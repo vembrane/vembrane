@@ -1,3 +1,5 @@
+__version__ = "0.1.0"
+
 from typing import Iterator
 
 from pysam import VariantFile, VariantRecord
