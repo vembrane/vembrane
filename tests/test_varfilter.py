@@ -1,3 +1,5 @@
+from pathlib import Path
+import os
 
 from pysam import VariantFile
 import pytest
@@ -11,7 +13,7 @@ def test_version():
     assert __version__ == '0.1.0'
 
 
-@pytest.mark.parametrize("testcase", os.listdir(CASES))
+@pytest.mark.parametrize("testcase", [d for d in os.listdir(CASES) if not d.startswith(".")])
 def test_filter(testcase):
     path = CASES.joinpath(testcase)
 
