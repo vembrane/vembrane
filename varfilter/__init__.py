@@ -5,26 +5,19 @@ from typing import Iterator
 from pysam import VariantFile, VariantRecord
 from sys import argv
 
-env = {
-    "__builtins__": None,
-    "__file__": None,
-    "__name__": None,
-    "globals": None,
-    "locals": None
-}
-
 
 def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
     header = vcf.header
+
+    env = dict()
+
     for name in header.info:
-        vars()[name] = None
+        env[name] = None
 
     for record in vcf:
         for key in record.info:
-            vars()[key] = record.info[key]
-        # TODO properly restrict env and locals
-        available_vars = locals()
-        if eval(expression, env, available_vars):
+            env[key] = record.info[key]
+        if eval(expression, locals=env):
             yield record
 
 
