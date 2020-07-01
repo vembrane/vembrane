@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "Filter VCF/BCF files with simple Python expressions."
 authors = ["Till Hartmann"]
 
+[tool.poetry.scripts]
+snakefmt = 'varfilter.varfilter:main'
+
 [tool.poetry.dependencies]
 python = "^3.7"
 

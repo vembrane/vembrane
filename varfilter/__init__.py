@@ -28,7 +28,7 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
             yield record
 
 
-if __name__ == "__main__":
+def main():
     expression = argv[2]
     with VariantFile(argv[1]) as vcf:
         with VariantFile('-', 'w', header=vcf.header) as out:
