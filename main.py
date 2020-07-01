@@ -25,9 +25,9 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
         for key in record.info:
             vars()[key] = record.info[key]
         # TODO properly restrict env and locals
-        available_vars = locals()
         ann = vars()["ANN"]
         ANNO = dict(zip(ann_names, zip(*[list(map(str.strip, a.split('|'))) for a in ann])))
+        available_vars = locals()
         if eval(expression, env, available_vars):
             yield record
 
