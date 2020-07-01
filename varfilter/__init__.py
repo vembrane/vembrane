@@ -27,6 +27,6 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
 def main():
     expression = argv[2]
     with VariantFile(argv[1]) as vcf:
-        with VariantFile('-', 'w', header=vcf.header) as out:
+        with VariantFile("-", "w", header=vcf.header) as out:
             for record in filter_vcf(vcf, expression):
                 out.write(record)

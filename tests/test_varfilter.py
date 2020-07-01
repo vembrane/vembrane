@@ -10,10 +10,12 @@ CASES = Path(__file__).parent.joinpath("testcases")
 
 
 def test_version():
-    assert __version__ == '0.1.0'
+    assert __version__ == "0.1.0"
 
 
-@pytest.mark.parametrize("testcase", [d for d in os.listdir(CASES) if not d.startswith(".")])
+@pytest.mark.parametrize(
+    "testcase", [d for d in os.listdir(CASES) if not d.startswith(".")]
+)
 def test_filter(testcase):
     path = CASES.joinpath(testcase)
 
