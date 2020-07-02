@@ -1,12 +1,13 @@
 __version__ = "0.1.0"
 
+# import stuff we want to be available in eval by default:
+import argparse
+import math
+import re
+from inspect import getmembers, isbuiltin
 from typing import Iterator
 
 from pysam import VariantFile, VariantRecord
-
-# import stuff we want to be available in eval by default:
-import re, argparse
-from math import log, log2, log10, log1p
 
 globals_whitelist = {
     **{
@@ -17,10 +18,8 @@ globals_whitelist = {
         "__doc__": None,
         "__package__": None,
     },
-    **{
-        mod.__name__: mod
-        for mod in [any, all, min, max, re, log, log2, log10, log1p, list, dict, zip]
-    },
+    **{mod.__name__: mod for mod in [any, all, min, max, re, list, dict, zip]},
+    **dict(getmembers(math, predicate=isbuiltin)),
 }
 
 
@@ -62,7 +61,7 @@ def main():
     parser.add_argument("expression", help="An expression to filter the variants.")
     args = parser.parse_args()
     expression = args.expression
-    if ".__" in expression or ";" in expression:
+    if ".__" in expression:
         raise ValueError("basic sanity check failed")
 
     with VariantFile(args.vcf) as vcf:
