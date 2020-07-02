@@ -25,7 +25,7 @@ globals_whitelist = {
         "__doc__": None,
         "__package__": None,
     },
-    **{mod.__name__: mod for mod in [any, all, min, max, re, list, dict, zip,]},
+    **{mod.__name__: mod for mod in [any, all, min, max, re, list, dict, zip]},
     **{name: mod for name, mod in vars(math).items() if not name.startswith("__")},
 }
 
@@ -124,7 +124,7 @@ def main():
         "--output-fmt",
         "-O",
         default="vcf",
-        choices=["vcf", "bcf", "uncompressed-bcf",],
+        choices=["vcf", "bcf", "uncompressed-bcf"],
         help="Output format.",
     )
     parser.add_argument(
