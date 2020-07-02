@@ -78,7 +78,7 @@ def filter_vcf(
             if ann_filter_expression:
                 # filter annotation entries
                 ann = record.info.get("ANN")
-                if not ann:
+                if ann:
                     filtered_ann = list(
                         filter_annotation_entries(
                             ann, ann_filter_expression, annotation_keys
