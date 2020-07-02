@@ -10,8 +10,8 @@ from pysam import VariantFile, VariantRecord
 
 globals_whitelist = {
     **{
-        "__builtins__": None,
-        "__builtin__": None,
+        "__builtins__": {},
+        "__builtin__": {},
         "__file__": None,
         "__name__": None,
         "__doc__": None,
