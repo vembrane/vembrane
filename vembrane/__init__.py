@@ -1,12 +1,13 @@
 __version__ = "0.1.0"
 
+# import stuff we want to be available in eval by default:
+import argparse
+import math
+import re
+from inspect import getmembers, isbuiltin
 from typing import Iterator
 
 from pysam import VariantFile, VariantRecord
-
-# import stuff we want to be available in eval by default:
-import re, argparse
-from math import log, log2, log10, log1p
 
 globals_whitelist = {
     **{
