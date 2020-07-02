@@ -58,7 +58,7 @@ def main():
     parser.add_argument("expression", help="An expression to filter the variants.")
     args = parser.parse_args()
     expression = args.expression
-    if ".__" in expression or ";" in expression:
+    if ".__" in expression:
         raise ValueError("basic sanity check failed")
 
     with VariantFile(args.vcf) as vcf:
