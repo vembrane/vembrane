@@ -8,7 +8,7 @@ on:
     branches_ignore: []
 
 jobs:
-  build:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -29,7 +29,11 @@ jobs:
       - name: Check formatting with black
         run:  poetry run black --check .
       - name: Lint with flake8
-        run:  poetry run flake8 --count .
+        uses: suo/flake8-github-action@releases/v1
+        with:
+          checkName: 'test'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Test and generate coverage report with pytest
         run:  poetry run pytest
 
