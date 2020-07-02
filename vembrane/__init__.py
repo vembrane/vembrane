@@ -5,6 +5,7 @@ import math
 import re
 from itertools import chain
 from typing import Iterator, List, Dict
+import sys
 
 from pysam import VariantFile, VariantRecord, VariantHeader
 
@@ -33,18 +34,8 @@ def parse_annotation_entry(entry: str) -> List[str]:
     return list(map(str.strip, entry.split("|")))
 
 
-def filter_annotation_entries(
-    entries: List[str], ann_filter_expression: str, annotation_keys: List[str]
-) -> Iterator[str]:
-    for entry in entries:
-        env: Dict[str, str] = dict(zip(annotation_keys, parse_annotation_entry(entry)))
-        if eval(ann_filter_expression, globals_whitelist, env):
-            yield entry
-
-
 def filter_vcf(
-    vcf: VariantFile, filter_expression: str, ann_filter_expression: str
-) -> Iterator[VariantRecord]:
+    vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
@@ -55,44 +46,28 @@ def filter_vcf(
     annotation_keys = get_annotation_keys(header)
 
     for record in vcf:
-        # obtain annotation entries
-        ann = dict(
-            zip(
-                annotation_keys,
-                zip(
-                    *(
-                        parse_annotation_entry(entry)
-                        for entry in record.info.get("ANN", [])
-                    )
-                ),
-            )
-        )
-
         # setup filter expression env
-        for key in record.info:
-            if key != "ANN":
-                env[key] = record.info[key]
-        env["ANN"] = ann
-        env["CHROM"] = record.chrom
-        env["POS"] = record.pos
-        env["REF"], env["ALT"] = chain(record.alleles)
 
-        if not filter_expression or eval(filter_expression, globals_whitelist, env):
-            if ann_filter_expression:
-                # filter annotation entries
-                ann = record.info.get("ANN")
-                if ann:
-                    filtered_ann = list(
-                        filter_annotation_entries(
-                            ann, ann_filter_expression, annotation_keys
-                        )
-                    )
-                    if not filtered_ann:
-                        # skip this record if filter removed all annotations
-                        continue
-                    record.info["ANN"] = filtered_ann
+        annotations = record.info.get("ANN")
+        filtered_ann = []
 
-            yield record
+        for annotation in annotations:
+            env: Dict[str, str] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
+            env["CHROM"] = record.chrom
+            env["POS"] = record.pos
+            env["REF"], env["ALT"] = chain(record.alleles)
+            for key in record.info:
+                if key != "ANN":
+                    env[key] = record.info[key]
+
+            if eval(expression, globals_whitelist, env):
+                filtered_ann.append(annotation)
+
+        if not filtered_ann:
+            # skip this record if filter removed all annotations
+            continue
+        record.info["ANN"] = filtered_ann
+        yield record
 
 
 def check_filter_expression(expression: str):
@@ -104,18 +79,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("vcf", help="The file containing the variants.")
     parser.add_argument(
-        "--filter-expression", help="An expression to filter the variants."
-    )
-    parser.add_argument(
-        "--ann-filter-expression",
-        help="Filter annotation entries. If this removes all annotations, "
+        "expression",
+        help="Filter variants and annotations. If this removes all annotations, "
         "the variant is removed as well.",
     )
     args = parser.parse_args()
 
     with VariantFile(args.vcf) as vcf:
         with VariantFile("-", "w", header=vcf.header) as out:
-            for record in filter_vcf(
-                vcf, args.filter_expression, args.ann_filter_expression
-            ):
+            for record in filter_vcf(vcf, args.expression):
                 out.write(record)
