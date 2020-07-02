@@ -18,10 +18,8 @@ globals_whitelist = {
         "__doc__": None,
         "__package__": None,
     },
-    **{
-        mod.__name__: mod
-        for mod in [any, all, min, max, re, log, log2, log10, log1p, list, dict, zip]
-    },
+    **{mod.__name__: mod for mod in [any, all, min, max, re, list, dict, zip]},
+    **dict(getmembers(math, predicate=isbuiltin)),
 }
 
 
