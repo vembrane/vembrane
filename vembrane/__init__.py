@@ -89,9 +89,27 @@ def main():
         help="Filter variants and annotations. If this removes all annotations, "
         "the variant is removed as well.",
     )
+    parser.add_argument(
+        "--output",
+        "-o",
+        default="-",
+        help="Output file, if not specified, output is written to STDOUT.",
+    )
+    parser.add_argument(
+        "--output-fmt",
+        "-O",
+        default="vcf",
+        choices=["vcf", "bcf", "uncompressed-bcf"],
+        help="Output format.",
+    )
     args = parser.parse_args()
 
     with VariantFile(args.vcf) as vcf:
-        with VariantFile("-", "w", header=vcf.header) as out:
+        fmt = ""
+        if args.output_fmt == "bcf":
+            fmt = "b"
+        elif args.output_fmt == "uncompressed-bcf":
+            fmt = "u"
+        with VariantFile(args.output, "w" + fmt, header=vcf.header) as out:
             for record in filter_vcf(vcf, args.expression):
                 out.write(record)
