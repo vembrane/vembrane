@@ -92,7 +92,7 @@ def main():
     )
     args = parser.parse_args()
     expr = ast.parse(args.expression, mode="eval")
-    if not isinstance(expr.body, ast.BoolOp):
+    if not isinstance(expr.body, (ast.BoolOp, ast.Compare)):
         raise ValueError("The provided expression does not evaluate to a boolean.")
 
     with VariantFile(args.vcf) as vcf:
