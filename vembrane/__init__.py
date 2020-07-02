@@ -7,6 +7,22 @@ from sys import argv
 
 # import stuff we want to be available in eval by default:
 import re, argparse
+from math import log, log2, log10, log1p
+
+globals_whitelist = {
+    **{
+        "__builtins__": None,
+        "__builtin__": None,
+        "__file__": None,
+        "__name__": None,
+        "__doc__": None,
+        "__package__": None,
+    },
+    **{
+        mod.__name__: mod
+        for mod in [any, all, min, max, re, log, log2, log10, log1p, list, dict, zip]
+    },
+}
 
 
 def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
@@ -34,7 +50,7 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
                 annotation_keys, zip(*(list(map(str.strip, a.split("|"))) for a in ann))
             )
         )
-        if eval(expression, dict(), env):
+        if eval(expression, globals=globals_whitelist, locals=env):
             yield record
 
 
@@ -43,12 +59,11 @@ def main():
     parser.add_argument("vcf", help="The file containing the variants.")
     parser.add_argument("expression", help="An expression to filter the variants.")
     args = parser.parse_args()
+    expression = args.expression
+    if ".__" in expression or ";" in expression:
+        raise ValueError("basic sanity check failed")
 
     with VariantFile(args.vcf) as vcf:
         with VariantFile("-", "w", header=vcf.header) as out:
-            for record in filter_vcf(vcf, args.expression):
+            for record in filter_vcf(vcf, expression):
                 out.write(record)
-
-
-if __name__ == "__main__":
-    main()
