@@ -4,7 +4,7 @@ import os
 from pysam import VariantFile
 import pytest
 
-from varfilter import __version__, filter_vcf
+from vembrane import __version__, filter_vcf
 
 CASES = Path(__file__).parent.joinpath("testcases")
 

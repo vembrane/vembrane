@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "varfilter"
+name = "vembrane"
 version = "0.1.0"
 description = "Filter VCF/BCF files with simple Python expressions."
 authors = ["Till Hartmann"]
 
 [tool.poetry.scripts]
-snakefmt = 'varfilter.varfilter:main'
+snakefmt = 'vembrane.vembrane:main'
 
 [tool.poetry.dependencies]
 python = "^3.7"

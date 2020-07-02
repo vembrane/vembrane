@@ -27,7 +27,7 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
             env[key] = record.info[key]
         ann = env["ANN"]
         if ann is not None:
-            env["ANNO"] = dict(zip(annotation_keys, zip(*[list(map(str.strip, a.split('|'))) for a in ann])))
+            env["ANNO"] = dict(zip(annotation_keys, zip(*(list(map(str.strip, a.split('|'))) for a in ann))))
         if eval(expression, locals=env):
             yield record
 
