@@ -71,7 +71,7 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
             # skip this record if filter removed all annotations
             continue
         elif len(annotations) != len(filtered_annotations):
-            # update annotations if they changed
+            # update annotations if they have been actually filtered
             record.info["ANN"] = filtered_annotations
         yield record
 
