@@ -34,7 +34,10 @@ def parse_annotation_entry(entry: str) -> List[str]:
 
 
 def filter_annotation_entries(
-    entries: List[str], ann_filter_expression: str, annotation_keys: List[str], env: dict
+    entries: List[str],
+    ann_filter_expression: str,
+    annotation_keys: List[str],
+    env: dict,
 ) -> Iterator[str]:
     for entry in entries:
         env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(entry)))
