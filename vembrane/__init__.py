@@ -4,8 +4,7 @@ import argparse
 import math
 import re
 from itertools import chain
-from typing import Iterator, List, Dict
-import sys
+from typing import Iterator, List
 
 from pysam import VariantFile, VariantRecord, VariantHeader
 
