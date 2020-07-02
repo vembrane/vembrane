@@ -44,9 +44,7 @@ def filter_vcf(
             break
 
     if not info_field_found:
-        raise ValueError(
-            f'VCF info field "{vcf_info_field}" not found in header'
-        )
+        raise ValueError(f'VCF info field "{vcf_info_field}" not found in header')
 
     for record in vcf:
         for key in record.info:
@@ -65,9 +63,7 @@ def filter_vcf(
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("vcf", help="The file containing the variants.")
-    parser.add_argument(
-        "expression", help="An expression to filter the variants."
-    )
+    parser.add_argument("expression", help="An expression to filter the variants.")
     parser.add_argument(
         "--vcf_info_field",
         metavar="key",
