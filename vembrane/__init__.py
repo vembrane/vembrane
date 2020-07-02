@@ -49,7 +49,8 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
         env["REF"], env["ALT"] = chain(record.alleles)
         env["ANNO"] = dict(
             zip(
-                annotation_keys, zip(*(list(map(str.strip, a.split("|"))) for a in ann))
+                annotation_keys,
+                zip(*(list(map(str.strip, a.split("|"))) for a in ann)),
             )
         )
         if eval(expression, globals_whitelist, env):
@@ -59,7 +60,9 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("vcf", help="The file containing the variants.")
-    parser.add_argument("expression", help="An expression to filter the variants.")
+    parser.add_argument(
+        "expression", help="An expression to filter the variants."
+    )
     args = parser.parse_args()
     expression = args.expression
     if ".__" in expression:
