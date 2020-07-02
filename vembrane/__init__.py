@@ -34,10 +34,10 @@ def parse_annotation_entry(entry: str):
 
 
 def filter_annotation_entries(
-    entries: list, ann_filter_expression: str, annotation_keys: list
+    entries: list, ann_filter_expression: str, annotation_keys: list, env: dict
 ):
     for entry in entries:
-        env = dict(zip(annotation_keys, parse_annotation_entry(entry)))
+        env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(entry)))
         if eval(ann_filter_expression, globals_whitelist, env):
             yield entry
 
@@ -81,7 +81,7 @@ def filter_vcf(
                 if ann:
                     filtered_ann = list(
                         filter_annotation_entries(
-                            ann, ann_filter_expression, annotation_keys
+                            ann, ann_filter_expression, annotation_keys, env
                         )
                     )
                     if not filtered_ann:
