@@ -34,8 +34,7 @@ def parse_annotation_entry(entry: str) -> List[str]:
     return list(map(str.strip, entry.split("|")))
 
 
-def filter_vcf(
-    vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
+def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
@@ -52,7 +51,9 @@ def filter_vcf(
         filtered_ann = []
 
         for annotation in annotations:
-            env: Dict[str, str] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
+            env: Dict[str, str] = dict(
+                zip(annotation_keys, parse_annotation_entry(annotation))
+            )
             env["CHROM"] = record.chrom
             env["POS"] = record.pos
             env["REF"], env["ALT"] = chain(record.alleles)
