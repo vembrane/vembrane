@@ -1,12 +1,11 @@
 __version__ = "0.1.0"
 
-# import stuff we want to be available in eval by default:
 import argparse
 import math
 import re
-from typing import Iterator
+from typing import Iterator, List, Dict
 
-from pysam import VariantFile, VariantRecord
+from pysam import VariantFile, VariantRecord, VariantHeader
 
 globals_whitelist = {
     **{
@@ -22,22 +21,22 @@ globals_whitelist = {
 }
 
 
-def get_annotation_keys(header):
+def get_annotation_keys(header: VariantHeader) -> List[str]:
     for rec in header.records:
         if rec.get("ID") == "ANN":
             return list(map(str.strip, rec.get("Description").split("'")[1].split("|")))
     return []
 
 
-def parse_annotation_entry(entry: str):
+def parse_annotation_entry(entry: str) -> List[str]:
     return list(map(str.strip, entry.split("|")))
 
 
 def filter_annotation_entries(
-    entries: list, ann_filter_expression: str, annotation_keys: list
-):
+    entries: List[str], ann_filter_expression: str, annotation_keys: List[str]
+) -> Iterator[str]:
     for entry in entries:
-        env = dict(zip(annotation_keys, parse_annotation_entry(entry)))
+        env: Dict[str, str] = dict(zip(annotation_keys, parse_annotation_entry(entry)))
         if eval(ann_filter_expression, globals_whitelist, env):
             yield entry
 
@@ -92,7 +91,7 @@ def filter_vcf(
             yield record
 
 
-def check_filter_expression(expression):
+def check_filter_expression(expression: str)g:
     if ".__" in expression:
         raise ValueError("basic sanity check failed")  # TODO: better error message
 
