@@ -1,1 +1,0 @@
-"CDH2" in ANNO["Gene_Name"] and "HIGH" in ANNO["Annotation_Impact"]

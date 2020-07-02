@@ -13,6 +13,7 @@ pysam = "^0.16"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
+pyyaml = "^5.3"
 
 [build-system]
 requires = ["poetry>=0.12"]
