@@ -45,25 +45,24 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
 
     for record in vcf:
         # setup filter expression env
+        env.clear()
+        env["CHROM"] = record.chrom
+        env["POS"] = record.pos
+        env["REF"], env["ALT"] = chain(record.alleles)
+        for key in record.info:
+            if key != "ANN":
+                env[key] = record.info[key]
 
-        annotations = record.info.get("ANN")
+        annotations = record.info.get("ANN", [])
         filtered_ann = []
 
         for annotation in annotations:
-            env: Dict[str, str] = dict(
-                zip(annotation_keys, parse_annotation_entry(annotation))
-            )
-            env["CHROM"] = record.chrom
-            env["POS"] = record.pos
-            env["REF"], env["ALT"] = chain(record.alleles)
-            for key in record.info:
-                if key != "ANN":
-                    env[key] = record.info[key]
+            env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
 
             if eval(expression, globals_whitelist, env):
                 filtered_ann.append(annotation)
 
-        if not filtered_ann:
+        if annotations and not filtered_ann:
             # skip this record if filter removed all annotations
             continue
         record.info["ANN"] = filtered_ann
