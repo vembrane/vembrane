@@ -48,7 +48,7 @@ def eval_expression(
         return False
 
 
-def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
+def filter_vcf(vcf: VariantFile, expression: str, ann_key:str="ANN") -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
@@ -65,10 +65,10 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
         env["POS"] = record.pos
         env["REF"], env["ALT"] = chain(record.alleles)
         for key in record.info:
-            if key != "ANN":
+            if key != ann_key:
                 env[key] = record.info[key]
 
-        annotations = record.info.get("ANN", [])
+        annotations = dict(record.info).get(ann_key, [])
         filtered_annotations = [
             annotation
             for annotation in annotations
@@ -80,7 +80,7 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
             continue
         elif len(annotations) != len(filtered_annotations):
             # update annotations if they have been actually filtered
-            record.info["ANN"] = filtered_annotations
+            record.info[ann_key] = filtered_annotations
         yield record
 
 
@@ -110,6 +110,14 @@ def main():
         choices=["vcf", "bcf", "uncompressed-bcf"],
         help="Output format.",
     )
+    parser.add_argument(
+        "--ann_key",
+        "-k",
+        metavar="FIELDNAME",
+        default="ANN",
+        help="The INFO key for the annotation field.",
+    )
+
     args = parser.parse_args()
 
     with VariantFile(args.vcf) as vcf:
@@ -119,5 +127,5 @@ def main():
         elif args.output_fmt == "uncompressed-bcf":
             fmt = "u"
         with VariantFile(args.output, "w" + fmt, header=vcf.header) as out:
-            for record in filter_vcf(vcf, args.expression):
+            for record in filter_vcf(vcf, args.expression, args.ann_key):
                 out.write(record)
