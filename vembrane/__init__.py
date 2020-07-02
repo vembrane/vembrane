@@ -7,6 +7,23 @@ from sys import argv
 
 # import stuff we want to be available in eval by default:
 import re
+import math
+from math import log, log2, log10, log1p
+
+globals_whitelist = {
+    **{
+        "__builtins__": None,
+        "__builtin__": None,
+        "__file__": None,
+        "__name__": None,
+        "__doc__": None,
+        "__package__": None,
+    },
+    **{
+        mod.__name__: mod
+        for mod in [any, all, min, max, re, log, log2, log10, log1p, list, dict, zip]
+    },
+}
 
 
 def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
