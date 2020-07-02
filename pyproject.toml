@@ -5,7 +5,7 @@ description = "Filter VCF/BCF files with simple Python expressions."
 authors = ["Till Hartmann"]
 
 [tool.poetry.scripts]
-membrane = 'vembrane.vembrane:main'
+vembrane = 'vembrane.vembrane:main'
 
 [tool.poetry.dependencies]
 python = "^3.7"
