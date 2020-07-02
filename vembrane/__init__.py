@@ -4,7 +4,7 @@ import argparse
 import math
 import re
 from itertools import chain
-from typing import Iterator, List, Dict
+from typing import Iterator, List
 
 from pysam import VariantFile, VariantRecord, VariantHeader
 
@@ -34,10 +34,13 @@ def parse_annotation_entry(entry: str) -> List[str]:
 
 
 def filter_annotation_entries(
-    entries: List[str], ann_filter_expression: str, annotation_keys: List[str]
+    entries: List[str],
+    ann_filter_expression: str,
+    annotation_keys: List[str],
+    env: dict,
 ) -> Iterator[str]:
     for entry in entries:
-        env: Dict[str, str] = dict(zip(annotation_keys, parse_annotation_entry(entry)))
+        env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(entry)))
         if eval(ann_filter_expression, globals_whitelist, env):
             yield entry
 
@@ -84,7 +87,7 @@ def filter_vcf(
                 if ann:
                     filtered_ann = list(
                         filter_annotation_entries(
-                            ann, ann_filter_expression, annotation_keys
+                            ann, ann_filter_expression, annotation_keys, env
                         )
                     )
                     if not filtered_ann:
