@@ -7,6 +7,7 @@ import re
 from inspect import getmembers, isbuiltin
 from typing import Iterator
 
+from itertools import chain
 from pysam import VariantFile, VariantRecord
 
 globals_whitelist = {
