@@ -3,7 +3,6 @@ __version__ = "0.1.0"
 from typing import Iterator
 
 from pysam import VariantFile, VariantRecord
-from sys import argv
 
 # import stuff we want to be available in eval by default:
 import re, argparse
