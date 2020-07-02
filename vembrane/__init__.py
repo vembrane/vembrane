@@ -33,6 +33,13 @@ def parse_annotation_entry(entry: str) -> List[str]:
     return list(map(str.strip, entry.split("|")))
 
 
+def eval_expression(
+    expression: str, annotation: str, annotation_keys: List[str], env: dict
+) -> bool:
+    env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
+    return eval(expression, globals_whitelist, env)
+
+
 def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
     header = vcf.header
 
@@ -54,18 +61,18 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
                 env[key] = record.info[key]
 
         annotations = record.info.get("ANN", [])
-        filtered_ann = []
+        filtered_annotations = [
+            annotation
+            for annotation in annotations
+            if eval_expression(expression, annotation, annotation_keys, env)
+        ]
 
-        for annotation in annotations:
-            env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
-
-            if eval(expression, globals_whitelist, env):
-                filtered_ann.append(annotation)
-
-        if annotations and not filtered_ann:
+        if annotations and not filtered_annotations:
             # skip this record if filter removed all annotations
             continue
-        record.info["ANN"] = filtered_ann
+        elif len(annotations) != len(filtered_annotations):
+            # update annotations if they changed
+            record.info["ANN"] = filtered_annotations
         yield record
 
 
