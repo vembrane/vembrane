@@ -49,7 +49,7 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
                 annotation_keys, zip(*(list(map(str.strip, a.split("|"))) for a in ann))
             )
         )
-        if eval(expression, globals=globals_whitelist, locals=env):
+        if eval(expression, globals_whitelist, env):
             yield record
 
 
