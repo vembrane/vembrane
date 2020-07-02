@@ -7,7 +7,6 @@ from sys import argv
 
 # import stuff we want to be available in eval by default:
 import re
-import math
 from math import log, log2, log10, log1p
 
 globals_whitelist = {
