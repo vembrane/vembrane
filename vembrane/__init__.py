@@ -34,7 +34,9 @@ def parse_annotation_entry(entry: str):
     return list(map(str.strip, entry.split("|")))
 
 
-def filter_annotation_entries(entries: list, ann_filter_expression: str):
+def filter_annotation_entries(
+    entries: list, ann_filter_expression: str, annotation_keys: list
+):
     for entry in entries:
         env = dict(zip(annotation_keys, parse_annotation_entry(entry)))
         if eval(ann_filter_expression, globals_whitelist, env):
@@ -79,7 +81,9 @@ def filter_vcf(
                 ann = record.info.get("ANN")
                 if not ann:
                     filtered_ann = list(
-                        filter_annotation_entries(ann, ann_filter_expression)
+                        filter_annotation_entries(
+                            ann, ann_filter_expression, annotation_keys
+                        )
                     )
                     if not filtered_ann:
                         # skip this record if filter removed all annotations
