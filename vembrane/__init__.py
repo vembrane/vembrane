@@ -27,9 +27,7 @@ globals_whitelist = {
 def get_annotation_keys(header):
     for rec in header.records:
         if rec.get("ID") == "ANN":
-            return list(
-                map(str.strip, rec.get("Description").split("'")[1].split("|"))
-            )
+            return list(map(str.strip, rec.get("Description").split("'")[1].split("|")))
     return []
 
 
@@ -44,7 +42,9 @@ def filter_annotation_entries(entries: list, ann_filter_expression: str):
             yield entry
 
 
-def filter_vcf(vcf: VariantFile, filter_expression: str, ann_filter_expression: str) -> Iterator[VariantRecord]:
+def filter_vcf(
+    vcf: VariantFile, filter_expression: str, ann_filter_expression: str
+) -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
@@ -58,7 +58,13 @@ def filter_vcf(vcf: VariantFile, filter_expression: str, ann_filter_expression: 
         # obtain annotation entries
         ann = dict(
             zip(
-                annotation_keys, zip(*(parse_annotation_entry(entry) for entry in record.info.get("ANN", [])))
+                annotation_keys,
+                zip(
+                    *(
+                        parse_annotation_entry(entry)
+                        for entry in record.info.get("ANN", [])
+                    )
+                ),
             )
         )
 
@@ -73,7 +79,9 @@ def filter_vcf(vcf: VariantFile, filter_expression: str, ann_filter_expression: 
                 # filter annotation entries
                 ann = record.info.get("ANN")
                 if not ann:
-                    filtered_ann = list(filter_annotation_entries(ann, ann_filter_expression))
+                    filtered_ann = list(
+                        filter_annotation_entries(ann, ann_filter_expression)
+                    )
                     if not filtered_ann:
                         # skip this record if filter removed all annotations
                         continue
@@ -84,24 +92,28 @@ def filter_vcf(vcf: VariantFile, filter_expression: str, ann_filter_expression: 
 
 def check_filter_expression(expression):
     if ".__" in expression or ";" in expression:
-        raise ValueError("basic sanity check failed") # TODO: better error message
+        raise ValueError("basic sanity check failed")  # TODO: better error message
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("vcf", help="The file containing the variants.")
-    parser.add_argument("--filter-expression", help="An expression to filter the variants.")
     parser.add_argument(
-        "--ann-filter-expression", 
+        "--filter-expression", help="An expression to filter the variants."
+    )
+    parser.add_argument(
+        "--ann-filter-expression",
         help="Filter annotation entries. If this removes all annotations, "
-        "the variant is removed as well."
+        "the variant is removed as well.",
     )
     args = parser.parse_args()
-    
+
     check_filter_expression(args.filter_expression)
     check_filter_expression(args.ann_filter_expression)
 
     with VariantFile(args.vcf) as vcf:
         with VariantFile("-", "w", header=vcf.header) as out:
-            for record in filter_vcf(vcf, args.filter_expression, args.ann_filter_expression):
+            for record in filter_vcf(
+                vcf, args.filter_expression, args.ann_filter_expression
+            ):
                 out.write(record)

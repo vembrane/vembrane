@@ -26,6 +26,10 @@ def test_filter(testcase):
     vcf = VariantFile(path.joinpath("test.vcf"))
 
     expected = list(VariantFile(path.joinpath("expected.vcf")))
-    result = list(filter_vcf(vcf, config.get("filter_expression"), config.get("ann_filter_expression")))
+    result = list(
+        filter_vcf(
+            vcf, config.get("filter_expression"), config.get("ann_filter_expression")
+        )
+    )
 
     assert result == expected
