@@ -17,11 +17,20 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
     for name in header.info:
         env[name] = None
 
+    annotation_keys = []
+    for rec in header.records: 
+        if rec.get("ID") == "ANN": 
+            annotation_keys = list(map(str.strip, rec.get("Description").split("'")[1].split("|")))
+
     for record in vcf:
         for key in record.info:
             env[key] = record.info[key]
+        ann = env["ANN"]
+        if ann is not None:
+            env["ANNO"] = dict(zip(annotation_keys, zip(*[list(map(str.strip, a.split('|'))) for a in ann])))
         if eval(expression, locals=env):
             yield record
+
 
 
 def main():
