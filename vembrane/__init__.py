@@ -24,7 +24,7 @@ globals_whitelist = {
 }
 
 
-def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
+def filter_vcf(vcf: VariantFile, expression: str, vcf_info_field: str="ANN") -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
@@ -33,17 +33,22 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
         env[name] = None
 
     annotation_keys = []
+    info_field_found = False
     for rec in header.records:
-        if rec.get("ID") == "ANN":
+        if rec.get("ID") == vcf_info_field:
             annotation_keys = list(
                 map(str.strip, rec.get("Description").split("'")[1].split("|"))
             )
+            info_field_found = True
             break
+
+    if not info_field_found:
+        raise ValueError(f"VCF info field \"{vcf_info_field}\" not found in header")
 
     for record in vcf:
         for key in record.info:
             env[key] = record.info[key]
-        ann = env.get("ANN", [])
+        ann = env.get(vcf_info_field, [])
         env["ANNO"] = dict(
             zip(
                 annotation_keys, zip(*(list(map(str.strip, a.split("|"))) for a in ann))
@@ -57,6 +62,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("vcf", help="The file containing the variants.")
     parser.add_argument("expression", help="An expression to filter the variants.")
+    parser.add_argument("--vcf_info_field", metavar="key", default="ANN", help="The INFO key VEMBRANE expects to decode. (Default=ANN)")
+
     args = parser.parse_args()
     expression = args.expression
     if ".__" in expression or ";" in expression:
@@ -64,5 +71,5 @@ def main():
 
     with VariantFile(args.vcf) as vcf:
         with VariantFile("-", "w", header=vcf.header) as out:
-            for record in filter_vcf(vcf, expression):
+            for record in filter_vcf(vcf, expression, args.vcf_info_field):
                 out.write(record)
