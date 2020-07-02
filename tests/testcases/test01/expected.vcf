@@ -85,7 +85,5 @@
 ##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | ERRORS / WARNINGS / INFO'">
 ##INFO=<ID=LOF,Number=.,Type=String,Description="Predicted loss of function effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'">
 ##INFO=<ID=NMD,Number=.,Type=String,Description="Predicted nonsense mediated decay effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'">
-##bcftools_viewVersion=1.10.2+htslib-1.10.2
-##bcftools_viewCommand=view -Ob test.vcf; Date=Wed Jul  1 21:44:10 2020
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TUMOR
 chr18	28036487	.	A	T	162	PASS	SNVHPOL=2;MQ=60;ANN=T|stop_gained|HIGH|CDH2|CDH2|transcript|NM_001308176.1|protein_coding|1/15|c.62T>A|p.Leu21*|99/3855|62/2628|21/875||;LOF=(CDH2|CDH2|2|0.50);NMD=(CDH2|CDH2|2|0.50)	GT:GQ:GQX:DP:DPF:AD:ADF:ADR:SB:FT:PL	0/1:195:162:36:4:19,17:13,11:6,6:-20:PASS:197,0,216

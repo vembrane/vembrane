@@ -1,1 +1,1 @@
-filter_expression: 'POS > 27990264'
+filter_expression: 'POS >= 27990264 and REF == "A"'
