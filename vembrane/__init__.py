@@ -6,7 +6,7 @@ from pysam import VariantFile, VariantRecord
 from sys import argv
 
 # import stuff we want to be available in eval by default:
-import re
+import re, argparse
 from math import log, log2, log10, log1p
 
 globals_whitelist = {
@@ -55,10 +55,15 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
 
 
 def main():
-    expression = argv[2]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("vcf", help="The file containing the variants.")
+    parser.add_argument("expression", help="An expression to filter the variants.")
+    args = parser.parse_args()
+    expression = args.expression
     if ".__" in expression or ";" in expression:
         raise ValueError("basic sanity check failed")
-    with VariantFile(argv[1]) as vcf:
+
+    with VariantFile(args.vcf) as vcf:
         with VariantFile("-", "w", header=vcf.header) as out:
             for record in filter_vcf(vcf, expression):
                 out.write(record)
