@@ -10,4 +10,4 @@
 
 ## Examples
 
-```vembrane test.bcf --ann-filter-expression '"CDH2" in Gene_Name and "HIGH" in Annotation_Impact```
+```vembrane test.bcf 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"```
