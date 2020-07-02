@@ -1,34 +1,32 @@
+__version__ = "0.1.0"
+
 from typing import Iterator
 
 from pysam import VariantFile, VariantRecord
 from sys import argv
 
-env = {
-    "__builtins__": None,
-    "__file__": None,
-    "__name__": None,
-    "globals": None,
-    "locals": None
-}
+# import stuff we want to be available in eval by default:
+import re
 
 
 def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
     header = vcf.header
+
+    env = dict()
+
     for name in header.info:
-        vars()[name] = None
+        env[name] = None
 
     for record in vcf:
         for key in record.info:
-            vars()[key] = record.info[key]
-        # TODO properly restrict env and locals
-        available_vars = locals()
-        if eval(expression, env, available_vars):
+            env[key] = record.info[key]
+        if eval(expression, locals=env):
             yield record
 
 
-if __name__ == "__main__":
+def main():
     expression = argv[2]
     with VariantFile(argv[1]) as vcf:
-        with VariantFile('-', 'w', header=vcf.header) as out:
+        with VariantFile("-", "w", header=vcf.header) as out:
             for record in filter_vcf(vcf, expression):
                 out.write(record)
