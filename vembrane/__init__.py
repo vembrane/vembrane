@@ -48,7 +48,9 @@ def eval_expression(
         return False
 
 
-def filter_vcf(vcf: VariantFile, expression: str, ann_key:str="ANN") -> Iterator[VariantRecord]:
+def filter_vcf(
+    vcf: VariantFile, expression: str, ann_key: str = "ANN"
+) -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
