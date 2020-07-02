@@ -6,7 +6,7 @@ from pysam import VariantFile, VariantRecord
 from sys import argv
 
 # import stuff we want to be available in eval by default:
-import re
+import re, argparse
 
 
 def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
@@ -28,13 +28,21 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
             env[key] = record.info[key]
         ann = env.get("ANN", [])
         env["ANNO"] = dict(zip(annotation_keys, zip(*(list(map(str.strip, a.split('|'))) for a in ann))))
-        if eval(expression, locals=env):
+        if eval(expression, dict(), env):
             yield record
 
 
 def main():
-    expression = argv[2]
-    with VariantFile(argv[1]) as vcf:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("vcf", help="The file containing the variants.")
+    parser.add_argument("expression", help="An expression to filter the variants.")
+    args = parser.parse_args()
+
+    with VariantFile(args.vcf) as vcf:
         with VariantFile("-", "w", header=vcf.header) as out:
-            for record in filter_vcf(vcf, expression):
+            for record in filter_vcf(vcf, args.expression):
                 out.write(record)
+
+
+if __name__ == "__main__":
+    main()
