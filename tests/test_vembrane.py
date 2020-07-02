@@ -3,6 +3,7 @@ import os
 
 from pysam import VariantFile
 import pytest
+import yaml
 
 from vembrane import __version__, filter_vcf
 
@@ -19,10 +20,16 @@ def test_version():
 def test_filter(testcase):
     path = CASES.joinpath(testcase)
 
-    expression = open(path.joinpath("expression.txt")).read().strip()
+    with open(path.joinpath("config.yaml")) as config_fp:
+        config = yaml.load(config_fp, Loader=yaml.FullLoader)
+
     vcf = VariantFile(path.joinpath("test.vcf"))
 
     expected = list(VariantFile(path.joinpath("expected.vcf")))
-    result = list(filter_vcf(vcf, expression))
+    result = list(
+        filter_vcf(
+            vcf, config.get("filter_expression"), config.get("ann_filter_expression")
+        )
+    )
 
     assert result == expected
