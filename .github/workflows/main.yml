@@ -8,11 +8,11 @@ on:
     branches_ignore: []
 
 jobs:
-  build:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7, 3.8]
         os: [ubuntu-latest, macos-latest]
 
     steps:
@@ -24,12 +24,16 @@ jobs:
       - name: Install dependencies
         run:  |
               python -m pip install --upgrade pip
-              python -m pip install poetry
+              python -m pip install poetry black flake8
               poetry install --no-interaction
       - name: Check formatting with black
         run:  poetry run black --check .
       - name: Lint with flake8
-        run:  poetry run flake8 --count .
+        uses: suo/flake8-github-action@releases/v1
+        with:
+          checkName: 'test'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Test and generate coverage report with pytest
         run:  poetry run pytest
 
