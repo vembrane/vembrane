@@ -37,20 +37,28 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
     annotation_keys = []
     for rec in header.records:
         if rec.get("ID") == "ANN":
-            annotation_keys = list(map(str.strip, rec.get("Description").split("'")[1].split("|")))
+            annotation_keys = list(
+                map(str.strip, rec.get("Description").split("'")[1].split("|"))
+            )
             break
 
     for record in vcf:
         for key in record.info:
             env[key] = record.info[key]
         ann = env.get("ANN", [])
-        env["ANNO"] = dict(zip(annotation_keys, zip(*(list(map(str.strip, a.split('|'))) for a in ann))))
-        if eval(expression, locals=env):
+        env["ANNO"] = dict(
+            zip(
+                annotation_keys, zip(*(list(map(str.strip, a.split("|"))) for a in ann))
+            )
+        )
+        if eval(expression, globals=globals_whitelist, locals=env):
             yield record
 
 
 def main():
     expression = argv[2]
+    if ".__" in expression or ";" in expression:
+        raise ValueError("basic sanity check failed")
     with VariantFile(argv[1]) as vcf:
         with VariantFile("-", "w", header=vcf.header) as out:
             for record in filter_vcf(vcf, expression):
