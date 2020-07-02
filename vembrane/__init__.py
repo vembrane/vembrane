@@ -4,7 +4,6 @@ __version__ = "0.1.0"
 import argparse
 import math
 import re
-from inspect import getmembers, isbuiltin
 from typing import Iterator
 
 from pysam import VariantFile, VariantRecord
@@ -19,7 +18,7 @@ globals_whitelist = {
         "__package__": None,
     },
     **{mod.__name__: mod for mod in [any, all, min, max, re, list, dict, zip]},
-    **dict(getmembers(math, predicate=isbuiltin)),
+    **{name: mod for name, mod in vars(math).items() if not name.startswith("__")},
 }
 
 
