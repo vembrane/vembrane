@@ -1,1 +1,1 @@
-filter_expression: '"CDH2" in ANN["Gene_Name"] and "HIGH" in ANN["Annotation_Impact"]'
+filter_expression: 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"'

@@ -33,21 +33,14 @@ def parse_annotation_entry(entry: str) -> List[str]:
     return list(map(str.strip, entry.split("|")))
 
 
-def filter_annotation_entries(
-    entries: List[str],
-    ann_filter_expression: str,
-    annotation_keys: List[str],
-    env: dict,
-) -> Iterator[str]:
-    for entry in entries:
-        env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(entry)))
-        if eval(ann_filter_expression, globals_whitelist, env):
-            yield entry
+def eval_expression(
+    expression: str, annotation: str, annotation_keys: List[str], env: dict
+) -> bool:
+    env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
+    return eval(expression, globals_whitelist, env)
 
 
-def filter_vcf(
-    vcf: VariantFile, filter_expression: str, ann_filter_expression: str
-) -> Iterator[VariantRecord]:
+def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
@@ -58,44 +51,29 @@ def filter_vcf(
     annotation_keys = get_annotation_keys(header)
 
     for record in vcf:
-        # obtain annotation entries
-        ann = dict(
-            zip(
-                annotation_keys,
-                zip(
-                    *(
-                        parse_annotation_entry(entry)
-                        for entry in record.info.get("ANN", [])
-                    )
-                ),
-            )
-        )
-
         # setup filter expression env
-        for key in record.info:
-            if key != "ANN":
-                env[key] = record.info[key]
-        env["ANN"] = ann
+        env.clear()
         env["CHROM"] = record.chrom
         env["POS"] = record.pos
         env["REF"], env["ALT"] = chain(record.alleles)
+        for key in record.info:
+            if key != "ANN":
+                env[key] = record.info[key]
 
-        if not filter_expression or eval(filter_expression, globals_whitelist, env):
-            if ann_filter_expression:
-                # filter annotation entries
-                ann = record.info.get("ANN")
-                if ann:
-                    filtered_ann = list(
-                        filter_annotation_entries(
-                            ann, ann_filter_expression, annotation_keys, env
-                        )
-                    )
-                    if not filtered_ann:
-                        # skip this record if filter removed all annotations
-                        continue
-                    record.info["ANN"] = filtered_ann
+        annotations = record.info.get("ANN", [])
+        filtered_annotations = [
+            annotation
+            for annotation in annotations
+            if eval_expression(expression, annotation, annotation_keys, env)
+        ]
 
-            yield record
+        if annotations and not filtered_annotations:
+            # skip this record if filter removed all annotations
+            continue
+        elif len(annotations) != len(filtered_annotations):
+            # update annotations if they have been actually filtered
+            record.info["ANN"] = filtered_annotations
+        yield record
 
 
 def check_filter_expression(expression: str):
@@ -107,18 +85,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("vcf", help="The file containing the variants.")
     parser.add_argument(
-        "--filter-expression", help="An expression to filter the variants."
-    )
-    parser.add_argument(
-        "--ann-filter-expression",
-        help="Filter annotation entries. If this removes all annotations, "
+        "expression",
+        help="Filter variants and annotations. If this removes all annotations, "
         "the variant is removed as well.",
     )
     args = parser.parse_args()
 
     with VariantFile(args.vcf) as vcf:
         with VariantFile("-", "w", header=vcf.header) as out:
-            for record in filter_vcf(
-                vcf, args.filter_expression, args.ann_filter_expression
-            ):
+            for record in filter_vcf(vcf, args.expression):
                 out.write(record)
