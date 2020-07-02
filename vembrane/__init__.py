@@ -3,6 +3,7 @@ __version__ = "0.1.0"
 import argparse
 import math
 import re
+from itertools import chain
 from typing import Iterator, List, Dict
 
 from pysam import VariantFile, VariantRecord, VariantHeader
@@ -72,6 +73,9 @@ def filter_vcf(
             if key != "ANN":
                 env[key] = record.info[key]
         env["ANN"] = ann
+        env["CHROM"] = record.chrom
+        env["POS"] = record.pos
+        env["REF"], env["ALT"] = chain(record.alleles)
 
         if not filter_expression or eval(filter_expression, globals_whitelist, env):
             if ann_filter_expression:
@@ -91,7 +95,7 @@ def filter_vcf(
             yield record
 
 
-def check_filter_expression(expression: str)g:
+def check_filter_expression(expression: str):
     if ".__" in expression:
         raise ValueError("basic sanity check failed")  # TODO: better error message
 

@@ -9,3 +9,5 @@
 * Christopher Schröder (@christopher-schroeder)
 
 ## Examples
+
+```vembrane test.bcf --ann-filter-expression '"CDH2" in Gene_Name and "HIGH" in Annotation_Impact```
