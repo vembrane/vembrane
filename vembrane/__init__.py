@@ -5,7 +5,8 @@ from typing import Iterator
 from pysam import VariantFile, VariantRecord
 
 # import stuff we want to be available in eval by default:
-import re, argparse
+import re
+import argparse
 from math import log, log2, log10, log1p
 
 globals_whitelist = {
@@ -19,7 +20,20 @@ globals_whitelist = {
     },
     **{
         mod.__name__: mod
-        for mod in [any, all, min, max, re, log, log2, log10, log1p, list, dict, zip]
+        for mod in [
+            any,
+            all,
+            min,
+            max,
+            re,
+            log,
+            log2,
+            log10,
+            log1p,
+            list,
+            dict,
+            zip,
+        ]
     },
 }
 
@@ -45,7 +59,9 @@ def filter_vcf(
             break
 
     if not info_field_found:
-        raise ValueError(f'VCF info field "{vcf_info_field}" not found in header')
+        raise ValueError(
+            f'VCF info field "{vcf_info_field}" not found in header'
+        )
 
     for record in vcf:
         for key in record.info:
@@ -53,7 +69,8 @@ def filter_vcf(
         ann = env.get(vcf_info_field, [])
         env["ANNO"] = dict(
             zip(
-                annotation_keys, zip(*(list(map(str.strip, a.split("|"))) for a in ann))
+                annotation_keys,
+                zip(*(list(map(str.strip, a.split("|"))) for a in ann)),
             )
         )
         if eval(expression, globals_whitelist, env):
@@ -63,7 +80,9 @@ def filter_vcf(
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("vcf", help="The file containing the variants.")
-    parser.add_argument("expression", help="An expression to filter the variants.")
+    parser.add_argument(
+        "expression", help="An expression to filter the variants."
+    )
     parser.add_argument(
         "--vcf_info_field",
         metavar="key",
