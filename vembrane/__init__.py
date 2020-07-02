@@ -48,7 +48,7 @@ def eval_expression(
         return False
 
 
-def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
+def filter_vcf(vcf: VariantFile, expression: str, keep_unmatched:bool=False) -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
@@ -78,7 +78,7 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
         if annotations and not filtered_annotations:
             # skip this record if filter removed all annotations
             continue
-        elif len(annotations) != len(filtered_annotations):
+        elif not keep_unmatched and (len(annotations) != len(filtered_annotations)):
             # update annotations if they have been actually filtered
             record.info["ANN"] = filtered_annotations
         yield record
@@ -110,6 +110,12 @@ def main():
         choices=["vcf", "bcf", "uncompressed-bcf"],
         help="Output format.",
     )
+    parser.add_argument(
+        "--keep-unmatched",
+        default=False,
+        action="store_true",
+        help="Keep all annotations of a variant if at least one annotation pass the expression.",
+    )
     args = parser.parse_args()
 
     with VariantFile(args.vcf) as vcf:
@@ -119,5 +125,5 @@ def main():
         elif args.output_fmt == "uncompressed-bcf":
             fmt = "u"
         with VariantFile(args.output, "w" + fmt, header=vcf.header) as out:
-            for record in filter_vcf(vcf, args.expression):
+            for record in filter_vcf(vcf, args.expression, keep_unmatched=args.keep_unmatched):
                 out.write(record)
