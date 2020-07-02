@@ -44,6 +44,9 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
         for key in record.info:
             env[key] = record.info[key]
         ann = env.get("ANN", [])
+        env["CHROM"] = record.chrom
+        env["POS"] = record.pos
+        env["REF"], env["ALT"] = chain(record.alleles)
         env["ANNO"] = dict(
             zip(
                 annotation_keys, zip(*(list(map(str.strip, a.split("|"))) for a in ann))
