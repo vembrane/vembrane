@@ -24,7 +24,9 @@ globals_whitelist = {
 }
 
 
-def filter_vcf(vcf: VariantFile, expression: str, vcf_info_field: str="ANN") -> Iterator[VariantRecord]:
+def filter_vcf(
+    vcf: VariantFile, expression: str, vcf_info_field: str = "ANN"
+) -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
@@ -43,7 +45,7 @@ def filter_vcf(vcf: VariantFile, expression: str, vcf_info_field: str="ANN") -> 
             break
 
     if not info_field_found:
-        raise ValueError(f"VCF info field \"{vcf_info_field}\" not found in header")
+        raise ValueError(f'VCF info field "{vcf_info_field}" not found in header')
 
     for record in vcf:
         for key in record.info:
@@ -62,7 +64,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("vcf", help="The file containing the variants.")
     parser.add_argument("expression", help="An expression to filter the variants.")
-    parser.add_argument("--vcf_info_field", metavar="key", default="ANN", help="The INFO key VEMBRANE expects to decode. (Default=ANN)")
+    parser.add_argument(
+        "--vcf_info_field",
+        metavar="key",
+        default="ANN",
+        help="The INFO key VEMBRANE expects to decode. (Default=ANN)",
+    )
 
     args = parser.parse_args()
     expression = args.expression
