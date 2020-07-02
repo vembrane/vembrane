@@ -48,7 +48,9 @@ def eval_expression(
         return False
 
 
-def filter_vcf(vcf: VariantFile, expression: str, keep_unmatched:bool=False) -> Iterator[VariantRecord]:
+def filter_vcf(
+    vcf: VariantFile, expression: str, keep_unmatched: bool = False
+) -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
@@ -125,5 +127,7 @@ def main():
         elif args.output_fmt == "uncompressed-bcf":
             fmt = "u"
         with VariantFile(args.output, "w" + fmt, header=vcf.header) as out:
-            for record in filter_vcf(vcf, args.expression, keep_unmatched=args.keep_unmatched):
+            for record in filter_vcf(
+                vcf, args.expression, keep_unmatched=args.keep_unmatched
+            ):
                 out.write(record)
