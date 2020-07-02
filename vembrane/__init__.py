@@ -1,7 +1,6 @@
 __version__ = "0.1.0"
 
 import argparse
-import ast
 import math
 import re
 from itertools import chain
@@ -99,9 +98,6 @@ def main():
         "the variant is removed as well.",
     )
     args = parser.parse_args()
-    expr = ast.parse(args.expression, mode="eval")
-    if not isinstance(expr.body, (ast.BoolOp, ast.Compare)):
-        raise ValueError("The provided expression does not evaluate to a boolean.")
 
     with VariantFile(args.vcf) as vcf:
         with VariantFile("-", "w", header=vcf.header) as out:
