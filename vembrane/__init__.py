@@ -4,6 +4,7 @@ import argparse
 import math
 import re
 from itertools import chain
+from sys import stderr
 from typing import Iterator, List
 
 from pysam import VariantFile, VariantRecord, VariantHeader
@@ -37,7 +38,14 @@ def eval_expression(
     expression: str, annotation: str, annotation_keys: List[str], env: dict
 ) -> bool:
     env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
-    return eval(expression, globals_whitelist, env)
+    try:
+        return eval(expression, globals_whitelist, env)
+    except KeyError as ke:
+        print(f"Unknown annotation {ke}, skipping", file=stderr)
+        return False
+    except NameError as ne:
+        print(f"{ne}, skipping", file=stderr)
+        return False
 
 
 def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
