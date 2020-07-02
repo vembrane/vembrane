@@ -6,6 +6,7 @@ import math
 import re
 from typing import Iterator
 
+from itertools import chain
 from pysam import VariantFile, VariantRecord
 
 globals_whitelist = {
@@ -73,6 +74,9 @@ def filter_vcf(
             if key != "ANN":
                 env[key] = record.info[key]
         env["ANN"] = ann
+        env["CHROM"] = record.chrom
+        env["POS"] = record.pos
+        env["REF"], env["ALT"] = chain(record.alleles)
 
         if not filter_expression or eval(filter_expression, globals_whitelist, env):
             if ann_filter_expression:
