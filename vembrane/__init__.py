@@ -116,7 +116,7 @@ def main():
         "--keep-unmatched",
         default=False,
         action="store_true",
-        help="Keep all annotations of a variant if at least one annotation pass the expression.",
+        help="Keep all annotations of a variant if at least one of them passes the expression.",
     )
     args = parser.parse_args()
 
