@@ -1,1 +1,4 @@
 poetry.lock
+vembrane.egg-info/*
+tests/__pycache__/*
+vembrane/__pycache__/*

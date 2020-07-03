@@ -1,9 +1,0 @@
-README.rst
-setup.py
-vembrane/__init__.py
-vembrane.egg-info/PKG-INFO
-vembrane.egg-info/SOURCES.txt
-vembrane.egg-info/dependency_links.txt
-vembrane.egg-info/entry_points.txt
-vembrane.egg-info/requires.txt
-vembrane.egg-info/top_level.txt
