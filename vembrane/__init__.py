@@ -30,12 +30,15 @@ globals_whitelist = {
 }
 
 
-def get_annotation_keys(header: VariantHeader,) -> List[str]:
+def get_annotation_keys(header: VariantHeader, rename_dict: dict) -> List[str]:
     for rec in header.records:
         if rec.get("ID") == "ANN":
-            return list(
-                map(str.strip, rec.get("Description").split("'")[1].split("|"),)
-            )
+            return [
+                rename_dict[ann] if ann in rename_dict else ann
+                for ann in list(
+                    map(str.strip, rec.get("Description").split("'")[1].split("|"),)
+                )
+            ]
     return []
 
 
@@ -66,6 +69,7 @@ def filter_vcf(
     expression: str,
     ann_key: str = "ANN",
     keep_unmatched: bool = False,
+    rename_dict: dict = dict(),
 ) -> Iterator[VariantRecord]:
     header = vcf.header
 
@@ -74,7 +78,7 @@ def filter_vcf(
     for name in header.info:
         env[name] = None
 
-    annotation_keys = get_annotation_keys(header)
+    annotation_keys = get_annotation_keys(header, rename_dict)
 
     for record in vcf:
         # setup filter expression env
@@ -145,6 +149,13 @@ def main():
         help="Keep all annotations of a variant if at least one of them passes "
         "the expression.",
     )
+
+    parser.add_argument(
+        "--rename",
+        default="=",
+        help="Replace ANN field names with desired variables. "
+        "Multiple replacements need to be comma-separated.",
+    )
     args = parser.parse_args()
 
     with VariantFile(args.vcf) as vcf:
@@ -159,5 +170,8 @@ def main():
                 args.expression,
                 keep_unmatched=args.keep_unmatched,
                 ann_key=args.annotation_key,
+                rename_dict=dict(
+                    (x, y) for x, y in [r.split("=") for r in args.rename.split(",")]
+                ),
             ):
                 out.write(record)
