@@ -102,7 +102,7 @@ def check_filter_expression(expression: str,) -> str:
             return expression
     except SyntaxError:
         raise InvalidExpression(
-            expression, f"The expression has to be syntactically correct."
+            expression, "The expression has to be syntactically correct."
         )
 
 
