@@ -31,7 +31,8 @@ def test_filter(testcase):
 
         with pytest.raises(exception):
             # FIXME we have to explicitly check the filter expression here
-            # until we change from calling filter_vcf to actually invoking vembrane.main
+            # until we change from calling filter_vcf
+            # to actually invoking vembrane.main
             check_filter_expression(config.get("filter_expression"))
             list(
                 filter_vcf(
