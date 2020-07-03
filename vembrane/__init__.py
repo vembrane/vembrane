@@ -102,11 +102,12 @@ def filter_vcf(
 def check_filter_expression(expression: str,) -> str:
     if ".__" in expression:
         raise InvalidExpression(expression, "The expression must not contain '.__'")
-    if not isinstance(
-        ast.parse(expression, mode="eval").body, (ast.BoolOp, ast.Compare)
-    ):
-        raise InvalidExpression(expression, "The expression has to evaluate to bool.")
-    return expression
+    tree = ast.parse(expression, mode="eval")
+    if isinstance(tree.body, (ast.BoolOp, ast.Compare)):
+        return expression
+    else:
+        # TODO possibly check for ast.Call, func return type
+        return expression
 
 
 def main():
