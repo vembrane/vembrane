@@ -55,6 +55,6 @@ KNOWN_ANN_TYPE_MAP = {
     "CDS.pos / CDS.length": type_int_pair,
     "AA.pos / AA.length": type_int_pair,
     "Distance": try_auto_type,
-    "ERRORS / WARNINGS / INFO": try_auto_type,
+    "ERRORS / WARNINGS / INFO": lambda x: [v.strip() for v in x.split("/")],
     "CLIN_SIG": lambda x: [v.strip() for v in x.split("&")],
 }
