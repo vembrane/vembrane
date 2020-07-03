@@ -14,20 +14,26 @@ class NoValue:
     def __ge__(self, other):
         return False
 
-    def __and__(self, other):
-        return False
-
-    def __or__(self, other):
-        return False
-
-    def __bool__(self):
-        return False
-
-    def __getitem__(self, item):
+    def __eq__(self, other):
         return False
 
 
 NA = NoValue()
+
+
+class InfoTuple:
+    """A container that lazily evaluates None to NA in case of access."""
+
+    def __init__(self, values):
+        self.values = values
+
+    def __getitem__(self, spec):
+        values = self.values.__getitem__(spec)
+        if isinstance(values, tuple) and any(v is None for v in values):
+            return tuple((NA if v is None else v) for v in values)
+        if values is None:
+            return NA
+        return values
 
 
 IntFloatStr = Union[int, float, str]
@@ -69,6 +75,14 @@ def type_int_pair(value: str) -> Union[List[int], NoValue]:
         return [int(v.strip()) for v in value.split("/")]
     else:
         return NA
+
+
+def type_info(value):
+    if value is None:
+        return NA
+    if isinstance(value, tuple):
+        return InfoTuple(value)
+    return value
 
 
 KNOWN_ANN_TYPE_MAP = {

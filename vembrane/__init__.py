@@ -10,7 +10,7 @@ from typing import Iterator, List
 
 from pysam import VariantFile, VariantRecord, VariantHeader
 
-from vembrane.ann_types import type_ann
+from vembrane.ann_types import type_ann, type_info, NA
 from vembrane.errors import UnknownAnnotation, UnknownInfoField, InvalidExpression
 
 globals_whitelist = {
@@ -69,14 +69,14 @@ def filter_vcf(
         # setup filter expression env
         env.clear()
         for name in header.info:
-            env[name] = None
+            env[name] = NA
 
         env["CHROM"] = record.chrom
         env["POS"] = record.pos
         (env["REF"], env["ALT"]) = chain(record.alleles)
         for key in record.info:
             if key != ann_key:
-                env[key] = record.info[key]
+                env[key] = type_info(record.info[key])
 
         annotations = dict(record.info).get(ann_key, [""])
         filtered_annotations = [
