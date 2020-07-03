@@ -30,7 +30,7 @@ def get_annotation_keys(header: VariantHeader, rename_dict: dict) -> List[str]:
     for rec in header.records:
         if rec.get("ID") == "ANN":
             return [
-                rename_dict[ann] if ann in rename_dict else ann
+                rename_dict.get(ann, ann)
                 for ann in list(
                     map(str.strip, rec.get("Description").split("'")[1].split("|"),)
                 )
