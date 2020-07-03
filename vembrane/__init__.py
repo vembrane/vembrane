@@ -1,6 +1,7 @@
 __version__ = "0.1.0"
 
 import argparse
+import ast
 import math
 import re
 from itertools import chain
@@ -8,6 +9,8 @@ from sys import stderr
 from typing import Iterator, List
 
 from pysam import VariantFile, VariantRecord, VariantHeader
+
+from vembrane.errors import UnknownAnnotation, UnknownInfoField, InvalidExpression
 
 globals_whitelist = {
     **{
@@ -35,17 +38,15 @@ def parse_annotation_entry(entry: str,) -> List[str]:
 
 
 def eval_expression(
-    expression: str, annotation: str, annotation_keys: List[str], env: dict
+    expression: str, idx: int, annotation: str, annotation_keys: List[str], env: dict,
 ) -> bool:
     env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
     try:
         return eval(expression, globals_whitelist, env)
     except KeyError as ke:
-        print(f"Unknown annotation {ke}, skipping", file=stderr)
-        return False
+        raise UnknownAnnotation(idx, ke)
     except NameError as ne:
-        print(f"{ne}, skipping", file=stderr)
-        return False
+        raise UnknownInfoField(idx, str(ne).split("'")[1])
 
 
 def filter_vcf(
@@ -60,7 +61,7 @@ def filter_vcf(
 
     annotation_keys = get_annotation_keys(header)
 
-    for record in vcf:
+    for idx, record in enumerate(vcf):
         # setup filter expression env
         env.clear()
         for name in header.info:
@@ -77,7 +78,7 @@ def filter_vcf(
         filtered_annotations = [
             annotation
             for annotation in annotations
-            if eval_expression(expression, annotation, annotation_keys, env)
+            if eval_expression(expression, idx, annotation, annotation_keys, env,)
         ]
 
         if not filtered_annotations:
@@ -89,9 +90,20 @@ def filter_vcf(
         yield record
 
 
-def check_filter_expression(expression: str,):
+def check_filter_expression(expression: str,) -> str:
     if ".__" in expression:
-        raise ValueError("basic sanity check failed")  # TODO: better error message
+        raise InvalidExpression(expression, "The expression must not contain '.__'")
+    try:
+        tree = ast.parse(expression, mode="eval")
+        if isinstance(tree.body, (ast.BoolOp, ast.Compare)):
+            return expression
+        else:
+            # TODO possibly check for ast.Call, func return type
+            return expression
+    except SyntaxError:
+        raise InvalidExpression(
+            expression, "The expression has to be syntactically correct."
+        )
 
 
 def main():
@@ -99,6 +111,7 @@ def main():
     parser.add_argument("vcf", help="The file containing the variants.")
     parser.add_argument(
         "expression",
+        type=check_filter_expression,
         help="Filter variants and annotations. If this removes all annotations, "
         "the variant is removed as well.",
     )
@@ -138,11 +151,18 @@ def main():
             fmt = "b"
         elif args.output_fmt == "uncompressed-bcf":
             fmt = "u"
-        with VariantFile(args.output, "w" + fmt, header=vcf.header) as out:
-            for record in filter_vcf(
-                vcf,
-                args.expression,
-                keep_unmatched=args.keep_unmatched,
-                ann_key=args.annotation_key,
-            ):
-                out.write(record)
+        with VariantFile(args.output, "w" + fmt, header=vcf.header,) as out:
+            try:
+                for record in filter_vcf(
+                    vcf,
+                    args.expression,
+                    keep_unmatched=args.keep_unmatched,
+                    ann_key=args.annotation_key,
+                ):
+                    out.write(record)
+            except UnknownAnnotation as ua:
+                print(ua, file=stderr)
+                exit(1)
+            except UnknownInfoField as ua:
+                print(ua, file=stderr)
+                exit(1)
