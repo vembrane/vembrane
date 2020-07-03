@@ -1,1 +1,2 @@
+raises: "UnknownAnnotation"
 filter_expression: 'ANN["nonsense"] == "BLABLA"'
