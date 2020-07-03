@@ -62,7 +62,10 @@ def eval_expression(
 
 
 def filter_vcf(
-    vcf: VariantFile, expression: str, keep_unmatched: bool = False,
+    vcf: VariantFile,
+    expression: str,
+    ann_key: str = "ANN",
+    keep_unmatched: bool = False,
 ) -> Iterator[VariantRecord]:
     header = vcf.header
 
@@ -80,22 +83,22 @@ def filter_vcf(
         env["POS"] = record.pos
         (env["REF"], env["ALT"],) = chain(record.alleles)
         for key in record.info:
-            if key != "ANN":
+            if key != ann_key:
                 env[key] = record.info[key]
 
-        annotations = record.info.get("ANN", [],)
+        annotations = dict(record.info).get(ann_key, [""])
         filtered_annotations = [
             annotation
             for annotation in annotations
             if eval_expression(expression, annotation, annotation_keys, env,)
         ]
 
-        if annotations and not filtered_annotations:
+        if not filtered_annotations:
             # skip this record if filter removed all annotations
             continue
         elif not keep_unmatched and (len(annotations) != len(filtered_annotations)):
             # update annotations if they have been actually filtered
-            record.info["ANN"] = filtered_annotations
+            record.info[ann_key] = filtered_annotations
         yield record
 
 
@@ -128,6 +131,14 @@ def main():
         help="Output format.",
     )
     parser.add_argument(
+        "--annotation-key",
+        "-k",
+        metavar="FIELDNAME",
+        default="ANN",
+        help="The INFO key for the annotation field.",
+    )
+
+    parser.add_argument(
         "--keep-unmatched",
         default=False,
         action="store_true",
@@ -144,6 +155,9 @@ def main():
             fmt = "u"
         with VariantFile(args.output, "w" + fmt, header=vcf.header,) as out:
             for record in filter_vcf(
-                vcf, args.expression, keep_unmatched=args.keep_unmatched,
+                vcf,
+                args.expression,
+                keep_unmatched=args.keep_unmatched,
+                ann_key=args.annotation_key,
             ):
                 out.write(record)
