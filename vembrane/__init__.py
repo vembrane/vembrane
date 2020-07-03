@@ -154,7 +154,7 @@ def main():
     )
 
     def mapping(value: str) -> Dict[str, str]:
-        return dict(map(str.strip, v.strip().split("=")) for v in value.split(',') if v)
+        return dict(map(str.strip, v.strip().split("=")) for v in value.split(",") if v)
 
     parser.add_argument(
         "--rename",
@@ -178,7 +178,7 @@ def main():
                     args.expression,
                     keep_unmatched=args.keep_unmatched,
                     ann_key=args.annotation_key,
-                    rename_dict=args.rename
+                    rename_dict=args.rename,
                 ):
                     out.write(record)
             except UnknownAnnotation as ua:
