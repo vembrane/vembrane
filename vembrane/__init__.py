@@ -95,7 +95,9 @@ def filter_vcf(
         yield record
 
 
-def statistics(records:Iterator[VariantRecord], vcf:VariantFile, filename:str) -> Iterator[VariantRecord]:
+def statistics(
+    records: Iterator[VariantRecord], vcf: VariantFile, filename: str
+) -> Iterator[VariantRecord]:
     annotation_keys = get_annotation_keys(vcf.header)
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
@@ -184,11 +186,11 @@ def main():
             fmt = "u"
         with VariantFile(args.output, "w" + fmt, header=vcf.header,) as out:
             records = filter_vcf(
-                    vcf,
-                    args.expression,
-                    keep_unmatched=args.keep_unmatched,
-                    ann_key=args.annotation_key,
-                )
+                vcf,
+                args.expression,
+                keep_unmatched=args.keep_unmatched,
+                ann_key=args.annotation_key,
+            )
             if args.statistics is not None:
                 records = statistics(records, vcf, args.statistics)
 
