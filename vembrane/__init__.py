@@ -62,7 +62,10 @@ def eval_expression(
 
 
 def filter_vcf(
-    vcf: VariantFile, expression: str, ann_key: str = "ANN", keep_unmatched: bool = False,
+    vcf: VariantFile,
+    expression: str,
+    ann_key: str = "ANN",
+    keep_unmatched: bool = False,
 ) -> Iterator[VariantRecord]:
     header = vcf.header
 
@@ -135,7 +138,7 @@ def main():
         help="The INFO key for the annotation field.",
     )
 
-parser.add_argument(
+    parser.add_argument(
         "--keep-unmatched",
         default=False,
         action="store_true",
@@ -152,6 +155,9 @@ parser.add_argument(
             fmt = "u"
         with VariantFile(args.output, "w" + fmt, header=vcf.header,) as out:
             for record in filter_vcf(
-                vcf, args.expression, keep_unmatched=args.keep_unmatched, ann_key=args.annotation_key,
+                vcf,
+                args.expression,
+                keep_unmatched=args.keep_unmatched,
+                ann_key=args.annotation_key,
             ):
                 out.write(record)
