@@ -37,7 +37,7 @@ def get_annotation_keys(header: VariantHeader,) -> List[str]:
     return []
 
 
-@lru_cache
+@lru_cache(maxsize=32)
 def parse_annotation_entry(entry: str,) -> List[str]:
     return list(map(str.strip, entry.split("|")))
 
