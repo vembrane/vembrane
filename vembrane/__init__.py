@@ -113,7 +113,7 @@ def main():
         help="Output format.",
     )
     parser.add_argument(
-        "--ann_key",
+        "--annotation-key",
         "-k",
         metavar="FIELDNAME",
         default="ANN",
