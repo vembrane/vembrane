@@ -5,16 +5,9 @@ import math
 import re
 from itertools import chain
 from sys import stderr
-from typing import (
-    Iterator,
-    List,
-)
+from typing import Iterator, List
 
-from pysam import (
-    VariantFile,
-    VariantRecord,
-    VariantHeader,
-)
+from pysam import VariantFile, VariantRecord, VariantHeader
 
 globals_whitelist = {
     **{
@@ -33,31 +26,25 @@ globals_whitelist = {
 def get_annotation_keys(header: VariantHeader,) -> List[str]:
     for rec in header.records:
         if rec.get("ID") == "ANN":
-            return list(
-                map(str.strip, rec.get("Description").split("'")[1].split("|"),)
-            )
+            return list(map(str.strip, rec.get("Description").split("'")[1].split("|")))
     return []
 
 
 def parse_annotation_entry(entry: str,) -> List[str]:
-    return list(map(str.strip, entry.split("|"),))
+    return list(map(str.strip, entry.split("|")))
 
 
 def eval_expression(
-    expression: str, annotation: str, annotation_keys: List[str], env: dict,
+    expression: str, annotation: str, annotation_keys: List[str], env: dict
 ) -> bool:
-    env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation),))
+    env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
     try:
-        return eval(expression, globals_whitelist, env,)
+        return eval(expression, globals_whitelist, env)
     except KeyError as ke:
-        print(
-            f"Unknown annotation {ke}, skipping", file=stderr,
-        )
+        print(f"Unknown annotation {ke}, skipping", file=stderr)
         return False
     except NameError as ne:
-        print(
-            f"{ne}, skipping", file=stderr,
-        )
+        print(f"{ne}, skipping", file=stderr)
         return False
 
 
@@ -71,17 +58,17 @@ def filter_vcf(
 
     env = dict()
 
-    for name in header.info:
-        env[name] = None
-
     annotation_keys = get_annotation_keys(header)
 
     for record in vcf:
         # setup filter expression env
         env.clear()
+        for name in header.info:
+            env[name] = None
+
         env["CHROM"] = record.chrom
         env["POS"] = record.pos
-        (env["REF"], env["ALT"],) = chain(record.alleles)
+        (env["REF"], env["ALT"]) = chain(record.alleles)
         for key in record.info:
             if key != ann_key:
                 env[key] = record.info[key]
@@ -90,7 +77,7 @@ def filter_vcf(
         filtered_annotations = [
             annotation
             for annotation in annotations
-            if eval_expression(expression, annotation, annotation_keys, env,)
+            if eval_expression(expression, annotation, annotation_keys, env)
         ]
 
         if not filtered_annotations:
@@ -109,9 +96,7 @@ def check_filter_expression(expression: str,):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "vcf", help="The file containing the variants.",
-    )
+    parser.add_argument("vcf", help="The file containing the variants.")
     parser.add_argument(
         "expression",
         help="Filter variants and annotations. If this removes all annotations, "
@@ -153,7 +138,7 @@ def main():
             fmt = "b"
         elif args.output_fmt == "uncompressed-bcf":
             fmt = "u"
-        with VariantFile(args.output, "w" + fmt, header=vcf.header,) as out:
+        with VariantFile(args.output, "w" + fmt, header=vcf.header) as out:
             for record in filter_vcf(
                 vcf,
                 args.expression,
