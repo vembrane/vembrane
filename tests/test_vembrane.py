@@ -6,6 +6,7 @@ import pytest
 import yaml
 
 from vembrane import __version__, filter_vcf
+from vembrane.errors import UnknownAnnotation, UnknownInfoField, InvalidExpression
 
 CASES = Path(__file__).parent.joinpath("testcases")
 
@@ -24,15 +25,35 @@ def test_filter(testcase):
         config = yaml.load(config_fp, Loader=yaml.FullLoader)
 
     vcf = VariantFile(path.joinpath("test.vcf"))
-
-    expected = list(VariantFile(path.joinpath("expected.vcf")))
-    result = list(
-        filter_vcf(
-            vcf,
-            config.get("filter_expression"),
-            config.get("ann_key", "ANN"),
-            config.get("keep_unmatched", False),
+    if testcase == "test06":
+        with pytest.raises(UnknownAnnotation):
+            result = list(
+                filter_vcf(
+                    vcf,
+                    config.get("filter_expression"),
+                    config.get("ann_key", "ANN"),
+                    config.get("keep_unmatched", False),
+                )
+            )
+    elif testcase == "test07":
+        with pytest.raises(UnknownInfoField):
+            result = list(
+                filter_vcf(
+                    vcf,
+                    config.get("filter_expression"),
+                    config.get("ann_key", "ANN"),
+                    config.get("keep_unmatched", False),
+                )
+            )
+    else:
+        expected = list(VariantFile(path.joinpath("expected.vcf")))
+        result = list(
+            filter_vcf(
+                vcf,
+                config.get("filter_expression"),
+                config.get("ann_key", "ANN"),
+                config.get("keep_unmatched", False),
+            )
         )
-    )
 
-    assert result == expected
+        assert result == expected
