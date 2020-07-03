@@ -4,7 +4,7 @@ import os
 from pysam import VariantFile
 import pytest
 import yaml
-
+from vembrane import errors
 from vembrane import __version__, filter_vcf
 
 CASES = Path(__file__).parent.joinpath("testcases")
@@ -24,15 +24,32 @@ def test_filter(testcase):
         config = yaml.load(config_fp, Loader=yaml.FullLoader)
 
     vcf = VariantFile(path.joinpath("test.vcf"))
+    if "raises" in config:
+        exception = getattr(errors, config["raises"])
 
-    expected = list(VariantFile(path.joinpath("expected.vcf")))
-    result = list(
-        filter_vcf(
-            vcf,
-            config.get("filter_expression"),
-            config.get("ann_key", "ANN"),
-            config.get("keep_unmatched", False),
+        from vembrane import check_filter_expression
+
+        with pytest.raises(exception):
+            # FIXME we have to explicitly check the filter expression here
+            # until we change from calling filter_vcf
+            # to actually invoking vembrane.main
+            check_filter_expression(config.get("filter_expression"))
+            list(
+                filter_vcf(
+                    vcf,
+                    config.get("filter_expression"),
+                    config.get("ann_key", "ANN"),
+                    config.get("keep_unmatched", False),
+                )
+            )
+    else:
+        expected = list(VariantFile(path.joinpath("expected.vcf")))
+        result = list(
+            filter_vcf(
+                vcf,
+                config.get("filter_expression"),
+                config.get("ann_key", "ANN"),
+                config.get("keep_unmatched", False),
+            )
         )
-    )
-
-    assert result == expected
+        assert result == expected

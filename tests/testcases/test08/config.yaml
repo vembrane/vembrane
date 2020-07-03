@@ -1,0 +1,2 @@
+raises: "InvalidExpression"
+filter_expression: 'any(["syntax_error")]'
