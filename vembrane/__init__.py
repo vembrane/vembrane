@@ -31,6 +31,7 @@ def get_annotation_keys(header: VariantHeader) -> List[str]:
             return list(map(str.strip, rec.get("Description").split("'")[1].split("|")))
     return []
 
+
 @lru_cache
 def parse_annotation_entry(entry: str) -> List[str]:
     return list(map(str.strip, entry.split("|")))
@@ -94,13 +95,13 @@ def statistics(vcf, records, n):
 
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for i, record in enumerate(records):
-        if i >= n: # process only the first n records
+        if i >= n:  # process only the first n records
             break
         for annotation in record.info["ANN"]:
             for key, value in zip(annotation_keys, parse_annotation_entry(annotation)):
                 if value:
                     counter[key][value] += 1
-    
+
     for key, subdict in counter.items():
         print(key)
         if len(subdict) <= 10:
@@ -154,7 +155,7 @@ def main():
 
         records = filter_vcf(vcf, args.expression)
 
-        if args.statistics is not None: #dont remove the "is none", 0 is allowed
+        if args.statistics is not None:  # dont remove the "is none", 0 is allowed
             statistics(vcf, records, args.statistics)
         else:
             with VariantFile(args.output, "w" + fmt, header=vcf.header) as out:
