@@ -4,11 +4,15 @@ import argparse
 import ast
 import math
 import re
+import yaml
+
 from itertools import chain
 from sys import stderr
 from typing import Iterator, List
 
 from pysam import VariantFile, VariantRecord, VariantHeader
+from functools import lru_cache
+from collections import defaultdict
 
 from vembrane.errors import UnknownAnnotation, UnknownInfoField, InvalidExpression
 
@@ -33,6 +37,7 @@ def get_annotation_keys(header: VariantHeader,) -> List[str]:
     return []
 
 
+@lru_cache(maxsize=32)
 def parse_annotation_entry(entry: str,) -> List[str]:
     return list(map(str.strip, entry.split("|")))
 
@@ -90,6 +95,28 @@ def filter_vcf(
         yield record
 
 
+def statistics(
+    records: Iterator[VariantRecord], vcf: VariantFile, filename: str
+) -> Iterator[VariantRecord]:
+    annotation_keys = get_annotation_keys(vcf.header)
+    counter = defaultdict(lambda: defaultdict(lambda: 0))
+    for record in records:
+        for annotation in record.info["ANN"]:
+            for key, value in zip(annotation_keys, parse_annotation_entry(annotation)):
+                if value:
+                    counter[key][value] += 1
+        yield record
+
+    # reduce dicts with many items, to just one counter
+    for key, subdict in counter.items():
+        if len(subdict) > 10:
+            counter[key] = f"#{len(subdict)}"
+
+    yaml.add_representer(defaultdict, yaml.representer.Representer.represent_dict)
+    with open(filename, "w") as out:
+        yaml.dump(dict(counter), out)
+
+
 def check_filter_expression(expression: str,) -> str:
     if ".__" in expression:
         raise InvalidExpression(expression, "The expression must not contain '.__'")
@@ -135,7 +162,13 @@ def main():
         default="ANN",
         help="The INFO key for the annotation field.",
     )
-
+    parser.add_argument(
+        "--statistics",
+        "-s",
+        metavar="FILE",
+        default=None,
+        help="Write statistics to this file.",
+    )
     parser.add_argument(
         "--keep-unmatched",
         default=False,
@@ -152,13 +185,17 @@ def main():
         elif args.output_fmt == "uncompressed-bcf":
             fmt = "u"
         with VariantFile(args.output, "w" + fmt, header=vcf.header,) as out:
+            records = filter_vcf(
+                vcf,
+                args.expression,
+                keep_unmatched=args.keep_unmatched,
+                ann_key=args.annotation_key,
+            )
+            if args.statistics is not None:
+                records = statistics(records, vcf, args.statistics)
+
             try:
-                for record in filter_vcf(
-                    vcf,
-                    args.expression,
-                    keep_unmatched=args.keep_unmatched,
-                    ann_key=args.annotation_key,
-                ):
+                for record in records:
                     out.write(record)
             except UnknownAnnotation as ua:
                 print(ua, file=stderr)
