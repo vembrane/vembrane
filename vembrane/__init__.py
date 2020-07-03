@@ -10,6 +10,7 @@ from typing import Iterator, List
 
 from pysam import VariantFile, VariantRecord, VariantHeader
 
+from vembrane.ann_types import type_ann
 from vembrane.errors import UnknownAnnotation, UnknownInfoField, InvalidExpression
 
 globals_whitelist = {
@@ -40,7 +41,10 @@ def parse_annotation_entry(entry: str,) -> List[str]:
 def eval_expression(
     expression: str, idx: int, annotation: str, annotation_keys: List[str], env: dict,
 ) -> bool:
-    env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
+    env["ANN"] = {
+        key: type_ann(key, value)
+        for key, value in zip(annotation_keys, parse_annotation_entry(annotation))
+    }
     try:
         return eval(expression, globals_whitelist, env)
     except KeyError as ke:
