@@ -70,14 +70,14 @@ def filter_vcf(
             if key != ann_key:
                 env[key] = record.info[key]
 
-        annotations = dict(record.info).get(ann_key, [])
+        annotations = dict(record.info).get(ann_key, [""])
         filtered_annotations = [
             annotation
             for annotation in annotations
             if eval_expression(expression, annotation, annotation_keys, env)
         ]
 
-        if annotations and not filtered_annotations:
+        if not filtered_annotations:
             # skip this record if filter removed all annotations
             continue
         elif len(annotations) != len(filtered_annotations):
@@ -129,5 +129,5 @@ def main():
         elif args.output_fmt == "uncompressed-bcf":
             fmt = "u"
         with VariantFile(args.output, "w" + fmt, header=vcf.header) as out:
-            for record in filter_vcf(vcf, args.expression, args.ann_key):
+            for record in filter_vcf(vcf, args.expression, args.annotation_key):
                 out.write(record)
