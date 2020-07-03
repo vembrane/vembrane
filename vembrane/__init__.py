@@ -1,6 +1,7 @@
 __version__ = "0.1.0"
 
 import argparse
+import ast
 import math
 import re
 from itertools import chain
@@ -10,6 +11,8 @@ from typing import Iterator, List
 from pysam import VariantFile, VariantRecord, VariantHeader
 from functools import lru_cache
 from collections import defaultdict
+
+from vembrane.errors import UnknownAnnotation, UnknownInfoField, InvalidExpression
 
 globals_whitelist = {
     **{
@@ -25,65 +28,72 @@ globals_whitelist = {
 }
 
 
-def get_annotation_keys(header: VariantHeader) -> List[str]:
+def get_annotation_keys(header: VariantHeader,) -> List[str]:
     for rec in header.records:
         if rec.get("ID") == "ANN":
             return list(map(str.strip, rec.get("Description").split("'")[1].split("|")))
     return []
 
 
+<<<<<<< HEAD
 @lru_cache
 def parse_annotation_entry(entry: str) -> List[str]:
+=======
+def parse_annotation_entry(entry: str,) -> List[str]:
+>>>>>>> main
     return list(map(str.strip, entry.split("|")))
 
 
 def eval_expression(
-    expression: str, annotation: str, annotation_keys: List[str], env: dict
+    expression: str, idx: int, annotation: str, annotation_keys: List[str], env: dict,
 ) -> bool:
     env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
     try:
         return eval(expression, globals_whitelist, env)
     except KeyError as ke:
-        print(f"Unknown annotation {ke}, skipping", file=stderr)
-        return False
+        raise UnknownAnnotation(idx, ke)
     except NameError as ne:
-        print(f"{ne}, skipping", file=stderr)
-        return False
+        raise UnknownInfoField(idx, str(ne).split("'")[1])
 
 
-def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
+def filter_vcf(
+    vcf: VariantFile,
+    expression: str,
+    ann_key: str = "ANN",
+    keep_unmatched: bool = False,
+) -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
 
-    for name in header.info:
-        env[name] = None
-
     annotation_keys = get_annotation_keys(header)
 
-    for record in vcf:
+    for idx, record in enumerate(vcf):
         # setup filter expression env
         env.clear()
+        for name in header.info:
+            env[name] = None
+
         env["CHROM"] = record.chrom
         env["POS"] = record.pos
-        env["REF"], env["ALT"] = chain(record.alleles)
+        (env["REF"], env["ALT"]) = chain(record.alleles)
         for key in record.info:
-            if key != "ANN":
+            if key != ann_key:
                 env[key] = record.info[key]
 
-        annotations = record.info.get("ANN", [])
+        annotations = dict(record.info).get(ann_key, [""])
         filtered_annotations = [
             annotation
             for annotation in annotations
-            if eval_expression(expression, annotation, annotation_keys, env)
+            if eval_expression(expression, idx, annotation, annotation_keys, env,)
         ]
 
-        if annotations and not filtered_annotations:
+        if not filtered_annotations:
             # skip this record if filter removed all annotations
             continue
-        elif len(annotations) != len(filtered_annotations):
+        elif not keep_unmatched and (len(annotations) != len(filtered_annotations)):
             # update annotations if they have been actually filtered
-            record.info["ANN"] = filtered_annotations
+            record.info[ann_key] = filtered_annotations
         yield record
 
 
@@ -111,9 +121,20 @@ def statistics(vcf, records, n):
             print("-", f"#{len(subdict)}")
 
 
-def check_filter_expression(expression: str):
+def check_filter_expression(expression: str,) -> str:
     if ".__" in expression:
-        raise ValueError("basic sanity check failed")  # TODO: better error message
+        raise InvalidExpression(expression, "The expression must not contain '.__'")
+    try:
+        tree = ast.parse(expression, mode="eval")
+        if isinstance(tree.body, (ast.BoolOp, ast.Compare)):
+            return expression
+        else:
+            # TODO possibly check for ast.Call, func return type
+            return expression
+    except SyntaxError:
+        raise InvalidExpression(
+            expression, "The expression has to be syntactically correct."
+        )
 
 
 def main():
@@ -121,6 +142,7 @@ def main():
     parser.add_argument("vcf", help="The file containing the variants.")
     parser.add_argument(
         "expression",
+        type=check_filter_expression,
         help="Filter variants and annotations. If this removes all annotations, "
         "the variant is removed as well.",
     )
@@ -138,11 +160,25 @@ def main():
         help="Output format.",
     )
     parser.add_argument(
+        "--annotation-key",
+        "-k",
+        metavar="FIELDNAME",
+        default="ANN",
+        help="The INFO key for the annotation field.",
+    )
+    parser.add_argument(
         "--statistics",
         "-s",
-        type=int,
-        default=None,
+        type="store_true",
+        default=False,
         help="Show statistics instead of filtering the vcf.",
+    )
+    parser.add_argument(
+        "--keep-unmatched",
+        default=False,
+        action="store_true",
+        help="Keep all annotations of a variant if at least one of them passes "
+        "the expression.",
     )
     args = parser.parse_args()
 
@@ -152,12 +188,18 @@ def main():
             fmt = "b"
         elif args.output_fmt == "uncompressed-bcf":
             fmt = "u"
-
-        records = filter_vcf(vcf, args.expression)
-
-        if args.statistics is not None:  # dont remove the "is none", 0 is allowed
-            statistics(vcf, records, args.statistics)
-        else:
-            with VariantFile(args.output, "w" + fmt, header=vcf.header) as out:
-                for record in records:
+        with VariantFile(args.output, "w" + fmt, header=vcf.header,) as out:
+            try:
+                for record in filter_vcf(
+                    vcf,
+                    args.expression,
+                    keep_unmatched=args.keep_unmatched,
+                    ann_key=args.annotation_key,
+                ):
                     out.write(record)
+            except UnknownAnnotation as ua:
+                print(ua, file=stderr)
+                exit(1)
+            except UnknownInfoField as ua:
+                print(ua, file=stderr)
+                exit(1)
