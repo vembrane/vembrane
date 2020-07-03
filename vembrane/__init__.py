@@ -8,6 +8,8 @@ from sys import stderr
 from typing import Iterator, List
 
 from pysam import VariantFile, VariantRecord, VariantHeader
+from functools import lru_cache
+from collections import defaultdict
 
 globals_whitelist = {
     **{
@@ -29,7 +31,7 @@ def get_annotation_keys(header: VariantHeader) -> List[str]:
             return list(map(str.strip, rec.get("Description").split("'")[1].split("|")))
     return []
 
-
+@lru_cache
 def parse_annotation_entry(entry: str) -> List[str]:
     return list(map(str.strip, entry.split("|")))
 
@@ -84,6 +86,30 @@ def filter_vcf(vcf: VariantFile, expression: str) -> Iterator[VariantRecord]:
         yield record
 
 
+def statistics(vcf, records, n):
+    annotation_keys = get_annotation_keys(vcf.header)
+    if n == 0:
+        print(*annotation_keys, sep="\n")
+        return
+
+    counter = defaultdict(lambda: defaultdict(lambda: 0))
+    for i, record in enumerate(records):
+        if i >= n: # process only the first n records
+            break
+        for annotation in record.info["ANN"]:
+            for key, value in zip(annotation_keys, parse_annotation_entry(annotation)):
+                if value:
+                    counter[key][value] += 1
+    
+    for key, subdict in counter.items():
+        print(key)
+        if len(subdict) <= 10:
+            for subkey, count in subdict.items():
+                print("-", subkey, "-", count)
+        else:
+            print("-", f"#{len(subdict)}")
+
+
 def check_filter_expression(expression: str):
     if ".__" in expression:
         raise ValueError("basic sanity check failed")  # TODO: better error message
@@ -110,6 +136,13 @@ def main():
         choices=["vcf", "bcf", "uncompressed-bcf"],
         help="Output format.",
     )
+    parser.add_argument(
+        "--statistics",
+        "-s",
+        type=int,
+        default=None,
+        help="Show statistics instead of filtering the vcf.",
+    )
     args = parser.parse_args()
 
     with VariantFile(args.vcf) as vcf:
@@ -118,6 +151,12 @@ def main():
             fmt = "b"
         elif args.output_fmt == "uncompressed-bcf":
             fmt = "u"
-        with VariantFile(args.output, "w" + fmt, header=vcf.header) as out:
-            for record in filter_vcf(vcf, args.expression):
-                out.write(record)
+
+        records = filter_vcf(vcf, args.expression)
+
+        if args.statistics is not None: #dont remove the "is none", 0 is allowed
+            statistics(vcf, records, args.statistics)
+        else:
+            with VariantFile(args.output, "w" + fmt, header=vcf.header) as out:
+                for record in records:
+                    out.write(record)
