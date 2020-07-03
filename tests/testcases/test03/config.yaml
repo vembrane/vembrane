@@ -1,2 +1,0 @@
-filter_expression: '("HIGH" == ANN["Annotation_Impact"] or "missense_variant" in ANN["Annotation"])'
-keep_unmatched: True

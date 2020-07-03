@@ -69,7 +69,6 @@ def filter_vcf(
 
     annotation_keys = get_annotation_keys(header, rename_dict)
 
-
     for record in vcf:
         # setup filter expression env
         env.clear()
