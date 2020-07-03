@@ -6,16 +6,9 @@ import math
 import re
 from itertools import chain
 from sys import stderr
-from typing import (
-    Iterator,
-    List,
-)
+from typing import Iterator, List
 
-from pysam import (
-    VariantFile,
-    VariantRecord,
-    VariantHeader,
-)
+from pysam import VariantFile, VariantRecord, VariantHeader
 
 from vembrane.errors import UnknownAnnotation, UnknownInfoField, InvalidExpression
 
@@ -36,22 +29,20 @@ globals_whitelist = {
 def get_annotation_keys(header: VariantHeader,) -> List[str]:
     for rec in header.records:
         if rec.get("ID") == "ANN":
-            return list(
-                map(str.strip, rec.get("Description").split("'")[1].split("|"),)
-            )
+            return list(map(str.strip, rec.get("Description").split("'")[1].split("|")))
     return []
 
 
 def parse_annotation_entry(entry: str,) -> List[str]:
-    return list(map(str.strip, entry.split("|"),))
+    return list(map(str.strip, entry.split("|")))
 
 
 def eval_expression(
     expression: str, idx: int, annotation: str, annotation_keys: List[str], env: dict,
 ) -> bool:
-    env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation),))
+    env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
     try:
-        return eval(expression, globals_whitelist, env,)
+        return eval(expression, globals_whitelist, env)
     except KeyError as ke:
         raise UnknownAnnotation(idx, ke)
     except NameError as ne:
@@ -68,17 +59,17 @@ def filter_vcf(
 
     env = dict()
 
-    for name in header.info:
-        env[name] = None
-
     annotation_keys = get_annotation_keys(header)
 
     for idx, record in enumerate(vcf):
         # setup filter expression env
         env.clear()
+        for name in header.info:
+            env[name] = None
+
         env["CHROM"] = record.chrom
         env["POS"] = record.pos
-        (env["REF"], env["ALT"],) = chain(record.alleles)
+        (env["REF"], env["ALT"]) = chain(record.alleles)
         for key in record.info:
             if key != ann_key:
                 env[key] = record.info[key]
@@ -112,9 +103,7 @@ def check_filter_expression(expression: str,) -> str:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "vcf", help="The file containing the variants.",
-    )
+    parser.add_argument("vcf", help="The file containing the variants.")
     parser.add_argument(
         "expression",
         type=check_filter_expression,
