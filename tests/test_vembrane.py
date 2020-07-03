@@ -28,7 +28,7 @@ def test_filter(testcase):
     expected = list(VariantFile(path.joinpath("expected.vcf")))
     result = list(
         filter_vcf(
-            vcf, config.get("filter_expression"), config.get("keep_unmatched", False)
+            vcf, config.get("filter_expression"), config.get("ann_key", "ANN"), config.get("keep_unmatched", False)
         )
     )
 
