@@ -1,5 +1,35 @@
 from typing import Union, Iterable, List
 
+
+class NoValue:
+    def __lt__(self, other):
+        return False
+
+    def __gt__(self, other):
+        return False
+
+    def __le__(self, other):
+        return False
+
+    def __ge__(self, other):
+        return False
+
+    def __and__(self, other):
+        return False
+
+    def __or__(self, other):
+        return False
+
+    def __bool__(self):
+        return False
+
+    def __getitem__(self, item):
+        return False
+
+
+NA = NoValue()
+
+
 IntFloatStr = Union[int, float, str]
 AutoType = Union[IntFloatStr, "AutoType", Iterable["AutoType"]]
 
@@ -25,18 +55,20 @@ def try_auto_type(value: str) -> AutoType:
     return str(value)  # if all else fails, return the original string
 
 
-def type_ann(key: str, value: str) -> Union[IntFloatStr, Iterable["IntFloatStr"], None]:
+def type_ann(
+    key: str, value: str
+) -> Union[IntFloatStr, Iterable["IntFloatStr"], NoValue]:
     if value:
         return KNOWN_ANN_TYPE_MAP.get(key, try_auto_type)(value)
     else:
-        return None
+        return NA
 
 
-def type_int_pair(value: str) -> Union[List[int], None]:
+def type_int_pair(value: str) -> Union[List[int], NoValue]:
     if value:
         return [int(v.strip()) for v in value.split("/")]
     else:
-        return None
+        return NA
 
 
 KNOWN_ANN_TYPE_MAP = {
