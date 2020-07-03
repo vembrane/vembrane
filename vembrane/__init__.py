@@ -53,12 +53,12 @@ def eval_expression(
         print(
             f"Unknown annotation {ke}, skipping", file=stderr,
         )
-        return False
+        raise ke
     except NameError as ne:
         print(
             f"{ne}, skipping", file=stderr,
         )
-        return False
+        raise ne
 
 
 def filter_vcf(
