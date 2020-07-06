@@ -4,15 +4,14 @@ import argparse
 import ast
 import math
 import re
-import yaml
-
+from collections import defaultdict
+from functools import lru_cache
 from itertools import chain
 from sys import stderr
-from typing import Iterator, List
+from typing import Iterator, List, Dict, Any
 
+import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
-from functools import lru_cache
-from collections import defaultdict
 
 from vembrane.errors import UnknownAnnotation, UnknownInfoField, InvalidExpression
 
@@ -28,6 +27,11 @@ globals_whitelist = {
     **{mod.__name__: mod for mod in [any, all, min, max, re, list, dict, zip]},
     **{name: mod for name, mod in vars(math).items() if not name.startswith("__")},
 }
+
+
+class Sample:
+    def __init__(self, formats: Dict[str, Any]):
+        self.__dict__ = formats
 
 
 def get_annotation_keys(header: VariantHeader,) -> List[str]:
@@ -78,6 +82,13 @@ def filter_vcf(
         for key in record.info:
             if key != ann_key:
                 env[key] = record.info[key]
+
+        formats = {
+            sample: Sample({fmt: record.samples[sample][fmt] for fmt in record.format})
+            for sample in record.samples
+        }
+
+        env["FORMAT"] = formats
 
         annotations = dict(record.info).get(ann_key, [""])
         filtered_annotations = [
