@@ -89,6 +89,7 @@ def filter_vcf(
         }
 
         env["FORMAT"] = formats
+        env["SAMPLES"] = list(record.samples)
 
         annotations = dict(record.info).get(ann_key, [""])
         filtered_annotations = [
