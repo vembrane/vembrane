@@ -13,7 +13,14 @@ from typing import Iterator, List, Dict, Any
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
 
-from vembrane.errors import UnknownAnnotation, UnknownInfoField, InvalidExpression
+from vembrane.errors import (
+    UnknownAnnotation,
+    UnknownInfoField,
+    InvalidExpression,
+    UnknownFormatField,
+    UnknownSample,
+    AmbiguousError,
+)
 
 globals_whitelist = {
     **{
@@ -53,7 +60,22 @@ def eval_expression(
     try:
         return eval(expression, globals_whitelist, env)
     except KeyError as ke:
-        raise UnknownAnnotation(idx, ke)
+        if (
+            "SAMPLES" in expression
+            or "FORMAT" in expression
+            and "ANN" not in expression
+        ):
+            raise UnknownSample(idx, ke)
+        elif (
+            "SAMPLES" not in expression
+            and "FORMAT" not in expression
+            and "ANN" in expression
+        ):
+            raise UnknownAnnotation(idx, ke)
+        else:
+            raise AmbiguousError(UnknownAnnotation(idx, ke), UnknownSample(idx, ke))
+    except AttributeError as ae:
+        raise UnknownFormatField(idx, str(ae).split("'")[3])
     except NameError as ne:
         raise UnknownInfoField(idx, str(ne).split("'")[1])
 
