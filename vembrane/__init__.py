@@ -4,6 +4,7 @@ import argparse
 import ast
 import math
 import re
+import sys
 from collections import defaultdict
 from functools import lru_cache
 from itertools import chain
@@ -236,7 +237,19 @@ def main():
             fmt = "b"
         elif args.output_fmt == "uncompressed-bcf":
             fmt = "u"
-        with VariantFile(args.output, "w" + fmt, header=vcf.header,) as out:
+
+        header: VariantHeader = vcf.header
+        header.add_meta("vembraneVersion", __version__)
+        header.add_meta(
+            "vembraneCmd",
+            "vembrane "
+            + " ".join(
+                "'" + arg.replace("'", '"') + '"' if " " in arg else arg
+                for arg in sys.argv[1:]
+            ),
+        )
+
+        with VariantFile(args.output, "w" + fmt, header=header,) as out:
             records = filter_vcf(
                 vcf,
                 args.expression,
