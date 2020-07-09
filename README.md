@@ -16,7 +16,7 @@ Vembrane allows to simultaneously filter variants based on any `INFO` field, `CH
   ```
   vembrane variants.bcf 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"'
   ```
-* Remove variants with quality less than 30:
+* Only keep variants with quality at least 30:
   ```
   vembrane variants.vcf 'QUAL >= 30'
   ```
@@ -28,7 +28,7 @@ Vembrane allows to simultaneously filter variants based on any `INFO` field, `CH
   ```
   vembrane variants.bcf 'ANN["Protein_position"] < 10'
   ```
-* Only keep annotations and variants where consequence contains the word stream (mathing upstream and downstream):
+* Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
   ```
   vembrane variants.vcf 're.search("stream", ANN["Consequence"])'
   ```
