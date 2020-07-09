@@ -29,9 +29,9 @@ class UnknownSample(VembraneError):
 class UnknownFormatField(VembraneError):
     """Unknown INFO key"""
 
-    def __init__(self, record, field, msg=None):
+    def __init__(self, record, sample, field, msg=None):
         if msg is None:
-            msg = f"No FORMAT field '{field}' in record {record}"
+            msg = f"No FORMAT field '{field}' in sample '{sample}' of record {record}"
         super(UnknownFormatField, self).__init__(msg)
         self.record = record
         self.field = field
@@ -56,14 +56,3 @@ class InvalidExpression(VembraneError):
             msg = f"The provided expression '{expression}' is invalid. Reason: {reason}"
         super(InvalidExpression, self).__init__(msg)
         self.expression = expression
-
-
-class AmbiguousError(VembraneError):
-    """It could have been anything!"""
-
-    def __init__(self, *errors, msg=None):
-        if msg is None:
-            joined = "\n".join(str(error) for error in errors)
-            msg = f"One of these errors occurred:\n{joined}"
-        super(AmbiguousError, self).__init__(msg)
-        self.errors = errors
