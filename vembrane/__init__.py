@@ -20,6 +20,7 @@ from vembrane.errors import (
     InvalidExpression,
     UnknownFormatField,
     UnknownSample,
+    VembraneError,
 )
 
 globals_whitelist = {
@@ -262,9 +263,6 @@ def main():
             try:
                 for record in records:
                     out.write(record)
-            except UnknownAnnotation as ua:
-                print(ua, file=stderr)
-                exit(1)
-            except UnknownInfoField as ua:
-                print(ua, file=stderr)
+            except VembraneError as ve:
+                print(ve, file=stderr)
                 exit(1)
