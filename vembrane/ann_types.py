@@ -119,6 +119,9 @@ KNOWN_ANN_TYPE_MAP = {
     "CDS.pos / CDS.length": ("CDS", PosLength.from_str),
     "AA.pos / AA.length": ("AA", PosLength.from_str),
     "Distance": ("Distance", try_auto_type),
-    "ERRORS / WARNINGS / INFO": ("ERRORS / WARNINGS / INFO", lambda x: [v.strip() for v in x.split("/")]),
+    "ERRORS / WARNINGS / INFO": (
+        "ERRORS / WARNINGS / INFO",
+        lambda x: [v.strip() for v in x.split("/")],
+    ),
     "CLIN_SIG": ("CLIN_SIG", lambda x: [v.strip() for v in x.split("&")]),
 }
