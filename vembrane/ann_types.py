@@ -1,4 +1,4 @@
-from typing import Union, Iterable, List
+from typing import Union, Iterable, List, Tuple
 
 
 class NoValue:
@@ -63,11 +63,12 @@ def try_auto_type(value: str) -> AutoType:
 
 def type_ann(
     key: str, value: str
-) -> Union[IntFloatStr, Iterable["IntFloatStr"], NoValue]:
+) -> Tuple[str, Union[IntFloatStr, Iterable["IntFloatStr"], NoValue]]:
     if value:
-        return KNOWN_ANN_TYPE_MAP.get(key, try_auto_type)(value)
+        new_key, value_func = KNOWN_ANN_TYPE_MAP.get(key, try_auto_type)
+        return new_key, value_func(value)
     else:
-        return NA
+        return (key, NA)
 
 
 def type_int_pair(value: str) -> Union[List[int], NoValue]:
@@ -85,21 +86,38 @@ def type_info(value):
     return value
 
 
+class PosLength:
+    def __init__(self, pos: int, length: int):
+        self.pos = pos
+        self.length = length
+
+    @classmethod
+    def from_str(cls, value: str) -> "PosLength":
+        pos, length = type_int_pair(value)
+        return cls(pos, length)
+
+    def __str__(self):
+        return f"(pos: {self.pos}, length: {self.length})"
+
+    def __repr__(self):
+        return self.__str__()
+
+
 KNOWN_ANN_TYPE_MAP = {
-    "Allele": str,
-    "Annotation": str,
-    "Annotation_Impact": str,
-    "Gene_Name": str,
-    "Gene_ID": str,
-    "Feature_Type": str,
-    "Feature_ID": str,
-    "Transcript_BioType": str,
-    "Rank": str,
-    "HGVS.c": str,
-    "HGVS.p": str,
-    "cDNA.pos / cDNA.length": type_int_pair,
-    "CDS.pos / CDS.length": type_int_pair,
-    "AA.pos / AA.length": type_int_pair,
+    "Allele": ("Allele", str),
+    "Annotation": ("Annotation", str),
+    "Annotation_Impact": ("Annotation_Impact", str),
+    "Gene_Name": ("Gene_Name", str),
+    "Gene_ID": ("Gene_ID", str),
+    "Feature_Type": ("Feature_Type", str),
+    "Feature_ID": ("Feature_ID", str),
+    "Transcript_BioType": ("Transcript_BioType", str),
+    "Rank": ("Rank", str),
+    "HGVS.c": ("HGVS.c", str),
+    "HGVS.p": ("HGVS.p", str),
+    "cDNA.pos / cDNA.length": ("cDNA", PosLength.from_str),
+    "CDS.pos / CDS.length": ("CDS", PosLength.from_str),
+    "AA.pos / AA.length": ("AA", PosLength.from_str),
     "Distance": try_auto_type,
     "ERRORS / WARNINGS / INFO": lambda x: [v.strip() for v in x.split("/")],
     "CLIN_SIG": lambda x: [v.strip() for v in x.split("&")],
