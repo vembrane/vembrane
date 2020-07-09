@@ -15,6 +15,28 @@ class UnknownAnnotation(VembraneError):
         self.key = key
 
 
+class UnknownSample(VembraneError):
+    """Unknown Sample"""
+
+    def __init__(self, record, sample, msg=None):
+        if msg is None:
+            msg = f"No sample with name '{sample}' in record {record}"
+        super(UnknownSample, self).__init__(msg)
+        self.record = record
+        self.field = sample
+
+
+class UnknownFormatField(VembraneError):
+    """Unknown INFO key"""
+
+    def __init__(self, record, sample, field, msg=None):
+        if msg is None:
+            msg = f"No FORMAT field '{field}' in sample '{sample}' of record {record}"
+        super(UnknownFormatField, self).__init__(msg)
+        self.record = record
+        self.field = field
+
+
 class UnknownInfoField(VembraneError):
     """Unknown INFO key"""
 

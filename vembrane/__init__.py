@@ -5,18 +5,22 @@ import ast
 import math
 import re
 import sys
-
-import yaml
-
+from collections import defaultdict
+from functools import lru_cache
 from itertools import chain
 from sys import stderr
-from typing import Iterator, List
+from typing import Iterator, List, Dict, Any
 
+import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
-from functools import lru_cache
-from collections import defaultdict
 
-from vembrane.errors import UnknownAnnotation, UnknownInfoField, InvalidExpression
+from vembrane.errors import (
+    UnknownAnnotation,
+    UnknownInfoField,
+    InvalidExpression,
+    UnknownFormatField,
+    UnknownSample,
+)
 
 globals_whitelist = {
     **{
@@ -27,9 +31,46 @@ globals_whitelist = {
         "__doc__": None,
         "__package__": None,
     },
-    **{mod.__name__: mod for mod in [any, all, min, max, re, list, dict, zip]},
+    **{mod.__name__: mod for mod in [any, all, min, max, re, list, dict, zip, map]},
     **{name: mod for name, mod in vars(math).items() if not name.startswith("__")},
 }
+
+
+class Sample:
+    def __init__(self, record_idx: int, sample: str, format_data: Dict[str, Any]):
+        self._record_idx = record_idx
+        self._sample = sample
+        self._data = format_data
+
+    def __getitem__(self, item):
+        try:
+            return self._data[item]
+        except KeyError as ke:
+            raise UnknownFormatField(self._record_idx, self._sample, ke)
+
+
+class Format:
+    def __init__(self, record_idx: int, sample_formats: Dict[Sample, Dict[str, Any]]):
+        self._record_idx = record_idx
+        self._sample_formats = sample_formats
+
+    def __getitem__(self, item):
+        try:
+            return self._sample_formats[item]
+        except KeyError as ke:
+            raise UnknownSample(self._record_idx, ke)
+
+
+class Annotation:
+    def __init__(self, record_idx: int, annotation_data: Dict[str, Any]):
+        self._record_idx = record_idx
+        self._data = annotation_data
+
+    def __getitem__(self, item):
+        try:
+            return self._data[item]
+        except KeyError as ke:
+            raise UnknownAnnotation(self._record_idx, ke)
 
 
 def get_annotation_keys(header: VariantHeader,) -> List[str]:
@@ -47,11 +88,11 @@ def parse_annotation_entry(entry: str,) -> List[str]:
 def eval_expression(
     expression: str, idx: int, annotation: str, annotation_keys: List[str], env: dict,
 ) -> bool:
-    env["ANN"] = dict(zip(annotation_keys, parse_annotation_entry(annotation)))
+    env["ANN"] = Annotation(
+        idx, dict(zip(annotation_keys, parse_annotation_entry(annotation)))
+    )
     try:
         return eval(expression, globals_whitelist, env)
-    except KeyError as ke:
-        raise UnknownAnnotation(idx, ke)
     except NameError as ne:
         raise UnknownInfoField(idx, str(ne).split("'")[1])
 
@@ -80,6 +121,16 @@ def filter_vcf(
         for key in record.info:
             if key != ann_key:
                 env[key] = record.info[key]
+
+        formats = {
+            sample: Sample(
+                idx, sample, {fmt: record.samples[sample][fmt] for fmt in record.format}
+            )
+            for sample in record.samples
+        }
+
+        env["FORMAT"] = Format(idx, formats)
+        env["SAMPLES"] = list(record.samples)
 
         annotations = dict(record.info).get(ann_key, [""])
         filtered_annotations = [
