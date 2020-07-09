@@ -12,7 +12,7 @@
 
 Vembrane allows to simultaneously filter variants based on any `INFO` field, `CHROM`, `POS`, `REF`, `ALT`, `QUAL`, and the annotation field `ANN`. When filtering based on `ANN`, annotation entries are filtered first. If no annotation entry remains, the entire variant is deleted.
 
-* Only keep annotations and variants where gene equals "CHD2" and its impact is "HIGH": 
+* Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH": 
   ```
   vembrane variants.bcf 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"'
   ```
