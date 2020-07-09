@@ -1,0 +1,2 @@
+filter_expression: 'ANN["IMPACT"] == "MODERATE"'
+vep: True
