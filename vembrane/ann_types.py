@@ -64,13 +64,12 @@ def try_auto_type(value: str) -> AutoType:
 def type_ann(
     key: str, value: str
 ) -> Tuple[str, Union[IntFloatStr, Iterable["IntFloatStr"], NoValue]]:
+    type_map = KnownAnnTypeList() if key in ["CLIN_SIG"] else KnownAnnType()
     if value:
-        new_key, value_func = KNOWN_ANN_TYPE_MAP.get(key, (key, try_auto_type))
+        new_key, value_func = type_map.get_value_func(key)
         return new_key, value_func(value)
     else:
-        if key == "CLIN_SIG":
-            return (key, [])
-        return (key, NA)
+        return (key, type_map.na_type())
 
 
 def type_int_pair(value: str) -> Union[List[int], NoValue]:
@@ -145,4 +144,18 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "CLIN_SIG": ("CLIN_SIG", lambda x: [v.strip() for v in x.split("&")]),
 }
 
-KNOWN_ANN_TYPE_MAP = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}
+
+class KnownAnnType:
+    def __init__(self):
+        self.map = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}
+
+    def get_value_func(self, key):
+        return self.map.get(key, (key, try_auto_type))
+
+    def na_type(self):
+        return NA
+
+
+class KnownAnnTypeList(KnownAnnType):
+    def na_type(self):
+        return []
