@@ -14,6 +14,7 @@ from typing import Iterator, List, Dict, Any
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
 
+from vembrane.ann_types import type_ann, NA, type_info
 from vembrane.errors import (
     UnknownAnnotation,
     UnknownInfoField,
@@ -96,7 +97,13 @@ def eval_expression(
     expression: str, idx: int, annotation: str, annotation_keys: List[str], env: dict,
 ) -> bool:
     env["ANN"] = Annotation(
-        idx, dict(zip(annotation_keys, parse_annotation_entry(annotation)))
+        idx,
+        dict(
+            map(
+                lambda v: type_ann(v[0], v[1]),
+                zip(annotation_keys, parse_annotation_entry(annotation)),
+            )
+        ),
     )
     try:
         return eval(expression, globals_whitelist, env)
@@ -120,14 +127,14 @@ def filter_vcf(
         # setup filter expression env
         env.clear()
         for name in header.info:
-            env[name] = None
+            env[name] = NA
 
         env["CHROM"] = record.chrom
         env["POS"] = record.pos
         (env["REF"], env["ALT"]) = chain(record.alleles)
         for key in record.info:
             if key != ann_key:
-                env[key] = record.info[key]
+                env[key] = type_info(record.info[key])
 
         formats = {
             sample: Sample(
