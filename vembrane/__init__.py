@@ -74,10 +74,16 @@ class Annotation:
             raise UnknownAnnotation(self._record_idx, ke)
 
 
-def get_annotation_keys(header: VariantHeader,) -> List[str]:
+def get_annotation_keys(header: VariantHeader) -> List[str]:
+    separator = "'"
     for rec in header.records:
+        if rec.key == "VEP":
+            separator = ":"
+            continue
         if rec.get("ID") == "ANN":
-            return list(map(str.strip, rec.get("Description").split("'")[1].split("|")))
+            return list(
+                map(str.strip, rec.get("Description").split(separator)[1].split("|"))
+            )
     return []
 
 
