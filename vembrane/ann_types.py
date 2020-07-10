@@ -68,6 +68,8 @@ def type_ann(
         new_key, value_func = KNOWN_ANN_TYPE_MAP.get(key, (key, try_auto_type))
         return new_key, value_func(value)
     else:
+        if key == "CLIN_SIG":
+            return (key, [])
         return (key, NA)
 
 
