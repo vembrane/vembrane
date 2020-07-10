@@ -74,12 +74,15 @@ class Annotation:
             raise UnknownAnnotation(self._record_idx, ke)
 
 
-def get_annotation_keys(header: VariantHeader, vep: bool) -> List[str]:
-    seperator = ":" if vep else "'"
+def get_annotation_keys(header: VariantHeader) -> List[str]:
+    separator = "'"
     for rec in header.records:
+        if rec.key == "VEP":
+            separator = ":"
+            continue
         if rec.get("ID") == "ANN":
             return list(
-                map(str.strip, rec.get("Description").split(seperator)[1].split("|"))
+                map(str.strip, rec.get("Description").split(separator)[1].split("|"))
             )
     return []
 
@@ -106,13 +109,12 @@ def filter_vcf(
     expression: str,
     ann_key: str = "ANN",
     keep_unmatched: bool = False,
-    vep: bool = False,
 ) -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
 
-    annotation_keys = get_annotation_keys(header, vep)
+    annotation_keys = get_annotation_keys(header)
 
     for idx, record in enumerate(vcf):
         # setup filter expression env
@@ -154,9 +156,9 @@ def filter_vcf(
 
 
 def statistics(
-    records: Iterator[VariantRecord], vcf: VariantFile, filename: str, vep: bool
+    records: Iterator[VariantRecord], vcf: VariantFile, filename: str
 ) -> Iterator[VariantRecord]:
-    annotation_keys = get_annotation_keys(vcf.header, vep)
+    annotation_keys = get_annotation_keys(vcf.header)
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
         for annotation in record.info["ANN"]:
@@ -234,12 +236,6 @@ def main():
         help="Keep all annotations of a variant if at least one of them passes "
         "the expression.",
     )
-    parser.add_argument(
-        "--vep",
-        default=False,
-        action="store_true",
-        help="Filter bcf/vcf files annotated by ensembl vep.",
-    )
     args = parser.parse_args()
 
     with VariantFile(args.vcf) as vcf:
@@ -266,10 +262,9 @@ def main():
                 args.expression,
                 keep_unmatched=args.keep_unmatched,
                 ann_key=args.annotation_key,
-                vep=args.vep,
             )
             if args.statistics is not None:
-                records = statistics(records, vcf, args.statistics.args.vep)
+                records = statistics(records, vcf, args.statistics)
 
             try:
                 for record in records:

@@ -40,7 +40,6 @@ def test_filter(testcase):
                     config.get("filter_expression"),
                     config.get("ann_key", "ANN"),
                     config.get("keep_unmatched", False),
-                    config.get("vep", False),
                 )
             )
     else:
@@ -51,7 +50,6 @@ def test_filter(testcase):
                 config.get("filter_expression"),
                 config.get("ann_key", "ANN"),
                 config.get("keep_unmatched", False),
-                config.get("vep", False),
             )
         )
         assert result == expected
