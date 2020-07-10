@@ -125,7 +125,6 @@ KNOWN_ANN_TYPE_MAP_SNPEFF = {
         "ERRORS / WARNINGS / INFO",
         lambda x: [v.strip() for v in x.split("/")],
     ),
-    "CLIN_SIG": ("CLIN_SIG", lambda x: [v.strip() for v in x.split("&")]),
 }
 
 KNOWN_ANN_TYPE_MAP_VEP = {
