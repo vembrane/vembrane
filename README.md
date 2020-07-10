@@ -46,6 +46,7 @@ Furthermore, vembrane will try auto-typing any unknown field (in the order of `i
 
 If a certain annotation field lacks a value, it will be replaced with the special value of `NA`. Comparing with this value will always result in `False`, e.g.
 `ANN["cDNA"].pos > 0` will always evaluate to `False` *if* there was no value in the "cDNA.pos / cDNA.length" field of ANN (otherwise the comparison will be carried out with the usual semantics).
+One way to handle optional values is by asserting that the field is not None, e.g `ID and "foo" in ID`.
 
 ## Development
 ### pre-commit hooks
