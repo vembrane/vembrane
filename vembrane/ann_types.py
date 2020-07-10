@@ -143,6 +143,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "cDNA_position": ("cDNA_position", str),
     "CDS_position": ("CDS_position", str),
     "Protein_position": ("Protein_position", str),
+    "CLIN_SIG": ("CLIN_SIG", lambda x: [v.strip() for v in x.split("&")]),
 }
 
 KNOWN_ANN_TYPE_MAP = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}
