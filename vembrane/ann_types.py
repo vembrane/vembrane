@@ -65,7 +65,7 @@ def type_ann(
     key: str, value: str
 ) -> Tuple[str, Union[IntFloatStr, Iterable["IntFloatStr"], NoValue]]:
     if value:
-        new_key, value_func = KNOWN_ANN_TYPE_MAP.get(key, try_auto_type)
+        new_key, value_func = KNOWN_ANN_TYPE_MAP.get(key, (key, try_auto_type))
         return new_key, value_func(value)
     else:
         return (key, NA)
