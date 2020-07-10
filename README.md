@@ -34,6 +34,19 @@ Vembrane allows to simultaneously filter variants based on any `INFO` field, `CH
   vembrane variants.vcf 're.search("stream", ANN["Consequence"])'
   ```
 
+## Custom ANN types
+
+vembrane parses the following annotation fields to a custom type:
+* (snpeff) `cDNA.pos / cDNA.length`, `CDS.pos / CDS.length` and `AA.pos / AA.length` are re-exposed as `cDNA`, `CDS` and `AA` respectively with attributes `pos` and `length`, e.g. can be accessed like this: `ANN["cDNA"].pos`
+* `CLIN_SIG` is split at `'&'` into a list of entries
+
+Furthermore, vembrane will try auto-typing any unknown field (in the order of `int > float > str > NA` or lists therof).
+
+## Missing values in annotations
+
+If a certain annotation field lacks a value, it will be replaced with the special value of `NA`. Comparing with this value will always result in `False`, e.g.
+`ANN["cDNA"].pos > 0` will always evaluate to `False` *if* there was no value in the "cDNA.pos / cDNA.length" field of ANN (otherwise the comparison will be carried out with the usual semantics).
+
 ## Development
 ### pre-commit hooks
 Since we enforce code formatting with `black` by checking for that in CI, we can avoid "fmt" commits by ensuring formatting is done upon comitting changes:
