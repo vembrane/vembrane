@@ -102,6 +102,7 @@ class PosLength:
     def __repr__(self):
         return self.__str__()
 
+
 KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "Allele": ("Allele", str),
     "Annotation": ("Annotation", str),
@@ -125,7 +126,7 @@ KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "CLIN_SIG": ("CLIN_SIG", lambda x: [v.strip() for v in x.split("&")]),
 }
 
-KNOWN_ANN_TYPE_MAP_VEP ={
+KNOWN_ANN_TYPE_MAP_VEP = {
     "Allele": ("Allele", str),
     "Consequence": ("Consequence", str),
     "IMPACT": ("IMPACT", str),
@@ -139,7 +140,7 @@ KNOWN_ANN_TYPE_MAP_VEP ={
     "HGSVp": ("HGSVp", str),
     "cDNA_position": ("cDNA_position", str),
     "CDS_position": ("CDS_position", str),
-    "Protein_position": ("Protein_position", str)
+    "Protein_position": ("Protein_position", str),
 }
 
 KNOWN_ANN_TYPE_MAP = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}
