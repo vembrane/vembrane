@@ -36,6 +36,7 @@ globals_whitelist = {
     **{name: mod for name, mod in vars(math).items() if not name.startswith("__")},
 }
 
+
 class Sample:
     def __init__(self, record_idx: int, sample: str, format_data: Dict[str, Any]):
         self._record_idx = record_idx
