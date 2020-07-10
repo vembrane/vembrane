@@ -131,7 +131,10 @@ def filter_vcf(
 
         env["CHROM"] = record.chrom
         env["POS"] = record.pos
+        env["ID"] = record.id
         (env["REF"], env["ALT"]) = chain(record.alleles)
+        env["QUAL"] = type_info(record.qual)
+        env["FILTER"] = record.filter
         for key in record.info:
             if key != ann_key:
                 env[key] = type_info(record.info[key])

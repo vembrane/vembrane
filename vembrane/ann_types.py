@@ -65,7 +65,7 @@ def type_ann(
     key: str, value: str
 ) -> Tuple[str, Union[IntFloatStr, Iterable["IntFloatStr"], NoValue]]:
     if value:
-        new_key, value_func = KNOWN_ANN_TYPE_MAP.get(key, try_auto_type)
+        new_key, value_func = KNOWN_ANN_TYPE_MAP.get(key, (key, try_auto_type))
         return new_key, value_func(value)
     else:
         return (key, NA)
@@ -103,7 +103,7 @@ class PosLength:
         return self.__str__()
 
 
-KNOWN_ANN_TYPE_MAP = {
+KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "Allele": ("Allele", str),
     "Annotation": ("Annotation", str),
     "Annotation_Impact": ("Annotation_Impact", str),
@@ -125,3 +125,22 @@ KNOWN_ANN_TYPE_MAP = {
     ),
     "CLIN_SIG": ("CLIN_SIG", lambda x: [v.strip() for v in x.split("&")]),
 }
+
+KNOWN_ANN_TYPE_MAP_VEP = {
+    "Allele": ("Allele", str),
+    "Consequence": ("Consequence", str),
+    "IMPACT": ("IMPACT", str),
+    "SYMBOL": ("SYMBOL", str),
+    "Gene": ("Gene", str),
+    "Feature_type": ("Feature_type", str),
+    "Feature": ("Feature", str),
+    "EXON": ("EXON", str),
+    "INTRON": ("INTRON", str),
+    "HGSVc": ("HGSVc", str),
+    "HGSVp": ("HGSVp", str),
+    "cDNA_position": ("cDNA_position", str),
+    "CDS_position": ("CDS_position", str),
+    "Protein_position": ("Protein_position", str),
+}
+
+KNOWN_ANN_TYPE_MAP = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}

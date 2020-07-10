@@ -7,6 +7,7 @@
 * Elias Kuthe (@eqt)
 * Johannes Köster (@johanneskoester)
 * Christopher Schröder (@christopher-schroeder)
+* Felix Mölder (@felixmoelder)
 
 ## Examples
 
