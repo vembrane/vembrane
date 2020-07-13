@@ -13,7 +13,7 @@
 
 Vembrane allows to simultaneously filter variants based on any `INFO` field, `CHROM`, `POS`, `REF`, `ALT`, `QUAL`, and the annotation field `ANN`. When filtering based on `ANN`, annotation entries are filtered first. If no annotation entry remains, the entire variant is deleted.
 
-* Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH": 
+* Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH":
   ```
   vembrane variants.bcf 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"'
   ```
@@ -32,6 +32,11 @@ Vembrane allows to simultaneously filter variants based on any `INFO` field, `CH
 * Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
   ```
   vembrane variants.vcf 're.search("stream", ANN["Consequence"])'
+  ```
+
+* Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
+  ```
+  vembrane variants.vcf 'any([entry for entry in ["pathogenic", "likely_pathogenic", "drug_response"] if entry in ANN["CLIN_SIG"]])'
   ```
 
 ## Custom ANN types
