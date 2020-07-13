@@ -82,5 +82,5 @@ Now when calling `git commit`, your changed code will be formatted with `black`,
 * Till Hartmann (@tedil)
 * Elias Kuthe (@eqt)
 * Johannes Köster (@johanneskoester)
-* Christopher Schröder (@christopher-schroeder)
 * Felix Mölder (@felixmoelder)
+* Christopher Schröder (@christopher-schroeder)
