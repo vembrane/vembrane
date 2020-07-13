@@ -1,2 +1,2 @@
 raises: "UnknownInfoField"
-filter_expression: 'NONSENSE == "BLABLA"'
+filter_expression: 'INFO["NONSENSE"] == "BLABLA"'
