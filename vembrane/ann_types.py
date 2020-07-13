@@ -112,7 +112,6 @@ class AnnotationTyper:
         self._mapping = mapping
 
     def convert(self, key: str, value: str) -> Tuple[str, AnnotationType]:
-
         return self._mapping.get(key, DefaultAnnotationEntry(key)).convert(value)
 
 
