@@ -1,5 +1,8 @@
 # vembrane: variant filtering using python expressions
 
+![Alt text](./images/vembrane.svg)
+<img src="./images/vembrane.svg">
+
 ## Authors
 
 * Jan Forster (@jafors)
