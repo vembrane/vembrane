@@ -1,7 +1,7 @@
 # vembrane: variant filtering using python expressions
 
 ![Alt text](./images/vembrane.svg)
-<img src="./images/vembrane.svg" width="20mm">
+<img src="./images/vembrane.svg" width="20">
 
 ## Authors
 
