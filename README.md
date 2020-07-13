@@ -2,6 +2,8 @@
 
 Vembrane allows to simultaneously filter variants based on any `INFO` field, `CHROM`, `POS`, `REF`, `ALT`, `QUAL`, and the annotation field `ANN`. When filtering based on `ANN`, annotation entries are filtered first. If no annotation entry remains, the entire variant is deleted.
 
+
+## Filter expression
 The filter expression can be any valid python expression that evaluates to `bool`. However, functions and symbols available have been restricted to the following:
 
  * `any`, `all`, `min`, `max`, `sum`
