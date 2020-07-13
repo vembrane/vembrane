@@ -141,7 +141,7 @@ def filter_vcf(
         env["CHROM"] = record.chrom
         env["POS"] = record.pos
         env["ID"] = record.id
-        (env["REF"], env["ALT"]) = chain(record.alleles)
+        (env["REF"], *env["ALT"]) = chain(record.alleles)
         env["QUAL"] = type_info(record.qual)
         env["FILTER"] = record.filter
         env["INFO"] = Info(
