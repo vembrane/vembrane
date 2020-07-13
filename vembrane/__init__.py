@@ -14,7 +14,7 @@ from typing import Iterator, List, Dict, Any
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
 
-from vembrane.ann_types import type_ann, NA, type_info
+from vembrane.ann_types import NA, type_info, ANN_TYPER
 from vembrane.errors import (
     UnknownAnnotation,
     UnknownInfoField,
@@ -100,7 +100,7 @@ def eval_expression(
         idx,
         dict(
             map(
-                lambda v: type_ann(v[0], v[1]),
+                lambda v: ANN_TYPER.convert(v[0], v[1]),
                 zip(annotation_keys, parse_annotation_entry(annotation)),
             )
         ),
