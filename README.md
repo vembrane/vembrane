@@ -28,6 +28,7 @@ The following VCF fields can be accessed in the filter expression:
 |`SAMPLES`|`List[str]`| `[Sample]`  |  `"Tumor" in SAMPLES` |
 
  ¹ depends on type specified in VCF header
+
  ² for the usual snpeff and vep annotations, custom types have been specified; any unknown ANN field will simply be of type `str`.
 
 ## Examples
