@@ -66,7 +66,7 @@ class PosLength:
             #  or start position only
             else [int(value.strip())] * 2
         )
-        return cls(start, start + end)
+        return cls(start, end - start)
 
     def __str__(self):
         return f"(pos: {self.pos}, length: {self.length})"
