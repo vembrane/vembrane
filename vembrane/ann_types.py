@@ -47,29 +47,36 @@ def type_info(value):
     return value
 
 
-class PosLength:
-    def __init__(self, pos: int, length: int):
-        self.pos = pos
-        self.length = length
+class PosRange:
+    def __init__(self, start: int, end: int):
+        self.start = start
+        self.end = end
 
     @classmethod
-    def from_snpeff_str(cls, value: str) -> "PosLength":
+    def from_snpeff_str(cls, value: str) -> "PosRange":
         pos, length = [int(v.strip()) for v in value.split("/")]
-        return cls(pos, length)
+        return cls(pos, pos + length)
 
     @classmethod
-    def from_vep_str(cls, value: str) -> "PosLength":
+    def from_vep_str(cls, value: str) -> "PosRange":
         start, end = (
             #  the "-" is optional, so vep either has either start and end position
-            [int(v.strip()) for v in value.split("-")]
+            [NA if v == "?" else int(v) for v in map(str.strip, value.split("-"))]
             if "-" in value
             #  or start position only
             else [int(value.strip())] * 2
         )
-        return cls(start, end - start)
+        return cls(start, end)
+
+    @property
+    def length(self):
+        if self.end != NA and self.start != NA:
+            return self.end - self.start
+        else:
+            return NA
 
     def __str__(self):
-        return f"(pos: {self.pos}, length: {self.length})"
+        return f"(start: {self.start}, end: {self.end}, length: {self.length})"
 
     def __repr__(self):
         return self.__str__()
@@ -127,9 +134,9 @@ KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "Rank": AnnotationEntry("Rank"),
     "HGVS.c": AnnotationEntry("HGVS.c"),
     "HGVS.p": AnnotationEntry("HGVS.p"),
-    "cDNA.pos / cDNA.length": AnnotationEntry("cDNA", PosLength.from_snpeff_str),
-    "CDS.pos / CDS.length": AnnotationEntry("CDS", PosLength.from_snpeff_str),
-    "AA.pos / AA.length": AnnotationEntry("AA", PosLength.from_snpeff_str),
+    "cDNA.pos / cDNA.length": AnnotationEntry("cDNA", PosRange.from_snpeff_str),
+    "CDS.pos / CDS.length": AnnotationEntry("CDS", PosRange.from_snpeff_str),
+    "AA.pos / AA.length": AnnotationEntry("AA", PosRange.from_snpeff_str),
     "Distance": AnnotationEntry("Distance", str),
     "ERRORS / WARNINGS / INFO": AnnotationEntry(
         "ERRORS / WARNINGS / INFO",
@@ -150,9 +157,9 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "INTRON": AnnotationEntry("INTRON"),
     "HGSVc": AnnotationEntry("HGSVc"),
     "HGSVp": AnnotationEntry("HGSVp"),
-    "cDNA_position": AnnotationEntry("cDNA", PosLength.from_vep_str),
-    "CDS_position": AnnotationEntry("CDS", PosLength.from_vep_str),
-    "Protein_position": AnnotationEntry("Protein", PosLength.from_vep_str),
+    "cDNA_position": AnnotationEntry("cDNA", PosRange.from_vep_str),
+    "CDS_position": AnnotationEntry("CDS", PosRange.from_vep_str),
+    "Protein_position": AnnotationEntry("Protein", PosRange.from_vep_str),
     "CLIN_SIG": AnnotationEntry(
         "CLIN_SIG", lambda x: [v.strip() for v in x.split("&")], lambda: []
     ),
