@@ -29,6 +29,10 @@ Vembrane allows to simultaneously filter variants based on any `INFO` field, `CH
   ```
   vembrane variants.bcf 'ANN["Protein_position"] < 10'
   ```
+* Only keep variants where mapping qualitiy is 60:
+  ```
+  vembrane variants.bcf 'INFO["MQ"] == 60'
+  ```  
 * Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
   ```
   vembrane variants.vcf 're.search("stream", ANN["Consequence"])'
