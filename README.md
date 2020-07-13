@@ -17,12 +17,12 @@ The following VCF fields can be accessed in the filter expression:
 |---|---|---|---|
 |`INFO`|`Dict[str, Any¹]`| `INFO field -> Value`  | `INFO["DP"] > 0`|
 |`ANN`| `Dict[str, Any²]`| `ANN field -> Value` | `ANN["Gene_Name"] == "CDH2"`|
-|`CHROM`| `str` | `Chromosome Name`  |  `CHROM == "chr2"` |
-|`POS`| `int` | `Chromosomal position`  | `24 < POS < 42`|
-|`ID`| `str`  | `Variant ID` |  `ID == "rs11725853"` |
-|`REF`| `str` |  `Reference allele`  | `REF == "A"` |
-|`ALT`| `List[str]` |  `Alternative alleles`  | `"C" in ALT or ALT[0] == "G"`|
-|`QUAL`| `float`  | `Quality` |  `QUAL >= 60` |
+|`CHROM`| `str` | Chromosome Name  |  `CHROM == "chr2"` |
+|`POS`| `int` | Chromosomal position  | `24 < POS < 42`|
+|`ID`| `str`  | Variant ID |  `ID == "rs11725853"` |
+|`REF`| `str` |  Reference allele  | `REF == "A"` |
+|`ALT`| `List[str]` |  Alternative alleles  | `"C" in ALT or ALT[0] == "G"`|
+|`QUAL`| `float`  | Quality |  `QUAL >= 60` |
 |`FILTER`|  |   |  |
 |`FORMAT`|`Dict[str, Dict[str, Any]`| `Sample -> (Format -> Value)` | `FORMAT[SAMPLES[0]]["DP"][0] > 0` |
 |`SAMPLES`|`List[str]`| `[Sample]`  |  `"Tumor" in SAMPLES` |
