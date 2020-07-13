@@ -40,7 +40,7 @@ vembrane parses the following annotation fields to a custom type:
 * (snpeff) `cDNA.pos / cDNA.length`, `CDS.pos / CDS.length` and `AA.pos / AA.length` are re-exposed as `cDNA`, `CDS` and `AA` respectively with attributes `pos` and `length`, e.g. can be accessed like this: `ANN["cDNA"].pos`
 * `CLIN_SIG` is split at `'&'` into a list of entries
 
-Furthermore, vembrane will try auto-typing any unknown field (in the order of `int > float > str > NA` or lists therof).
+Any unknown annotation field will be left as is.
 
 ## Missing values in annotations
 
