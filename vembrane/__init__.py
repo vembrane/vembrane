@@ -33,7 +33,10 @@ globals_whitelist = {
         "__doc__": None,
         "__package__": None,
     },
-    **{mod.__name__: mod for mod in [any, all, min, max, re, list, dict, zip, map]},
+    **{
+        mod.__name__: mod
+        for mod in [any, all, min, max, re, list, dict, set, tuple, zip, map, sum]
+    },
     **{name: mod for name, mod in vars(math).items() if not name.startswith("__")},
 }
 
