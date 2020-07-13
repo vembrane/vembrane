@@ -1,19 +1,38 @@
 # vembrane: variant filtering using python expressions
 
-## Authors
+Vembrane allows to simultaneously filter variants based on any `INFO` field, `CHROM`, `POS`, `REF`, `ALT`, `QUAL`, and the annotation field `ANN`. When filtering based on `ANN`, annotation entries are filtered first. If no annotation entry remains, the entire variant is deleted.
 
-* Jan Forster (@jafors)
-* Till Hartmann (@tedil)
-* Elias Kuthe (@eqt)
-* Johannes Köster (@johanneskoester)
-* Christopher Schröder (@christopher-schroeder)
-* Felix Mölder (@felixmoelder)
+The filter expression can be any valid python expression that evaluates to `bool`. However, functions and symbols available have been restricted to the following:
+
+ * `any`, `all`, `min`, `max`, `sum`
+ * `list`, `dict`, `set`, `tuple`,
+ * `zip`, `map`
+ * Any function or symbol from [`math`](math.html)
+ * Regular expressions via [`re`](https://docs.python.org/3/library/re.html)
+
+## Available fields
+The following VCF fields can be accessed in the filter expression:
+
+|Name|Type|Interpretation|Example expression|
+|---|---|---|---|
+|`INFO`|`Dict[str, Any¹]`| `INFO field -> Value`  | `INFO["DP"] > 0`|
+|`ANN`| `Dict[str, Any²]`| `ANN field -> Value` | `ANN["Gene_Name"] == "CDH2"`|
+|`CHROM`| `str` | `Chromosome Name`  |  `CHROM == "chr2"` |
+|`POS`| `int` | `Chromosomal position`  | `24 < POS < 42`|
+|`ID`| `str`  | `Variant ID` |  `ID == "rs11725853"` |
+|`REF`| `str` |  `Reference allele`  | `REF == "A"` |
+|`ALT`| `List[str]` |  `Alternative alleles`  | `"C" in ALT or ALT[0] == "G"`|
+|`QUAL`| `float`  | `Quality` |  `QUAL >= 60` |
+|`FILTER`|  |   |  |
+|`FORMAT`|`Dict[str, Dict[str, Any]`| `Sample -> (Format -> Value)` | `FORMAT[SAMPLES[0]]["DP"][0] > 0` |
+|`SAMPLES`|`List[str]`| `[Sample]`  |  `"Tumor" in SAMPLES` |
+
+ ¹ depends on type specified in VCF header
+ ² for the usual snpeff and vep annotations, custom types have been specified; any unknown ANN field will simply be of type `str`.
 
 ## Examples
 
-Vembrane allows to simultaneously filter variants based on any `INFO` field, `CHROM`, `POS`, `REF`, `ALT`, `QUAL`, and the annotation field `ANN`. When filtering based on `ANN`, annotation entries are filtered first. If no annotation entry remains, the entire variant is deleted.
-
-* Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH": 
+* Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH":
   ```
   vembrane variants.bcf 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"'
   ```
@@ -55,3 +74,12 @@ Since we enforce code formatting with `black` by checking for that in CI, we can
 2. run `pre-commit install`. This will activate pre-commit hooks to your _local_ .git
 
 Now when calling `git commit`, your changed code will be formatted with `black`, checked with`flake8`, get trailing whitespace removed and trailing newlines added (if needed)
+
+## Authors
+
+* Jan Forster (@jafors)
+* Till Hartmann (@tedil)
+* Elias Kuthe (@eqt)
+* Johannes Köster (@johanneskoester)
+* Christopher Schröder (@christopher-schroeder)
+* Felix Mölder (@felixmoelder)
