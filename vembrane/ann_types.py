@@ -102,6 +102,8 @@ class AnnotationEntry:
 
 class DefaultAnnotationEntry(AnnotationEntry):
     def __init__(self, name: str):
+        # TODO issue INFO: No type conversion information about {name},
+        #  please open an issue here: https://github.com/vembrane/vembrane/issues
         super().__init__(name)
 
 
