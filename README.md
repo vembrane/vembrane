@@ -31,7 +31,7 @@ The following VCF fields can be accessed in the filter expression:
 
  ¹ depends on type specified in VCF header
 
- ² for the usual snpeff and vep annotations, custom types have been specified; any unknown ANN field will simply be of type `str`.
+ ² for the usual snpeff and vep annotations, custom types have been specified; any unknown ANN field will simply be of type `str`. If something lacks a custom parser/type, please consider filing an issue in the [issue tracker](https://github.com/vembrane/vembrane/issues).
 
 
 ## Examples
