@@ -4,7 +4,7 @@ import os
 from pysam import VariantFile
 import pytest
 import yaml
-from vembrane import errors
+from vembrane import errors, Expression
 from vembrane import __version__, filter_vcf
 
 CASES = Path(__file__).parent.joinpath("testcases")
@@ -37,8 +37,9 @@ def test_filter(testcase):
             list(
                 filter_vcf(
                     vcf,
-                    config.get("filter_expression"),
-                    config.get("ann_key", "ANN"),
+                    Expression(
+                        config.get("filter_expression"), config.get("ann_key", "ANN")
+                    ),
                     config.get("keep_unmatched", False),
                 )
             )
@@ -47,8 +48,9 @@ def test_filter(testcase):
         result = list(
             filter_vcf(
                 vcf,
-                config.get("filter_expression"),
-                config.get("ann_key", "ANN"),
+                Expression(
+                    config.get("filter_expression"), config.get("ann_key", "ANN")
+                ),
                 config.get("keep_unmatched", False),
             )
         )
