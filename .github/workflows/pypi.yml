@@ -17,8 +17,7 @@ jobs:
       - name: Install dependencies
         run:  |
           python -m pip install --upgrade pip
-          python -m pip install poetry black flake8
-          poetry install --no-interaction
+          python -m pip install poetry
       - name: Build package with poetry
         run:  |
           poetry build --no-interaction
