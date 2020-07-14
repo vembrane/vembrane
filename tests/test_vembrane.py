@@ -1,17 +1,17 @@
-from pathlib import Path
 import os
+from pathlib import Path
 
-from pysam import VariantFile
 import pytest
 import yaml
-from vembrane import errors, Expression
-from vembrane import __version__, filter_vcf
+from pysam import VariantFile
+
+from vembrane import errors, Expression, __version__, filter_vcf
 
 CASES = Path(__file__).parent.joinpath("testcases")
 
 
 def test_version():
-    assert __version__ == "0.2.0"
+    assert __version__ != "unknown"
 
 
 @pytest.mark.parametrize(
