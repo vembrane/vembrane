@@ -1,0 +1,27 @@
+name: Publish vembrane to PyPI
+
+if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+
+jobs:
+  build-and-publish:
+    name: build and publish python dists to PyPI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Install dependencies
+        run:  |
+          python -m pip install --upgrade pip
+          python -m pip install poetry black flake8
+          poetry install --no-interaction
+      - name: Build package with poetry
+        run:  |
+          poetry build --no-interaction
+      - name: Publish distribution to PyPI
+        if: startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.pypi_password }}
