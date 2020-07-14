@@ -9,7 +9,7 @@ The filter expression can be any valid python expression that evaluates to `bool
  * `any`, `all`, `min`, `max`, `sum`
  * `list`, `dict`, `set`, `tuple`,
  * `zip`, `map`
- * Any function or symbol from [`math`](math.html)
+ * Any function or symbol from [`math`](https://docs.python.org/3/library/math.html)
  * Regular expressions via [`re`](https://docs.python.org/3/library/re.html)
 
 ## Available fields
