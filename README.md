@@ -29,7 +29,7 @@ Vembrane allows to simultaneously filter variants based on any `INFO` field, `CH
   ```
   vembrane variants.bcf 'ANN["Protein_position"] < 10'
   ```
-* Only keep variants where mapping qualitiy is 60:
+* Only keep variants where mapping quality is exactly 60:
   ```
   vembrane variants.bcf 'INFO["MQ"] == 60'
   ```  
