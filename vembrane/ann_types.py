@@ -267,7 +267,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     # ),
     "MOTIF_SCORE_CHANGE": AnnotationEntry(
         "MOTIF_SCORE_CHANGE",
-        int,
+        float,
         description="The difference in motif score of the reference and variant "
         "sequences for the TFBP",
     ),
