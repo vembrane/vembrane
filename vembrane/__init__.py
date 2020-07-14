@@ -173,25 +173,30 @@ def filter_vcf(
         env["SAMPLES"] = list(record.samples)
 
         if expression.filters_annotations():
+            # if the expression contains a reference to the ANN field
+            # get all annotations from the record.info field
+            # (or supply an empty ANN value if the record has no ANN field)
             annotations = dict(record.info).get(ann_key, [""])
+            #  … and only keep the annotations where the expression evaluates to true
             filtered_annotations = [
                 annotation
                 for annotation in annotations
                 if expression.evaluate(idx, annotation, annotation_keys, env,)
             ]
+            if not filtered_annotations:
+                # skip this record if filter removed all annotations
+                continue
+            elif not keep_unmatched and (len(annotations) != len(filtered_annotations)):
+                # update annotations if they have actually been filtered
+                record.info[ann_key] = filtered_annotations
+            yield record
         else:
-            annotations = [""]
-            filtered_annotations = (
-                [""] if expression.evaluate(idx, "", annotation_keys, env,) else []
-            )
-
-        if not filtered_annotations:
-            # skip this record if filter removed all annotations
-            continue
-        elif not keep_unmatched and (len(annotations) != len(filtered_annotations)):
-            # update annotations if they have been actually filtered
-            record.info[ann_key] = filtered_annotations
-        yield record
+            # otherwise, the annotations are irrelevant w.r.t. the expression,
+            # so we can omit them
+            if expression.evaluate(idx, "", [], env,):
+                yield record
+            else:
+                continue
 
 
 def statistics(
