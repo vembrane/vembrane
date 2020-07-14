@@ -10,8 +10,22 @@ repos:
       - id: flake8
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v3.1.0
     hooks:
+      - id: check-byte-order-marker
+        exclude: ^tests/.*
+      - id: check-case-conflict
+        exclude: ^tests/.*
+      - id: check-merge-conflict
+        exclude: ^tests/.*
+      - id: check-symlinks
+        exclude: ^tests/.*
+      - id: check-yaml
+        exclude: ^tests/.*
+      - id: end-of-file-fixer
+        exclude: ^tests/.*
+      - id: mixed-line-ending
+        exclude: ^tests/.*
       - id: trailing-whitespace
         exclude: ^tests/.*
       - id: end-of-file-fixer
