@@ -108,31 +108,41 @@ def parse_annotation_entry(entry: str,) -> List[str]:
     return list(map(str.strip, entry.split("|")))
 
 
-def eval_expression(
-    expression: str, idx: int, annotation: str, annotation_keys: List[str], env: dict,
-) -> bool:
-    env["ANN"] = Annotation(
-        idx,
-        dict(
-            map(
-                lambda v: ANN_TYPER.convert(v[0], v[1]),
-                zip(annotation_keys, parse_annotation_entry(annotation)),
-            )
-        ),
-    )
-    return eval(expression, globals_whitelist, env)
+class Expression:
+    def __init__(self, expression: str, ann_key: str = "ANN"):
+        self._expression = expression
+        self._ann_key = ann_key
+        self._has_ann = f"{ann_key}[" in expression
+
+    def annotation_key(self):
+        return self._ann_key
+
+    def filters_annotations(self):
+        return self._has_ann
+
+    def evaluate(
+        self, idx: int, annotation: str, annotation_keys: List[str], env: dict,
+    ) -> bool:
+        env["ANN"] = Annotation(
+            idx,
+            dict(
+                map(
+                    lambda v: ANN_TYPER.convert(v[0], v[1]),
+                    zip(annotation_keys, parse_annotation_entry(annotation)),
+                )
+            ),
+        )
+        return eval(self._expression, globals_whitelist, env)
 
 
 def filter_vcf(
-    vcf: VariantFile,
-    expression: str,
-    ann_key: str = "ANN",
-    keep_unmatched: bool = False,
+    vcf: VariantFile, expression: Expression, keep_unmatched: bool = False,
 ) -> Iterator[VariantRecord]:
     header = vcf.header
 
     env = dict()
 
+    ann_key = expression.annotation_key()
     annotation_keys = get_annotation_keys(header)
 
     for idx, record in enumerate(vcf):
@@ -162,20 +172,31 @@ def filter_vcf(
         env["FORMAT"] = Format(idx, formats)
         env["SAMPLES"] = list(record.samples)
 
-        annotations = dict(record.info).get(ann_key, [""])
-        filtered_annotations = [
-            annotation
-            for annotation in annotations
-            if eval_expression(expression, idx, annotation, annotation_keys, env,)
-        ]
-
-        if not filtered_annotations:
-            # skip this record if filter removed all annotations
-            continue
-        elif not keep_unmatched and (len(annotations) != len(filtered_annotations)):
-            # update annotations if they have been actually filtered
-            record.info[ann_key] = filtered_annotations
-        yield record
+        if expression.filters_annotations():
+            # if the expression contains a reference to the ANN field
+            # get all annotations from the record.info field
+            # (or supply an empty ANN value if the record has no ANN field)
+            annotations = dict(record.info).get(ann_key, [""])
+            #  … and only keep the annotations where the expression evaluates to true
+            filtered_annotations = [
+                annotation
+                for annotation in annotations
+                if expression.evaluate(idx, annotation, annotation_keys, env,)
+            ]
+            if not filtered_annotations:
+                # skip this record if filter removed all annotations
+                continue
+            elif not keep_unmatched and (len(annotations) != len(filtered_annotations)):
+                # update annotations if they have actually been filtered
+                record.info[ann_key] = filtered_annotations
+            yield record
+        else:
+            # otherwise, the annotations are irrelevant w.r.t. the expression,
+            # so we can omit them
+            if expression.evaluate(idx, "", [], env,):
+                yield record
+            else:
+                continue
 
 
 def statistics(
@@ -260,6 +281,7 @@ def main():
         "the expression.",
     )
     args = parser.parse_args()
+    expression = Expression(args.expression, ann_key=args.annotation_key)
 
     with VariantFile(args.vcf) as vcf:
         fmt = ""
@@ -280,12 +302,7 @@ def main():
         )
 
         with VariantFile(args.output, "w" + fmt, header=header,) as out:
-            records = filter_vcf(
-                vcf,
-                args.expression,
-                keep_unmatched=args.keep_unmatched,
-                ann_key=args.annotation_key,
-            )
+            records = filter_vcf(vcf, expression, keep_unmatched=args.keep_unmatched,)
             if args.statistics is not None:
                 records = statistics(records, vcf, args.statistics)
 
