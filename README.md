@@ -50,12 +50,12 @@ The following VCF fields can be accessed in the filter expression:
   ```
 * Only keep annotations and variants where protein position is less than 10:
   ```
-  vembrane variants.bcf 'ANN["Protein_position"] < 10'
+  vembrane variants.bcf 'ANN["Protein"].start < 10'
   ```
 * Only keep variants where mapping quality is exactly 60:
   ```
   vembrane variants.bcf 'INFO["MQ"] == 60'
-  ```  
+  ```
 * Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
   ```
   vembrane variants.vcf 're.search("stream", ANN["Consequence"])'
@@ -69,6 +69,7 @@ The following VCF fields can be accessed in the filter expression:
 
 vembrane parses the following annotation fields to a custom type:
 * (snpeff) `cDNA.pos / cDNA.length`, `CDS.pos / CDS.length` and `AA.pos / AA.length` are re-exposed as `cDNA`, `CDS` and `AA` respectively with properties `start`, `end` and `length`, e.g. can be accessed like this: `ANN["cDNA"].start`
+* (vep) `cDNA_position`, `CDS_position` and `Protein_position` are re-exposed as `cDNA`, `CDS` and `Protein` respectively with properties `start`, `end` and `length`, e.g. can be accessed like this: `ANN["cDNA"].start`
 * `CLIN_SIG` is split at `'&'` into a list of entries
 
 Any unknown annotation field will be left as is.
