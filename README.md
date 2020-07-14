@@ -90,6 +90,7 @@ Now when calling `git commit`, your changed code will be formatted with `black`,
 
 ## Authors
 
+* Marcel Bargull (@mbargull)
 * Jan Forster (@jafors)
 * Till Hartmann (@tedil)
 * Johannes Köster (@johanneskoester)
