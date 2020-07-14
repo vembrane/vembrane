@@ -40,7 +40,7 @@ Vembrane allows to simultaneously filter variants based on any `INFO` field, `CH
 
 * Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
   ```
-  vembrane variants.vcf 'any([entry for entry in ["pathogenic", "likely_pathogenic", "drug_response"] if entry in ANN["CLIN_SIG"]])'
+  vembrane variants.vcf 'any(entry in ANN["CLIN_SIG"] for entry in ("pathogenic", "likely_pathogenic", "drug_response"))'
   ```
 
 ## Custom ANN types
