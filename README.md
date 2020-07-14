@@ -33,6 +33,7 @@ The following VCF fields can be accessed in the filter expression:
 
  ² for the usual snpeff and vep annotations, custom types have been specified; any unknown ANN field will simply be of type `str`.
 
+
 ## Examples
 
 * Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH":
@@ -51,9 +52,17 @@ The following VCF fields can be accessed in the filter expression:
   ```
   vembrane variants.bcf 'ANN["Protein_position"] < 10'
   ```
+* Only keep variants where mapping quality is exactly 60:
+  ```
+  vembrane variants.bcf 'INFO["MQ"] == 60'
+  ```  
 * Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
   ```
   vembrane variants.vcf 're.search("stream", ANN["Consequence"])'
+  ```
+* Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
+  ```
+  vembrane variants.vcf 'any(entry in ANN["CLIN_SIG"] for entry in ("pathogenic", "likely_pathogenic", "drug_response"))'
   ```
 
 ## Custom ANN types
