@@ -232,6 +232,7 @@ class Environment:
             "FILTER": lambda record: record.filter,
             "REF": lambda record: record.alleles[0],
             "ALT": lambda record: record.alleles[1:],
+            "SAMPLES": lambda record: list(record.samples),
         }
         self.info = Info(
             record_idx=self.idx,
