@@ -183,10 +183,12 @@ class Environment:
 
         # this set contains all nodes that refer to a Constant/Name/String/Function/…
         # (note that we have to check for Str explicitly for python 3.7 support)
-        names = set(node.id for node in ast.walk(tree) if hasattr(node, "id")) | set(
-            (node.value if isinstance(node, ast.Constant) else node.s)
-            for node in ast.walk(tree)
-            if isinstance(node, (ast.Str, ast.Constant))
+        names = (
+            set(node.id for node in ast.walk(tree) if hasattr(node, "id"))
+            | set(
+                node.value for node in ast.walk(tree) if isinstance(node, ast.Constant)
+            )
+            | set(node.s for node in ast.walk(tree) if isinstance(node, ast.Str))
         )
 
         # restrict names/strings/identifiers/functions/symbols to the ones actually
