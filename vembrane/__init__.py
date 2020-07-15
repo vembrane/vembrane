@@ -119,7 +119,10 @@ class Expression:
     def __init__(self, expression: str, ann_key: str = "ANN"):
         self._expression = expression
         self._ann_key = ann_key
-        self._has_ann = f"{ann_key}[" in expression
+        self._has_ann = any(
+            hasattr(node, "id") and node.id == ann_key
+            for node in ast.walk(ast.parse(expression))
+        )
 
     def annotation_key(self):
         return self._ann_key
