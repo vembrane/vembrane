@@ -4,6 +4,8 @@ version = "0.2.1"
 description = "Filter VCF/BCF files with Python expressions."
 authors = ["Till Hartmann"]
 readme = "README.md"
+homepage = "https://github.com/vembrane/vembrane"
+repository = "https://github.com/vembrane/vembrane"
 
 [tool.poetry.scripts]
 vembrane = 'vembrane:main'
