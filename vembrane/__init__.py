@@ -120,7 +120,7 @@ class Expression:
         self._expression = expression
         self._ann_key = ann_key
         self._has_ann = any(
-            hasattr(node, "id") and node.id == ann_key
+            hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
             for node in ast.walk(ast.parse(expression))
         )
 
