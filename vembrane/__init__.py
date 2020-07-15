@@ -182,11 +182,10 @@ class Expression:
 
 class Environment:
     def __init__(self, expression: Expression, vcf_header: VariantHeader):
-        # TODO walk ast, find all symbols, fields, info_keys, annotation_keys
         tree = ast.parse(expression.expression)
 
-        # this set contains all nodes that refer to a Constant/Name/String/Function/…
-        # (note that we have to check for Str explicitly for python 3.7 support)
+        # This set contains *all* nodes that refer to a Constant/Name/String/Function/…
+        # (note that we have to check for Str explicitly for python 3.7 support).
         names = (
             set(node.id for node in ast.walk(tree) if hasattr(node, "id"))
             | set(
@@ -198,8 +197,8 @@ class Environment:
         # restrict names/strings/identifiers/functions/symbols to the ones actually
         # seen in the expression
         available_info_fields = set(vcf_header.info) & names
-        available_samples = set(vcf_header.samples) & names
-        available_formats = set(vcf_header.formats) & names
+        available_sample_names = set(vcf_header.samples) & names
+        available_format_keys = set(vcf_header.formats) & names
         avaible_vcf_fields = {
             "QUAL",
             "FILTER",
@@ -208,18 +207,15 @@ class Environment:
             "POS",
             "REF",
             "ALT",
+            "SAMPLES",
         } & names
         available_symbols = globals_whitelist.keys() & names
 
-        ann_key = expression.annotation_key()
-        # TODO only parse needed annotations
-        annotation_keys = get_annotation_keys(vcf_header, ann_key)
-
-        format_keys = available_formats
-        sample_names = available_samples
-        info_keys = available_info_fields
-        ann_field_name = ann_key
-        ann_keys = annotation_keys
+        ann_field_name = expression.annotation_key()
+        ann_keys = get_annotation_keys(vcf_header, ann_field_name)
+        available_annotation_keys = [
+            (i, k) for i, k in enumerate(ann_keys) if k in names
+        ]
 
         self.idx = -1
         self.field_lookup = {
@@ -235,22 +231,24 @@ class Environment:
         self.info = Info(
             record_idx=self.idx,
             info_dict={
-                info_key: {} for info_key in info_keys if info_key != ann_field_name
+                info_key: {}
+                for info_key in available_info_fields
+                if info_key != ann_field_name
             },
         )
         self.annotation = Annotation(
             record_idx=self.idx,
-            annotation_data={key: None for key in ann_keys},
-            available_keys=[(i, k) for i, k in enumerate(ann_keys) if k in names],
+            annotation_data={field: None for (_, field) in available_annotation_keys},
+            available_keys=available_annotation_keys,
         )
-        self.sample_names = sample_names
+        self.sample_names = available_sample_names
         self.formats = Format(
             record_idx=self.idx,
             sample_formats={
                 sample: Sample(record_idx=self.idx, sample=sample, format_data={})
                 for sample in self.sample_names
             },
-            format_keys=format_keys,
+            format_keys=available_format_keys,
         )
         self.env = {
             "INFO": self.info,
