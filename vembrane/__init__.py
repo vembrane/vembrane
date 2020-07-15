@@ -14,9 +14,8 @@ import re
 import sys
 from collections import defaultdict
 from functools import lru_cache
-from itertools import chain
 from sys import stderr
-from typing import Iterator, List, Dict, Any
+from typing import Iterator, List, Dict, Any, Set
 
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
@@ -54,6 +53,9 @@ class Sample:
         self._sample = sample
         self._data = format_data
 
+    def update(self, items: Dict[str, Any]):
+        self._data.update(items)
+
     def __getitem__(self, item):
         try:
             return self._data[item]
@@ -62,9 +64,26 @@ class Sample:
 
 
 class Format:
-    def __init__(self, record_idx: int, sample_formats: Dict[Sample, Dict[str, Any]]):
+    def __init__(
+        self,
+        record_idx: int,
+        sample_formats: Dict[Sample, Dict[str, Any]],
+        format_keys: Set[str],
+    ):
         self._record_idx = record_idx
         self._sample_formats = sample_formats
+        self._samples = sample_formats.keys()
+        self._format_keys = format_keys
+
+    def update(self, idx: int, record: VariantRecord):
+        self._record_idx = idx
+        for sample_name in self._samples:
+            self._sample_formats[sample_name].update(
+                {
+                    fmt: record.samples[sample_name].get(fmt, NA)
+                    for fmt in self._format_keys
+                }
+            )
 
     def __getitem__(self, item):
         try:
@@ -77,6 +96,13 @@ class Info:
     def __init__(self, record_idx: int, info_dict: Dict[str, Dict[str, Any]]):
         self._record_idx = record_idx
         self._info_dict = info_dict
+        self._keys = info_dict.keys()
+
+    def update(self, idx: int, record: VariantRecord):
+        self._record_idx = idx
+        self._info_dict.update(
+            {key: type_info(record.info.get(key, NA)) for key in self._keys}
+        )
 
     def __getitem__(self, item):
         try:
@@ -86,9 +112,24 @@ class Info:
 
 
 class Annotation:
-    def __init__(self, record_idx: int, annotation_data: Dict[str, Any]):
+    def __init__(
+        self, record_idx: int, annotation_data: Dict[str, Any], ann_keys: List[str]
+    ):
         self._record_idx = record_idx
         self._data = annotation_data
+        self._keys = ann_keys
+
+    def update(self, idx: int, annotation: str):
+        self._record_idx = idx
+
+        self._data.update(
+            dict(
+                map(
+                    lambda v: ANN_TYPER.convert(v[0], v[1]),
+                    zip(self._keys, parse_annotation_entry(annotation)),
+                )
+            ),
+        )
 
     def __getitem__(self, item):
         try:
@@ -117,71 +158,144 @@ def parse_annotation_entry(entry: str,) -> List[str]:
 
 class Expression:
     def __init__(self, expression: str, ann_key: str = "ANN"):
-        self._expression = expression
         self._ann_key = ann_key
+        self._expression = expression
         self._has_ann = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
             for node in ast.walk(ast.parse(expression))
         )
 
-    def annotation_key(self):
+    def annotation_key(self) -> str:
         return self._ann_key
 
-    def filters_annotations(self):
+    def filters_annotations(self) -> bool:
         return self._has_ann
 
-    def evaluate(
-        self, idx: int, annotation: str, annotation_keys: List[str], env: dict,
-    ) -> bool:
-        env[self._ann_key] = Annotation(
-            idx,
-            dict(
-                map(
-                    lambda v: ANN_TYPER.convert(v[0], v[1]),
-                    zip(annotation_keys, parse_annotation_entry(annotation)),
-                )
-            ),
+    @property
+    def expression(self) -> str:
+        return self._expression
+
+
+class Environment:
+    def __init__(self, expression: Expression, vcf_header: VariantHeader):
+        # TODO walk ast, find all symbols, fields, info_keys, annotation_keys
+        tree = ast.parse(expression.expression)
+
+        # this set contains all nodes that refer to a Constant/Name/String/Function/…
+        # (note that we have to check for Str explicitly for python 3.7 support)
+        names = set(node.id for node in ast.walk(tree) if hasattr(node, "id")) | set(
+            (node.value if isinstance(node, ast.Constant) else node.s)
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.Str, ast.Constant))
         )
-        return eval(self._expression, globals_whitelist, env)
+
+        # restrict names/strings/identifiers/functions/symbols to the ones actually
+        # seen in the expression
+        available_info_fields = set(vcf_header.info) & names
+        available_samples = set(vcf_header.samples) & names
+        available_formats = set(vcf_header.formats) & names
+        avaible_vcf_fields = {
+            "QUAL",
+            "FILTER",
+            "ID",
+            "CHROM",
+            "POS",
+            "REF",
+            "ALT",
+        } & names
+        available_symbols = globals_whitelist.keys() & names
+
+        ann_key = expression.annotation_key()
+        # TODO only parse needed annotations
+        annotation_keys = get_annotation_keys(vcf_header, ann_key)
+
+        format_keys = available_formats
+        sample_names = available_samples
+        info_keys = available_info_fields
+        ann_field_name = ann_key
+        ann_keys = annotation_keys
+
+        self.idx = -1
+        self.field_lookup = {
+            "CHROM": lambda record: record.chrom,
+            "POS": lambda record: record.pos,
+            "ID": lambda record: record.id,
+            "QUAL": lambda record: type_info(record.qual),
+            "FILTER": lambda record: record.filter,
+            "REF": lambda record: record.alleles[0],
+            "ALT": lambda record: record.alleles[1:],
+        }
+        self.info = Info(
+            record_idx=self.idx,
+            info_dict={
+                info_key: {} for info_key in info_keys if info_key != ann_field_name
+            },
+        )
+        self.annotation = Annotation(
+            record_idx=self.idx,
+            annotation_data={key: None for key in ann_keys},
+            ann_keys=ann_keys,
+        )
+        self.sample_names = sample_names
+        self.formats = Format(
+            record_idx=self.idx,
+            sample_formats={
+                sample: Sample(record_idx=self.idx, sample=sample, format_data={})
+                for sample in self.sample_names
+            },
+            format_keys=format_keys,
+        )
+        self.env = {
+            "INFO": self.info,
+            "FORMAT": self.formats,
+            ann_field_name: self.annotation,
+        }
+        self.globals = {key: globals_whitelist[key] for key in available_symbols}
+
+        # remove unneeded fields
+        for field in self.field_lookup.keys() - set(avaible_vcf_fields):
+            self.field_lookup.pop(field, None)
+
+    def update(self, idx: int, record: VariantRecord):
+        self.idx = idx
+        for field, get_field_value in self.field_lookup.items():
+            self.env[field] = get_field_value(record)
+        self.info.update(idx, record)
+        self.formats.update(idx, record)
+
+    def update_annotation(self, annotation: str) -> bool:
+        # update(…) has to be called once for the current record first
+        # then update_annotation(…) for each annotation
+        self.annotation.update(self.idx, annotation)
+        return True
+
+    def evaluate(self, expression: Expression) -> bool:
+        return eval(expression.expression, self.globals, self.env)
+
+    def __str__(self):
+        return (
+            f"\tINFO: {self.info._info_dict}\n\tANN: {self.annotation._data}\n"
+            + "\n\t".join(
+                f"{field}: {self.env[field]}" for field in self.field_lookup.keys()
+            )
+        )
+
+    def __repr__(self):
+        self.__str__()
 
 
 def filter_vcf(
     vcf: VariantFile, expression: Expression, keep_unmatched: bool = False,
 ) -> Iterator[VariantRecord]:
-    header = vcf.header
-
-    env = dict()
 
     ann_key = expression.annotation_key()
-    annotation_keys = get_annotation_keys(header, ann_key)
+    env = Environment(expression, vcf.header)
 
     for idx, record in enumerate(vcf):
-        # setup filter expression env
-        env.clear()
-        for name in header.info:
-            env[name] = NA
+        # update the environment with data from the record
+        env.update(idx, record)
 
-        env["CHROM"] = record.chrom
-        env["POS"] = record.pos
-        env["ID"] = record.id
-        (env["REF"], *env["ALT"]) = chain(record.alleles)
-        env["QUAL"] = type_info(record.qual)
-        env["FILTER"] = record.filter
-        env["INFO"] = Info(
-            idx,
-            {key: type_info(record.info[key]) for key in record.info if key != ann_key},
-        )
-
-        formats = {
-            sample: Sample(
-                idx, sample, {fmt: record.samples[sample][fmt] for fmt in record.format}
-            )
-            for sample in record.samples
-        }
-
-        env["FORMAT"] = Format(idx, formats)
-        env["SAMPLES"] = list(record.samples)
-
+        # TODO move this block to `Environment.evaluate(…)`
         if expression.filters_annotations():
             # if the expression contains a reference to the ANN field
             # get all annotations from the record.info field
@@ -191,7 +305,7 @@ def filter_vcf(
             filtered_annotations = [
                 annotation
                 for annotation in annotations
-                if expression.evaluate(idx, annotation, annotation_keys, env,)
+                if env.update_annotation(annotation) and env.evaluate(expression)
             ]
             if not filtered_annotations:
                 # skip this record if filter removed all annotations
@@ -203,7 +317,7 @@ def filter_vcf(
         else:
             # otherwise, the annotations are irrelevant w.r.t. the expression,
             # so we can omit them
-            if expression.evaluate(idx, "", [], env,):
+            if env.evaluate(expression):
                 yield record
             else:
                 continue
