@@ -132,7 +132,7 @@ class Annotation:
             dict(
                 map(
                     lambda v: ANN_TYPER.convert(v[0], v[1]),
-                    zip(self._keys, (split[i] for i in self._keys)),
+                    ((self._all_keys[i], split[i]) for i in self._keys),
                 )
             ),
         )
