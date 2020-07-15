@@ -15,7 +15,7 @@ import sys
 from collections import defaultdict
 from functools import lru_cache
 from sys import stderr
-from typing import Iterator, List, Dict, Any, Set
+from typing import Iterator, List, Dict, Any, Set, Tuple
 
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
@@ -116,23 +116,21 @@ class Annotation:
         self,
         record_idx: int,
         annotation_data: Dict[str, Any],
-        ann_keys: List[str],
-        available_keys: List[int],
+        available_keys: List[Tuple[int, str]],
     ):
         self._record_idx = record_idx
         self._data = annotation_data
-        self._all_keys = ann_keys
         self._keys = available_keys
 
     def update(self, idx: int, annotation: str):
         self._record_idx = idx
-        split = split_annotation_entry(annotation)
+        split = annotation.split("|")
 
         self._data.update(
             dict(
                 map(
                     lambda v: ANN_TYPER.convert(v[0], v[1]),
-                    ((self._all_keys[i], split[i]) for i in self._keys),
+                    ((k, split[i].strip()) for i, k in self._keys),
                 )
             ),
         )
@@ -243,8 +241,7 @@ class Environment:
         self.annotation = Annotation(
             record_idx=self.idx,
             annotation_data={key: None for key in ann_keys},
-            ann_keys=ann_keys,
-            available_keys=[i for i, k in enumerate(ann_keys) if k in names],
+            available_keys=[(i, k) for i, k in enumerate(ann_keys) if k in names],
         )
         self.sample_names = sample_names
         self.formats = Format(
