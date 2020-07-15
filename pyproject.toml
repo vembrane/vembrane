@@ -3,6 +3,7 @@ name = "vembrane"
 version = "0.2.1"
 description = "Filter VCF/BCF files with Python expressions."
 authors = ["Till Hartmann"]
+readme = "README.md"
 
 [tool.poetry.scripts]
 vembrane = 'vembrane:main'
