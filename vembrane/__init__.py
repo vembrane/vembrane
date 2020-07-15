@@ -113,20 +113,26 @@ class Info:
 
 class Annotation:
     def __init__(
-        self, record_idx: int, annotation_data: Dict[str, Any], ann_keys: List[str]
+        self,
+        record_idx: int,
+        annotation_data: Dict[str, Any],
+        ann_keys: List[str],
+        available_keys: List[int],
     ):
         self._record_idx = record_idx
         self._data = annotation_data
-        self._keys = ann_keys
+        self._all_keys = ann_keys
+        self._keys = available_keys
 
     def update(self, idx: int, annotation: str):
         self._record_idx = idx
+        split = split_annotation_entry(annotation)
 
         self._data.update(
             dict(
                 map(
                     lambda v: ANN_TYPER.convert(v[0], v[1]),
-                    zip(self._keys, parse_annotation_entry(annotation)),
+                    zip(self._keys, (split[i] for i in self._keys)),
                 )
             ),
         )
@@ -152,7 +158,7 @@ def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
 
 
 @lru_cache(maxsize=32)
-def parse_annotation_entry(entry: str,) -> List[str]:
+def split_annotation_entry(entry: str,) -> List[str]:
     return list(map(str.strip, entry.split("|")))
 
 
@@ -237,6 +243,7 @@ class Environment:
             record_idx=self.idx,
             annotation_data={key: None for key in ann_keys},
             ann_keys=ann_keys,
+            available_keys=[i for i, k in enumerate(ann_keys) if k in names],
         )
         self.sample_names = sample_names
         self.formats = Format(
@@ -332,7 +339,7 @@ def statistics(
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
         for annotation in record.info["ANN"]:
-            for key, value in zip(annotation_keys, parse_annotation_entry(annotation)):
+            for key, value in zip(annotation_keys, split_annotation_entry(annotation)):
                 if value:
                     counter[key][value] += 1
         yield record
