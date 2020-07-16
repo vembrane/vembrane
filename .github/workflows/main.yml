@@ -23,9 +23,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run:  |
-              python -m pip install --upgrade pip
-              python -m pip install poetry black flake8
-              poetry install --no-interaction
+              python -m pip install -v --upgrade pip
+              python -m pip install -v poetry black flake8
+              poetry install -v --no-interaction
       - name: Check formatting with black
         run:  poetry run black --check .
       - name: Lint with flake8
