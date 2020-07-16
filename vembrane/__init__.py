@@ -62,6 +62,12 @@ class Sample:
         except KeyError as ke:
             raise UnknownFormatField(self._record_idx, self._sample, ke)
 
+    def __str__(self):
+        return str(self._data)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class Format:
     def __init__(
@@ -91,6 +97,12 @@ class Format:
         except KeyError as ke:
             raise UnknownSample(self._record_idx, ke)
 
+    def __str__(self):
+        return str(self._sample_formats)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class Info:
     def __init__(self, record_idx: int, info_dict: Dict[str, Dict[str, Any]]):
@@ -109,6 +121,12 @@ class Info:
             return self._info_dict[item]
         except KeyError as ke:
             raise UnknownInfoField(self._record_idx, ke)
+
+    def __str__(self):
+        return str(self._info_dict)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class Annotation:
@@ -141,6 +159,12 @@ class Annotation:
         except KeyError as ke:
             raise UnknownAnnotation(self._record_idx, ke)
 
+    def __str__(self):
+        return str(self._data)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
     separator = "'"
@@ -163,7 +187,7 @@ def split_annotation_entry(entry: str,) -> List[str]:
 class Expression:
     def __init__(self, expression: str, ann_key: str = "ANN"):
         self._ann_key = ann_key
-        self._expression = expression
+        self._raw_expression = expression
         self._has_ann = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
             for node in ast.walk(ast.parse(expression))
@@ -272,7 +296,7 @@ class Environment:
         self.annotation.update(self.idx, annotation)
 
     def evaluate(self, expression: Expression) -> bool:
-        return eval(expression.expression, self.globals, self.env)
+        return eval(expression.raw_expression, self.globals, self.env)
 
     def evaluate_with_ann(self, expression: Expression, annotation: str) -> bool:
         self.update_annotation(annotation)
@@ -280,8 +304,10 @@ class Environment:
 
     def __str__(self):
         return (
-            f"\tINFO: {self.info._info_dict}\n\tANN: {self.annotation._data}\n"
-            + "\n\t".join(
+            f"INFO: {self.info}\n"
+            f"FORMAT: {self.formats}\n"
+            f"ANN: {self.annotation}\n"
+            "\n".join(
                 f"{field}: {self.env[field]}" for field in self.field_lookup.keys()
             )
         )
