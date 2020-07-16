@@ -25,7 +25,7 @@ jobs:
         run:  |
               python -m pip install -v --upgrade pip
               python -m pip install -v poetry black flake8
-              poetry install -v --no-interaction
+              poetry install --no-interaction
       - name: Check formatting with black
         run:  poetry run black --check .
       - name: Lint with flake8
