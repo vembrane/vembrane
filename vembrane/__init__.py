@@ -215,7 +215,7 @@ def statistics(
     annotation_keys = get_annotation_keys(vcf.header, ann_key)
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
-        for annotation in record.info["ANN"]:
+        for annotation in record.info[ann_key]:
             for key, value in zip(annotation_keys, parse_annotation_entry(annotation)):
                 if value:
                     counter[key][value] += 1
