@@ -268,14 +268,15 @@ class Environment:
         self.info.update(idx, record)
         self.formats.update(idx, record)
 
-    def update_annotation(self, annotation: str) -> bool:
-        # update(…) has to be called once for the current record first
-        # then update_annotation(…) for each annotation
+    def update_annotation(self, annotation: str):
         self.annotation.update(self.idx, annotation)
-        return True
 
     def evaluate(self, expression: Expression) -> bool:
         return eval(expression.expression, self.globals, self.env)
+
+    def evaluate_with_ann(self, expression: Expression, annotation: str) -> bool:
+        self.update_annotation(annotation)
+        return self.evaluate(expression)
 
     def __str__(self):
         return (
@@ -310,7 +311,7 @@ def filter_vcf(
             filtered_annotations = [
                 annotation
                 for annotation in annotations
-                if env.update_annotation(annotation) and env.evaluate(expression)
+                if env.evaluate_with_ann(expression, annotation)
             ]
             if not filtered_annotations:
                 # skip this record if filter removed all annotations
