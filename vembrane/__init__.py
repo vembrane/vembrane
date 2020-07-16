@@ -387,7 +387,7 @@ def statistics(
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
         for annotation in record.info[ann_key]:
-            for key, value in zip(annotation_keys, parse_annotation_entry(annotation)):
+            for key, value in zip(annotation_keys, split_annotation_entry(annotation)):
                 if value:
                     counter[key][value] += 1
         yield record
