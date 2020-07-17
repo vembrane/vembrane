@@ -312,6 +312,8 @@ class Environment:
             ann_field_name: self.annotation,
         }
 
+        # We use self.globals + self.func as a closure.
+        # Do not reassign self.globals, but use .clear()/.update() on it!
         self.globals = {}
         self.func = eval(f"lambda: {expression.raw_expression}", self.globals, {})
 
