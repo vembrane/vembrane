@@ -249,7 +249,9 @@ class Environment:
             "SAMPLES",
         } & names
         available_symbols = globals_whitelist.keys() & names
-        self.globals = {key: globals_whitelist[key] for key in available_symbols}
+        self.globals_whitelist = {
+            key: globals_whitelist[key] for key in available_symbols
+        }
 
         ann_field_name = expression.annotation_key()
         annotation_keys = get_annotation_keys(vcf_header, ann_field_name)
@@ -310,6 +312,9 @@ class Environment:
             ann_field_name: self.annotation,
         }
 
+        self.globals = {}
+        self.func = eval(f"lambda: {expression.raw_expression}", self.globals, {})
+
     def update(self, idx: int, record: VariantRecord):
         self.idx = idx
         for field, get_field_value in self.field_lookup.items():
@@ -320,12 +325,15 @@ class Environment:
     def update_annotation(self, annotation: str):
         self.annotation.update(self.idx, annotation)
 
-    def evaluate(self, expression: Expression) -> bool:
-        return eval(expression.raw_expression, self.globals, self.env)
+    def evaluate(self) -> bool:
+        self.globals.clear()
+        self.globals.update(self.env)
+        self.globals.update(self.globals_whitelist)
+        return self.func()
 
-    def evaluate_with_ann(self, expression: Expression, annotation: str) -> bool:
+    def evaluate_with_ann(self, annotation: str) -> bool:
         self.update_annotation(annotation)
-        return self.evaluate(expression)
+        return self.evaluate()
 
     def __str__(self):
         return (
@@ -362,7 +370,7 @@ def filter_vcf(
             filtered_annotations = [
                 annotation
                 for annotation in annotations
-                if env.evaluate_with_ann(expression, annotation)
+                if env.evaluate_with_ann(annotation)
             ]
             if not filtered_annotations:
                 # skip this record if filter removed all annotations
@@ -374,7 +382,7 @@ def filter_vcf(
         else:
             # otherwise, the annotations are irrelevant w.r.t. the expression,
             # so we can omit them
-            if env.evaluate(expression):
+            if env.evaluate():
                 yield record
             else:
                 continue
