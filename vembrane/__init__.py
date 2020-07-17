@@ -249,9 +249,6 @@ class Environment:
             "SAMPLES",
         } & names
         available_symbols = globals_whitelist.keys() & names
-        self.globals_whitelist = {
-            key: globals_whitelist[key] for key in available_symbols
-        }
 
         ann_field_name = expression.annotation_key()
         annotation_keys = get_annotation_keys(vcf_header, ann_field_name)
@@ -312,10 +309,10 @@ class Environment:
             ann_field_name: self.annotation,
         }
 
-        # We use self.globals + self.func as a closure.
-        # Do not reassign self.globals, but use .clear()/.update() on it!
-        self.globals = {}
-        self.func = eval(f"lambda: {expression.raw_expression}", self.globals, {})
+        # We use self._globals + self.func as a closure.
+        # Do not reassign self._globals, but use .update() on it!
+        self._globals = {key: globals_whitelist[key] for key in available_symbols}
+        self.func = eval(f"lambda: {expression.raw_expression}", self._globals, {})
 
     def update(self, idx: int, record: VariantRecord):
         self.idx = idx
@@ -328,9 +325,7 @@ class Environment:
         self.annotation.update(self.idx, annotation)
 
     def evaluate(self) -> bool:
-        self.globals.clear()
-        self.globals.update(self.env)
-        self.globals.update(self.globals_whitelist)
+        self._globals.update(self.env)
         return self.func()
 
     def evaluate_with_ann(self, annotation: str) -> bool:
