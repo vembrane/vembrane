@@ -15,7 +15,7 @@ import sys
 from collections import defaultdict
 from functools import lru_cache
 from sys import stderr
-from typing import Iterator, List, Dict, Any, Set, Tuple
+from typing import Iterator, List, Dict, Any, Set, Tuple, Iterable
 
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
@@ -256,20 +256,11 @@ def dump(node, annotate_fields=True, include_attributes=False, indent="  "):
     return _format(node)
 
 
-class NoopList(list):
-    def append(self, item):
+class NoopSet(set):
+    def add(self, item):
         pass
 
     def clear(self, *args, **kwargs):
-        pass
-
-    def extend(self, *args, **kwargs):
-        pass
-
-    def index(self, *args, **kwargs):
-        return self
-
-    def insert(self, *args, **kwargs):
         pass
 
     def pop(self, *args, **kwargs):
@@ -278,30 +269,28 @@ class NoopList(list):
     def remove(self, *args, **kwargs):
         pass
 
-    def reverse(self, *args, **kwargs):
-        pass
-
-    def sort(self, *args, **kwargs):
-        pass
-
-    def __add__(self, *args, **kwargs):
-        pass
-
     def __contains__(self, *args, **kwargs):
-        return False
+        return True
 
-    def __delitem__(self, *args, **kwargs):
-        pass
+    def copy(self) -> "NoopSet":
+        return self
+
+    def intersection(self, *s: Iterable[Any]) -> Set[Any]:
+        return set(s)
+
+    def __rand__(self, other) -> Set[Any]:
+        return other
 
 
-ALL = NoopList()
+ALL = NoopSet()
 
 
 class FieldLister(ast.NodeVisitor):
-    constants = set()
-
     def __init__(self):
-        self.data = defaultdict(list)
+        self.field_accesses = defaultdict(set)
+        self.modules = set()
+        self.functions = set()
+        self.symbols = set()
 
     def visit(self, root: ast.AST):
         for node in ast.walk(root):
@@ -310,44 +299,63 @@ class FieldLister(ast.NodeVisitor):
         super().visit(root)
 
     def visit_Subscript(self, node: ast.Subscript) -> Any:
-        if isinstance(node.value, ast.Name) and isinstance(node.slice, ast.Index):
-            print("Subscript+Name: ", node.value.id)
+        # node slice can be either Index, Slice or ExtSlice
+        # anything that isn't Index makes this expression "complex"
+        if isinstance(node.value, (ast.Name, ast.Attribute)) and isinstance(
+            node.slice, ast.Index
+        ):
             field = node.value.id
             key = node.slice.value
             if isinstance(key, (ast.Str, ast.Constant)):
                 # python < 3.8
                 if isinstance(key, ast.Str):
-                    self.data[field].append(key.s)
+                    self.field_accesses[field].add(key.s)
                 # python >= 3.8
                 elif isinstance(key, ast.Constant):
-                    self.data[field].append(key.value)
+                    self.field_accesses[field].add(key.value)
             else:
-                self.data[field] = ALL
-        else:
-            print("Subscript: ", node.value)
+                self.field_accesses[field] = ALL
+        self.generic_visit(node)
+
+    def visit_Attribute(self, node: ast.Attribute) -> Any:
+        self.modules.add(node.value.id)
+        self.generic_visit(node)
+
+    def visit_Call(self, node: ast.Call) -> Any:
+        func = node.func
+        if isinstance(func, ast.Name):
+            self.functions.add(func.id)
+        elif isinstance(func, ast.Attribute):
+            self.modules.add(func.value.id)
+            self.functions.add(func.value.id + "." + func.attr)
         self.generic_visit(node)
 
     def visit_Constant(self, node: ast.Constant) -> Any:
-        print("Constant: ", node.value)
-        self.constants.add(node.value)
+        if not isinstance(node.parent, ast.Subscript):
+            # print("Constant: ", node.value)
+            # self.constants.add(node.value)
+            pass
         self.generic_visit(node)
 
     def visit_Str(self, node: ast.Str) -> Any:
-        print("Str: ", node.s)
-        self.constants.add(node.s)
+        if not isinstance(node.parent, ast.Subscript):
+            # print("Str: ", node.s)
+            # self.constants.add(node.s)
+            pass
         self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name) -> Any:
-        print("Name: ", node.id)
-        self.constants.add(node.id)
+        self.symbols.add(node.id)
         self.generic_visit(node)
 
     def visit_Dict(self, node: ast.Dict) -> Any:
-        print("Dict: ", node)
         self.generic_visit(node)
 
-    def get_info(self):
-        return self.constants, self.data
+    def __str__(self):
+        return str(self.__dict__)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class Environment:
@@ -355,25 +363,9 @@ class Environment:
         # We only wish to access (and in the case of ANN, parse) the fields that
         # are part of the expression. To do that, we build the AST for the expression…
         tree = ast.parse(expression.raw_expression)
-        print(dump(tree))
         field_lister = FieldLister()
         field_lister.visit(tree)
-        print(field_lister.get_info())
-
-        # … and get all nodes that correspond to fields/symbols/:
-        # `names` contains *all* nodes that refer to a Constant/Name/Str/…
-        # (note that we have to check for Str explicitly for python 3.7 support).
-        # so there may be some names in there that we do not really need
-        # (but they don't bother us)
-        names = (
-            set(node.id for node in ast.walk(tree) if hasattr(node, "id"))
-            | set(
-                node.value for node in ast.walk(tree) if isinstance(node, ast.Constant)
-            )
-            | set(node.s for node in ast.walk(tree) if isinstance(node, ast.Str))
-        )
-        print(names)
-        exit(1)
+        print(field_lister)
 
         # Restrict names/strings/identifiers/functions/symbols to the ones actually
         # seen in the expression. We use `names` here for everything, even though we
@@ -381,10 +373,18 @@ class Environment:
         # in the expression while there's also `FOO` in `INFO`.
         # (That shouldn't make much of a difference, but if it does, we can check
         # for a node's parent [e.g. is it `INFO` or `FORMAT` or …])
-        available_info_fields = set(vcf_header.info) & names
-        available_sample_names = set(vcf_header.samples) & names
-        available_format_keys = set(vcf_header.formats) & names
-        avaible_vcf_fields = {
+        available_info_fields = (
+            set(vcf_header.info) & field_lister.field_accesses["INFO"]
+        )
+
+        available_sample_names = (
+            set(vcf_header.samples) & field_lister.field_accesses["SAMPLES"]
+        )
+
+        available_format_keys = (
+            set(vcf_header.formats) & field_lister.field_accesses["FORMAT"]
+        )
+        available_vcf_fields = {
             "QUAL",
             "FILTER",
             "ID",
@@ -393,11 +393,12 @@ class Environment:
             "REF",
             "ALT",
             "SAMPLES",
-        } & names
-        available_symbols = globals_whitelist.keys() & names
-        self.globals_whitelist = {
-            key: globals_whitelist[key] for key in available_symbols
-        }
+        } & field_lister.symbols
+
+        available_symbols = globals_whitelist.keys() & (
+            field_lister.modules | field_lister.symbols | field_lister.functions
+        )
+        self.globals_whitelist = {key: globals_whitelist[key] for key in available_symbols}
 
         ann_field_name = expression.annotation_key()
         annotation_keys = get_annotation_keys(vcf_header, ann_field_name)
@@ -405,7 +406,9 @@ class Environment:
         # since the annotation values are a string joined by (usually) '|',
         # i.e. when splitting at '|', extract only the values at certain indices.
         available_annotation_keys = [
-            (i, k) for i, k in enumerate(annotation_keys) if k in names
+            (i, k)
+            for i, k in enumerate(annotation_keys)
+            if k in field_lister.field_accesses[ann_field_name]
         ]
 
         self.idx = -1  # Consider changing this to None
@@ -448,7 +451,7 @@ class Environment:
         }
 
         # … but we don't need all of them, so remove unneeded fields:
-        for field in self.field_lookup.keys() - set(avaible_vcf_fields):
+        for field in self.field_lookup.keys() - set(available_vcf_fields):
             self.field_lookup.pop(field, None)
 
         # Build the env dict used for `eval`
