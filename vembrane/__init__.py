@@ -639,7 +639,7 @@ def main():
             ),
         )
 
-        with VariantFile(args.output, "w" + fmt, header=None,) as out:
+        with VariantFile(args.output, "w" + fmt, header=header,) as out:
             records = filter_vcf(vcf, expression, keep_unmatched=args.keep_unmatched,)
             if args.statistics is not None:
                 records = statistics(records, vcf, args.statistics, args.annotation_key)
