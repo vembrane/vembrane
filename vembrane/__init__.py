@@ -1,3 +1,5 @@
+from vembrane.aux import FieldLister
+
 try:
     from importlib.metadata import version, PackageNotFoundError  # type: ignore
 except ImportError:  # pragma: no cover
@@ -215,19 +217,8 @@ class Environment:
         # We only wish to access (and in the case of ANN, parse) the fields that
         # are part of the expression. To do that, we build the AST for the expression…
         tree = ast.parse(expression.raw_expression)
-
-        # … and get all nodes that correspond to fields/symbols/:
-        # `names` contains *all* nodes that refer to a Constant/Name/Str/…
-        # (note that we have to check for Str explicitly for python 3.7 support).
-        # so there may be some names in there that we do not really need
-        # (but they don't bother us)
-        names = (
-            set(node.id for node in ast.walk(tree) if hasattr(node, "id"))
-            | set(
-                node.value for node in ast.walk(tree) if isinstance(node, ast.Constant)
-            )
-            | set(node.s for node in ast.walk(tree) if isinstance(node, ast.Str))
-        )
+        field_lister = FieldLister()
+        field_lister.visit(tree)
 
         # Restrict names/strings/identifiers/functions/symbols to the ones actually
         # seen in the expression. We use `names` here for everything, even though we
@@ -235,10 +226,18 @@ class Environment:
         # in the expression while there's also `FOO` in `INFO`.
         # (That shouldn't make much of a difference, but if it does, we can check
         # for a node's parent [e.g. is it `INFO` or `FORMAT` or …])
-        available_info_fields = set(vcf_header.info) & names
-        available_sample_names = set(vcf_header.samples) & names
-        available_format_keys = set(vcf_header.formats) & names
-        avaible_vcf_fields = {
+        available_info_fields = (
+            set(vcf_header.info) & field_lister.field_accesses["INFO"]
+        )
+
+        available_sample_names = (
+            set(vcf_header.samples) & field_lister.field_accesses["SAMPLES"]
+        )
+
+        available_format_keys = (
+            set(vcf_header.formats) & field_lister.field_accesses["FORMAT"]
+        )
+        available_vcf_fields = {
             "QUAL",
             "FILTER",
             "ID",
@@ -247,16 +246,18 @@ class Environment:
             "REF",
             "ALT",
             "SAMPLES",
-        } & names
-        available_symbols = globals_whitelist.keys() & names
+        } & field_lister.names
 
+        available_symbols = globals_whitelist.keys() & field_lister.names
         ann_field_name = expression.annotation_key()
         annotation_keys = get_annotation_keys(vcf_header, ann_field_name)
         # For the annotation keys, we have to keep track of their indices,
         # since the annotation values are a string joined by (usually) '|',
         # i.e. when splitting at '|', extract only the values at certain indices.
         available_annotation_keys = [
-            (i, k) for i, k in enumerate(annotation_keys) if k in names
+            (i, k)
+            for i, k in enumerate(annotation_keys)
+            if k in field_lister.field_accesses[ann_field_name]
         ]
 
         self.idx = -1  # Consider changing this to None
@@ -299,7 +300,7 @@ class Environment:
         }
 
         # … but we don't need all of them, so remove unneeded fields:
-        for field in self.field_lookup.keys() - set(avaible_vcf_fields):
+        for field in self.field_lookup.keys() - set(available_vcf_fields):
             self.field_lookup.pop(field, None)
 
         # Build the env dict used for `eval`
@@ -425,12 +426,14 @@ def check_filter_expression(expression: str,) -> str:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("vcf", help="The file containing the variants.")
     parser.add_argument(
         "expression",
         type=check_filter_expression,
         help="Filter variants and annotations. If this removes all annotations, "
         "the variant is removed as well.",
+    )
+    parser.add_argument(
+        "vcf", help="The file containing the variants.", nargs="?", default="-"
     )
     parser.add_argument(
         "--output",

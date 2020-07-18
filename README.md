@@ -38,31 +38,31 @@ The following VCF fields can be accessed in the filter expression:
 
 * Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH":
   ```
-  vembrane variants.bcf 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"'
+  vembrane 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"' variants.bcf
   ```
 * Only keep variants with quality at least 30:
   ```
-  vembrane variants.vcf 'QUAL >= 30'
+  vembrane 'QUAL >= 30' variants.vcf
   ```
 * Only keep annotations and variants where feature (transcript) is ENST00000307301:
   ```
-  vembrane variants.bcf 'ANN["Feature"] == "ENST00000307301"'
+  vembrane 'ANN["Feature"] == "ENST00000307301"' variants.bcf
   ```
 * Only keep annotations and variants where protein position is less than 10:
   ```
-  vembrane variants.bcf 'ANN["Protein"].start < 10'
+  vembrane 'ANN["Protein"].start < 10' variants.bcf
   ```
 * Only keep variants where mapping quality is exactly 60:
   ```
-  vembrane variants.bcf 'INFO["MQ"] == 60'
+  vembrane 'INFO["MQ"] == 60' variants.bcf
   ```
 * Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
   ```
-  vembrane variants.vcf 're.search("stream", ANN["Consequence"])'
+  vembrane 're.search("stream", ANN["Consequence"])' variants.vcf
   ```
 * Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
   ```
-  vembrane variants.vcf 'any(entry in ANN["CLIN_SIG"] for entry in ("pathogenic", "likely_pathogenic", "drug_response"))'
+  vembrane 'any(entry in ANN["CLIN_SIG"] for entry in ("pathogenic", "likely_pathogenic", "drug_response"))' variants.vcf
   ```
 
 ## Custom ANN types
