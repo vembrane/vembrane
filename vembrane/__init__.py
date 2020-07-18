@@ -365,7 +365,7 @@ class Environment:
         tree = ast.parse(expression.raw_expression)
         field_lister = FieldLister()
         field_lister.visit(tree)
-        print(field_lister)
+        print(field_lister, file=sys.stderr)
 
         # Restrict names/strings/identifiers/functions/symbols to the ones actually
         # seen in the expression. We use `names` here for everything, even though we
@@ -398,7 +398,9 @@ class Environment:
         available_symbols = globals_whitelist.keys() & (
             field_lister.modules | field_lister.symbols | field_lister.functions
         )
-        self.globals_whitelist = {key: globals_whitelist[key] for key in available_symbols}
+        self.globals_whitelist = {
+            key: globals_whitelist[key] for key in available_symbols
+        }
 
         ann_field_name = expression.annotation_key()
         annotation_keys = get_annotation_keys(vcf_header, ann_field_name)
