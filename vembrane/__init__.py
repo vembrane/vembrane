@@ -219,7 +219,6 @@ class Environment:
         tree = ast.parse(expression.raw_expression)
         field_lister = FieldLister()
         field_lister.visit(tree)
-        print(field_lister, file=sys.stderr)
 
         # Restrict names/strings/identifiers/functions/symbols to the ones actually
         # seen in the expression. We use `names` here for everything, even though we

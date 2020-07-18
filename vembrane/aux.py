@@ -87,6 +87,10 @@ class FieldLister(ast.NodeVisitor):
         for node in ast.walk(root):
             if hasattr(node, "id"):
                 self.names.add(node.id)
+            if isinstance(node, ast.Constant):
+                self.names.add(node.value)
+            if isinstance(node, ast.Str):
+                self.names.add(node.s)
         super().visit(root)
 
     def visit_Subscript(self, node: ast.Subscript) -> Any:
