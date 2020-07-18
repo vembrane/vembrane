@@ -249,12 +249,14 @@ def check_filter_expression(expression: str,) -> str:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("vcf", help="The file containing the variants.")
     parser.add_argument(
         "expression",
         type=check_filter_expression,
         help="Filter variants and annotations. If this removes all annotations, "
         "the variant is removed as well.",
+    )
+    parser.add_argument(
+        "vcf", help="The file containing the variants.", nargs="?", default="-"
     )
     parser.add_argument(
         "--output",
