@@ -103,11 +103,15 @@ class AnnotationEntry:
         self._nafunc = nafunc
         self._description = description
 
+    @property
+    def name(self):
+        return self._name
+
     def convert(self, value: str) -> Tuple[str, Any]:
         if value:
-            return self._name, self._typefunc(value)
+            return self._typefunc(value)
         else:
-            return self._name, self._nafunc()
+            return self._nafunc()
 
     def description(self):
         return self._description
@@ -130,7 +134,7 @@ class AnnotationTyper:
     def __init__(self, mapping: Dict[str, AnnotationEntry]):
         self._mapping = mapping
 
-    def convert(self, key: str, value: str) -> Tuple[str, AnnotationType]:
+    def get_entry(self, key: str) -> Tuple[str, AnnotationType]:
         entry = self._mapping.get(key)
         if not entry:
             print(
@@ -142,7 +146,11 @@ class AnnotationTyper:
             )
             self._mapping[key] = DefaultAnnotationEntry(key)
             entry = self._mapping[key]
-        return entry.convert(value)
+        return entry
+
+    def convert(self, key: str, value: str) -> Tuple[str, AnnotationType]:
+        entry = self.get_entry(key)
+        return entry.name, entry.convert(value)
 
 
 KNOWN_ANN_TYPE_MAP_SNPEFF = {

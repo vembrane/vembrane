@@ -16,7 +16,7 @@ from collections import defaultdict
 from functools import lru_cache
 from itertools import chain
 from sys import stderr
-from typing import Iterator, List, Dict, Any
+from typing import Any, Callable, Dict, Iterator, List, Tuple
 
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
@@ -92,15 +92,22 @@ class Info:
 
 
 class Annotation:
-    def __init__(self, record_idx: int, annotation_data: Dict[str, Any]):
+    def __init__(self, record_idx: int, annotation_data: List[str], ann_conv):
         self._record_idx = record_idx
-        self._data = annotation_data
+        self._data = {}
+        self._annotation_data = annotation_data
+        self._ann_conv = ann_conv
 
     def __getitem__(self, item):
         try:
             return self._data[item]
-        except KeyError as ke:
-            raise UnknownAnnotation(self._record_idx, ke)
+        except KeyError:
+            try:
+                ann_idx, convert = self._ann_conv[item]
+            except KeyError as ke:
+                raise UnknownAnnotation(self._record_idx, ke)
+            value = self._data[item] = convert(self._annotation_data[ann_idx])
+            return value
 
 
 def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
@@ -140,17 +147,16 @@ class Expression:
         return self._has_ann
 
     def evaluate(
-        self, idx: int, annotation: str, annotation_keys: List[str], env: dict,
+        self,
+        idx: int,
+        annotation: str,
+        ann_conv: Dict[str, Tuple[int, Callable[[str], Any]]],
+        env: dict,
     ) -> bool:
-        env[self._ann_key] = Annotation(
-            idx,
-            dict(
-                map(
-                    lambda v: ANN_TYPER.convert(v[0], v[1]),
-                    zip(annotation_keys, parse_annotation_entry(annotation)),
-                )
-            ),
-        )
+        if self._has_ann:
+            env[self._ann_key] = Annotation(
+                idx, parse_annotation_entry(annotation), ann_conv,
+            )
         self._globals.update(env)
         return self._func()
 
@@ -158,9 +164,13 @@ class Expression:
 class Environment:
     def __init__(self, expression: Expression, header: VariantHeader):
         self.expression = expression
-        self.annotation_keys = get_annotation_keys(header, expression.annotation_key())
         self._empty_env = {name: NA for name in header.info}
         self._env = {}
+        annotation_keys = get_annotation_keys(header, expression.annotation_key())
+        self.ann_conv = {
+            entry.name: (ann_idx, entry.convert)
+            for ann_idx, entry in enumerate(map(ANN_TYPER.get_entry, annotation_keys))
+        }
 
     def update(self, idx, record):
         self.idx = idx
@@ -190,9 +200,7 @@ class Environment:
         env["SAMPLES"] = list(record.samples)
 
     def evaluate(self, annotation) -> bool:
-        return self.expression.evaluate(
-            self.idx, annotation, self.annotation_keys, self._env
-        )
+        return self.expression.evaluate(self.idx, annotation, self.ann_conv, self._env)
 
 
 def filter_vcf(
