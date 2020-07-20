@@ -160,6 +160,7 @@ def filter_vcf(
     annotation_keys = get_annotation_keys(header, ann_key)
 
     for idx, record in enumerate(vcf):
+        continue
         # setup filter expression env
         env.clear()
         for name in header.info:
