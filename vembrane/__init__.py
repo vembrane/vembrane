@@ -16,7 +16,7 @@ from collections import defaultdict
 from functools import lru_cache
 from itertools import chain
 from sys import stderr
-from typing import Any, Callable, Dict, Iterator, List, Tuple
+from typing import Any, Dict, Iterator, List
 
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
@@ -92,11 +92,20 @@ class Info:
 
 
 class Annotation:
-    def __init__(self, record_idx: int, annotation_data: List[str], ann_conv):
-        self._record_idx = record_idx
+    def __init__(self, ann_key: str, header: VariantHeader):
+        self._record_idx = -1
+        self._annotation_data = {}
         self._data = {}
-        self._annotation_data = annotation_data
-        self._ann_conv = ann_conv
+        annotation_keys = get_annotation_keys(header, ann_key)
+        self._ann_conv = {
+            entry.name: (ann_idx, entry.convert)
+            for ann_idx, entry in enumerate(map(ANN_TYPER.get_entry, annotation_keys))
+        }
+
+    def update(self, record_idx: int, annotation: str):
+        self._record_idx = record_idx
+        self._data.clear()
+        self._annotation_data = parse_annotation_entry(annotation)
 
     def __getitem__(self, item):
         try:
@@ -129,48 +138,25 @@ def parse_annotation_entry(entry: str,) -> List[str]:
     return entry.split("|")
 
 
-class Expression:
-    def __init__(self, expression: str, ann_key: str = "ANN"):
-        # We use self._globals + self.func as a closure.
-        # Do not reassign self._globals, but use .update() on it!
-        self._globals = globals_whitelist.copy()
-        self._func = eval(f"lambda: {expression}", self._globals, {})
+class Environment:
+    def __init__(self, expression: str, ann_key: str, header: VariantHeader):
         self._ann_key = ann_key
         self._has_ann = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
             for node in ast.walk(ast.parse(expression))
         )
-
-    def annotation_key(self):
-        return self._ann_key
+        self._annotation = Annotation(ann_key, header)
+        self._empty_env = {name: NA for name in header.info}
+        if self._has_ann:
+            self._empty_env[ann_key] = self._annotation
+        self._env = {}
+        # We use self._globals + self.func as a closure.
+        # Do not reassign self._globals, but use .update() on it!
+        self._globals = globals_whitelist.copy()
+        self._func = eval(f"lambda: {expression}", self._globals, {})
 
     def filters_annotations(self):
         return self._has_ann
-
-    def evaluate(
-        self,
-        idx: int,
-        annotation: str,
-        ann_conv: Dict[str, Tuple[int, Callable[[str], Any]]],
-        env: dict,
-    ) -> bool:
-        if self._has_ann:
-            annotation_entries = parse_annotation_entry(annotation)
-            env[self._ann_key] = Annotation(idx, annotation_entries, ann_conv,)
-        self._globals.update(env)
-        return self._func()
-
-
-class Environment:
-    def __init__(self, expression: Expression, header: VariantHeader):
-        self.expression = expression
-        self._empty_env = {name: NA for name in header.info}
-        self._env = {}
-        annotation_keys = get_annotation_keys(header, expression.annotation_key())
-        self.ann_conv = {
-            entry.name: (ann_idx, entry.convert)
-            for ann_idx, entry in enumerate(map(ANN_TYPER.get_entry, annotation_keys))
-        }
 
     def update(self, idx, record):
         self.idx = idx
@@ -184,9 +170,8 @@ class Environment:
         (env["REF"], *env["ALT"]) = chain(record.alleles)
         env["QUAL"] = type_info(record.qual)
         env["FILTER"] = record.filter
-        ann_key = self.expression.annotation_key()
         env["INFO"] = Info(
-            idx, {key: record.info[key] for key in record.info if key != ann_key},
+            idx, {key: record.info[key] for key in record.info if key != self._ann_key},
         )
 
         formats = {
@@ -199,20 +184,22 @@ class Environment:
         env["FORMAT"] = Format(idx, formats)
         env["SAMPLES"] = list(record.samples)
 
-    def evaluate(self, annotation) -> bool:
-        return self.expression.evaluate(self.idx, annotation, self.ann_conv, self._env)
+    def evaluate(self, annotation: str,) -> bool:
+        if self._has_ann:
+            self._annotation.update(self.idx, annotation)
+        self._globals.update(self._env)
+        return self._func()
 
 
 def filter_vcf(
-    vcf: VariantFile, expression: Expression, keep_unmatched: bool = False,
+    vcf: VariantFile, expression: str, ann_key: str, keep_unmatched: bool = False,
 ) -> Iterator[VariantRecord]:
 
-    ann_key = expression.annotation_key()
-    env = Environment(expression, vcf.header)
+    env = Environment(expression, ann_key, vcf.header)
 
     for idx, record in enumerate(vcf):
         env.update(idx, record)
-        if expression.filters_annotations():
+        if env.filters_annotations():
             # if the expression contains a reference to the ANN field
             # get all annotations from the record.info field
             # (or supply an empty ANN value if the record has no ANN field)
@@ -324,7 +311,6 @@ def main():
         "the expression.",
     )
     args = parser.parse_args()
-    expression = Expression(args.expression, ann_key=args.annotation_key)
 
     with VariantFile(args.vcf) as vcf:
         fmt = ""
@@ -345,7 +331,12 @@ def main():
         )
 
         with VariantFile(args.output, "w" + fmt, header=header,) as out:
-            records = filter_vcf(vcf, expression, keep_unmatched=args.keep_unmatched,)
+            records = filter_vcf(
+                vcf,
+                args.expression,
+                args.annotation_key,
+                keep_unmatched=args.keep_unmatched,
+            )
             if args.statistics is not None:
                 records = statistics(records, vcf, args.statistics, args.annotation_key)
 
