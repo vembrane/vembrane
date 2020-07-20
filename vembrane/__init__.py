@@ -77,12 +77,18 @@ class Info:
     def __init__(self, record_idx: int, info_dict: Dict[str, Dict[str, Any]]):
         self._record_idx = record_idx
         self._info_dict = info_dict
+        self._typed_dict = {}
 
     def __getitem__(self, item):
         try:
-            return self._info_dict[item]
-        except KeyError as ke:
-            raise UnknownInfoField(self._record_idx, ke)
+            return self._typed_dict[item]
+        except KeyError:
+            try:
+                untyped_value = self._info_dict[item]
+            except KeyError as ke:
+                raise UnknownInfoField(self._record_idx, ke)
+            value = self._typed_dict[item] = type_info(untyped_value)
+            return value
 
 
 class Annotation:
@@ -172,8 +178,7 @@ def filter_vcf(
         env["QUAL"] = type_info(record.qual)
         env["FILTER"] = record.filter
         env["INFO"] = Info(
-            idx,
-            {key: type_info(record.info[key]) for key in record.info if key != ann_key},
+            idx, {key: record.info[key] for key in record.info if key != ann_key},
         )
 
         formats = {
