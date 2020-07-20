@@ -138,7 +138,10 @@ def parse_annotation_entry(entry: str,) -> List[str]:
     return entry.split("|")
 
 
-class Environment:
+UNSET = object()
+
+
+class Environment(dict):
     def __init__(self, expression: str, ann_key: str, header: VariantHeader):
         self._ann_key = ann_key
         self._has_ann = any(
@@ -146,48 +149,110 @@ class Environment:
             for node in ast.walk(ast.parse(expression))
         )
         self._annotation = Annotation(ann_key, header)
-        self._empty_env = {name: NA for name in header.info}
-        if self._has_ann:
-            self._empty_env[ann_key] = self._annotation
-        self._env = {}
-        # We use self._globals + self.func as a closure.
-        # Do not reassign self._globals, but use .update() on it!
+        self._globals = {}
+        # We use self + self.func as a closure.
         self._globals = globals_whitelist.copy()
-        self._func = eval(f"lambda: {expression}", self._globals, {})
+        self._func = eval(f"lambda: {expression}", self, {})
+
+        self._getters = {
+            "CHROM": self._get_chrom,
+            "POS": self._get_pos,
+            "ID": self._get_id,
+            "ALT": self._get_alt,
+            "REF": self._get_ref,
+            "QUAL": self._get_qual,
+            "FILTER": self._get_filter,
+            "INFO": self._get_info,
+            "FORMAT": self._get_format,
+            "SAMPLES": self._get_samples,
+        }
+        self._empty_globals = {name: NA for name in header.info}
+        self._empty_globals.update({name: UNSET for name in self._getters})
+        self.record = None
+        self.idx = -1
 
     def filters_annotations(self):
         return self._has_ann
 
     def update(self, idx, record):
         self.idx = idx
-        env = self._env
-        env.clear()
-        env.update(self._empty_env)
+        self.record = record
+        self._globals.update(self._empty_globals)
 
-        env["CHROM"] = record.chrom
-        env["POS"] = record.pos
-        env["ID"] = record.id
-        (env["REF"], *env["ALT"]) = chain(record.alleles)
-        env["QUAL"] = type_info(record.qual)
-        env["FILTER"] = record.filter
-        env["INFO"] = Info(
+    def _get_chrom(self):
+        value = self.record.chrom
+        self._globals["CHROM"] = value
+        return value
+
+    def _get_pos(self):
+        value = self.record.pos
+        self._globals["POS"] = value
+        return value
+
+    def _get_id(self):
+        value = self.record.id
+        self._globals["ID"] = value
+        return value
+
+    def _get_ref_alt(self):
+        ref, *alt = chain(self.record.alleles)
+        self._globals["REF"], self._globals["ALT"] = ref, alt
+        return ref, alt
+
+    def _get_ref(self):
+        return self._get_ref_alt()[0]
+
+    def _get_alt(self):
+        return self._get_ref_alt()[1]
+
+    def _get_qual(self):
+        value = type_info(self.record.qual)
+        self._globals["QUAL"] = value
+        return value
+
+    def _get_filter(self):
+        value = self.record.filter
+        self._globals["FILTER"] = value
+        return value
+
+    def _get_info(self):
+        idx = self.idx
+        record = self.record
+        value = Info(
             idx, {key: record.info[key] for key in record.info if key != self._ann_key},
         )
+        self._globals["INFO"] = value
+        return value
 
+    def _get_format(self):
+        idx = self.idx
+        record = self.record
         formats = {
             sample: Sample(
                 idx, sample, {fmt: record.samples[sample][fmt] for fmt in record.format}
             )
             for sample in record.samples
         }
+        value = Format(idx, formats)
+        self._globals["FORMAT"] = value
+        return value
 
-        env["FORMAT"] = Format(idx, formats)
-        env["SAMPLES"] = list(record.samples)
+    def _get_samples(self):
+        value = list(self.record.samples)
+        self._globals["SAMPLES"] = value
+        return value
+
+    def __getitem__(self, item):
+        if item == self._ann_key:
+            return self._annotation
+        value = self._globals[item]
+        if value is UNSET:
+            value = self._getters[item]()
+        return value
 
     def evaluate(self, annotation: str,) -> bool:
         if self._has_ann:
             self._annotation.update(self.idx, annotation)
-        self._globals.update(self._env)
         return self._func()
 
 
