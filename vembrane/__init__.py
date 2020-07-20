@@ -272,7 +272,10 @@ def filter_vcf(
             # if the expression contains a reference to the ANN field
             # get all annotations from the record.info field
             # (or supply an empty ANN value if the record has no ANN field)
-            annotations = record.info.get(ann_key, [""])
+            try:
+                annotations = record.info[ann_key]
+            except KeyError:
+                annotations = [""]
             #  … and only keep the annotations where the expression evaluates to true
             filtered_annotations = [
                 annotation for annotation in annotations if env.evaluate(annotation)
