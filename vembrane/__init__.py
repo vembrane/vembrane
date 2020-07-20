@@ -160,8 +160,6 @@ def filter_vcf(
     annotation_keys = get_annotation_keys(header, ann_key)
 
     for idx, record in enumerate(vcf):
-        yield record
-        continue
         # setup filter expression env
         env.clear()
         for name in header.info:
@@ -192,7 +190,7 @@ def filter_vcf(
             # if the expression contains a reference to the ANN field
             # get all annotations from the record.info field
             # (or supply an empty ANN value if the record has no ANN field)
-            annotations = dict(record.info).get(ann_key, [""])
+            annotations = record.info.get(ann_key, [""])
             #  … and only keep the annotations where the expression evaluates to true
             filtered_annotations = [
                 annotation
