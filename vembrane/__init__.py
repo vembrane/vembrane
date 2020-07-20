@@ -146,12 +146,7 @@ class Annotation:
         self._record_idx = idx
         split = annotation.split("|")
 
-        self._data.update(
-            map(
-                lambda v: ANN_TYPER.convert(v[0], v[1]),
-                ((k, split[i].strip()) for i, k in self._keys),
-            )
-        )
+        self._data.update(ANN_TYPER.convert(k, split[i].strip()) for i, k in self._keys)
 
     def __getitem__(self, item):
         try:
