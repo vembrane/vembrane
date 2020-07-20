@@ -155,21 +155,18 @@ class Expression:
         return self._func()
 
 
-def filter_vcf(
-    vcf: VariantFile, expression: Expression, keep_unmatched: bool = False,
-) -> Iterator[VariantRecord]:
-    header = vcf.header
+class Environment:
+    def __init__(self, expression: Expression, header: VariantHeader):
+        self.expression = expression
+        self.annotation_keys = get_annotation_keys(header, expression.annotation_key())
+        self._empty_env = {name: NA for name in header.info}
+        self._env = {}
 
-    env = dict()
-
-    ann_key = expression.annotation_key()
-    annotation_keys = get_annotation_keys(header, ann_key)
-
-    for idx, record in enumerate(vcf):
-        # setup filter expression env
+    def update(self, idx, record):
+        self.idx = idx
+        env = self._env
         env.clear()
-        for name in header.info:
-            env[name] = NA
+        env.update(self._empty_env)
 
         env["CHROM"] = record.chrom
         env["POS"] = record.pos
@@ -177,6 +174,7 @@ def filter_vcf(
         (env["REF"], *env["ALT"]) = chain(record.alleles)
         env["QUAL"] = type_info(record.qual)
         env["FILTER"] = record.filter
+        ann_key = self.expression.annotation_key()
         env["INFO"] = Info(
             idx, {key: record.info[key] for key in record.info if key != ann_key},
         )
@@ -191,6 +189,21 @@ def filter_vcf(
         env["FORMAT"] = Format(idx, formats)
         env["SAMPLES"] = list(record.samples)
 
+    def evaluate(self, annotation) -> bool:
+        return self.expression.evaluate(
+            self.idx, annotation, self.annotation_keys, self._env
+        )
+
+
+def filter_vcf(
+    vcf: VariantFile, expression: Expression, keep_unmatched: bool = False,
+) -> Iterator[VariantRecord]:
+
+    ann_key = expression.annotation_key()
+    env = Environment(expression, vcf.header)
+
+    for idx, record in enumerate(vcf):
+        env.update(idx, record)
         if expression.filters_annotations():
             # if the expression contains a reference to the ANN field
             # get all annotations from the record.info field
@@ -198,9 +211,7 @@ def filter_vcf(
             annotations = record.info.get(ann_key, [""])
             #  … and only keep the annotations where the expression evaluates to true
             filtered_annotations = [
-                annotation
-                for annotation in annotations
-                if expression.evaluate(idx, annotation, annotation_keys, env,)
+                annotation for annotation in annotations if env.evaluate(annotation)
             ]
             if not filtered_annotations:
                 # skip this record if filter removed all annotations
@@ -212,7 +223,7 @@ def filter_vcf(
         else:
             # otherwise, the annotations are irrelevant w.r.t. the expression,
             # so we can omit them
-            if expression.evaluate(idx, "", [], env,):
+            if env.evaluate(""):
                 yield record
             else:
                 continue
