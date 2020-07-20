@@ -117,7 +117,10 @@ def parse_annotation_entry(entry: str,) -> List[str]:
 
 class Expression:
     def __init__(self, expression: str, ann_key: str = "ANN"):
-        self._expression = expression
+        # We use self._globals + self.func as a closure.
+        # Do not reassign self._globals, but use .update() on it!
+        self._globals = globals_whitelist.copy()
+        self._func = eval(f"lambda: {expression}", self._globals, {})
         self._ann_key = ann_key
         self._has_ann = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
@@ -142,7 +145,8 @@ class Expression:
                 )
             ),
         )
-        return eval(self._expression, globals_whitelist, env)
+        self._globals.update(env)
+        return self._func()
 
 
 def filter_vcf(
