@@ -74,20 +74,23 @@ class Format:
 
 
 class Info:
-    def __init__(self, record_idx: int, info_dict: Dict[str, Dict[str, Any]]):
+    def __init__(self, record_idx: int, record_info, ann_key: str):
         self._record_idx = record_idx
-        self._info_dict = info_dict
-        self._typed_dict = {}
+        self._record_info = record_info
+        self._ann_key = ann_key
+        self._info_dict = {}
 
     def __getitem__(self, item):
         try:
-            return self._typed_dict[item]
+            return self._info_dict[item]
         except KeyError:
             try:
-                untyped_value = self._info_dict[item]
+                if item == self._ann_key:
+                    raise KeyError(item)
+                untyped_value = self._record_info[item]
             except KeyError as ke:
                 raise UnknownInfoField(self._record_idx, ke)
-            value = self._typed_dict[item] = type_info(untyped_value)
+            value = self._info_dict[item] = type_info(untyped_value)
             return value
 
 
@@ -216,11 +219,7 @@ class Environment(dict):
         return value
 
     def _get_info(self):
-        idx = self.idx
-        record = self.record
-        value = Info(
-            idx, {key: record.info[key] for key in record.info if key != self._ann_key},
-        )
+        value = Info(self.idx, self.record.info, self._ann_key)
         self._globals["INFO"] = value
         return value
 
