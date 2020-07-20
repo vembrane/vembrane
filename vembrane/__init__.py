@@ -106,7 +106,8 @@ class Annotation:
                 ann_idx, convert = self._ann_conv[item]
             except KeyError as ke:
                 raise UnknownAnnotation(self._record_idx, ke)
-            value = self._data[item] = convert(self._annotation_data[ann_idx])
+            raw_value = self._annotation_data[ann_idx].strip()
+            value = self._data[item] = convert(raw_value)
             return value
 
 
@@ -125,7 +126,7 @@ def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
 
 @lru_cache(maxsize=32)
 def parse_annotation_entry(entry: str,) -> List[str]:
-    return list(map(str.strip, entry.split("|")))
+    return entry.split("|")
 
 
 class Expression:
@@ -154,9 +155,8 @@ class Expression:
         env: dict,
     ) -> bool:
         if self._has_ann:
-            env[self._ann_key] = Annotation(
-                idx, parse_annotation_entry(annotation), ann_conv,
-            )
+            annotation_entries = parse_annotation_entry(annotation)
+            env[self._ann_key] = Annotation(idx, annotation_entries, ann_conv,)
         self._globals.update(env)
         return self._func()
 
@@ -244,7 +244,10 @@ def statistics(
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
         for annotation in record.info[ann_key]:
-            for key, value in zip(annotation_keys, parse_annotation_entry(annotation)):
+            for key, raw_value in zip(
+                annotation_keys, parse_annotation_entry(annotation)
+            ):
+                value = raw_value.strip()
                 if value:
                     counter[key][value] += 1
         yield record
