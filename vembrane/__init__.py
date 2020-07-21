@@ -16,10 +16,11 @@ from collections import defaultdict
 from functools import lru_cache
 from itertools import chain
 from sys import stderr
-from typing import Iterator, List
+from typing import Iterator, List, Tuple
 
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
+from pysam.libcbcf import VariantRecordInfo, VariantRecordSample
 
 from vembrane.ann_types import NA, type_info, ANN_TYPER
 from vembrane.errors import (
@@ -49,7 +50,7 @@ globals_whitelist = {
 
 
 class Sample:
-    def __init__(self, record_idx: int, sample_name: str, sample):
+    def __init__(self, record_idx: int, sample_name: str, sample: VariantRecordSample):
         self._record_idx = record_idx
         self._sample_name = sample_name
         self._sample = sample
@@ -68,7 +69,7 @@ class Sample:
 
 
 class Format:
-    def __init__(self, record_idx: int, record_samples):
+    def __init__(self, record_idx: int, record_samples: List[VariantRecordSample]):
         self._record_idx = record_idx
         self._record_samples = record_samples
         self._sample_formats = {}
@@ -87,7 +88,7 @@ class Format:
 
 
 class Info:
-    def __init__(self, record_idx: int, record_info, ann_key: str):
+    def __init__(self, record_idx: int, record_info: VariantRecordInfo, ann_key: str):
         self._record_idx = record_idx
         self._record_info = record_info
         self._ann_key = ann_key
@@ -210,7 +211,7 @@ class Environment(dict):
         self._globals["ID"] = value
         return value
 
-    def _get_ref_alt(self):
+    def _get_ref_alt(self) -> Tuple[str, List[str]]:
         ref, *alt = chain(self.record.alleles)
         self._globals["REF"], self._globals["ALT"] = ref, alt
         return ref, alt
@@ -218,10 +219,10 @@ class Environment(dict):
     def _get_ref(self) -> str:
         return self._get_ref_alt()[0]
 
-    def _get_alt(self):
+    def _get_alt(self) -> List[str]:
         return self._get_ref_alt()[1]
 
-    def _get_qual(self):
+    def _get_qual(self) -> float:
         value = type_info(self.record.qual)
         self._globals["QUAL"] = value
         return value
@@ -241,7 +242,7 @@ class Environment(dict):
         self._globals["FORMAT"] = value
         return value
 
-    def _get_samples(self):
+    def _get_samples(self) -> List[VariantRecordSample]:
         value = list(self.record.samples)
         self._globals["SAMPLES"] = value
         return value
