@@ -67,10 +67,8 @@ class Format:
         except KeyError:
             try:
                 record_sample = self._record_samples[sample]
-            except KeyError as ke:
-                raise UnknownSample(
-                    self._record_idx, str(ke).split(":")[1][1:].strip("'")
-                )
+            except KeyError:
+                raise UnknownSample(self._record_idx, sample)
             value = record_sample[self._name]
             self._sample_values[sample] = value
             return value
@@ -94,10 +92,8 @@ class Formats:
         except KeyError:
             try:
                 self._record_format[item]
-            except KeyError as ke:
-                raise UnknownFormatField(
-                    self._record_idx, str(ke).split(":")[1][1:].strip("'")
-                )
+            except KeyError:
+                raise UnknownFormatField(self._record_idx, item)
             format_field = Format(self._record_idx, item, self._record_samples)
             self._formats[item] = format_field
             return format_field
