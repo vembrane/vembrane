@@ -19,8 +19,12 @@ from typing import Iterator, List, Tuple
 
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
-from pysam.libcbcf import VariantRecordInfo, VariantRecordSample
-
+from pysam.libcbcf import (
+    VariantRecordInfo,
+    VariantRecordSample,
+    VariantRecordFormat,
+    VariantRecordSamples,
+)
 from vembrane.ann_types import NA, type_info, ANN_TYPER
 from vembrane.errors import (
     UnknownAnnotation,
@@ -48,42 +52,51 @@ globals_whitelist = {
 }
 
 
-class Sample:
-    def __init__(self, record_idx: int, sample_name: str, sample: VariantRecordSample):
-        self._record_idx = record_idx
-        self._sample_name = sample_name
-        self._sample = sample
-        self._data = {}
-
-    def __getitem__(self, item):
-        try:
-            return self._data[item]
-        except KeyError:
-            try:
-                sample_format = self._sample[item]
-            except KeyError as ke:
-                raise UnknownFormatField(self._record_idx, self._sample_name, ke)
-            self._data[item] = sample_format
-            return sample_format
-
-
 class Format:
-    def __init__(self, record_idx: int, record_samples: List[VariantRecordSample]):
+    def __init__(
+        self, record_idx: int, name: str, record_samples: VariantRecordSamples
+    ):
         self._record_idx = record_idx
+        self._name = name
         self._record_samples = record_samples
-        self._sample_formats = {}
+        self._sample_values = {}
+
+    def __getitem__(self, sample):
+        try:
+            return self._sample_values[sample]
+        except KeyError:
+            try:
+                record_sample = self._record_samples[sample]
+            except KeyError:
+                raise UnknownSample(self._record_idx, sample)
+            value = record_sample[self._name]
+            self._sample_values[sample] = value
+            return value
+
+
+class Formats:
+    def __init__(
+        self,
+        record_idx: int,
+        record_format: VariantRecordFormat,
+        record_samples: VariantRecordSamples,
+    ):
+        self._record_idx = record_idx
+        self._record_format = record_format
+        self._record_samples = record_samples
+        self._formats = {}
 
     def __getitem__(self, item):
         try:
-            return self._sample_formats[item]
+            return self._formats[item]
         except KeyError:
             try:
-                record_sample = self._record_samples[item]
-            except KeyError as ke:
-                raise UnknownSample(self._record_idx, ke)
-            sample = Sample(self._record_idx, item, record_sample)
-            self._sample_formats[item] = sample
-            return sample
+                self._record_format[item]
+            except KeyError:
+                raise UnknownFormatField(self._record_idx, item)
+            format_field = Format(self._record_idx, item, self._record_samples)
+            self._formats[item] = format_field
+            return format_field
 
 
 class Info:
@@ -158,12 +171,12 @@ UNSET = object()
 
 class Environment(dict):
     def __init__(self, expression: str, ann_key: str, header: VariantHeader):
-        self._ann_key = ann_key
-        self._has_ann = any(
+        self._ann_key: str = ann_key
+        self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
             for node in ast.walk(ast.parse(expression))
         )
-        self._annotation = Annotation(ann_key, header)
+        self._annotation: Annotation = Annotation(ann_key, header)
         self._globals = {}
         # We use self + self.func as a closure.
         self._globals = globals_whitelist.copy()
@@ -183,8 +196,8 @@ class Environment(dict):
         }
         self._empty_globals = {name: NA for name in header.info}
         self._empty_globals.update({name: UNSET for name in self._getters})
-        self.record = None
-        self.idx = -1
+        self.record: VariantRecord = None
+        self.idx: int = -1
 
     def filters_annotations(self):
         return self._has_ann
@@ -235,8 +248,8 @@ class Environment(dict):
         self._globals["INFO"] = value
         return value
 
-    def _get_format(self) -> Format:
-        value = Format(self.idx, self.record.samples)
+    def _get_format(self) -> Formats:
+        value = Formats(self.idx, self.record.format, self.record.samples)
         self._globals["FORMAT"] = value
         return value
 
@@ -265,6 +278,7 @@ def filter_vcf(
 
     env = Environment(expression, ann_key, vcf.header)
 
+    record: VariantRecord
     for idx, record in enumerate(vcf):
         env.update_from_record(idx, record)
         if env.filters_annotations():
