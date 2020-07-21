@@ -255,7 +255,7 @@ class Environment(dict):
             value = self._getters[item]()
         return value
 
-    def evaluate(self, annotation: str,) -> bool:
+    def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
             self._annotation.update(self.idx, annotation)
         return self._func()
@@ -291,7 +291,7 @@ def filter_vcf(
         else:
             # otherwise, the annotations are irrelevant w.r.t. the expression,
             # so we can omit them
-            if env.evaluate(""):
+            if env.evaluate():
                 yield record
             else:
                 continue
