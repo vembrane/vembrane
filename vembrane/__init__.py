@@ -189,7 +189,7 @@ class Environment(dict):
     def filters_annotations(self):
         return self._has_ann
 
-    def update(self, idx: int, record: VariantRecord):
+    def update_from_record(self, idx: int, record: VariantRecord):
         self.idx = idx
         self.record = record
         self._globals.update(self._empty_globals)
@@ -266,7 +266,7 @@ def filter_vcf(
     env = Environment(expression, ann_key, vcf.header)
 
     for idx, record in enumerate(vcf):
-        env.update(idx, record)
+        env.update_from_record(idx, record)
         if env.filters_annotations():
             # if the expression contains a reference to the ANN field
             # get all annotations from the record.info field
