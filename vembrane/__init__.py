@@ -13,13 +13,13 @@ import math
 import re
 import sys
 from collections import defaultdict
-from functools import lru_cache
 from itertools import chain
 from sys import stderr
-from typing import Iterator, List, Dict, Any
+from typing import Iterator, List, Tuple
 
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
+from pysam.libcbcf import VariantRecordInfo, VariantRecordSample
 
 from vembrane.ann_types import NA, type_info, ANN_TYPER
 from vembrane.errors import (
@@ -49,52 +49,91 @@ globals_whitelist = {
 
 
 class Sample:
-    def __init__(self, record_idx: int, sample: str, format_data: Dict[str, Any]):
+    def __init__(self, record_idx: int, sample_name: str, sample: VariantRecordSample):
         self._record_idx = record_idx
+        self._sample_name = sample_name
         self._sample = sample
-        self._data = format_data
+        self._data = {}
 
     def __getitem__(self, item):
         try:
             return self._data[item]
-        except KeyError as ke:
-            raise UnknownFormatField(self._record_idx, self._sample, ke)
+        except KeyError:
+            try:
+                sample_format = self._sample[item]
+            except KeyError as ke:
+                raise UnknownFormatField(self._record_idx, self._sample_name, ke)
+            self._data[item] = sample_format
+            return sample_format
 
 
 class Format:
-    def __init__(self, record_idx: int, sample_formats: Dict[Sample, Dict[str, Any]]):
+    def __init__(self, record_idx: int, record_samples: List[VariantRecordSample]):
         self._record_idx = record_idx
-        self._sample_formats = sample_formats
+        self._record_samples = record_samples
+        self._sample_formats = {}
 
     def __getitem__(self, item):
         try:
             return self._sample_formats[item]
-        except KeyError as ke:
-            raise UnknownSample(self._record_idx, ke)
+        except KeyError:
+            try:
+                record_sample = self._record_samples[item]
+            except KeyError as ke:
+                raise UnknownSample(self._record_idx, ke)
+            sample = Sample(self._record_idx, item, record_sample)
+            self._sample_formats[item] = sample
+            return sample
 
 
 class Info:
-    def __init__(self, record_idx: int, info_dict: Dict[str, Dict[str, Any]]):
+    def __init__(self, record_idx: int, record_info: VariantRecordInfo, ann_key: str):
         self._record_idx = record_idx
-        self._info_dict = info_dict
+        self._record_info = record_info
+        self._ann_key = ann_key
+        self._info_dict = {}
 
     def __getitem__(self, item):
         try:
             return self._info_dict[item]
-        except KeyError as ke:
-            raise UnknownInfoField(self._record_idx, ke)
+        except KeyError:
+            try:
+                if item == self._ann_key:
+                    raise KeyError(item)
+                untyped_value = self._record_info[item]
+            except KeyError as ke:
+                raise UnknownInfoField(self._record_idx, ke)
+            value = self._info_dict[item] = type_info(untyped_value)
+            return value
 
 
 class Annotation:
-    def __init__(self, record_idx: int, annotation_data: Dict[str, Any]):
+    def __init__(self, ann_key: str, header: VariantHeader):
+        self._record_idx = -1
+        self._annotation_data = {}
+        self._data = {}
+        annotation_keys = get_annotation_keys(header, ann_key)
+        self._ann_conv = {
+            entry.name: (ann_idx, entry.convert)
+            for ann_idx, entry in enumerate(map(ANN_TYPER.get_entry, annotation_keys))
+        }
+
+    def update(self, record_idx: int, annotation: str):
         self._record_idx = record_idx
-        self._data = annotation_data
+        self._data.clear()
+        self._annotation_data = split_annotation_entry(annotation)
 
     def __getitem__(self, item):
         try:
             return self._data[item]
-        except KeyError as ke:
-            raise UnknownAnnotation(self._record_idx, ke)
+        except KeyError:
+            try:
+                ann_idx, convert = self._ann_conv[item]
+            except KeyError as ke:
+                raise UnknownAnnotation(self._record_idx, ke)
+            raw_value = self._annotation_data[ann_idx].strip()
+            value = self._data[item] = convert(raw_value)
+            return value
 
 
 def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
@@ -110,88 +149,135 @@ def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
     return []
 
 
-@lru_cache(maxsize=32)
-def parse_annotation_entry(entry: str,) -> List[str]:
-    return list(map(str.strip, entry.split("|")))
+def split_annotation_entry(entry: str,) -> List[str]:
+    return entry.split("|")
 
 
-class Expression:
-    def __init__(self, expression: str, ann_key: str = "ANN"):
-        self._expression = expression
+UNSET = object()
+
+
+class Environment(dict):
+    def __init__(self, expression: str, ann_key: str, header: VariantHeader):
         self._ann_key = ann_key
         self._has_ann = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
             for node in ast.walk(ast.parse(expression))
         )
+        self._annotation = Annotation(ann_key, header)
+        self._globals = {}
+        # We use self + self.func as a closure.
+        self._globals = globals_whitelist.copy()
+        self._func = eval(f"lambda: {expression}", self, {})
 
-    def annotation_key(self):
-        return self._ann_key
+        self._getters = {
+            "CHROM": self._get_chrom,
+            "POS": self._get_pos,
+            "ID": self._get_id,
+            "ALT": self._get_alt,
+            "REF": self._get_ref,
+            "QUAL": self._get_qual,
+            "FILTER": self._get_filter,
+            "INFO": self._get_info,
+            "FORMAT": self._get_format,
+            "SAMPLES": self._get_samples,
+        }
+        self._empty_globals = {name: NA for name in header.info}
+        self._empty_globals.update({name: UNSET for name in self._getters})
+        self.record = None
+        self.idx = -1
 
     def filters_annotations(self):
         return self._has_ann
 
-    def evaluate(
-        self, idx: int, annotation: str, annotation_keys: List[str], env: dict,
-    ) -> bool:
-        env[self._ann_key] = Annotation(
-            idx,
-            dict(
-                map(
-                    lambda v: ANN_TYPER.convert(v[0], v[1]),
-                    zip(annotation_keys, parse_annotation_entry(annotation)),
-                )
-            ),
-        )
-        return eval(self._expression, globals_whitelist, env)
+    def update_from_record(self, idx: int, record: VariantRecord):
+        self.idx = idx
+        self.record = record
+        self._globals.update(self._empty_globals)
+
+    def _get_chrom(self) -> str:
+        value = self.record.chrom
+        self._globals["CHROM"] = value
+        return value
+
+    def _get_pos(self) -> int:
+        value = self.record.pos
+        self._globals["POS"] = value
+        return value
+
+    def _get_id(self) -> str:
+        value = self.record.id
+        self._globals["ID"] = value
+        return value
+
+    def _get_ref_alt(self) -> Tuple[str, List[str]]:
+        ref, *alt = chain(self.record.alleles)
+        self._globals["REF"], self._globals["ALT"] = ref, alt
+        return ref, alt
+
+    def _get_ref(self) -> str:
+        return self._get_ref_alt()[0]
+
+    def _get_alt(self) -> List[str]:
+        return self._get_ref_alt()[1]
+
+    def _get_qual(self) -> float:
+        value = type_info(self.record.qual)
+        self._globals["QUAL"] = value
+        return value
+
+    def _get_filter(self) -> str:
+        value = self.record.filter
+        self._globals["FILTER"] = value
+        return value
+
+    def _get_info(self) -> Info:
+        value = Info(self.idx, self.record.info, self._ann_key)
+        self._globals["INFO"] = value
+        return value
+
+    def _get_format(self) -> Format:
+        value = Format(self.idx, self.record.samples)
+        self._globals["FORMAT"] = value
+        return value
+
+    def _get_samples(self) -> List[VariantRecordSample]:
+        value = list(self.record.samples)
+        self._globals["SAMPLES"] = value
+        return value
+
+    def __getitem__(self, item):
+        if item == self._ann_key:
+            return self._annotation
+        value = self._globals[item]
+        if value is UNSET:
+            value = self._getters[item]()
+        return value
+
+    def evaluate(self, annotation: str = "") -> bool:
+        if self._has_ann:
+            self._annotation.update(self.idx, annotation)
+        return self._func()
 
 
 def filter_vcf(
-    vcf: VariantFile, expression: Expression, keep_unmatched: bool = False,
+    vcf: VariantFile, expression: str, ann_key: str, keep_unmatched: bool = False,
 ) -> Iterator[VariantRecord]:
-    header = vcf.header
 
-    env = dict()
-
-    ann_key = expression.annotation_key()
-    annotation_keys = get_annotation_keys(header, ann_key)
+    env = Environment(expression, ann_key, vcf.header)
 
     for idx, record in enumerate(vcf):
-        # setup filter expression env
-        env.clear()
-        for name in header.info:
-            env[name] = NA
-
-        env["CHROM"] = record.chrom
-        env["POS"] = record.pos
-        env["ID"] = record.id
-        (env["REF"], *env["ALT"]) = chain(record.alleles)
-        env["QUAL"] = type_info(record.qual)
-        env["FILTER"] = record.filter
-        env["INFO"] = Info(
-            idx,
-            {key: type_info(record.info[key]) for key in record.info if key != ann_key},
-        )
-
-        formats = {
-            sample: Sample(
-                idx, sample, {fmt: record.samples[sample][fmt] for fmt in record.format}
-            )
-            for sample in record.samples
-        }
-
-        env["FORMAT"] = Format(idx, formats)
-        env["SAMPLES"] = list(record.samples)
-
-        if expression.filters_annotations():
+        env.update_from_record(idx, record)
+        if env.filters_annotations():
             # if the expression contains a reference to the ANN field
             # get all annotations from the record.info field
             # (or supply an empty ANN value if the record has no ANN field)
-            annotations = dict(record.info).get(ann_key, [""])
+            try:
+                annotations = record.info[ann_key]
+            except KeyError:
+                annotations = [""]
             #  … and only keep the annotations where the expression evaluates to true
             filtered_annotations = [
-                annotation
-                for annotation in annotations
-                if expression.evaluate(idx, annotation, annotation_keys, env,)
+                annotation for annotation in annotations if env.evaluate(annotation)
             ]
             if not filtered_annotations:
                 # skip this record if filter removed all annotations
@@ -203,7 +289,7 @@ def filter_vcf(
         else:
             # otherwise, the annotations are irrelevant w.r.t. the expression,
             # so we can omit them
-            if expression.evaluate(idx, "", [], env,):
+            if env.evaluate():
                 yield record
             else:
                 continue
@@ -216,7 +302,10 @@ def statistics(
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
         for annotation in record.info[ann_key]:
-            for key, value in zip(annotation_keys, parse_annotation_entry(annotation)):
+            for key, raw_value in zip(
+                annotation_keys, split_annotation_entry(annotation)
+            ):
+                value = raw_value.strip()
                 if value:
                     counter[key][value] += 1
         yield record
@@ -293,7 +382,6 @@ def main():
         "the expression.",
     )
     args = parser.parse_args()
-    expression = Expression(args.expression, ann_key=args.annotation_key)
 
     with VariantFile(args.vcf) as vcf:
         fmt = ""
@@ -314,7 +402,12 @@ def main():
         )
 
         with VariantFile(args.output, "w" + fmt, header=header,) as out:
-            records = filter_vcf(vcf, expression, keep_unmatched=args.keep_unmatched,)
+            records = filter_vcf(
+                vcf,
+                args.expression,
+                args.annotation_key,
+                keep_unmatched=args.keep_unmatched,
+            )
             if args.statistics is not None:
                 records = statistics(records, vcf, args.statistics, args.annotation_key)
 
