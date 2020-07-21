@@ -13,7 +13,7 @@ import math
 import re
 import sys
 from collections import defaultdict
-from itertools import chain
+from itertools import chain, islice
 from sys import stderr
 from typing import Iterator, List, Tuple
 
@@ -409,14 +409,14 @@ def main():
         )
 
         try:
-            first_record = next(records)
+            first_record = list(islice(records, 1))
         except VembraneError as ve:
             print(ve, file=stderr)
             exit(1)
 
-        with VariantFile(args.output, "w" + fmt, header=header,) as out:
-            records = chain(first_record, records)
+        records = chain(first_record, records)
 
+        with VariantFile(args.output, "w" + fmt, header=header,) as out:
             if args.statistics is not None:
                 records = statistics(records, vcf, args.statistics, args.annotation_key)
 
