@@ -13,7 +13,6 @@ import math
 import re
 import sys
 from collections import defaultdict
-from functools import lru_cache
 from itertools import chain
 from sys import stderr
 from typing import Iterator, List, Tuple
@@ -122,7 +121,7 @@ class Annotation:
     def update(self, record_idx: int, annotation: str):
         self._record_idx = record_idx
         self._data.clear()
-        self._annotation_data = parse_annotation_entry(annotation)
+        self._annotation_data = split_annotation_entry(annotation)
 
     def __getitem__(self, item):
         try:
@@ -150,8 +149,7 @@ def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
     return []
 
 
-@lru_cache(maxsize=32)
-def parse_annotation_entry(entry: str,) -> List[str]:
+def split_annotation_entry(entry: str,) -> List[str]:
     return entry.split("|")
 
 
@@ -305,7 +303,7 @@ def statistics(
     for record in records:
         for annotation in record.info[ann_key]:
             for key, raw_value in zip(
-                annotation_keys, parse_annotation_entry(annotation)
+                annotation_keys, split_annotation_entry(annotation)
             ):
                 value = raw_value.strip()
                 if value:
