@@ -175,12 +175,12 @@ UNSET = object()
 
 class Environment(dict):
     def __init__(self, expression: str, ann_key: str, header: VariantHeader):
-        self._ann_key = ann_key
-        self._has_ann = any(
+        self._ann_key: str = ann_key
+        self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
             for node in ast.walk(ast.parse(expression))
         )
-        self._annotation = Annotation(ann_key, header)
+        self._annotation: Annotation = Annotation(ann_key, header)
         self._globals = {}
         # We use self + self.func as a closure.
         self._globals = globals_whitelist.copy()
@@ -200,8 +200,8 @@ class Environment(dict):
         }
         self._empty_globals = {name: NA for name in header.info}
         self._empty_globals.update({name: UNSET for name in self._getters})
-        self.record = None
-        self.idx = -1
+        self.record: VariantRecord = None
+        self.idx: int = -1
 
     def filters_annotations(self):
         return self._has_ann
@@ -282,6 +282,7 @@ def filter_vcf(
 
     env = Environment(expression, ann_key, vcf.header)
 
+    record: VariantRecord
     for idx, record in enumerate(vcf):
         env.update_from_record(idx, record)
         if env.filters_annotations():
