@@ -26,7 +26,7 @@ The following VCF fields can be accessed in the filter expression:
 |`ALT`| `List[str]` |  Alternative alleles  | `"C" in ALT or ALT[0] == "G"`|
 |`QUAL`| `float`  | Quality |  `QUAL >= 60` |
 |`FILTER`|  |   |  |
-|`FORMAT`|`Dict[str, Dict[str, Any¹]]`| `Sample -> (Format -> Value)` | `FORMAT[SAMPLES[0]]["DP"][0] > 0` |
+|`FORMAT`|`Dict[str, Dict[str, Any¹]]`| `Format -> (Sample -> Value)` | `FORMAT["DP"][SAMPLES[0]] > 0` |
 |`SAMPLES`|`List[str]`| `[Sample]`  |  `"Tumor" in SAMPLES` |
 
  ¹ depends on type specified in VCF header
