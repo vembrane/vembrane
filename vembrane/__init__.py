@@ -190,22 +190,22 @@ class Environment(dict):
     def filters_annotations(self):
         return self._has_ann
 
-    def update(self, idx, record):
+    def update(self, idx: int, record: VariantRecord):
         self.idx = idx
         self.record = record
         self._globals.update(self._empty_globals)
 
-    def _get_chrom(self):
+    def _get_chrom(self) -> str:
         value = self.record.chrom
         self._globals["CHROM"] = value
         return value
 
-    def _get_pos(self):
+    def _get_pos(self) -> int:
         value = self.record.pos
         self._globals["POS"] = value
         return value
 
-    def _get_id(self):
+    def _get_id(self) -> str:
         value = self.record.id
         self._globals["ID"] = value
         return value
@@ -215,7 +215,7 @@ class Environment(dict):
         self._globals["REF"], self._globals["ALT"] = ref, alt
         return ref, alt
 
-    def _get_ref(self):
+    def _get_ref(self) -> str:
         return self._get_ref_alt()[0]
 
     def _get_alt(self):
@@ -226,17 +226,17 @@ class Environment(dict):
         self._globals["QUAL"] = value
         return value
 
-    def _get_filter(self):
+    def _get_filter(self) -> str:
         value = self.record.filter
         self._globals["FILTER"] = value
         return value
 
-    def _get_info(self):
+    def _get_info(self) -> Info:
         value = Info(self.idx, self.record.info, self._ann_key)
         self._globals["INFO"] = value
         return value
 
-    def _get_format(self):
+    def _get_format(self) -> Format:
         value = Format(self.idx, self.record.samples)
         self._globals["FORMAT"] = value
         return value
