@@ -27,11 +27,11 @@ class UnknownSample(VembraneError):
 
 
 class UnknownFormatField(VembraneError):
-    """Unknown INFO key"""
+    """Unknown FORMAT key"""
 
-    def __init__(self, record, sample, field, msg=None):
+    def __init__(self, record, field, msg=None):
         if msg is None:
-            msg = f"No FORMAT field '{field}' in sample '{sample}' of record {record}"
+            msg = f"No FORMAT field '{field}' in record {record}"
         super(UnknownFormatField, self).__init__(msg)
         self.record = record
         self.field = field
