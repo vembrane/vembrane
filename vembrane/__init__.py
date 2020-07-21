@@ -401,13 +401,22 @@ def main():
             ),
         )
 
+        records = filter_vcf(
+            vcf,
+            args.expression,
+            args.annotation_key,
+            keep_unmatched=args.keep_unmatched,
+        )
+
+        try:
+            first_record = next(records)
+        except VembraneError as ve:
+            print(ve, file=stderr)
+            exit(1)
+
         with VariantFile(args.output, "w" + fmt, header=header,) as out:
-            records = filter_vcf(
-                vcf,
-                args.expression,
-                args.annotation_key,
-                keep_unmatched=args.keep_unmatched,
-            )
+            records = chain(first_record, records)
+
             if args.statistics is not None:
                 records = statistics(records, vcf, args.statistics, args.annotation_key)
 
