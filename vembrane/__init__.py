@@ -9,8 +9,6 @@ except PackageNotFoundError:  # pragma: no cover
 
 import argparse
 import ast
-import math
-import re
 import sys
 from collections import defaultdict
 from itertools import chain, islice
@@ -34,38 +32,7 @@ from vembrane.errors import (
     UnknownSample,
     VembraneError,
 )
-
-globals_whitelist = {
-    **{
-        "__builtins__": {},
-        "__builtin__": {},
-        "__file__": None,
-        "__name__": None,
-        "__doc__": None,
-        "__package__": None,
-    },
-    **{
-        mod.__name__: mod
-        for mod in [
-            any,
-            all,
-            min,
-            max,
-            re,
-            list,
-            dict,
-            set,
-            tuple,
-            zip,
-            map,
-            sum,
-            str,
-            int,
-            float,
-        ]
-    },
-    **{name: mod for name, mod in vars(math).items() if not name.startswith("__")},
-}
+from vembrane.globals_whitelist import globals_whitelist
 
 
 class Format:
