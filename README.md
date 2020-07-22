@@ -6,9 +6,11 @@ Vembrane allows to simultaneously filter variants based on any `INFO` field, `CH
 ## Filter expression
 The filter expression can be any valid python expression that evaluates to `bool`. However, functions and symbols available have been restricted to the following:
 
- * `any`, `all`, `min`, `max`, `sum`
- * `list`, `dict`, `set`, `tuple`,
+ * `any`, `all`
+ * `min`, `max`, `sum`
+ * `list`, `dict`, `set`, `tuple`
  * `zip`, `map`
+ * `str`, `float`, `int`
  * Any function or symbol from [`math`](https://docs.python.org/3/library/math.html)
  * Regular expressions via [`re`](https://docs.python.org/3/library/re.html)
 
