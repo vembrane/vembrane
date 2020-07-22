@@ -8,7 +8,7 @@ The filter expression can be any valid python expression that evaluates to `bool
 
  * `any`, `all`, `min`, `max`, `sum`
  * `list`, `dict`, `set`, `tuple`,
- * `zip`, `map`
+ * `zip`, `map`, `str`, `float`, `int`
  * Any function or symbol from [`math`](https://docs.python.org/3/library/math.html)
  * Regular expressions via [`re`](https://docs.python.org/3/library/re.html)
 
