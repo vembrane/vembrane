@@ -68,7 +68,16 @@ globals_whitelist = {
 }
 
 
-class Format:
+class NoValueDict:
+    def __contains__(self, item):
+        try:
+            value = self[item]
+        except KeyError:
+            return False
+        return value is not NA
+
+
+class Format(NoValueDict):
     def __init__(
         self, record_idx: int, name: str, record_samples: VariantRecordSamples
     ):
@@ -90,7 +99,7 @@ class Format:
             return value
 
 
-class Formats:
+class Formats(NoValueDict):
     def __init__(
         self,
         record_idx: int,
@@ -115,7 +124,7 @@ class Formats:
             return format_field
 
 
-class Info:
+class Info(NoValueDict):
     def __init__(
         self,
         record_idx: int,
@@ -147,7 +156,7 @@ class Info:
             return value
 
 
-class Annotation:
+class Annotation(NoValueDict):
     def __init__(self, ann_key: str, header: VariantHeader):
         self._record_idx = -1
         self._annotation_data = {}
