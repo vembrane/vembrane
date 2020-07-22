@@ -46,7 +46,7 @@ globals_whitelist = {
     },
     **{
         mod.__name__: mod
-        for mod in [any, all, min, max, re, list, dict, set, tuple, zip, map, sum]
+        for mod in [any, all, min, max, re, list, dict, set, tuple, zip, map, sum, str, int, float]
     },
     **{name: mod for name, mod in vars(math).items() if not name.startswith("__")},
 }
