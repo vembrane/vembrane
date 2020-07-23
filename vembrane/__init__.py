@@ -13,7 +13,7 @@ import sys
 from collections import defaultdict
 from itertools import chain, islice
 from sys import stderr
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Set, Tuple
 
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
@@ -35,7 +35,16 @@ from vembrane.errors import (
 from vembrane.globals_whitelist import globals_whitelist
 
 
-class Format:
+class NoValueDict:
+    def __contains__(self, item):
+        try:
+            value = self[item]
+        except KeyError:
+            return False
+        return value is not NA
+
+
+class Format(NoValueDict):
     def __init__(
         self, record_idx: int, name: str, record_samples: VariantRecordSamples
     ):
@@ -57,7 +66,7 @@ class Format:
             return value
 
 
-class Formats:
+class Formats(NoValueDict):
     def __init__(
         self,
         record_idx: int,
@@ -82,10 +91,17 @@ class Formats:
             return format_field
 
 
-class Info:
-    def __init__(self, record_idx: int, record_info: VariantRecordInfo, ann_key: str):
+class Info(NoValueDict):
+    def __init__(
+        self,
+        record_idx: int,
+        record_info: VariantRecordInfo,
+        header_info_fields: Set[str],
+        ann_key: str,
+    ):
         self._record_idx = record_idx
         self._record_info = record_info
+        self._header_info_fields = header_info_fields
         self._ann_key = ann_key
         self._info_dict = {}
 
@@ -98,12 +114,16 @@ class Info:
                     raise KeyError(item)
                 untyped_value = self._record_info[item]
             except KeyError as ke:
-                raise UnknownInfoField(self._record_idx, ke)
-            value = self._info_dict[item] = type_info(untyped_value)
+                if item in self._header_info_fields:
+                    value = NA
+                else:
+                    raise UnknownInfoField(self._record_idx, ke)
+            else:
+                value = self._info_dict[item] = type_info(untyped_value)
             return value
 
 
-class Annotation:
+class Annotation(NoValueDict):
     def __init__(self, ann_key: str, header: VariantHeader):
         self._record_idx = -1
         self._annotation_data = {}
@@ -177,8 +197,8 @@ class Environment(dict):
             "FORMAT": self._get_format,
             "SAMPLES": self._get_samples,
         }
-        self._empty_globals = {name: NA for name in header.info}
-        self._empty_globals.update({name: UNSET for name in self._getters})
+        self._header_info_fields = set(header.info)
+        self._empty_globals = {name: UNSET for name in self._getters}
         self.record: VariantRecord = None
         self.idx: int = -1
 
@@ -227,7 +247,9 @@ class Environment(dict):
         return value
 
     def _get_info(self) -> Info:
-        value = Info(self.idx, self.record.info, self._ann_key)
+        value = Info(
+            self.idx, self.record.info, self._header_info_fields, self._ann_key,
+        )
         self._globals["INFO"] = value
         return value
 
