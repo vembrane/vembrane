@@ -21,6 +21,7 @@ class NoValue:
     def __bool__(self):
         return False
 
+
 NA = NoValue()
 
 
