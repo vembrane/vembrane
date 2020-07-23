@@ -18,6 +18,9 @@ class NoValue:
     def __eq__(self, other):
         return False
 
+    def __bool__(self):
+        return False
+
 
 NA = NoValue()
 
