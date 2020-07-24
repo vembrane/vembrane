@@ -48,10 +48,15 @@ class NoValueDict:
 
 class Format(NoValueDict):
     def __init__(
-        self, record_idx: int, name: str, record_samples: VariantRecordSamples
+        self,
+        record_idx: int,
+        name: str,
+        number: str,
+        record_samples: VariantRecordSamples,
     ):
         self._record_idx = record_idx
         self._name = name
+        self._number = number
         self._record_samples = record_samples
         self._sample_values = {}
 
@@ -63,7 +68,7 @@ class Format(NoValueDict):
                 record_sample = self._record_samples[sample]
             except KeyError:
                 raise UnknownSample(self._record_idx, sample)
-            value = record_sample[self._name]
+            value = type_info(record_sample[self._name], self._number)
             self._sample_values[sample] = value
             return value
 
@@ -72,10 +77,12 @@ class Formats(NoValueDict):
     def __init__(
         self,
         record_idx: int,
+        header_format_fields: Dict[str, str],
         record_format: VariantRecordFormat,
         record_samples: VariantRecordSamples,
     ):
         self._record_idx = record_idx
+        self._header_format_fields = header_format_fields
         self._record_format = record_format
         self._record_samples = record_samples
         self._formats = {}
@@ -88,7 +95,8 @@ class Formats(NoValueDict):
                 self._record_format[item]
             except KeyError:
                 raise UnknownFormatField(self._record_idx, item)
-            format_field = Format(self._record_idx, item, self._record_samples)
+            number = self._header_format_fields[item]
+            format_field = Format(self._record_idx, item, number, self._record_samples)
             self._formats[item] = format_field
             return format_field
 
@@ -211,6 +219,7 @@ class Environment(dict):
             for kind in set(r.type for r in header.records)
         }
         self._header_info_fields = self._numbers["INFO"]
+        self._header_format_fields = self._numbers["FORMAT"]
         self._empty_globals = {name: UNSET for name in self._getters}
         self.record: VariantRecord = None
         self.idx: int = -1
@@ -270,7 +279,12 @@ class Environment(dict):
         return value
 
     def _get_format(self) -> Formats:
-        value = Formats(self.idx, self.record.format, self.record.samples)
+        value = Formats(
+            self.idx,
+            self._header_format_fields,
+            self.record.format,
+            self.record.samples,
+        )
         self._globals["FORMAT"] = value
         return value
 
