@@ -64,6 +64,9 @@ class MoreThanOneAltAllele(VembraneError):
     def __init__(self):
         msg = (
             "vembrane only supports records with one alternative allele.\n"
-            "Please run `bcftools norm -m-any` on the input file, first."
+            "Please split multi-allelic records first, for example with "
+            "`bcftools norm -m-any […]` or "
+            "`gatk LeftAlignAndTrimVariants […] --split-multi-allelics` or "
+            "`vcfmulti2oneallele […]`"
         )
         super(MoreThanOneAltAllele, self).__init__(msg)
