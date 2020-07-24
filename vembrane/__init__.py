@@ -13,7 +13,7 @@ import sys
 from collections import defaultdict
 from itertools import chain, islice
 from sys import stderr
-from typing import Iterator, List, Set, Tuple
+from typing import Iterator, List, Tuple, Dict
 
 import yaml
 from pysam import VariantFile, VariantRecord, VariantHeader
@@ -23,6 +23,7 @@ from pysam.libcbcf import (
     VariantRecordFormat,
     VariantRecordSamples,
 )
+
 from vembrane.ann_types import NA, type_info, ANN_TYPER
 from vembrane.errors import (
     UnknownAnnotation,
@@ -31,6 +32,7 @@ from vembrane.errors import (
     UnknownFormatField,
     UnknownSample,
     VembraneError,
+    MoreThanOneAltAllele,
 )
 from vembrane.globals_whitelist import globals_whitelist
 
@@ -96,7 +98,7 @@ class Info(NoValueDict):
         self,
         record_idx: int,
         record_info: VariantRecordInfo,
-        header_info_fields: Set[str],
+        header_info_fields: Dict[str, str],
         ann_key: str,
     ):
         self._record_idx = record_idx
@@ -119,7 +121,9 @@ class Info(NoValueDict):
                 else:
                     raise UnknownInfoField(self._record_idx, ke)
             else:
-                value = self._info_dict[item] = type_info(untyped_value)
+                value = self._info_dict[item] = type_info(
+                    untyped_value, self._header_info_fields[item]
+                )
             return value
 
 
@@ -197,7 +201,16 @@ class Environment(dict):
             "FORMAT": self._get_format,
             "SAMPLES": self._get_samples,
         }
-        self._header_info_fields = set(header.info)
+
+        self._numbers = {
+            kind: {
+                record.get("ID"): record.get("Number")
+                for record in header.records
+                if record.type == kind
+            }
+            for kind in set(r.type for r in header.records)
+        }
+        self._header_info_fields = self._numbers["INFO"]
         self._empty_globals = {name: UNSET for name in self._getters}
         self.record: VariantRecord = None
         self.idx: int = -1
@@ -233,8 +246,11 @@ class Environment(dict):
     def _get_ref(self) -> str:
         return self._get_ref_alt()[0]
 
-    def _get_alt(self) -> List[str]:
-        return self._get_ref_alt()[1]
+    def _get_alt(self) -> str:
+        alts = self._get_ref_alt()[1]
+        if len(alts) > 1:
+            raise MoreThanOneAltAllele()
+        return alts[0]
 
     def _get_qual(self) -> float:
         value = type_info(self.record.qual)

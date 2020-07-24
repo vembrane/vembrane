@@ -56,3 +56,14 @@ class InvalidExpression(VembraneError):
             msg = f"The provided expression '{expression}' is invalid. Reason: {reason}"
         super(InvalidExpression, self).__init__(msg)
         self.expression = expression
+
+
+class MoreThanOneAltAllele(VembraneError):
+    """vembrane only supports one ALT allele per record"""
+
+    def __init__(self):
+        msg = (
+            "vembrane only supports records with one alternative allele.\n"
+            "Please run `bcftools norm -m-any` on the input file, first."
+        )
+        super(MoreThanOneAltAllele, self).__init__(msg)

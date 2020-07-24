@@ -1,6 +1,8 @@
 from sys import stderr
 from typing import Union, Iterable, Tuple, Dict, Callable, Any
 
+from vembrane.errors import MoreThanOneAltAllele
+
 
 class NoValue:
     def __lt__(self, other):
@@ -43,11 +45,16 @@ class InfoTuple:
 IntFloatStr = Union[int, float, str]
 
 
-def type_info(value):
+def type_info(value, number="."):
     if value is None:
         return NA
     if isinstance(value, tuple):
-        return InfoTuple(value)
+        if number != "A":
+            return InfoTuple(value)
+        else:
+            if len(value) != 1:
+                raise MoreThanOneAltAllele()
+            return value[0]
     return value
 
 
