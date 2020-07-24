@@ -6,6 +6,8 @@ import re
 #        *sorted(o for o in dir(__builtins__) if o.islower() and not o.startswith("_")),
 #        sep="\n",
 #    )'
+from vembrane import NA
+
 _builtins = {
     obj.__name__: obj
     for obj in (
@@ -105,4 +107,5 @@ globals_whitelist = {
     **_modules,
     **_math_exports,
     **_explicit_clear,
+    "NA": NA,
 }
