@@ -54,7 +54,8 @@ def type_info(value, number="."):
         else:
             if len(value) != 1:
                 raise MoreThanOneAltAllele()
-            return value[0]
+            value = value[0]
+            return value if value is not None else NA
     return value
 
 
