@@ -49,13 +49,18 @@ def type_info(value, number="."):
     if value is None:
         return NA
     if isinstance(value, tuple):
-        if number != "A":
+        if number not in {"A", "R"}:
             return InfoTuple(value)
         else:
-            if len(value) != 1:
-                raise MoreThanOneAltAllele()
-            value = value[0]
-            return value if value is not None else NA
+            if number == "A":
+                if len(value) != 1:
+                    raise MoreThanOneAltAllele()
+                value = value[0]
+                return value if value is not None else NA
+            if number == "R":
+                if len(value) != 2:
+                    raise MoreThanOneAltAllele()
+                return InfoTuple(value)
     return value
 
 
