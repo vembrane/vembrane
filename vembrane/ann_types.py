@@ -1,7 +1,7 @@
 from sys import stderr
 from typing import Union, Iterable, Tuple, Dict, Callable, Any
 
-from vembrane.errors import MoreThanOneAltAllele
+from .errors import MoreThanOneAltAllele
 
 
 class NoValue:
