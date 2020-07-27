@@ -102,7 +102,7 @@ _explicit_clear = {
     "__package__": None,
 }
 
-globals_allowlist = {
+allowed_globals = {
     **_builtins,
     **_modules,
     **_math_exports,

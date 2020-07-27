@@ -11,7 +11,7 @@ from pysam.libcbcf import (
     VariantRecordSample,
 )
 
-from .globals import globals_allowlist
+from .globals import allowed_globals
 
 from .ann_types import (
     NA,
@@ -185,7 +185,7 @@ class Environment(dict):
         self._annotation: Annotation = Annotation(ann_key, header)
         self._globals = {}
         # We use self + self.func as a closure.
-        self._globals = globals_allowlist.copy()
+        self._globals = allowed_globals.copy()
         self._func = eval(f"lambda: {expression}", self, {})
 
         self._getters = {
