@@ -210,6 +210,13 @@ class Environment(dict):
             "SAMPLES": self._get_samples,
         }
 
+        # vembrane only supports bi-allelic records (i.e. one REF, one ALT allele).
+        # Hence, for all fields in the header whith `number in {"A", "R"}`
+        # we check if there is indeed only 1 value ("A") or 2 values ("R")
+        # and abort otherwise.
+        # Then, in the case of `number == "A"`, the value tuples only have one entry,
+        # so that the value can be accessed directly and need not be accessed via
+        # an index operation.
         self._numbers = {
             kind: {
                 record.get("ID"): record.get("Number")
@@ -218,6 +225,7 @@ class Environment(dict):
             }
             for kind in set(r.type for r in header.records)
         }
+        # At the moment, only INFO and FORMAT records are checked
         self._header_info_fields = self._numbers["INFO"]
         self._header_format_fields = self._numbers["FORMAT"]
         self._empty_globals = {name: UNSET for name in self._getters}
