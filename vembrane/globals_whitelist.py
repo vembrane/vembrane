@@ -6,7 +6,7 @@ import re
 #        *sorted(o for o in dir(__builtins__) if o.islower() and not o.startswith("_")),
 #        sep="\n",
 #    )'
-from vembrane import NA
+from .ann_types import NA
 
 _builtins = {
     obj.__name__: obj
