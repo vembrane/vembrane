@@ -80,7 +80,10 @@ Any unknown annotation field will be left as is.
 
 If a certain annotation field lacks a value, it will be replaced with the special value of `NA`. Comparing with this value will always result in `False`, e.g.
 `ANN["cDNA"].start > 0` will always evaluate to `False` *if* there was no value in the "cDNA.pos / cDNA.length" field of (snpeff) ANN (otherwise the comparison will be carried out with the usual semantics).
-One way to handle optional values is by asserting that the field is not None, e.g `ID and "foo" in ID`.
+
+*Explicitly* handling missing/optional values in INFO or FORMAT fields can be done by checking for NA, e.g.: `INFO["DP"] is NA`.
+
+Handling missing/optional values in fields other than INFO or FORMAT can be done by checking for None, e.g `ID is not None`.
 
 ## Development
 ### pre-commit hooks
