@@ -56,3 +56,17 @@ class InvalidExpression(VembraneError):
             msg = f"The provided expression '{expression}' is invalid. Reason: {reason}"
         super(InvalidExpression, self).__init__(msg)
         self.expression = expression
+
+
+class MoreThanOneAltAllele(VembraneError):
+    """vembrane only supports one ALT allele per record"""
+
+    def __init__(self):
+        msg = (
+            "vembrane only supports records with one alternative allele.\n"
+            "Please split multi-allelic records first, for example with "
+            "`bcftools norm -m-any […]` or "
+            "`gatk LeftAlignAndTrimVariants […] --split-multi-allelics` or "
+            "`vcfmulti2oneallele […]`"
+        )
+        super(MoreThanOneAltAllele, self).__init__(msg)

@@ -25,7 +25,7 @@ The following VCF fields can be accessed in the filter expression:
 |`POS`| `int` | Chromosomal position  | `24 < POS < 42`|
 |`ID`| `str`  | Variant ID |  `ID == "rs11725853"` |
 |`REF`| `str` |  Reference allele  | `REF == "A"` |
-|`ALT`| `List[str]` |  Alternative alleles  | `"C" in ALT or ALT[0] == "G"`|
+|`ALT`| `str` |  Alternative allele³  | `ALT == "C"`|
 |`QUAL`| `float`  | Quality |  `QUAL >= 60` |
 |`FILTER`|  |   |  |
 |`FORMAT`|`Dict[str, Dict[str, Any¹]]`| `Format -> (Sample -> Value)` | `FORMAT["DP"][SAMPLES[0]] > 0` |
@@ -34,6 +34,12 @@ The following VCF fields can be accessed in the filter expression:
  ¹ depends on type specified in VCF header
 
  ² for the usual snpeff and vep annotations, custom types have been specified; any unknown ANN field will simply be of type `str`. If something lacks a custom parser/type, please consider filing an issue in the [issue tracker](https://github.com/vembrane/vembrane/issues).
+
+ ³ vembrane does not handle multi-allelic records itself. Instead, such files should be
+ preprocessed by either of the following tools (preferably even before annotation):
+ - [`bcftools norm -m-any […]`](http://samtools.github.io/bcftools/bcftools.html#norm)
+ - [`gatk LeftAlignAndTrimVariants […] --split-multi-allelics`](https://gatk.broadinstitute.org/hc/en-us/articles/360037225872-LeftAlignAndTrimVariants)
+ - [`vcfmulti2oneallele […]`](http://lindenb.github.io/jvarkit/VcfMultiToOneAllele.html)
 
 
 ## Examples
