@@ -5,7 +5,8 @@ import pytest
 import yaml
 from pysam import VariantFile
 
-from vembrane import errors, __version__, filter_vcf
+from vembrane import errors, __version__
+from vembrane.cli import filter_vcf, check_filter_expression
 
 CASES = Path(__file__).parent.joinpath("testcases")
 
@@ -26,8 +27,6 @@ def test_filter(testcase):
     vcf = VariantFile(path.joinpath("test.vcf"))
     if "raises" in config:
         exception = getattr(errors, config["raises"])
-
-        from vembrane import check_filter_expression
 
         with pytest.raises(exception):
             # FIXME we have to explicitly check the filter expression here

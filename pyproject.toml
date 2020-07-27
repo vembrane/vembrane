@@ -8,7 +8,7 @@ homepage = "https://github.com/vembrane/vembrane"
 repository = "https://github.com/vembrane/vembrane"
 
 [tool.poetry.scripts]
-vembrane = 'vembrane:main'
+vembrane = 'vembrane.cli:main'
 
 [tool.poetry.dependencies]
 python = "^3.7"
