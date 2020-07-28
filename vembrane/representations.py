@@ -217,8 +217,8 @@ class Environment(dict):
             for kind in set(r.type for r in header.records)
         }
         # At the moment, only INFO and FORMAT records are checked
-        self._header_info_fields = self._numbers["INFO"]
-        self._header_format_fields = self._numbers["FORMAT"]
+        self._header_info_fields = self._numbers.get("INFO", dict())
+        self._header_format_fields = self._numbers.get("FORMAT", dict())
         self._empty_globals = {name: UNSET for name in self._getters}
         self.record: VariantRecord = None
         self.idx: int = -1
