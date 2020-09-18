@@ -1,46 +1,83 @@
 # vembrane: variant filtering using python expressions
 
-![Alt text](./images/vembrane.svg)
-<img src="./images/vembrane.svg" width="20">
+Vembrane allows to simultaneously filter variants based on any `INFO` field, `CHROM`, `POS`, `REF`, `ALT`, `QUAL`, and the annotation field `ANN`. When filtering based on `ANN`, annotation entries are filtered first. If no annotation entry remains, the entire variant is deleted.
 
-## Authors
 
-* Jan Forster (@jafors)
-* Till Hartmann (@tedil)
-* Elias Kuthe (@eqt)
-* Johannes Köster (@johanneskoester)
-* Christopher Schröder (@christopher-schroeder)
-* Felix Mölder (@felixmoelder)
+## Filter expression
+The filter expression can be any valid python expression that evaluates to `bool`. However, functions and symbols available have been restricted to the following:
+
+ * `all`, `any`
+ * `abs`, `len`, `max`, `min`, `round`, `sum`
+ * `enumerate`, `filter`, `iter`, `map`, `next`, `range`, `reversed`, `sorted`, `zip`
+ * `dict`, `list`, `set`, `tuple`
+ * `bool`, `chr`, `float`, `int`, `ord`, `str`
+ * Any function or symbol from [`math`](https://docs.python.org/3/library/math.html)
+ * Regular expressions via [`re`](https://docs.python.org/3/library/re.html)
+
+## Available fields
+The following VCF fields can be accessed in the filter expression:
+
+|Name|Type|Interpretation|Example expression|
+|---|---|---|---|
+|`INFO`|`Dict[str, Any¹]`| `INFO field -> Value`  | `INFO["DP"] > 0`|
+|`ANN`| `Dict[str, Any²]`| `ANN field -> Value` | `ANN["Gene_Name"] == "CDH2"`|
+|`CHROM`| `str` | Chromosome Name  |  `CHROM == "chr2"` |
+|`POS`| `int` | Chromosomal position  | `24 < POS < 42`|
+|`ID`| `str`  | Variant ID |  `ID == "rs11725853"` |
+|`REF`| `str` |  Reference allele  | `REF == "A"` |
+|`ALT`| `str` |  Alternative allele³  | `ALT == "C"`|
+|`QUAL`| `float`  | Quality |  `QUAL >= 60` |
+|`FILTER`|  |   |  |
+|`FORMAT`|`Dict[str, Dict[str, Any¹]]`| `Format -> (Sample -> Value)` | `FORMAT["DP"][SAMPLES[0]] > 0` |
+|`SAMPLES`|`List[str]`| `[Sample]`  |  `"Tumor" in SAMPLES` |
+
+ ¹ depends on type specified in VCF header
+
+ ² for the usual snpeff and vep annotations, custom types have been specified; any unknown ANN field will simply be of type `str`. If something lacks a custom parser/type, please consider filing an issue in the [issue tracker](https://github.com/vembrane/vembrane/issues).
+
+ ³ vembrane does not handle multi-allelic records itself. Instead, such files should be
+ preprocessed by either of the following tools (preferably even before annotation):
+ - [`bcftools norm -m-any […]`](http://samtools.github.io/bcftools/bcftools.html#norm)
+ - [`gatk LeftAlignAndTrimVariants […] --split-multi-allelics`](https://gatk.broadinstitute.org/hc/en-us/articles/360037225872-LeftAlignAndTrimVariants)
+ - [`vcfmulti2oneallele […]`](http://lindenb.github.io/jvarkit/VcfMultiToOneAllele.html)
+
 
 ## Examples
 
-Vembrane allows to simultaneously filter variants based on any `INFO` field, `CHROM`, `POS`, `REF`, `ALT`, `QUAL`, and the annotation field `ANN`. When filtering based on `ANN`, annotation entries are filtered first. If no annotation entry remains, the entire variant is deleted.
-
-* Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH": 
+* Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH":
   ```
-  vembrane variants.bcf 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"'
+  vembrane 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"' variants.bcf
   ```
 * Only keep variants with quality at least 30:
   ```
-  vembrane variants.vcf 'QUAL >= 30'
+  vembrane 'QUAL >= 30' variants.vcf
   ```
 * Only keep annotations and variants where feature (transcript) is ENST00000307301:
   ```
-  vembrane variants.bcf 'ANN["Feature"] == "ENST00000307301"'
+  vembrane 'ANN["Feature"] == "ENST00000307301"' variants.bcf
   ```
 * Only keep annotations and variants where protein position is less than 10:
   ```
-  vembrane variants.bcf 'ANN["Protein_position"] < 10'
+  vembrane 'ANN["Protein"].start < 10' variants.bcf
+  ```
+* Only keep variants where mapping quality is exactly 60:
+  ```
+  vembrane 'INFO["MQ"] == 60' variants.bcf
   ```
 * Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
   ```
-  vembrane variants.vcf 're.search("stream", ANN["Consequence"])'
+  vembrane 're.search("stream", ANN["Consequence"])' variants.vcf
+  ```
+* Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
+  ```
+  vembrane 'any(entry in ANN["CLIN_SIG"] for entry in ("pathogenic", "likely_pathogenic", "drug_response"))' variants.vcf
   ```
 
 ## Custom ANN types
 
 vembrane parses the following annotation fields to a custom type:
 * (snpeff) `cDNA.pos / cDNA.length`, `CDS.pos / CDS.length` and `AA.pos / AA.length` are re-exposed as `cDNA`, `CDS` and `AA` respectively with properties `start`, `end` and `length`, e.g. can be accessed like this: `ANN["cDNA"].start`
+* (vep) `cDNA_position`, `CDS_position` and `Protein_position` are re-exposed as `cDNA`, `CDS` and `Protein` respectively with properties `start`, `end` and `length`, e.g. can be accessed like this: `ANN["cDNA"].start`
 * `CLIN_SIG` is split at `'&'` into a list of entries
 
 Any unknown annotation field will be left as is.
@@ -48,8 +85,11 @@ Any unknown annotation field will be left as is.
 ## Missing values in annotations
 
 If a certain annotation field lacks a value, it will be replaced with the special value of `NA`. Comparing with this value will always result in `False`, e.g.
-`ANN["cDNA"].pos > 0` will always evaluate to `False` *if* there was no value in the "cDNA.pos / cDNA.length" field of ANN (otherwise the comparison will be carried out with the usual semantics).
-One way to handle optional values is by asserting that the field is not None, e.g `ID and "foo" in ID`.
+`ANN["cDNA"].start > 0` will always evaluate to `False` *if* there was no value in the "cDNA.pos / cDNA.length" field of (snpeff) ANN (otherwise the comparison will be carried out with the usual semantics).
+
+*Explicitly* handling missing/optional values in INFO or FORMAT fields can be done by checking for NA, e.g.: `INFO["DP"] is NA`.
+
+Handling missing/optional values in fields other than INFO or FORMAT can be done by checking for None, e.g `ID is not None`.
 
 ## Development
 ### pre-commit hooks
@@ -58,3 +98,13 @@ Since we enforce code formatting with `black` by checking for that in CI, we can
 2. run `pre-commit install`. This will activate pre-commit hooks to your _local_ .git
 
 Now when calling `git commit`, your changed code will be formatted with `black`, checked with`flake8`, get trailing whitespace removed and trailing newlines added (if needed)
+
+## Authors
+
+* Marcel Bargull (@mbargull)
+* Jan Forster (@jafors)
+* Till Hartmann (@tedil)
+* Johannes Köster (@johanneskoester)
+* Elias Kuthe (@eqt)
+* Felix Mölder (@felixmoelder)
+* Christopher Schröder (@christopher-schroeder)
