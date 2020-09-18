@@ -223,7 +223,7 @@ class Environment(dict):
         self.record: VariantRecord = None
         self.idx: int = -1
 
-    def filters_annotations(self):
+    def expression_annotations(self):
         return self._has_ann
 
     def update_from_record(self, idx: int, record: VariantRecord):
@@ -303,4 +303,10 @@ class Environment(dict):
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
             self._annotation.update(self.idx, annotation)
+        return self._func()
+
+    def tablelize(self, annotation: str = "") -> bool:
+        if self._has_ann:
+            self._annotation.update(self.idx, annotation)
+        print(self._func())
         return self._func()
