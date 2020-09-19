@@ -59,7 +59,7 @@ def tablelize_vcf(
 def print_header(args):
     # print the nodes of the first layer of the ast tree as header names
     elts = ast.parse(args.expression).body[0].value.elts
-    header_fields = [args.expression[n.col_offset : n.end_col_offset] for n in elts]
+    header_fields = [args.expression[n.col_offset:n.end_col_offset] for n in elts]
     header = "#" + args.separator.join(map(str.strip, header_fields))
     print(header)
 
