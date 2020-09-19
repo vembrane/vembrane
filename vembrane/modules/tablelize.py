@@ -1,7 +1,7 @@
 from pysam.libcbcf import VariantFile
 from typing import Iterator
 
-from .common import check_filter_expression
+from ..common import check_filter_expression
 from ..errors import VembraneError
 from ..representations import Environment
 

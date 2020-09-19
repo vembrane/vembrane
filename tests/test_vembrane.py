@@ -6,7 +6,8 @@ import yaml
 from pysam import VariantFile
 
 from vembrane import errors, __version__
-from vembrane.cli import filter_vcf, check_filter_expression
+from vembrane.common import check_filter_expression
+from vembrane.modules.filter import filter_vcf
 
 CASES = Path(__file__).parent.joinpath("testcases")
 

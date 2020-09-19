@@ -4,7 +4,7 @@ from typing import Iterator
 from itertools import islice, chain
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
-from .common import check_filter_expression
+from ..common import check_filter_expression
 from ..errors import VembraneError
 from ..representations import Environment
 from .. import __version__
