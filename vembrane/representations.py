@@ -100,7 +100,6 @@ class Formats(NoValueDict):
     #     #return "".join([self.__getitem__(r.name) for r in self._record_format.values()])
 
 
-
 class Info(NoValueDict):
     def __init__(
         self,

@@ -26,6 +26,7 @@ class NoValue:
     def __repr__(self):
         return "."
 
+
 NA = NoValue()
 
 
