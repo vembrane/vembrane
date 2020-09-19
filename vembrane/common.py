@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, List, Tuple
+from typing import List
 
 from vembrane.errors import InvalidExpression
 
@@ -33,3 +33,7 @@ def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
                 map(str.strip, rec.get("Description").split(separator)[1].split("|"))
             )
     return []
+
+
+def split_annotation_entry(entry: str,) -> List[str]:
+    return entry.split("|")

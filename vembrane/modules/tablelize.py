@@ -1,4 +1,4 @@
-from pysam.libcbcf import VariantFile
+from pysam.libcbcf import VariantFile, VariantRecord
 from typing import Iterator
 from sys import stderr
 

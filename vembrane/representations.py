@@ -2,7 +2,7 @@ import ast
 from itertools import chain
 from typing import Dict, List, Tuple
 
-from .common import get_annotation_keys
+from .common import get_annotation_keys, split_annotation_entry
 
 from pysam.libcbcf import (
     VariantRecordSamples,
@@ -161,10 +161,6 @@ class Annotation(NoValueDict):
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
-
-
-def split_annotation_entry(entry: str,) -> List[str]:
-    return entry.split("|")
 
 
 UNSET = object()

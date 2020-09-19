@@ -1,5 +1,7 @@
-import sys
+import sys, yaml
 
+from sys import stderr
+from collections import defaultdict
 from typing import Iterator
 from itertools import islice, chain
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
