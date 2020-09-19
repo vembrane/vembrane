@@ -93,12 +93,6 @@ class Formats(NoValueDict):
             self._formats[item] = format_field
             return format_field
 
-    # def __repr__(self):
-    #     print(self._record_format)
-    #     return ""
-    #     #return "".join(self._formats.values())
-    #     #return "".join([self.__getitem__(r.name) for r in self._record_format.values()])
-
 
 class Info(NoValueDict):
     def __init__(

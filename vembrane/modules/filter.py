@@ -1,4 +1,5 @@
-import sys, yaml
+import sys
+import yaml
 
 from sys import stderr
 from collections import defaultdict
@@ -6,7 +7,11 @@ from typing import Iterator
 from itertools import islice, chain
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
-from ..common import check_filter_expression, get_annotation_keys
+from ..common import (
+    check_filter_expression,
+    get_annotation_keys,
+    split_annotation_entry,
+)
 from ..errors import VembraneError
 from ..representations import Environment
 from .. import __version__
