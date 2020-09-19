@@ -2,6 +2,8 @@ import ast
 from itertools import chain
 from typing import Dict, List, Tuple
 
+from .common import get_annotation_keys
+
 from pysam.libcbcf import (
     VariantRecordSamples,
     VariantRecordFormat,
@@ -91,6 +93,13 @@ class Formats(NoValueDict):
             self._formats[item] = format_field
             return format_field
 
+    # def __repr__(self):
+    #     print(self._record_format)
+    #     return ""
+    #     #return "".join(self._formats.values())
+    #     #return "".join([self.__getitem__(r.name) for r in self._record_format.values()])
+
+
 
 class Info(NoValueDict):
     def __init__(
@@ -153,19 +162,6 @@ class Annotation(NoValueDict):
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
-
-
-def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
-    separator = "'"
-    for rec in header.records:
-        if rec.key == "VEP":
-            separator = ":"
-            continue
-        if rec.get("ID") == ann_key:
-            return list(
-                map(str.strip, rec.get("Description").split(separator)[1].split("|"))
-            )
-    return []
 
 
 def split_annotation_entry(entry: str,) -> List[str]:
@@ -308,5 +304,4 @@ class Environment(dict):
     def tablelize(self, annotation: str = "") -> bool:
         if self._has_ann:
             self._annotation.update(self.idx, annotation)
-        print(self._func())
         return self._func()

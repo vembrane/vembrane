@@ -4,11 +4,10 @@ from typing import Iterator
 from itertools import islice, chain
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
-from ..common import check_filter_expression
+from ..common import check_filter_expression, get_annotation_keys
 from ..errors import VembraneError
 from ..representations import Environment
 from .. import __version__
-
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("filter")

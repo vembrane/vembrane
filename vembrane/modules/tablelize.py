@@ -1,10 +1,12 @@
 from pysam.libcbcf import VariantFile
 from typing import Iterator
+from sys import stderr
 
 from ..common import check_filter_expression
 from ..errors import VembraneError
 from ..representations import Environment
 
+import ast
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("tablelize")
@@ -24,12 +26,19 @@ def add_subcommmand(subparsers):
         default="ANN",
         help="The INFO key for the annotation field.",
     )
+    parser.add_argument(
+        "--separator",
+        "-s",
+        default="\t",
+        help="Define the field separator.",
+    )
 
 
 def tablelize_vcf(
     vcf: VariantFile, expression: str, ann_key: str, keep_unmatched: bool = False,
 ) -> Iterator[tuple]:
 
+    expression = f"({expression})"
     env = Environment(expression, ann_key, vcf.header)
 
     record: VariantRecord
@@ -49,13 +58,30 @@ def tablelize_vcf(
             yield env.tablelize()
 
 
+def print_header(args):
+    # print the nodes of the first layer of the ast tree as header names
+    elts = ast.parse(args.expression).body[0].value.elts
+    header_fields = [args.expression[n.col_offset:n.end_col_offset] for n in elts]
+    header = "#" + args.separator.join(map(str.strip, header_fields))
+    print(header)
+
+
+def print_row(row, args):
+    out_string = args.separator.join(map(str, row))
+    if out_string != print_row.last_string:
+        print(*row, sep=args.separator)
+        print_row.last_string = out_string
+
+print_row.last_string = None
+
 def execute(args):
     with VariantFile(args.vcf) as vcf:
         rows = tablelize_vcf(vcf, args.expression, args.annotation_key,)
 
         try:
+            print_header(args)
             for row in rows:
-                print(row)
+                print_row(row, args)
         except VembraneError as ve:
             print(ve, file=stderr)
             exit(1)
