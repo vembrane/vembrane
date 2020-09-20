@@ -30,6 +30,9 @@ def add_subcommmand(subparsers):
     parser.add_argument(
         "--separator", "-s", default="\t", help="Define the field separator.",
     )
+    parser.add_argument(
+        "--all", "-a", default=False, action="store_true", help="Do not filter duplicate entries.",
+    )
 
 
 def tablelize_vcf(
@@ -66,7 +69,7 @@ def print_header(args):
 
 def print_row(row, args):
     out_string = args.separator.join(map(str, row))
-    if out_string != print_row.last_string:
+    if args.all or out_string != print_row.last_string:
         print(*row, sep=args.separator)
         print_row.last_string = out_string
 
