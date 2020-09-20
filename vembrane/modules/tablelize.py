@@ -31,7 +31,11 @@ def add_subcommmand(subparsers):
         "--separator", "-s", default="\t", help="Define the field separator.",
     )
     parser.add_argument(
-        "--all", "-a", default=False, action="store_true", help="Do not filter duplicate entries.",
+        "--all",
+        "-a",
+        default=False,
+        action="store_true",
+        help="Do not filter duplicate entries.",
     )
 
 
