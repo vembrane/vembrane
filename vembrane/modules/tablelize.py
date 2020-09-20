@@ -28,7 +28,7 @@ def add_subcommmand(subparsers):
         help="The INFO key for the annotation field.",
     )
     parser.add_argument(
-        "--separator", "-s", default="\t", help="Define the field separator.",
+        "--separator", "-s", default="\t", metavar="CHAR", help="Define the field separator (default: \\t).",
     )
     parser.add_argument(
         "--all",
@@ -36,6 +36,12 @@ def add_subcommmand(subparsers):
         default=False,
         action="store_true",
         help="Do not filter duplicate entries.",
+    )
+    parser.add_argument(
+        "--header",
+        default="auto",
+        metavar="TEXT",
+        help="Override the automatically generated header. Provide \"auto\" (default) to automatically generate the header from the expression. Provide a comma separated string to manually set the header. Provide \"none\" to disable any header output.",
     )
 
 
@@ -64,14 +70,26 @@ def tablelize_vcf(
 
 
 def print_header(args):
-    # print the nodes of the first layer of the ast tree as header names
-    elts = ast.parse(args.expression).body[0].value.elts
-    header_fields = [args.expression[n.col_offset : n.end_col_offset] for n in elts]
-    header = "#" + args.separator.join(map(str.strip, header_fields))
-    print(header)
+    if args.header == "none":
+        return
+    elif args.header == "auto":
+        header = args.expression
+    else:
+        header = args.header
+
+    if not "," in header:
+        print(f"#{header}")
+    else:
+        # print the nodes of the first layer of the ast tree as header names
+        elts = ast.parse(header).body[0].value.elts
+        header_fields = [header[n.col_offset : n.end_col_offset] for n in elts]
+        header_string = "#" + args.separator.join(map(str.strip, header_fields))
+        print(header_string)
 
 
 def print_row(row, args):
+    if not isinstance(row, tuple):
+        row = (row,)
     out_string = args.separator.join(map(str, row))
     if args.all or out_string != print_row.last_string:
         print(*row, sep=args.separator)
@@ -86,7 +104,8 @@ def execute(args):
         rows = tablelize_vcf(vcf, args.expression, args.annotation_key,)
 
         try:
-            print_header(args)
+            if args.header:
+                print_header(args)
             for row in rows:
                 print_row(row, args)
         except VembraneError as ve:
