@@ -132,7 +132,7 @@ def execute(args):
 
         try:
             with smart_open(args.output, "wt", newline="") as csvfile:
-                writer = csv.writer(csvfile, delimiter="\t")
+                writer = csv.writer(csvfile, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
                 if args.header:
                     writer.writerow(get_header(args))
                 writer.writerows(get_row(row) for row in rows)
