@@ -82,9 +82,9 @@ def tableize_vcf(
             except KeyError:
                 annotations = [""]
             for annotation in annotations:
-                yield env.tablelize(annotation)
+                yield env.table(annotation)
         else:
-            yield env.tablelize()
+            yield env.table()
 
 
 def get_header(args):
@@ -124,7 +124,7 @@ def smart_open(filename=None, *args, **kwargs):
 
 def execute(args):
     with VariantFile(args.vcf) as vcf:
-        rows = tableize_vcf(
+        rows = table_vcf(
             vcf,
             args.expression,
             args.annotation_key,

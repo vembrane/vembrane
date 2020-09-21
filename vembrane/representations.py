@@ -293,7 +293,7 @@ class Environment(dict):
             self._annotation.update(self.idx, annotation)
         return self._func()
 
-    def tablelize(self, annotation: str = "") -> tuple:
+    def table(self, annotation: str = "") -> tuple:
         if self._has_ann:
             self._annotation.update(self.idx, annotation)
         return self._func()
