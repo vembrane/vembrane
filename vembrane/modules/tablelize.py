@@ -81,7 +81,7 @@ def print_header(args):
     else:
         header = args.header
 
-    if not "," in header:
+    if "," not in header:
         print(f"#{header}")
     else:
         # print the nodes of the first layer of the ast tree as header names
