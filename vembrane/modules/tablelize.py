@@ -28,7 +28,11 @@ def add_subcommmand(subparsers):
         help="The INFO key for the annotation field.",
     )
     parser.add_argument(
-        "--separator", "-s", default="\t", metavar="CHAR", help="Define the field separator (default: \\t).",
+        "--separator",
+        "-s",
+        default="\t",
+        metavar="CHAR",
+        help="Define the field separator (default: \\t).",
     )
     parser.add_argument(
         "--all",
@@ -41,7 +45,7 @@ def add_subcommmand(subparsers):
         "--header",
         default="auto",
         metavar="TEXT",
-        help="Override the automatically generated header. Provide \"auto\" (default) to automatically generate the header from the expression. Provide a comma separated string to manually set the header. Provide \"none\" to disable any header output.",
+        help='Override the automatically generated header. Provide "auto" (default) to automatically generate the header from the expression. Provide a comma separated string to manually set the header. Provide "none" to disable any header output.',
     )
 
 
