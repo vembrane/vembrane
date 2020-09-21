@@ -95,7 +95,9 @@ Handling missing/optional values in fields other than INFO or FORMAT can be done
 ## `vembrane table`
 In addition to the `filter` subcommand, vembrane (`≥ 0.5`) also supports writing tabular data with the `table` subcommand.
 In this case, an expression which evaluates to `tuple` is expected, for example:
-`vembrane table 'CHROM, POS, 10**(-QUAL/10)', ANN["CLIN_SIG"] > table.tsv`.
+```
+vembrane table 'CHROM, POS, 10**(-QUAL/10)', ANN["CLIN_SIG"] > table.tsv`.
+```
 
 ## Development
 ### pre-commit hooks
