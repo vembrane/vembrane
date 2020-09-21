@@ -10,7 +10,7 @@ import ast
 
 
 def add_subcommmand(subparsers):
-    parser = subparsers.add_parser("tablelize")
+    parser = subparsers.add_parser("table")
     parser.add_argument(
         "expression",
         type=check_filter_expression,
@@ -51,8 +51,11 @@ def add_subcommmand(subparsers):
     )
 
 
-def tablelize_vcf(
-    vcf: VariantFile, expression: str, ann_key: str, keep_unmatched: bool = False,
+def tableize_vcf(
+    vcf: VariantFile,
+    expression: str,
+    ann_key: str,
+    keep_unmatched: bool = False,
 ) -> Iterator[tuple]:
 
     expression = f"({expression})"
@@ -106,7 +109,11 @@ row_string.last_string = None
 
 def execute(args):
     with VariantFile(args.vcf) as vcf:
-        rows = tablelize_vcf(vcf, args.expression, args.annotation_key,)
+        rows = tableize_vcf(
+            vcf,
+            args.expression,
+            args.annotation_key,
+        )
 
         try:
             if args.header:

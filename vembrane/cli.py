@@ -1,6 +1,6 @@
 import argparse
 
-from .modules import filter, tablelize
+from .modules import filter, table
 
 
 def main():
@@ -9,12 +9,12 @@ def main():
         dest="command", description="valid subcommands", required=True
     )
     filter.add_subcommmand(subparsers)
-    tablelize.add_subcommmand(subparsers)
+    table.add_subcommmand(subparsers)
 
     args = parser.parse_args()
     if args.command == "filter":
         filter.execute(args)
     elif args.command == "tablelize":
-        tablelize.execute(args)
+        table.execute(args)
     else:
         assert False
