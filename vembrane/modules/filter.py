@@ -8,7 +8,7 @@ from itertools import islice, chain
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from ..common import (
-    check_filter_expression,
+    check_expression,
     get_annotation_keys,
     split_annotation_entry,
 )
@@ -21,7 +21,7 @@ def add_subcommmand(subparsers):
     parser = subparsers.add_parser("filter")
     parser.add_argument(
         "expression",
-        type=check_filter_expression,
+        type=check_expression,
         help="Filter variants and annotations. If this removes all annotations, "
         "the variant is removed as well.",
     )

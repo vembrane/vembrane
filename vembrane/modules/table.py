@@ -6,7 +6,7 @@ from pysam.libcbcf import VariantFile, VariantRecord
 from typing import Iterator
 from sys import stderr
 
-from ..common import check_filter_expression
+from ..common import check_expression
 from ..errors import VembraneError
 from ..representations import Environment
 
@@ -17,7 +17,7 @@ def add_subcommmand(subparsers):
     parser = subparsers.add_parser("table")
     parser.add_argument(
         "expression",
-        type=check_filter_expression,
+        type=check_expression,
         help="The expression for the output.",
     )
     parser.add_argument(

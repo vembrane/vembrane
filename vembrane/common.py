@@ -6,7 +6,7 @@ from vembrane.errors import InvalidExpression
 from pysam.libcbcf import VariantHeader
 
 
-def check_filter_expression(
+def check_expression(
     expression: str,
 ) -> str:
     if ".__" in expression:

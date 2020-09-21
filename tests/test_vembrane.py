@@ -6,8 +6,9 @@ import yaml
 from pysam import VariantFile
 
 from vembrane import errors, __version__
-from vembrane.common import check_filter_expression
+from vembrane.common import check_expression
 from vembrane.modules.filter import filter_vcf
+from vembrane.modules.table import tableize_vcf
 
 CASES = Path(__file__).parent.joinpath("testcases")
 
@@ -33,11 +34,11 @@ def test_filter(testcase):
             # FIXME we have to explicitly check the filter expression here
             # until we change from calling filter_vcf
             # to actually invoking vembrane.main
-            check_filter_expression(config.get("filter_expression"))
+            check_expression(config.get("expression"))
             list(
                 filter_vcf(
                     vcf,
-                    config.get("filter_expression"),
+                    config.get("expression"),
                     config.get("ann_key", "ANN"),
                     config.get("keep_unmatched", False),
                 )
@@ -47,7 +48,7 @@ def test_filter(testcase):
         result = list(
             filter_vcf(
                 vcf,
-                config.get("filter_expression"),
+                config.get("expression"),
                 config.get("ann_key", "ANN"),
                 config.get("keep_unmatched", False),
             )

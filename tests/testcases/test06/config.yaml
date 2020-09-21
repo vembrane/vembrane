@@ -1,2 +1,3 @@
+function: "filter"
 raises: "UnknownAnnotation"
-filter_expression: 'ANN["nonsense"] == "BLABLA"'
+expression: 'ANN["nonsense"] == "BLABLA"'

@@ -1,2 +1,3 @@
+function: "filter"
 ann_key: CSQ
-filter_expression: 'CSQ["Gene_Name"] == "CDH2" and CSQ["Annotation_Impact"] == "HIGH"'
+expression: 'CSQ["Gene_Name"] == "CDH2" and CSQ["Annotation_Impact"] == "HIGH"'
