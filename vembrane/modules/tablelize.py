@@ -45,7 +45,10 @@ def add_subcommmand(subparsers):
         "--header",
         default="auto",
         metavar="TEXT",
-        help='Override the automatically generated header. Provide "auto" (default) to automatically generate the header from the expression. Provide a comma separated string to manually set the header. Provide "none" to disable any header output.',
+        help='Override the automatically generated header. Provide "auto" (default) \
+              to automatically generate the header from the expression. Provide a \
+              comma separated string to manually set the header. Provide "none" to \
+              disable any header output.',
     )
 
 
