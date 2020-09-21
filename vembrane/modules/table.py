@@ -1,3 +1,7 @@
+import contextlib
+import csv
+import sys
+
 from pysam.libcbcf import VariantFile, VariantRecord
 from typing import Iterator
 from sys import stderr
@@ -49,6 +53,12 @@ def add_subcommmand(subparsers):
               comma separated string to manually set the header. Provide "none" to \
               disable any header output.',
     )
+    parser.add_argument(
+        "--output",
+        "-o",
+        default="-",
+        help="Output file, if not specified, output is written to STDOUT.",
+    )
 
 
 def tableize_vcf(
@@ -57,7 +67,6 @@ def tableize_vcf(
     ann_key: str,
     keep_unmatched: bool = False,
 ) -> Iterator[tuple]:
-
     expression = f"({expression})"
     env = Environment(expression, ann_key, vcf.header)
 
@@ -78,33 +87,39 @@ def tableize_vcf(
             yield env.tablelize()
 
 
-def header_string(args):
+def get_header(args):
     if args.header == "none":
         return
     elif args.header == "auto":
         header = args.expression
     else:
         header = args.header
-
     if "," not in header:
-        print(f"#{header}")
+        return [header]
     else:
-        # print the nodes of the first layer of the ast tree as header names
+        # use the nodes of the first layer of the ast tree as header names
         elts = ast.parse(header).body[0].value.elts
-        header_fields = [header[n.col_offset : n.end_col_offset] for n in elts]
-        return "#" + args.separator.join(map(str.strip, header_fields))
+        return [header[n.col_offset : n.end_col_offset] for n in elts]
 
 
-def row_string(row, args):
+def get_row(row):
     if not isinstance(row, tuple):
         row = (row,)
-    out_string = args.separator.join(map(str, row))
-    if args.all or out_string != row_string.last_string:
-        row_string.last_string = out_string
-        return args.separator.join(row)
+    return row
 
 
-row_string.last_string = None
+@contextlib.contextmanager
+def smart_open(filename=None, *args, **kwargs):
+    if filename and filename != "-":
+        fh = open(filename, *args, **kwargs)
+    else:
+        fh = sys.stdout
+
+    try:
+        yield fh
+    finally:
+        if fh is not sys.stdout:
+            fh.close()
 
 
 def execute(args):
@@ -116,10 +131,11 @@ def execute(args):
         )
 
         try:
-            if args.header:
-                print(header_string(args))
-            for row in rows:
-                print(row_string(row, args))
+            with smart_open(args.output, "wt", newline="") as csvfile:
+                writer = csv.writer(csvfile, delimiter="\t")
+                if args.header:
+                    writer.writerow(get_header(args))
+                writer.writerows(get_row(row) for row in rows)
         except VembraneError as ve:
             print(ve, file=stderr)
             exit(1)
