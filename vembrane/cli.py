@@ -14,7 +14,7 @@ def main():
     args = parser.parse_args()
     if args.command == "filter":
         filter.execute(args)
-    elif args.command == "tablelize":
+    elif args.command == "table":
         table.execute(args)
     else:
         assert False
