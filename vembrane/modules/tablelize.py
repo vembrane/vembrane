@@ -14,8 +14,7 @@ def add_subcommmand(subparsers):
     parser.add_argument(
         "expression",
         type=check_filter_expression,
-        help="Filter variants and annotations. If this removes all annotations, "
-        "the variant is removed as well.",
+        help="The expression for the output.",
     )
     parser.add_argument(
         "vcf", help="The file containing the variants.", nargs="?", default="-"
@@ -76,7 +75,7 @@ def tablelize_vcf(
             yield env.tablelize()
 
 
-def print_header(args):
+def header_string(args):
     if args.header == "none":
         return
     elif args.header == "auto":
@@ -90,20 +89,19 @@ def print_header(args):
         # print the nodes of the first layer of the ast tree as header names
         elts = ast.parse(header).body[0].value.elts
         header_fields = [header[n.col_offset : n.end_col_offset] for n in elts]
-        header_string = "#" + args.separator.join(map(str.strip, header_fields))
-        print(header_string)
+        return "#" + args.separator.join(map(str.strip, header_fields))
 
 
-def print_row(row, args):
+def row_string(row, args):
     if not isinstance(row, tuple):
         row = (row,)
     out_string = args.separator.join(map(str, row))
-    if args.all or out_string != print_row.last_string:
-        print(*row, sep=args.separator)
-        print_row.last_string = out_string
+    if args.all or out_string != row_string.last_string:
+        row_string.last_string = out_string
+        return args.separator.join(row)
 
 
-print_row.last_string = None
+row_string.last_string = None
 
 
 def execute(args):
@@ -112,9 +110,9 @@ def execute(args):
 
         try:
             if args.header:
-                print_header(args)
+                print(header_string(args))
             for row in rows:
-                print_row(row, args)
+                print(row_string(row, args))
         except VembraneError as ve:
             print(ve, file=stderr)
             exit(1)

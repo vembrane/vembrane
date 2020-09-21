@@ -24,7 +24,7 @@ class NoValue:
         return False
 
     def __repr__(self):
-        return "."
+        return ""
 
 
 NA = NoValue()
