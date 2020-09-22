@@ -67,6 +67,7 @@ def test_filter(testcase):
             )
             assert result == expected
         elif config["function"] == "table":
+            separator = config.get("separator", "\t")
             expected = list(
                 map(
                     lambda x: x.strip("\n"),
@@ -74,10 +75,13 @@ def test_filter(testcase):
                 )
             )
             result = list(
-                tableize_vcf(
-                    vcf,
-                    config.get("expression"),
-                    config.get("ann_key", "ANN"),
+                map(
+                    lambda x: separator.join(map(str, x)),
+                    tableize_vcf(
+                        vcf,
+                        config.get("expression"),
+                        config.get("ann_key", "ANN"),
+                    ),
                 )
             )
             assert result == expected[1:]  # avoid header check by now
