@@ -35,7 +35,27 @@ def test_filter(testcase):
             # until we change from calling filter_vcf
             # to actually invoking vembrane.main
             check_expression(config.get("expression"))
-            list(
+            if config["function"] == "filter":
+                list(
+                    filter_vcf(
+                        vcf,
+                        config.get("expression"),
+                        config.get("ann_key", "ANN"),
+                        config.get("keep_unmatched", False),
+                    )
+                )
+            elif config["function"] == "table":
+                list(
+                    tableize_vcf(
+                        vcf, config.get("expression"), config.get("ann_key", "ANN"),
+                    )
+                )
+            else:
+                assert False
+    else:
+        if config["function"] == "filter":
+            expected = list(VariantFile(path.joinpath("expected.vcf")))
+            result = list(
                 filter_vcf(
                     vcf,
                     config.get("expression"),
@@ -43,14 +63,19 @@ def test_filter(testcase):
                     config.get("keep_unmatched", False),
                 )
             )
-    else:
-        expected = list(VariantFile(path.joinpath("expected.vcf")))
-        result = list(
-            filter_vcf(
-                vcf,
-                config.get("expression"),
-                config.get("ann_key", "ANN"),
-                config.get("keep_unmatched", False),
+            assert result == expected
+        elif config["function"] == "table":
+            expected = list(
+                map(
+                    lambda x: x.strip("\n"),
+                    open(path.joinpath("expected.tsv"), "r").readlines(),
+                )
             )
-        )
-        assert result == expected
+            result = list(
+                tableize_vcf(
+                    vcf, config.get("expression"), config.get("ann_key", "ANN"),
+                )
+            )
+            assert result == expected[1:]  # avoid header check by now
+        else:
+            assert False

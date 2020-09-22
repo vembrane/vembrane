@@ -65,10 +65,7 @@ def add_subcommmand(subparsers):
 
 
 def filter_vcf(
-    vcf: VariantFile,
-    expression: str,
-    ann_key: str,
-    keep_unmatched: bool = False,
+    vcf: VariantFile, expression: str, ann_key: str, keep_unmatched: bool = False,
 ) -> Iterator[VariantRecord]:
 
     env = Environment(expression, ann_key, vcf.header)
@@ -163,11 +160,7 @@ def execute(args):
 
         records = chain(first_record, records)
 
-        with VariantFile(
-            args.output,
-            "w" + fmt,
-            header=header,
-        ) as out:
+        with VariantFile(args.output, "w" + fmt, header=header,) as out:
             if args.statistics is not None:
                 records = statistics(records, vcf, args.statistics, args.annotation_key)
 

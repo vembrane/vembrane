@@ -257,10 +257,7 @@ class Environment(dict):
 
     def _get_info(self) -> Info:
         value = Info(
-            self.idx,
-            self.record.info,
-            self._header_info_fields,
-            self._ann_key,
+            self.idx, self.record.info, self._header_info_fields, self._ann_key,
         )
         self._globals["INFO"] = value
         return value

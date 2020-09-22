@@ -6,9 +6,7 @@ from vembrane.errors import InvalidExpression
 from pysam.libcbcf import VariantHeader
 
 
-def check_expression(
-    expression: str,
-) -> str:
+def check_expression(expression: str,) -> str:
     if ".__" in expression:
         raise InvalidExpression(expression, "The expression must not contain '.__'")
     try:
@@ -37,7 +35,5 @@ def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
     return []
 
 
-def split_annotation_entry(
-    entry: str,
-) -> List[str]:
+def split_annotation_entry(entry: str,) -> List[str]:
     return entry.split("|")
