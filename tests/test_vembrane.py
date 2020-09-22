@@ -86,4 +86,4 @@ def test_filter(testcase):
             )
             assert result == expected[1:]  # avoid header check by now
         else:
-            assert False
+            assert config["function"] in {"filter", "table"}, "Unknown subcommand"
