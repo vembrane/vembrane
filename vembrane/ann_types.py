@@ -24,6 +24,8 @@ class NoValue:
         return False
 
     def __repr__(self):
+        # nonexistent fields will result in an empty string
+        # should be configurable in upcoming versions
         return ""
 
 
