@@ -47,7 +47,9 @@ def test_filter(testcase):
             elif config["function"] == "table":
                 list(
                     tableize_vcf(
-                        vcf, config.get("expression"), config.get("ann_key", "ANN"),
+                        vcf,
+                        config.get("expression"),
+                        config.get("ann_key", "ANN"),
                     )
                 )
             else:
@@ -73,7 +75,9 @@ def test_filter(testcase):
             )
             result = list(
                 tableize_vcf(
-                    vcf, config.get("expression"), config.get("ann_key", "ANN"),
+                    vcf,
+                    config.get("expression"),
+                    config.get("ann_key", "ANN"),
                 )
             )
             assert result == expected[1:]  # avoid header check by now
