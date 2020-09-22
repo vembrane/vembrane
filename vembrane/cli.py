@@ -17,4 +17,4 @@ def main():
     elif args.command == "table":
         table.execute(args)
     else:
-        assert False
+        raise ValueError(f"Unknown subcommand {args.command}")
