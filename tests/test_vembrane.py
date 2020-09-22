@@ -6,7 +6,9 @@ import yaml
 from pysam import VariantFile
 
 from vembrane import errors, __version__
-from vembrane.cli import filter_vcf, check_filter_expression
+from vembrane.common import check_expression
+from vembrane.modules.filter import filter_vcf
+from vembrane.modules.table import tableize_vcf
 
 CASES = Path(__file__).parent.joinpath("testcases")
 
@@ -32,23 +34,56 @@ def test_filter(testcase):
             # FIXME we have to explicitly check the filter expression here
             # until we change from calling filter_vcf
             # to actually invoking vembrane.main
-            check_filter_expression(config.get("filter_expression"))
-            list(
+            check_expression(config.get("expression"))
+            if config["function"] == "filter":
+                list(
+                    filter_vcf(
+                        vcf,
+                        config.get("expression"),
+                        config.get("ann_key", "ANN"),
+                        config.get("keep_unmatched", False),
+                    )
+                )
+            elif config["function"] == "table":
+                list(
+                    tableize_vcf(
+                        vcf,
+                        config.get("expression"),
+                        config.get("ann_key", "ANN"),
+                    )
+                )
+            else:
+                assert False
+    else:
+        if config["function"] == "filter":
+            expected = list(VariantFile(path.joinpath("expected.vcf")))
+            result = list(
                 filter_vcf(
                     vcf,
-                    config.get("filter_expression"),
+                    config.get("expression"),
                     config.get("ann_key", "ANN"),
                     config.get("keep_unmatched", False),
                 )
             )
-    else:
-        expected = list(VariantFile(path.joinpath("expected.vcf")))
-        result = list(
-            filter_vcf(
-                vcf,
-                config.get("filter_expression"),
-                config.get("ann_key", "ANN"),
-                config.get("keep_unmatched", False),
+            assert result == expected
+        elif config["function"] == "table":
+            separator = config.get("separator", "\t")
+            expected = list(
+                map(
+                    lambda x: x.strip("\n"),
+                    open(path.joinpath("expected.tsv"), "r").readlines(),
+                )
             )
-        )
-        assert result == expected
+            result = list(
+                map(
+                    lambda x: separator.join(map(str, x)),
+                    tableize_vcf(
+                        vcf,
+                        config.get("expression"),
+                        config.get("ann_key", "ANN"),
+                    ),
+                )
+            )
+            assert result == expected[1:]  # avoid header check by now
+        else:
+            assert config["function"] in {"filter", "table"}, "Unknown subcommand"

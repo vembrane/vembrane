@@ -1,8 +1,6 @@
 class VembraneError(Exception):
     """Basic exception for errors raised by vembrane"""
 
-    pass
-
 
 class UnknownAnnotation(VembraneError):
     """Unknown annotation entry"""

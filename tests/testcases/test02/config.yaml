@@ -1,1 +1,2 @@
-filter_expression: 'POS >= 27990264 and REF == "A"'
+function: "filter"
+expression: 'POS >= 27990264 and REF == "A"'

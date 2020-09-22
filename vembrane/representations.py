@@ -2,6 +2,8 @@ import ast
 from itertools import chain
 from typing import Dict, List, Tuple
 
+from .common import get_annotation_keys, split_annotation_entry
+
 from pysam.libcbcf import (
     VariantRecordSamples,
     VariantRecordFormat,
@@ -155,23 +157,6 @@ class Annotation(NoValueDict):
             return value
 
 
-def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
-    separator = "'"
-    for rec in header.records:
-        if rec.key == "VEP":
-            separator = ":"
-            continue
-        if rec.get("ID") == ann_key:
-            return list(
-                map(str.strip, rec.get("Description").split(separator)[1].split("|"))
-            )
-    return []
-
-
-def split_annotation_entry(entry: str,) -> List[str]:
-    return entry.split("|")
-
-
 UNSET = object()
 
 
@@ -223,7 +208,7 @@ class Environment(dict):
         self.record: VariantRecord = None
         self.idx: int = -1
 
-    def filters_annotations(self):
+    def expression_annotations(self):
         return self._has_ann
 
     def update_from_record(self, idx: int, record: VariantRecord):
@@ -272,7 +257,10 @@ class Environment(dict):
 
     def _get_info(self) -> Info:
         value = Info(
-            self.idx, self.record.info, self._header_info_fields, self._ann_key,
+            self.idx,
+            self.record.info,
+            self._header_info_fields,
+            self._ann_key,
         )
         self._globals["INFO"] = value
         return value
@@ -301,6 +289,11 @@ class Environment(dict):
         return value
 
     def evaluate(self, annotation: str = "") -> bool:
+        if self._has_ann:
+            self._annotation.update(self.idx, annotation)
+        return self._func()
+
+    def table(self, annotation: str = "") -> tuple:
         if self._has_ann:
             self._annotation.update(self.idx, annotation)
         return self._func()

@@ -1,1 +1,2 @@
-filter_expression: 'ANN["IMPACT"] == "MODERATE"'
+function: "filter"
+expression: 'ANN["IMPACT"] == "MODERATE"'

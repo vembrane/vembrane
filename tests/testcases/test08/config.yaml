@@ -1,2 +1,3 @@
+function: "filter"
 raises: "InvalidExpression"
-filter_expression: 'any(["syntax_error")]'
+expression: 'any(["syntax_error")]'
