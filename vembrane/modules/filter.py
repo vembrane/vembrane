@@ -62,12 +62,12 @@ def add_subcommmand(subparsers):
         help="Keep all annotations of a variant if at least one of them passes "
         "the expression.",
     )
-    parser.add_argument(
-        "--events",
-        default=False,
-        action="store_true",
-        help="The variant file contains breakend events. This requires two passes, so streaming is not possible.",
-    )
+    # parser.add_argument(
+    #     "--events",
+    #     default=False,
+    #     action="store_true",
+    #     help="The variant file contains breakend events. This requires two passes, so streaming is not possible.",
+    # )
 
 
 def filter_vcf(
@@ -83,18 +83,9 @@ def filter_vcf(
 
     record: VariantRecord
     for idx, record in enumerate(vcf):
-        svtype = record.info.get("SVTYPE", None)
-        event = record.info.get("EVENT", None)
-
-        force_record_output = False
-
-        if svtype == "BND":
-            if events is not None:
-                if event in events:
-                    force_record_output = True
-                else:
-                    continue
-        elif bnd_only:
+        # svtype = record.info.get("SVTYPE", None)
+        has_events = events is not None        
+        if has_events and record.info.get("EVENT", None) not in events:
             continue
 
         env.update_from_record(idx, record)
@@ -116,14 +107,14 @@ def filter_vcf(
                 continue
             elif (
                 not keep_unmatched and (len(annotations) != len(filtered_annotations))
-            ) or force_record_output:
+            ) or has_events:
                 # update annotations if they have actually been filtered
                 record.info[ann_key] = filtered_annotations
             yield record
         else:
             # otherwise, the annotations are irrelevant w.r.t. the expression,
             # so we can omit them
-            if force_record_output or env.evaluate():
+            if has_events or env.evaluate():
                 yield record
             else:
                 continue
@@ -155,63 +146,82 @@ def statistics(
 
 
 def execute(args):
-    events = None
-    if args.events:
-        # first pass
+    # if args.events:
+    #     # first pass
+    #     with VariantFile(args.vcf) as vcf:
+    #         bnds = filter_vcf(
+    #             vcf,
+    #             args.expression,
+    #             args.annotation_key,
+    #             keep_unmatched=args.keep_unmatched,
+    #         )
+    #         events = set(record.info["EVENT"] for record in bnds)
+
+
+    vcf = VariantFile(args.vcf)
+    header: VariantHeader = vcf.header
+    header.add_meta("vembraneVersion", __version__)
+    header.add_meta(
+        "vembraneCmd",
+        "vembrane "
+        + " ".join(
+            "'" + arg.replace("'", '"') + '"' if " " in arg else arg
+            for arg in sys.argv[1:]
+        ),
+    )
+
+    records = filter_vcf(
+        vcf,
+        args.expression,
+        args.annotation_key,
+        keep_unmatched=args.keep_unmatched,
+    )
+
+    try:
+        first_record = list(islice(records, 1))
+    except VembraneError as ve:
+        print(ve, file=stderr)
+        exit(1)
+
+    records = chain(first_record, records)
+
+    if args.statistics is not None:
+        records = statistics(records, vcf, args.statistics, args.annotation_key)
+
+    fmt = {"vcf":"", "bcf":"b", "uncompressed-bcf": "u"}[args.output_fmt]
+    out = VariantFile(args.output,
+        f"w{fmt}",
+        header=header,
+    )
+    
+    # write non bnds
+    info_keys = set(vcf.header.info.keys())
+    events = set()
+    try:
+        for record in records:
+            svtype = record.info.get("SVTYPE", None) if "SVTYPE" in info_keys else None
+            is_bnd = svtype == "BND"
+            if is_bnd:
+                event = record.info.get("EVENT", None)
+                events.add(event)
+            else:
+                out.write(record)
+    except VembraneError as ve:
+        print(ve, file=stderr)
+        exit(1)
+    vcf.close()
+
+    # if there were remaining bnds
+    if len(events) > 0:
+        # perform a second pass
         with VariantFile(args.vcf) as vcf:
-            bnds = filter_vcf(
+            records = filter_vcf(
                 vcf,
                 args.expression,
                 args.annotation_key,
                 keep_unmatched=args.keep_unmatched,
+                events=events,
             )
-            events = set(record.info["EVENT"] for record in bnds)
-
-    with VariantFile(args.vcf) as vcf:
-        fmt = ""
-        if args.output_fmt == "bcf":
-            fmt = "b"
-        elif args.output_fmt == "uncompressed-bcf":
-            fmt = "u"
-
-        header: VariantHeader = vcf.header
-        header.add_meta("vembraneVersion", __version__)
-        header.add_meta(
-            "vembraneCmd",
-            "vembrane "
-            + " ".join(
-                "'" + arg.replace("'", '"') + '"' if " " in arg else arg
-                for arg in sys.argv[1:]
-            ),
-        )
-
-        records = filter_vcf(
-            vcf,
-            args.expression,
-            args.annotation_key,
-            keep_unmatched=args.keep_unmatched,
-            events=events,
-        )
-
-        try:
-            first_record = list(islice(records, 1))
-        except VembraneError as ve:
-            print(ve, file=stderr)
-            exit(1)
-
-        records = chain(first_record, records)
-
-        with VariantFile(
-            args.output,
-            "w" + fmt,
-            header=header,
-        ) as out:
-            if args.statistics is not None:
-                records = statistics(records, vcf, args.statistics, args.annotation_key)
-
-            try:
-                for record in records:
-                    out.write(record)
-            except VembraneError as ve:
-                print(ve, file=stderr)
-                exit(1)
+            for record in records:
+                out.write(record)
+    out.close()
