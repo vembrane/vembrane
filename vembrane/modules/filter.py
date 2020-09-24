@@ -114,7 +114,9 @@ def filter_vcf(
             if not filtered_annotations:
                 # skip this record if filter removed all annotations
                 continue
-            elif (not keep_unmatched and (len(annotations) != len(filtered_annotations))) or force_record_output:
+            elif (
+                not keep_unmatched and (len(annotations) != len(filtered_annotations))
+            ) or force_record_output:
                 # update annotations if they have actually been filtered
                 record.info[ann_key] = filtered_annotations
             yield record
@@ -165,7 +167,6 @@ def execute(args):
             )
             events = set(record.info["EVENT"] for record in bnds)
 
-
     with VariantFile(args.vcf) as vcf:
         fmt = ""
         if args.output_fmt == "bcf":
@@ -200,11 +201,7 @@ def execute(args):
 
         records = chain(first_record, records)
 
-        with VariantFile(
-            args.output,
-            "w" + fmt,
-            header=header,
-        ) as out:
+        with VariantFile(args.output, "w" + fmt, header=header,) as out:
             if args.statistics is not None:
                 records = statistics(records, vcf, args.statistics, args.annotation_key)
 
