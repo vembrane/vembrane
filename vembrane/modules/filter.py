@@ -201,7 +201,11 @@ def execute(args):
 
         records = chain(first_record, records)
 
-        with VariantFile(args.output, "w" + fmt, header=header,) as out:
+        with VariantFile(
+            args.output,
+            "w" + fmt,
+            header=header,
+        ) as out:
             if args.statistics is not None:
                 records = statistics(records, vcf, args.statistics, args.annotation_key)
 

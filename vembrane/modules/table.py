@@ -16,7 +16,9 @@ import ast
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("table")
     parser.add_argument(
-        "expression", type=check_expression, help="The expression for the output.",
+        "expression",
+        type=check_expression,
+        help="The expression for the output.",
     )
     parser.add_argument(
         "vcf", help="The file containing the variants.", nargs="?", default="-"
@@ -59,7 +61,11 @@ def add_subcommmand(subparsers):
     )
 
 
-def tableize_vcf(vcf: VariantFile, expression: str, ann_key: str,) -> Iterator[tuple]:
+def tableize_vcf(
+    vcf: VariantFile,
+    expression: str,
+    ann_key: str,
+) -> Iterator[tuple]:
     expression = f"({expression})"
     env = Environment(expression, ann_key, vcf.header)
 
@@ -117,7 +123,11 @@ def smart_open(filename=None, *args, **kwargs):
 
 def execute(args):
     with VariantFile(args.vcf) as vcf:
-        rows = tableize_vcf(vcf, args.expression, args.annotation_key,)
+        rows = tableize_vcf(
+            vcf,
+            args.expression,
+            args.annotation_key,
+        )
 
         try:
             with smart_open(args.output, "wt", newline="") as csvfile:
