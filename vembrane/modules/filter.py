@@ -62,6 +62,12 @@ def add_subcommmand(subparsers):
         help="Keep all annotations of a variant if at least one of them passes "
         "the expression.",
     )
+    parser.add_argument(
+        "--events",
+        default=False,
+        action="store_true",
+        help="The variant file contains breakend events. This requires two passes, so streaming is not possible.",
+    )
 
 
 def filter_vcf(
@@ -69,12 +75,28 @@ def filter_vcf(
     expression: str,
     ann_key: str,
     keep_unmatched: bool = False,
+    bnd_only: bool = False,
+    events: set = None,
 ) -> Iterator[VariantRecord]:
 
     env = Environment(expression, ann_key, vcf.header)
 
     record: VariantRecord
     for idx, record in enumerate(vcf):
+        svtype = record.info.get("SVTYPE", None)
+        event = record.info.get("EVENT", None)
+
+        force_record_output = False
+
+        if svtype == "BND":
+            if events is not None:
+                if event in events:
+                    force_record_output = True
+                else:
+                    continue
+        elif bnd_only:
+            continue
+
         env.update_from_record(idx, record)
         if env.expression_annotations():
             # if the expression contains a reference to the ANN field
@@ -88,17 +110,18 @@ def filter_vcf(
             filtered_annotations = [
                 annotation for annotation in annotations if env.evaluate(annotation)
             ]
+
             if not filtered_annotations:
                 # skip this record if filter removed all annotations
                 continue
-            elif not keep_unmatched and (len(annotations) != len(filtered_annotations)):
+            elif (not keep_unmatched and (len(annotations) != len(filtered_annotations))) or force_record_output:
                 # update annotations if they have actually been filtered
                 record.info[ann_key] = filtered_annotations
             yield record
         else:
             # otherwise, the annotations are irrelevant w.r.t. the expression,
             # so we can omit them
-            if env.evaluate():
+            if force_record_output or env.evaluate():
                 yield record
             else:
                 continue
@@ -130,6 +153,19 @@ def statistics(
 
 
 def execute(args):
+    events = None
+    if args.events:
+        # first pass
+        with VariantFile(args.vcf) as vcf:
+            bnds = filter_vcf(
+                vcf,
+                args.expression,
+                args.annotation_key,
+                keep_unmatched=args.keep_unmatched,
+            )
+            events = set(record.info["EVENT"] for record in bnds)
+
+
     with VariantFile(args.vcf) as vcf:
         fmt = ""
         if args.output_fmt == "bcf":
@@ -153,6 +189,7 @@ def execute(args):
             args.expression,
             args.annotation_key,
             keep_unmatched=args.keep_unmatched,
+            events=events,
         )
 
         try:
