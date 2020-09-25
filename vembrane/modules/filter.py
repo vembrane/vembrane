@@ -70,54 +70,67 @@ def add_subcommmand(subparsers):
     # )
 
 
+def test_and_update_record(env, idx, record, ann_key, keep_unmatched):
+    env.update_from_record(idx, record)
+    if env.expression_annotations():
+        # if the expression contains a reference to the ANN field
+        # get all annotations from the record.info field
+        # (or supply an empty ANN value if the record has no ANN field)
+        try:
+            annotations = record.info[ann_key]
+        except KeyError:
+            annotations = [""]
+        #  … and only keep the annotations where the expression evaluates to true
+        filtered_annotations = [
+            annotation for annotation in annotations if env.evaluate(annotation)
+        ] # TODO: if keep_unmatched, that could be "any(iterator)" instead of list
+
+        if not keep_unmatched and (len(annotations) != len(filtered_annotations)):
+            # update annotations if they have actually been filtered
+            record.info[ann_key] = filtered_annotations
+
+        return record, len(filtered_annotations) > 0
+    else:
+        # otherwise, the annotations are irrelevant w.r.t. the expression,
+        # so we can omit them
+        return record, env.evaluate()
+
+
+
 def filter_vcf(
     vcf: VariantFile,
     expression: str,
     ann_key: str,
     keep_unmatched: bool = False,
-    bnd_only: bool = False,
-    events: set = None,
 ) -> Iterator[VariantRecord]:
 
     env = Environment(expression, ann_key, vcf.header)
 
+    events = set()
+    info_keys = set(vcf.header.info.keys())
+
     record: VariantRecord
     for idx, record in enumerate(vcf):
-        # svtype = record.info.get("SVTYPE", None)
-        has_events = events is not None        
-        if has_events and record.info.get("EVENT", None) not in events:
-            continue
-
-        env.update_from_record(idx, record)
-        if env.expression_annotations():
-            # if the expression contains a reference to the ANN field
-            # get all annotations from the record.info field
-            # (or supply an empty ANN value if the record has no ANN field)
-            try:
-                annotations = record.info[ann_key]
-            except KeyError:
-                annotations = [""]
-            #  … and only keep the annotations where the expression evaluates to true
-            filtered_annotations = [
-                annotation for annotation in annotations if env.evaluate(annotation)
-            ]
-
-            if not filtered_annotations:
-                # skip this record if filter removed all annotations
-                continue
-            elif (
-                not keep_unmatched and (len(annotations) != len(filtered_annotations))
-            ) or has_events:
-                # update annotations if they have actually been filtered
-                record.info[ann_key] = filtered_annotations
-            yield record
-        else:
-            # otherwise, the annotations are irrelevant w.r.t. the expression,
-            # so we can omit them
-            if has_events or env.evaluate():
-                yield record
+        record, passed = test_and_update_record(env, idx, record, ann_key, keep_unmatched)
+        if passed:
+            is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
+            if is_bnd:
+                event = record.info.get("EVENT", None)
+                events.add(event)
             else:
+                yield record
+
+    if len(events) > 0:
+        # perform a second pass
+        vcf.seek(0)
+        for idx, record in enumerate(vcf):
+            is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
+            event = record.info.get("EVENT", None)
+            # only bnds with valid event
+            if not (is_bnd and event in events):
                 continue
+            record, _ = test_and_update_record(env, idx, record, ann_key, keep_unmatched)
+            yield record
 
 
 def statistics(
@@ -158,70 +171,44 @@ def execute(args):
     #         events = set(record.info["EVENT"] for record in bnds)
 
 
-    vcf = VariantFile(args.vcf)
-    header: VariantHeader = vcf.header
-    header.add_meta("vembraneVersion", __version__)
-    header.add_meta(
-        "vembraneCmd",
-        "vembrane "
-        + " ".join(
-            "'" + arg.replace("'", '"') + '"' if " " in arg else arg
-            for arg in sys.argv[1:]
-        ),
-    )
+    with VariantFile(args.vcf) as vcf:
+        header: VariantHeader = vcf.header
+        header.add_meta("vembraneVersion", __version__)
+        header.add_meta(
+            "vembraneCmd",
+            "vembrane "
+            + " ".join(
+                "'" + arg.replace("'", '"') + '"' if " " in arg else arg
+                for arg in sys.argv[1:]
+            ),
+        )
 
-    records = filter_vcf(
-        vcf,
-        args.expression,
-        args.annotation_key,
-        keep_unmatched=args.keep_unmatched,
-    )
+        records = filter_vcf(
+            vcf,
+            args.expression,
+            args.annotation_key,
+            keep_unmatched=args.keep_unmatched,
+        )
 
-    try:
-        first_record = list(islice(records, 1))
-    except VembraneError as ve:
-        print(ve, file=stderr)
-        exit(1)
+        try:
+            first_record = list(islice(records, 1))
+        except VembraneError as ve:
+            print(ve, file=stderr)
+            exit(1)
 
-    records = chain(first_record, records)
+        records = chain(first_record, records)
 
-    if args.statistics is not None:
-        records = statistics(records, vcf, args.statistics, args.annotation_key)
+        if args.statistics is not None:
+            records = statistics(records, vcf, args.statistics, args.annotation_key)
 
-    fmt = {"vcf":"", "bcf":"b", "uncompressed-bcf": "u"}[args.output_fmt]
-    out = VariantFile(args.output,
-        f"w{fmt}",
-        header=header,
-    )
-    
-    # write non bnds
-    info_keys = set(vcf.header.info.keys())
-    events = set()
-    try:
-        for record in records:
-            svtype = record.info.get("SVTYPE", None) if "SVTYPE" in info_keys else None
-            is_bnd = svtype == "BND"
-            if is_bnd:
-                event = record.info.get("EVENT", None)
-                events.add(event)
-            else:
-                out.write(record)
-    except VembraneError as ve:
-        print(ve, file=stderr)
-        exit(1)
-    vcf.close()
-
-    # if there were remaining bnds
-    if len(events) > 0:
-        # perform a second pass
-        with VariantFile(args.vcf) as vcf:
-            records = filter_vcf(
-                vcf,
-                args.expression,
-                args.annotation_key,
-                keep_unmatched=args.keep_unmatched,
-                events=events,
-            )
-            for record in records:
-                out.write(record)
-    out.close()
+        fmt = {"vcf":"", "bcf":"b", "uncompressed-bcf": "u"}[args.output_fmt]
+        with VariantFile(args.output,
+            f"w{fmt}",
+            header=header,
+        ) as out:
+            try:
+                for record in records:
+                    out.write(record)
+            except VembraneError as ve:
+                print(ve, file=stderr)
+                exit(1)
