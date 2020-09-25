@@ -62,6 +62,14 @@ def add_subcommmand(subparsers):
         help="Keep all annotations of a variant if at least one of them passes "
         "the expression.",
     )
+    parser.add_argument(
+        "--preserve-order",
+        default=False,
+        action="store_true",
+        help="Make sure that the variant order of the output matches that of the input. \
+              For performance reasons only make use of this option, if the input might contain breakends (BNDs) \
+              as the order of all other variants are preserved anyway.",
+    )
     # parser.add_argument(
     #     "--events",
     #     default=False,
@@ -117,7 +125,8 @@ def filter_vcf(
             if is_bnd:
                 event = record.info.get("EVENT", None)
                 events.add(event)
-            else:
+            elif not preserve-order:
+                # if preserver order, we will output everything in the second pass *
                 yield record
 
     if len(events) > 0:
@@ -126,9 +135,16 @@ def filter_vcf(
         for idx, record in enumerate(vcf):
             is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
             event = record.info.get("EVENT", None)
-            # only bnds with valid event
-            if not (is_bnd and event in events):
-                continue
+
+            if is_bnd:
+                if event not in events:
+                     # only bnds with valid event
+                    continue
+            else:
+                if not preserve-order:
+                    # if preserver order, we will output everything in the second pass *
+                    continue
+
             record, _ = test_and_update_record(env, idx, record, ann_key, keep_unmatched)
             yield record
 
