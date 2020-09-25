@@ -110,6 +110,7 @@ def filter_vcf(
     expression: str,
     ann_key: str,
     keep_unmatched: bool = False,
+    preserve_order: bool = False,
 ) -> Iterator[VariantRecord]:
 
     env = Environment(expression, ann_key, vcf.header)
@@ -125,13 +126,14 @@ def filter_vcf(
             if is_bnd:
                 event = record.info.get("EVENT", None)
                 events.add(event)
-            elif not preserve-order:
+            elif not preserve_order:
                 # if preserver order, we will output everything in the second pass *
                 yield record
 
+
     if len(events) > 0:
         # perform a second pass
-        vcf.seek(0)
+        vcf.reset()
         for idx, record in enumerate(vcf):
             is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
             event = record.info.get("EVENT", None)
@@ -141,10 +143,9 @@ def filter_vcf(
                      # only bnds with valid event
                     continue
             else:
-                if not preserve-order:
+                if not preserve_order:
                     # if preserver order, we will output everything in the second pass *
                     continue
-
             record, _ = test_and_update_record(env, idx, record, ann_key, keep_unmatched)
             yield record
 
@@ -175,18 +176,6 @@ def statistics(
 
 
 def execute(args):
-    # if args.events:
-    #     # first pass
-    #     with VariantFile(args.vcf) as vcf:
-    #         bnds = filter_vcf(
-    #             vcf,
-    #             args.expression,
-    #             args.annotation_key,
-    #             keep_unmatched=args.keep_unmatched,
-    #         )
-    #         events = set(record.info["EVENT"] for record in bnds)
-
-
     with VariantFile(args.vcf) as vcf:
         header: VariantHeader = vcf.header
         header.add_meta("vembraneVersion", __version__)
@@ -204,6 +193,7 @@ def execute(args):
             args.expression,
             args.annotation_key,
             keep_unmatched=args.keep_unmatched,
+            preserve_order=args.preserve_order,
         )
 
         try:
@@ -225,6 +215,7 @@ def execute(args):
             try:
                 for record in records:
                     out.write(record)
+
             except VembraneError as ve:
                 print(ve, file=stderr)
                 exit(1)
