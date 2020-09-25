@@ -70,12 +70,6 @@ def add_subcommmand(subparsers):
               For performance reasons only make use of this option, if the input might contain breakends (BNDs) \
               as the order of all other variants are preserved anyway.",
     )
-    # parser.add_argument(
-    #     "--events",
-    #     default=False,
-    #     action="store_true",
-    #     help="The variant file contains breakend events. This requires two passes, so streaming is not possible.",
-    # )
 
 
 def test_and_update_record(env, idx, record, ann_key, keep_unmatched):
