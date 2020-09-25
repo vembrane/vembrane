@@ -1,2 +1,2 @@
 function: "filter"
-expression: 'POS==1029398'
+expression: "POS==1029398"

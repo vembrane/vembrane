@@ -91,7 +91,7 @@ def test_and_update_record(env, idx, record, ann_key, keep_unmatched):
         #  … and only keep the annotations where the expression evaluates to true
         filtered_annotations = [
             annotation for annotation in annotations if env.evaluate(annotation)
-        ] # TODO: if keep_unmatched, that could be "any(iterator)" instead of list
+        ]  # TODO: if keep_unmatched, that could be "any(iterator)" instead of list
 
         if not keep_unmatched and (len(annotations) != len(filtered_annotations)):
             # update annotations if they have actually been filtered
@@ -102,7 +102,6 @@ def test_and_update_record(env, idx, record, ann_key, keep_unmatched):
         # otherwise, the annotations are irrelevant w.r.t. the expression,
         # so we can omit them
         return record, env.evaluate()
-
 
 
 def filter_vcf(
@@ -120,7 +119,9 @@ def filter_vcf(
 
     record: VariantRecord
     for idx, record in enumerate(vcf):
-        record, passed = test_and_update_record(env, idx, record, ann_key, keep_unmatched)
+        record, passed = test_and_update_record(
+            env, idx, record, ann_key, keep_unmatched
+        )
         if passed:
             is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
             if is_bnd:
@@ -129,7 +130,6 @@ def filter_vcf(
             elif not preserve_order:
                 # if preserver order, we will output everything in the second pass *
                 yield record
-
 
     if len(events) > 0:
         # perform a second pass
@@ -140,13 +140,15 @@ def filter_vcf(
 
             if is_bnd:
                 if event not in events:
-                     # only bnds with valid event
+                    # only bnds with valid event
                     continue
             else:
                 if not preserve_order:
                     # if preserver order, we will output everything in the second pass *
                     continue
-            record, _ = test_and_update_record(env, idx, record, ann_key, keep_unmatched)
+            record, _ = test_and_update_record(
+                env, idx, record, ann_key, keep_unmatched
+            )
             yield record
 
 
@@ -207,8 +209,9 @@ def execute(args):
         if args.statistics is not None:
             records = statistics(records, vcf, args.statistics, args.annotation_key)
 
-        fmt = {"vcf":"", "bcf":"b", "uncompressed-bcf": "u"}[args.output_fmt]
-        with VariantFile(args.output,
+        fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
+        with VariantFile(
+            args.output,
             f"w{fmt}",
             header=header,
         ) as out:
