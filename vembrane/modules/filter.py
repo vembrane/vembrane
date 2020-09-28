@@ -119,16 +119,16 @@ def filter_vcf(
 
     record: VariantRecord
     for idx, record in enumerate(vcf):
-        record, passed = test_and_update_record(
+        record, record_has_passed = test_and_update_record(
             env, idx, record, ann_key, keep_unmatched
         )
-        if passed:
+        if record_has_passed:
             is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
             if is_bnd:
                 event = record.info.get("EVENT", None)
                 events.add(event)
             elif not preserve_order:
-                # if preserver order, we will output everything in the second pass *
+                # if preserve order, we will output everything in the second pass *
                 yield record
 
     if len(events) > 0:
