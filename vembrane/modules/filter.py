@@ -132,7 +132,8 @@ def filter_vcf(
                 yield record
 
     if len(events) > 0:
-        # perform a second pass
+        # perform a second pass if the first pass filtered breakend (BND) events
+        # since these are compound events which have to be filtered jointly
         vcf.reset()
         for idx, record in enumerate(vcf):
             is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
