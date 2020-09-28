@@ -147,8 +147,6 @@ def filter_vcf(
                     continue
             else:
                 if not preserve_order:
-                    # if preserver order, \
-                    # we will output everything in the second pass *
                     continue
             record, _ = test_and_update_record(
                 env, idx, record, ann_key, keep_unmatched
