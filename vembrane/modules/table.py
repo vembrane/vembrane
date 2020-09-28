@@ -86,7 +86,7 @@ def tableize_vcf(
             yield env.table()
 
 
-def get_header(args):
+def get_header(args) -> list[str]:
     if args.header == "none":
         return
     elif args.header == "auto":

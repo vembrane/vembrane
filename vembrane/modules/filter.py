@@ -68,11 +68,17 @@ def add_subcommmand(subparsers):
         action="store_true",
         help="Ensures that the order of the output matches that of the \
               input. This is only useful if the input contains breakends (BNDs) \
-              since the order of all other variants is preserved anyway.
+              since the order of all other variants is preserved anyway.",
     )
 
 
-def test_and_update_record(env, idx, record, ann_key, keep_unmatched):
+def test_and_update_record(
+    env: Environment,
+    idx: int,
+    record: VariantRecord,
+    ann_key: str,
+    keep_unmatched: bool,
+) -> (VariantRecord, bool):
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
