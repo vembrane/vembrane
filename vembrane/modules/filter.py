@@ -66,10 +66,9 @@ def add_subcommmand(subparsers):
         "--preserve-order",
         default=False,
         action="store_true",
-        help="Make sure that the variant order of the output matches that of the \
-              input. For performance reasons only make use of this option, if the \
-              input might contain breakends (BNDs) as the order of all other variants \
-              are preserved anyway.",
+        help="Ensures that the order of the output matches that of the \
+              input. This is only useful if the input contains breakends (BNDs) \
+              since the order of all other variants is preserved anyway.
     )
 
 
