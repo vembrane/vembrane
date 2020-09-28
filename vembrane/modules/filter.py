@@ -62,6 +62,46 @@ def add_subcommmand(subparsers):
         help="Keep all annotations of a variant if at least one of them passes "
         "the expression.",
     )
+    parser.add_argument(
+        "--preserve-order",
+        default=False,
+        action="store_true",
+        help="Ensures that the order of the output matches that of the \
+              input. This is only useful if the input contains breakends (BNDs) \
+              since the order of all other variants is preserved anyway.",
+    )
+
+
+def test_and_update_record(
+    env: Environment,
+    idx: int,
+    record: VariantRecord,
+    ann_key: str,
+    keep_unmatched: bool,
+) -> (VariantRecord, bool):
+    env.update_from_record(idx, record)
+    if env.expression_annotations():
+        # if the expression contains a reference to the ANN field
+        # get all annotations from the record.info field
+        # (or supply an empty ANN value if the record has no ANN field)
+        try:
+            annotations = record.info[ann_key]
+        except KeyError:
+            annotations = [""]
+        #  … and only keep the annotations where the expression evaluates to true
+        filtered_annotations = [
+            annotation for annotation in annotations if env.evaluate(annotation)
+        ]  # TODO: if keep_unmatched, that could be "any(iterator)" instead of list
+
+        if not keep_unmatched and (len(annotations) != len(filtered_annotations)):
+            # update annotations if they have actually been filtered
+            record.info[ann_key] = filtered_annotations
+
+        return record, len(filtered_annotations) > 0
+    else:
+        # otherwise, the annotations are irrelevant w.r.t. the expression,
+        # so we can omit them
+        return record, env.evaluate()
 
 
 def filter_vcf(
@@ -69,39 +109,49 @@ def filter_vcf(
     expression: str,
     ann_key: str,
     keep_unmatched: bool = False,
+    preserve_order: bool = False,
 ) -> Iterator[VariantRecord]:
 
     env = Environment(expression, ann_key, vcf.header)
 
+    events = set()
+    info_keys = set(vcf.header.info.keys())
+
     record: VariantRecord
     for idx, record in enumerate(vcf):
-        env.update_from_record(idx, record)
-        if env.expression_annotations():
-            # if the expression contains a reference to the ANN field
-            # get all annotations from the record.info field
-            # (or supply an empty ANN value if the record has no ANN field)
-            try:
-                annotations = record.info[ann_key]
-            except KeyError:
-                annotations = [""]
-            #  … and only keep the annotations where the expression evaluates to true
-            filtered_annotations = [
-                annotation for annotation in annotations if env.evaluate(annotation)
-            ]
-            if not filtered_annotations:
-                # skip this record if filter removed all annotations
-                continue
-            elif not keep_unmatched and (len(annotations) != len(filtered_annotations)):
-                # update annotations if they have actually been filtered
-                record.info[ann_key] = filtered_annotations
-            yield record
-        else:
-            # otherwise, the annotations are irrelevant w.r.t. the expression,
-            # so we can omit them
-            if env.evaluate():
+        record, record_has_passed = test_and_update_record(
+            env, idx, record, ann_key, keep_unmatched
+        )
+        if record_has_passed:
+            is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
+            if is_bnd:
+                event = record.info.get("EVENT", None)
+                events.add(event)
+            elif not preserve_order:
+                # if preserve_order is True, \
+                # we will output everything in the second pass instead
                 yield record
+
+    if len(events) > 0:
+        # perform a second pass if the first pass filtered breakend (BND) events
+        # since these are compound events which have to be filtered jointly
+        vcf.reset()
+        for idx, record in enumerate(vcf):
+            is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
+            event = record.info.get("EVENT", None)
+
+            if is_bnd:
+                if event not in events:
+                    # only bnds with a valid associated event need to be considered, \
+                    # so skip the rest
+                    continue
             else:
-                continue
+                if not preserve_order:
+                    continue
+            record, _ = test_and_update_record(
+                env, idx, record, ann_key, keep_unmatched
+            )
+            yield record
 
 
 def statistics(
@@ -131,12 +181,6 @@ def statistics(
 
 def execute(args):
     with VariantFile(args.vcf) as vcf:
-        fmt = ""
-        if args.output_fmt == "bcf":
-            fmt = "b"
-        elif args.output_fmt == "uncompressed-bcf":
-            fmt = "u"
-
         header: VariantHeader = vcf.header
         header.add_meta("vembraneVersion", __version__)
         header.add_meta(
@@ -153,6 +197,7 @@ def execute(args):
             args.expression,
             args.annotation_key,
             keep_unmatched=args.keep_unmatched,
+            preserve_order=args.preserve_order,
         )
 
         try:
@@ -163,17 +208,19 @@ def execute(args):
 
         records = chain(first_record, records)
 
+        if args.statistics is not None:
+            records = statistics(records, vcf, args.statistics, args.annotation_key)
+
+        fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
         with VariantFile(
             args.output,
-            "w" + fmt,
+            f"w{fmt}",
             header=header,
         ) as out:
-            if args.statistics is not None:
-                records = statistics(records, vcf, args.statistics, args.annotation_key)
-
             try:
                 for record in records:
                     out.write(record)
+
             except VembraneError as ve:
                 print(ve, file=stderr)
                 exit(1)
