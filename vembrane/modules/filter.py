@@ -128,7 +128,8 @@ def filter_vcf(
                 event = record.info.get("EVENT", None)
                 events.add(event)
             elif not preserve_order:
-                # if preserve_order is True, we will output everything in the second pass instead
+                # if preserve_order is True, \
+                # we will output everything in the second pass instead
                 yield record
 
     if len(events) > 0:
@@ -145,7 +146,8 @@ def filter_vcf(
                     continue
             else:
                 if not preserve_order:
-                    # if preserver order, we will output everything in the second pass *
+                    # if preserver order, \
+                    # we will output everything in the second pass *
                     continue
             record, _ = test_and_update_record(
                 env, idx, record, ann_key, keep_unmatched
