@@ -3,7 +3,7 @@ import csv
 import sys
 
 from pysam.libcbcf import VariantFile, VariantRecord
-from typing import Iterator
+from typing import Iterator, List, Optional
 from sys import stderr
 
 from ..common import check_expression
@@ -86,7 +86,7 @@ def tableize_vcf(
             yield env.table()
 
 
-def get_header(args) -> list[str]:
+def get_header(args) -> Optional[List[str]]:
     if args.header == "none":
         return
     elif args.header == "auto":
