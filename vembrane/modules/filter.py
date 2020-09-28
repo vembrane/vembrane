@@ -128,7 +128,7 @@ def filter_vcf(
                 event = record.info.get("EVENT", None)
                 events.add(event)
             elif not preserve_order:
-                # if preserver order, we will output everything in the second pass *
+                # if preserve_order is True, we will output everything in the second pass instead
                 yield record
 
     if len(events) > 0:
