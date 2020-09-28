@@ -141,7 +141,7 @@ def filter_vcf(
 
             if is_bnd:
                 if event not in events:
-                    # only bnds with valid event
+                    # only bnds with a valid associated event need to be considered, so skip the rest
                     continue
             else:
                 if not preserve_order:
