@@ -128,11 +128,12 @@ def filter_vcf(
                 event = record.info.get("EVENT", None)
                 events.add(event)
             elif not preserve_order:
-                # if preserve order, we will output everything in the second pass *
+                # if preserve_order is True, we will output everything in the second pass instead
                 yield record
 
     if len(events) > 0:
-        # perform a second pass
+        # perform a second pass if the first pass filtered breakend (BND) events
+        # since these are compound events which have to be filtered jointly
         vcf.reset()
         for idx, record in enumerate(vcf):
             is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
