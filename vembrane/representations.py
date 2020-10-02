@@ -250,8 +250,8 @@ class Environment(dict):
         self._globals["QUAL"] = value
         return value
 
-    def _get_filter(self) -> str:
-        value = self.record.filter
+    def _get_filter(self) -> List[str]:
+        value = list(self.record.filter)
         self._globals["FILTER"] = value
         return value
 
