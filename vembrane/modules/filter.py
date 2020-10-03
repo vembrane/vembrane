@@ -88,16 +88,21 @@ def test_and_update_record(
             annotations = record.info[ann_key]
         except KeyError:
             annotations = [""]
+
         #  … and only keep the annotations where the expression evaluates to true
-        filtered_annotations = [
-            annotation for annotation in annotations if env.evaluate(annotation)
-        ]  # TODO: if keep_unmatched, that could be "any(iterator)" instead of list
+        if keep_unmatched:
+            filtered = any(map(env.evaluate, annotations))
+            return record, filtered
+        else:
+            filtered_annotations = [
+                annotation for annotation in annotations if env.evaluate(annotation)
+            ]
 
-        if not keep_unmatched and (len(annotations) != len(filtered_annotations)):
-            # update annotations if they have actually been filtered
-            record.info[ann_key] = filtered_annotations
+            if len(annotations) != len(filtered_annotations):
+                # update annotations if they have actually been filtered
+                record.info[ann_key] = filtered_annotations
 
-        return record, len(filtered_annotations) > 0
+            return record, len(filtered_annotations) > 0
     else:
         # otherwise, the annotations are irrelevant w.r.t. the expression,
         # so we can omit them
