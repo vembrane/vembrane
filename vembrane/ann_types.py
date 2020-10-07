@@ -1,3 +1,4 @@
+from collections import defaultdict
 from sys import stderr
 from typing import Union, Iterable, Tuple, Dict, Callable, Any
 
@@ -155,9 +156,33 @@ class AnnotationListEntry(AnnotationEntry):
         super().__init__(name, typefunc, nafunc=lambda: [], **kwargs)
 
 
+class AnnotationListDictEntry(AnnotationEntry):
+    def __init__(self, name: str, **kwargs):
+        def typefunc(x):
+            key_value_tuples = map(lambda v: v.split(":", maxsplit=1), x.split("&"))
+            mapping = defaultdict(list)
+            for key, value in key_value_tuples:
+                mapping[key].append(value)
+            # make sure non-existent keys do not return list() on __getitem__ calls
+            # in the filter expression (without actually building a new dict from
+            # the defaultdict)
+            mapping.default_factory = None
+            return mapping
+
+        super().__init__(name=name, typefunc=typefunc, **kwargs)
+
+
 class AnnotationNumberTotalEntry(AnnotationListEntry):
     def __init__(self, name: str, **kwargs):
         super().__init__(name, sep="/", inner_typefunc=int, **kwargs)
+
+
+class AnnotationPredictionScoreEntry(AnnotationEntry):
+    def __init__(self, name: str, **kwargs):
+        def typefunc(x: str) -> Dict[str, float]:
+            return {x[: x.rindex("(")]: float(x[x.index("(") + 1 : x.rindex(")")])}
+
+        super().__init__(name, typefunc=typefunc, nafunc=lambda: dict(), **kwargs)
 
 
 class DefaultAnnotationEntry(AnnotationEntry):
@@ -254,12 +279,12 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "ENSP": AnnotationEntry(
         "ENSP", description="The Ensembl protein identifier of the affected transcript"
     ),
-    # TODO parse flags: "cds_start_NF: CDS 5' incomplete, cds_end_NF: CDS 3' incomplete"
-    # "FLAGS": AnnotationEntry(
-    #     "FLAGS",
-    #     description="Transcript quality flags:
-    #     cds_start_NF: CDS 5' incomplete, cds_end_NF: CDS 3' incomplete",
-    # ),
+    "FLAGS": AnnotationListEntry(
+        "FLAGS",
+        sep="&",
+        description="Transcript quality flags: "
+        "cds_start_NF: CDS 5' incomplete, cds_end_NF: CDS 3' incomplete",
+    ),
     "SWISSPROT": AnnotationEntry(
         "SWISSPROT",
         description="Best match UniProtKB/Swiss-Prot accession of protein product",
@@ -281,22 +306,14 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     ),
     # "NEAREST": AnnotationEntry("NEAREST",
     #               description="Identifier(s) of nearest transcription start site"),
-    # TODO custom type:
-    #  "the SIFT prediction and/or score, with both given as prediction(score)"
-    "SIFT": AnnotationEntry(
+    "SIFT": AnnotationPredictionScoreEntry(
         "SIFT",
-        typefunc=lambda x: {
-            x[: x.rindex("(")]: float(x[x.index("(") + 1 : x.rindex(")")])
-        },
-        nafunc=lambda: dict(),
         description="The SIFT prediction and/or score,"
         " with both given as prediction(score)",
     ),
-    # TODO custom type:
-    #  "the PolyPhen prediction and/or score"
-    # "PolyPhen": AnnotationEntry(
-    #     "PolyPhen", description="The PolyPhen prediction and/or score"
-    # ),
+    "PolyPhen": AnnotationPredictionScoreEntry(
+        "PolyPhen", description="The PolyPhen prediction and/or score"
+    ),
     "MOTIF_NAME": AnnotationEntry(
         "MOTIF_NAME",
         description="The source and identifier of a transcription factor binding "
@@ -307,14 +324,12 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         int,
         description="The relative position of the variation in the aligned TFBP",
     ),
-    # TODO parse flag:
-    #  "a flag indicating if the variant falls in a high information position of a
-    #  transcription factor binding profile (TFBP)"
-    # "HIGH_INF_POS": AnnotationEntry(
-    #     "HIGH_INF_POS",
-    #     description="A flag indicating if the variant falls in a high information "
-    #                 "position of a transcription factor binding profile (TFBP)",
-    # ),
+    "HIGH_INF_POS": AnnotationEntry(
+        "HIGH_INF_POS",
+        typefunc=lambda x: True if x == "Y" else False,
+        description="A flag indicating if the variant falls in a high information "
+        "position of a transcription factor binding profile (TFBP)",
+    ),
     "MOTIF_SCORE_CHANGE": AnnotationEntry(
         "MOTIF_SCORE_CHANGE",
         float,
@@ -326,14 +341,12 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         ",",
         description="List of cell types and classifications for regulatory feature",
     ),
-    # TODO parse flag:
-    #  "a flag indicating if the transcript is denoted as the canonical transcript
-    #  for this gene"
-    # "CANONICAL": AnnotationEntry(
-    #     "CANONICAL",
-    #     description="A flag indicating if the transcript is denoted as the canonical "
-    #                 "transcript for this gene",
-    # ),
+    "CANONICAL": AnnotationEntry(
+        "CANONICAL",
+        typefunc=lambda x: True if x == "YES" else False,
+        description="A flag indicating if the transcript is denoted as the canonical "
+        "transcript for this gene",
+    ),
     "CCDS": AnnotationEntry(
         "CCDS", description="The CCDS identifer for this transcript, where applicable"
     ),
@@ -343,10 +356,10 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "EXON": AnnotationNumberTotalEntry(
         "EXON", description="The exon number (out of total number)"
     ),
-    # "DOMAINS": AnnotationEntry(
-    #     "DOMAINS",
-    #     description="The source and identifer of any overlapping protein domains",
-    # ),
+    "DOMAINS": AnnotationListDictEntry(
+        "DOMAINS",
+        description="The source and identifer of any overlapping protein domains",
+    ),
     "DISTANCE": AnnotationEntry(
         "DISTANCE", int, description="Shortest distance from variant to transcript"
     ),
@@ -469,10 +482,11 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="Maximum observed allele frequency in "
         "1000 Genomes, ESP and gnomAD",
     ),
-    # "MAX_AF_POPS": AnnotationEntry(
-    #     "MAX_AF_POPS",
-    #     description="Populations in which maximum allele frequency was observed",
-    # ),
+    "MAX_AF_POPS": AnnotationListEntry(
+        "MAX_AF_POPS",
+        sep="&",
+        description="Populations in which maximum allele frequency was observed",
+    ),
     "CLIN_SIG": AnnotationListEntry(
         "CLIN_SIG",
         "&",
@@ -493,27 +507,28 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "PUBMED": AnnotationEntry(
         "PUBMED", description="Pubmed ID(s) of publications that cite existing variant"
     ),
-    # TODO list type with unknown sep
-    # "SOMATIC": AnnotationEntry(
-    #     "SOMATIC",
-    #     description="Somatic status of existing variant(s); "
-    #                 "multiple values correspond to multiple values "
-    #                 "in the Existing_variation field",
-    # ),
-    # TODO list type with unknown sep
-    # "PHENO": AnnotationEntry(
-    #     "PHENO",
-    #     description="Indicates if existing variant is associated with a phenotype, "
-    #                 "disease or trait; "
-    #                 "multiple values correspond to multiple values "
-    #                 "in the Existing_variation field",
-    # ),
-    # TODO list type with unknown sep
-    # "GENE_PHENO": AnnotationEntry(
-    #     "GENE_PHENO",
-    #     description="Indicates if overlapped gene is associated with a phenotype, "
-    #                 "disease or trait",
-    # ),
+    "SOMATIC": AnnotationListEntry(
+        "SOMATIC",
+        description="Somatic status of existing variant(s); "
+        "multiple values correspond to multiple values "
+        "in the Existing_variation field",
+        sep="&",
+    ),
+    "PHENO": AnnotationListEntry(
+        "PHENO",
+        sep="&",
+        description="Indicates if existing variant is associated with a phenotype, "
+        "disease or trait; "
+        "multiple values correspond to multiple values "
+        "in the Existing_variation field",
+    ),
+    # TODO list type with unconfirmed sep
+    "GENE_PHENO": AnnotationListEntry(
+        "GENE_PHENO",
+        sep="&",
+        description="Indicates if overlapped gene is associated with a phenotype, "
+        "disease or trait",
+    ),
     "ALLELE_NUM": AnnotationEntry(
         "ALLELE_NUM",
         int,
@@ -569,6 +584,27 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     # ),
     "AMBIGUITY": AnnotationEntry(
         "AMBIGUITY", description="IUPAC allele ambiguity code"
+    ),
+    "Amino_acids": AnnotationListEntry(
+        "Amino_acids", description="Reference and variant amino acids", sep="/"
+    ),
+    "Codons": AnnotationListEntry(
+        "Codons", description="Reference and variant codon sequence", sep="/"
+    ),
+    # TODO HGNC_ID description
+    "HGNC_ID": AnnotationEntry("HGNC_ID"),
+    "MANE": AnnotationEntry(
+        "MANE", description="Matched Annotation from NCBI and EMBL-EBI (MANE)."
+    ),
+    "miRNA": AnnotationEntry(
+        "miRNA",
+        description="Determines where in the secondary structure of a miRNA "
+        "a variant falls",
+    ),
+    "Existing_variation": AnnotationListEntry(
+        "Existing_variation",
+        sep="&",
+        description="Identifier(s) of co-located known variants",
     ),
 }
 
