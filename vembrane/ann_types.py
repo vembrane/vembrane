@@ -169,7 +169,7 @@ class AnnotationTyper:
     def __init__(self, mapping: Dict[str, AnnotationEntry]):
         self._mapping = mapping
 
-    def get_entry(self, key: str) -> Tuple[str, AnnotationType]:
+    def get_entry(self, key: str) -> AnnotationEntry:
         entry = self._mapping.get(key)
         if not entry:
             print(
