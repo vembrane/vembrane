@@ -606,6 +606,13 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         sep="&",
         description="Identifier(s) of co-located known variants",
     ),
+    "LoFtool": AnnotationEntry(
+        "LoFtool",
+        typefunc=float,
+        description="Provides a rank of genic intolerance and "
+        "consequent susceptibility to disease based on the ratio of Loss-of-function "
+        "(LoF)to synonymous mutations.",
+    ),
 }
 
 KNOWN_ANN_TYPE_MAP = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}
