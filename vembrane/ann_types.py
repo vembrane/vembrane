@@ -140,10 +140,24 @@ class AnnotationEntry:
 
 class AnnotationListEntry(AnnotationEntry):
     def __init__(
-        self, name: str, sep: str, typefunc: Callable[[str], Any] = None, **kwargs
+        self,
+        name: str,
+        sep: str,
+        typefunc: Callable[[str], Any] = None,
+        inner_typefunc: Callable[[str], Any] = lambda x: x,
+        **kwargs,
     ):
-        typefunc = typefunc if typefunc else lambda v: [x.strip() for x in v.split(sep)]
+        typefunc = (
+            typefunc
+            if typefunc
+            else lambda v: [inner_typefunc(x.strip()) for x in v.split(sep)]
+        )
         super().__init__(name, typefunc, nafunc=lambda: [], **kwargs)
+
+
+class AnnotationNumberTotalEntry(AnnotationListEntry):
+    def __init__(self, name: str, **kwargs):
+        super().__init__(name, sep="/", inner_typefunc=int, **kwargs)
 
 
 class DefaultAnnotationEntry(AnnotationEntry):
@@ -269,11 +283,15 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     #               description="Identifier(s) of nearest transcription start site"),
     # TODO custom type:
     #  "the SIFT prediction and/or score, with both given as prediction(score)"
-    # "SIFT": AnnotationEntry(
-    #     "SIFT",
-    #     description="The SIFT prediction and/or score,"
-    #     " with both given as prediction(score)",
-    # ),
+    "SIFT": AnnotationEntry(
+        "SIFT",
+        typefunc=lambda x: {
+            x[: x.rindex("(")]: float(x[x.index("(") + 1 : x.rindex(")")])
+        },
+        nafunc=lambda: dict(),
+        description="The SIFT prediction and/or score,"
+        " with both given as prediction(score)",
+    ),
     # TODO custom type:
     #  "the PolyPhen prediction and/or score"
     # "PolyPhen": AnnotationEntry(
@@ -319,14 +337,12 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "CCDS": AnnotationEntry(
         "CCDS", description="The CCDS identifer for this transcript, where applicable"
     ),
-    # TODO custom type: "the intron number (out of total number)"
-    # "INTRON": AnnotationEntry(
-    #     "INTRON", description="The intron number (out of total number)"
-    # ),
-    # TODO custom type: "the exon number (out of total number)"
-    # "EXON": AnnotationEntry(
-    #     "EXON", description="The exon number (out of total number)"
-    # ),
+    "INTRON": AnnotationNumberTotalEntry(
+        "INTRON", description="The intron number (out of total number)"
+    ),
+    "EXON": AnnotationNumberTotalEntry(
+        "EXON", description="The exon number (out of total number)"
+    ),
     # "DOMAINS": AnnotationEntry(
     #     "DOMAINS",
     #     description="The source and identifer of any overlapping protein domains",
