@@ -1,6 +1,7 @@
 from collections import defaultdict
 from sys import stderr
 from typing import Union, Iterable, Tuple, Dict, Callable, Any
+import re
 
 from .errors import MoreThanOneAltAllele
 
@@ -177,10 +178,14 @@ class AnnotationNumberTotalEntry(AnnotationListEntry):
         super().__init__(name, sep="/", inner_typefunc=int, **kwargs)
 
 
+PREDICTION_SCORE_REGEXP: re.Pattern = re.compile(r"(.*)\((.*)\)")
+
+
 class AnnotationPredictionScoreEntry(AnnotationEntry):
     def __init__(self, name: str, **kwargs):
         def typefunc(x: str) -> Dict[str, float]:
-            return {x[: x.rindex("(")]: float(x[x.index("(") + 1 : x.rindex(")")])}
+            match = PREDICTION_SCORE_REGEXP.findall(x)[0]
+            return {match[0]: float(match[1])}
 
         super().__init__(name, typefunc=typefunc, nafunc=lambda: dict(), **kwargs)
 
