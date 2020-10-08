@@ -173,9 +173,26 @@ class AnnotationListDictEntry(AnnotationEntry):
         super().__init__(name=name, typefunc=typefunc, **kwargs)
 
 
-class AnnotationNumberTotalEntry(AnnotationListEntry):
+class NumberTotal(object):
+    def __init__(self, number, total):
+        self.number = number
+        self.total = total
+
+    @classmethod
+    def from_vep_string(cls, value: str) -> "NumberTotal":
+        v = value.split("/")
+        return cls(int(v[0]), int(v[1]))
+
+    def __str__(self):
+        return f"number / total: {self.number} / {self.total}"
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class AnnotationNumberTotalEntry(AnnotationEntry):
     def __init__(self, name: str, **kwargs):
-        super().__init__(name, sep="/", inner_typefunc=int, **kwargs)
+        super().__init__(name, typefunc=NumberTotal.from_vep_string, **kwargs)
 
 
 PREDICTION_SCORE_REGEXP: re.Pattern = re.compile(r"(.*)\((.*)\)")
