@@ -326,7 +326,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     ),
     "HIGH_INF_POS": AnnotationEntry(
         "HIGH_INF_POS",
-        typefunc=lambda x: True if x == "Y" else False,
+        typefunc="Y".__eq__,
         description="A flag indicating if the variant falls in a high information "
         "position of a transcription factor binding profile (TFBP)",
     ),
