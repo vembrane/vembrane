@@ -343,7 +343,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     ),
     "CANONICAL": AnnotationEntry(
         "CANONICAL",
-        typefunc=lambda x: True if x == "YES" else False,
+        typefunc="YES".__eq__,
         description="A flag indicating if the transcript is denoted as the canonical "
         "transcript for this gene",
     ),
