@@ -6,6 +6,8 @@ import re
 #        *sorted(o for o in dir(__builtins__) if o.islower() and not o.startswith("_")),
 #        sep="\n",
 #    )'
+from typing import Dict, Any
+
 from .ann_types import NA
 
 _builtins = {
@@ -109,3 +111,60 @@ allowed_globals = {
     **_explicit_clear,
     "NA": NA,
 }
+
+
+def custom_functions(env) -> Dict[str, Any]:
+    return {
+        "count_hom": eval(
+            "lambda: "
+            "sum(all(x == FORMAT['GT'][s][0] for x in FORMAT['GT'][s][1:]) "
+            "for s in SAMPLES)",
+            env,
+            {},
+        ),
+        "count_het": eval(
+            "lambda: "
+            "sum(any(x != FORMAT['GT'][s][0] for x in FORMAT['GT'][s][1:]) "
+            "for s in SAMPLES)",
+            env,
+            {},
+        ),
+        "count_ref": eval(
+            "lambda: "
+            "sum(all(x == 0 for x in FORMAT['GT'][s][1:]) "
+            "for s in SAMPLES)",
+            env,
+            {},
+        ),
+        "count_var": eval(
+            "lambda: "
+            "sum(any(x != 0 for x in FORMAT['GT'][s][1:]) "
+            "for s in SAMPLES)",
+            env,
+            {},
+        ),
+        "is_hom": eval(
+            f"lambda sample: "
+            f"all(x == FORMAT['GT'][sample][0] "
+            f"for x in FORMAT['GT'][sample][1:])",
+            env,
+            {},
+        ),
+        "is_het": eval(
+            f"lambda sample: "
+            f"any(x != FORMAT['GT'][sample][0] "
+            f"for x in FORMAT['GT'][sample][1:])",
+            env,
+            {},
+        ),
+        "is_ref": eval(
+            f"lambda sample: " f"all(x == 0 " f"for x in FORMAT['GT'][sample][1:])",
+            env,
+            {},
+        ),
+        "is_var": eval(
+            f"lambda sample: " f"any(x != 0 " f"for x in FORMAT['GT'][sample][1:])",
+            env,
+            {},
+        ),
+    }
