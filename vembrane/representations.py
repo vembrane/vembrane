@@ -2,8 +2,6 @@ import ast
 from itertools import chain
 from typing import Dict, List, Tuple
 
-from .common import get_annotation_keys, split_annotation_entry
-
 from pysam.libcbcf import (
     VariantRecordSamples,
     VariantRecordFormat,
@@ -13,21 +11,20 @@ from pysam.libcbcf import (
     VariantRecordSample,
 )
 
-from .globals import allowed_globals
-
 from .ann_types import (
     NA,
     type_info,
     ANN_TYPER,
     MoreThanOneAltAllele,
 )
-
+from .common import get_annotation_keys, split_annotation_entry
 from .errors import (
     UnknownSample,
     UnknownFormatField,
     UnknownInfoField,
     UnknownAnnotation,
 )
+from .globals import allowed_globals, custom_functions
 
 
 class NoValueDict:
@@ -171,6 +168,7 @@ class Environment(dict):
         self._globals = {}
         # We use self + self.func as a closure.
         self._globals = allowed_globals.copy()
+        self._globals.update(custom_functions(self))
         self._func = eval(f"lambda: {expression}", self, {})
 
         self._getters = {
