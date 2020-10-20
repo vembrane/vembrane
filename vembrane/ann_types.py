@@ -25,10 +25,13 @@ class NoValue:
     def __bool__(self):
         return False
 
-    def __repr__(self):
+    def __str__(self):
         # nonexistent fields will result in an empty string
         # should be configurable in upcoming versions
         return ""
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}()"
 
 
 NA = NoValue()
@@ -47,6 +50,12 @@ class InfoTuple:
         if values is None:
             return NA
         return values
+
+    def __str__(self):
+        return self.values.__str__()
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(values={self.values!r})"
 
 
 IntFloatStr = Union[int, float, str]
@@ -103,7 +112,7 @@ class PosRange:
         return f"(start: {self.start}, end: {self.end}, length: {self.length})"
 
     def __repr__(self):
-        return self.__str__()
+        return f"{self.__class__.__name__}(start={self.start!r}, end={self.end!r})"
 
 
 def na_func() -> NoValue:
@@ -138,6 +147,16 @@ class AnnotationEntry:
 
     def description(self):
         return self._description
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"name={self._name!r}, "
+            f"typefunc={self._typefunc!r}, "
+            f"nafunc={self._nafunc!r}, "
+            f"description={self._description!r}"
+            f")"
+        )
 
 
 class AnnotationListEntry(AnnotationEntry):
@@ -187,7 +206,9 @@ class NumberTotal(object):
         return f"number / total: {self.number} / {self.total}"
 
     def __repr__(self):
-        return self.__str__()
+        return (
+            f"{self.__class__.__name__}(number={self.number!r}, total={self.total!r})"
+        )
 
 
 class AnnotationNumberTotalEntry(AnnotationEntry):
