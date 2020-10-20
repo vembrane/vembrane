@@ -171,6 +171,23 @@ class Environment(dict):
         self._globals = {}
         # We use self + self.func as a closure.
         self._globals = allowed_globals.copy()
+        custom_functions = {
+            "count_hom": eval(
+                "lambda: "
+                "sum(all(x == FORMAT['GT'][s][0] for x in FORMAT['GT'][s][1:]) "
+                "for s in SAMPLES)",
+                self,
+                {},
+            ),
+            "count_het": eval(
+                "lambda: "
+                "sum(any(x != FORMAT['GT'][s][0] for x in FORMAT['GT'][s][1:]) "
+                "for s in SAMPLES)",
+                self,
+                {},
+            ),
+        }
+        self._globals.update(custom_functions)
         self._func = eval(f"lambda: {expression}", self, {})
 
         self._getters = {
