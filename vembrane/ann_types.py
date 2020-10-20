@@ -158,7 +158,7 @@ class AnnotationListEntry(AnnotationEntry):
 
 
 class AnnotationListDictEntry(AnnotationEntry):
-    def __init__(self, name: str, **kwargs):
+    def __init__(self, name: str, nafunc=lambda: None, **kwargs):
         def typefunc(x):
             key_value_tuples = map(lambda v: v.split(":", maxsplit=1), x.split("&"))
             mapping = defaultdict(list)
@@ -167,7 +167,7 @@ class AnnotationListDictEntry(AnnotationEntry):
             # make sure non-existent keys do not return list() on __getitem__ calls
             # in the filter expression (without actually building a new dict from
             # the defaultdict)
-            mapping.default_factory = None
+            mapping.default_factory = nafunc
             return mapping
 
         super().__init__(name=name, typefunc=typefunc, **kwargs)
