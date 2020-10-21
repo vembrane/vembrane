@@ -149,9 +149,7 @@ def custom_functions(env) -> Dict[str, Any]:
             {},
         ),
         "count_hom_var": eval(
-            "lambda: "
-            "sum(all(x != 0 for x in FORMAT['GT'][s] if x is not NA) "
-            "and sum(x is NA for x in FORMAT['GT'][s]) != len(FORMAT['GT'][s][:])"
+            "lambda: sum(all(x != 0 and x is not NA for x in FORMAT['GT'][s]) "
             "for s in SAMPLES)",
             env,
             {},
