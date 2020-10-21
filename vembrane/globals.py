@@ -131,15 +131,13 @@ def custom_functions(env) -> Dict[str, Any]:
             {},
         ),
         "count_ref": eval(
-            "lambda: "
-            "sum(all(x == 0 for x in FORMAT['GT'][s][1:]) "
-            "for s in SAMPLES)",
+            "lambda: sum(all(x == 0 for x in FORMAT['GT'][s]) for s in SAMPLES)",
             env,
             {},
         ),
         "count_var": eval(
             "lambda: "
-            "sum(any(x != 0 for x in FORMAT['GT'][s][1:] if x is not NA) "
+            "sum(any(x != 0 for x in FORMAT['GT'][s] if x is not NA) "
             "for s in SAMPLES)",
             env,
             {},
@@ -159,13 +157,13 @@ def custom_functions(env) -> Dict[str, Any]:
             {},
         ),
         "is_ref": eval(
-            f"lambda sample: all(x == 0 for x in FORMAT['GT'][sample][1:])",
+            f"lambda sample: all(x == 0 for x in FORMAT['GT'][sample])",
             env,
             {},
         ),
         "is_var": eval(
             f"lambda sample: "
-            f"any(x != 0 for x in FORMAT['GT'][sample][1:] if x is not NA)",
+            f"any(x != 0 for x in FORMAT['GT'][sample] if x is not NA)",
             env,
             {},
         ),
