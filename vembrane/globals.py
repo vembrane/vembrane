@@ -125,7 +125,8 @@ def custom_functions(env) -> Dict[str, Any]:
         "count_het": eval(
             "lambda: "
             "sum("
-            "any(x != FORMAT['GT'][s][0] for x in FORMAT['GT'][s][1:] if x is not NA) "
+            "any(x != next(f for f in FORMAT['GT'][s] if f is not NA) "
+            "for x in FORMAT['GT'][s][1:] if x is not NA) "
             "for s in SAMPLES)",
             env,
             {},
