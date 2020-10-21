@@ -124,7 +124,8 @@ def custom_functions(env) -> Dict[str, Any]:
         ),
         "count_het": eval(
             "lambda: "
-            "sum(any(x != FORMAT['GT'][s][0] for x in FORMAT['GT'][s][1:]) "
+            "sum("
+            "any(x != FORMAT['GT'][s][0] for x in FORMAT['GT'][s][1:] if x is not NA) "
             "for s in SAMPLES)",
             env,
             {},
@@ -138,7 +139,7 @@ def custom_functions(env) -> Dict[str, Any]:
         ),
         "count_var": eval(
             "lambda: "
-            "sum(any(x != 0 for x in FORMAT['GT'][s][1:]) "
+            "sum(any(x != 0 for x in FORMAT['GT'][s][1:] if x is not NA) "
             "for s in SAMPLES)",
             env,
             {},
@@ -153,17 +154,18 @@ def custom_functions(env) -> Dict[str, Any]:
         "is_het": eval(
             f"lambda sample: "
             f"any(x != FORMAT['GT'][sample][0] "
-            f"for x in FORMAT['GT'][sample][1:])",
+            f"for x in FORMAT['GT'][sample][1:] if x is not NA)",
             env,
             {},
         ),
         "is_ref": eval(
-            f"lambda sample: " f"all(x == 0 " f"for x in FORMAT['GT'][sample][1:])",
+            f"lambda sample: all(x == 0 for x in FORMAT['GT'][sample][1:])",
             env,
             {},
         ),
         "is_var": eval(
-            f"lambda sample: " f"any(x != 0 " f"for x in FORMAT['GT'][sample][1:])",
+            f"lambda sample: "
+            f"any(x != 0 for x in FORMAT['GT'][sample][1:] if x is not NA)",
             env,
             {},
         ),
