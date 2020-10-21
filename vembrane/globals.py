@@ -144,27 +144,27 @@ def custom_functions(env) -> Dict[str, Any]:
             {},
         ),
         "is_hom": eval(
-            f"lambda sample: "
-            f"all(x == next(f for f in FORMAT['GT'][sample] if f is not NA) "
-            f"for x in FORMAT['GT'][sample][1:])",
+            "lambda sample: "
+            "all(x == next(f for f in FORMAT['GT'][sample] if f is not NA) "
+            "for x in FORMAT['GT'][sample][1:])",
             env,
             {},
         ),
         "is_het": eval(
-            f"lambda sample: "
-            f"any(x != next(f for f in FORMAT['GT'][sample] if f is not NA) "
-            f"for x in FORMAT['GT'][sample][1:] if x is not NA)",
+            "lambda sample: "
+            "any(x != next(f for f in FORMAT['GT'][sample] if f is not NA) "
+            "for x in FORMAT['GT'][sample][1:] if x is not NA)",
             env,
             {},
         ),
         "is_ref": eval(
-            f"lambda sample: any(x == 0 for x in FORMAT['GT'][sample])",
+            "lambda sample: any(x == 0 for x in FORMAT['GT'][sample])",
             env,
             {},
         ),
         "is_var": eval(
-            f"lambda sample: "
-            f"any(x != 0 for x in FORMAT['GT'][sample] if x is not NA)",
+            "lambda sample: "
+            "any(x != 0 for x in FORMAT['GT'][sample] if x is not NA)",
             env,
             {},
         ),
