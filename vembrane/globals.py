@@ -168,14 +168,13 @@ def custom_functions(env) -> Dict[str, Any]:
             env,
             {},
         ),
-        "is_ref": eval(
+        "is_hom_ref": eval(
             "lambda sample: all(x == 0 for x in FORMAT['GT'][sample])",
             env,
             {},
         ),
-        "is_var": eval(
-            "lambda sample: "
-            "all(x != 0 for x in FORMAT['GT'][sample] if x is not NA)",
+        "is_hom_var": eval(
+            "lambda sample: all(x != 0 and x is not NA for x in FORMAT['GT'][s])",
             env,
             {},
         ),
