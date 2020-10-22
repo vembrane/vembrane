@@ -65,7 +65,7 @@ Annotations with type `str`:
 
 |Name in vep `ANN`|Name in `vembrane`|Type|Description|Example expression|
 |---|---|---|---|---|
-|`Location`|`Location`|`str`|(not yet parsed) In standard coordinate format (chr:start or chr:start-end)| |
+|`Location`|`Location`|`str`|In standard coordinate format (chr:start or chr:start-end)| |
 |`Allele`|`Allele`|`str`|The variant allele used to calculate the consequence| |
 |`Gene`|`Gene`|`str`|Ensembl stable ID of affected gene| |
 |`Feature`|`Feature`|`str`|Ensembl stable ID of feature| |
