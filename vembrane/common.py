@@ -32,7 +32,10 @@ def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
             continue
         if rec.get("ID") == ann_key:
             return list(
-                map(str.strip, rec.get("Description").split(separator)[1].split("|"))
+                map(
+                    str.strip,
+                    rec.get("Description").strip('"').split(separator)[1].split("|"),
+                )
             )
     return []
 

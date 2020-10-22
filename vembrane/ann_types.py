@@ -1,5 +1,7 @@
+from collections import defaultdict
 from sys import stderr
 from typing import Union, Iterable, Tuple, Dict, Callable, Any
+import re
 
 from .errors import MoreThanOneAltAllele
 
@@ -23,10 +25,13 @@ class NoValue:
     def __bool__(self):
         return False
 
-    def __repr__(self):
+    def __str__(self):
         # nonexistent fields will result in an empty string
         # should be configurable in upcoming versions
         return ""
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}()"
 
 
 NA = NoValue()
@@ -45,6 +50,12 @@ class InfoTuple:
         if values is None:
             return NA
         return values
+
+    def __str__(self):
+        return self.values.__str__()
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(values={self.values!r})"
 
 
 IntFloatStr = Union[int, float, str]
@@ -101,7 +112,7 @@ class PosRange:
         return f"(start: {self.start}, end: {self.end}, length: {self.length})"
 
     def __repr__(self):
-        return self.__str__()
+        return f"{self.__class__.__name__}(start={self.start!r}, end={self.end!r})"
 
 
 def na_func() -> NoValue:
@@ -137,13 +148,84 @@ class AnnotationEntry:
     def description(self):
         return self._description
 
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"name={self._name!r}, "
+            f"typefunc={self._typefunc!r}, "
+            f"nafunc={self._nafunc!r}, "
+            f"description={self._description!r}"
+            f")"
+        )
+
 
 class AnnotationListEntry(AnnotationEntry):
     def __init__(
-        self, name: str, sep: str, typefunc: Callable[[str], Any] = None, **kwargs
+        self,
+        name: str,
+        sep: str,
+        typefunc: Callable[[str], Any] = None,
+        inner_typefunc: Callable[[str], Any] = lambda x: x,
+        **kwargs,
     ):
-        typefunc = typefunc if typefunc else lambda v: [x.strip() for x in v.split(sep)]
+        typefunc = (
+            typefunc
+            if typefunc
+            else lambda v: [inner_typefunc(x.strip()) for x in v.split(sep)]
+        )
         super().__init__(name, typefunc, nafunc=lambda: [], **kwargs)
+
+
+class AnnotationListDictEntry(AnnotationEntry):
+    def __init__(self, name: str, nafunc=lambda: None, **kwargs):
+        def typefunc(x):
+            key_value_tuples = map(lambda v: v.split(":", maxsplit=1), x.split("&"))
+            mapping = defaultdict(list)
+            for key, value in key_value_tuples:
+                mapping[key].append(value)
+            # make sure non-existent keys do not return list() on __getitem__ calls
+            # in the filter expression (without actually building a new dict from
+            # the defaultdict)
+            mapping.default_factory = nafunc
+            return mapping
+
+        super().__init__(name=name, typefunc=typefunc, **kwargs)
+
+
+class NumberTotal(object):
+    def __init__(self, number, total):
+        self.number = number
+        self.total = total
+
+    @classmethod
+    def from_vep_string(cls, value: str) -> "NumberTotal":
+        v = value.split("/")
+        return cls(int(v[0]), int(v[1]))
+
+    def __str__(self):
+        return f"number / total: {self.number} / {self.total}"
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(number={self.number!r}, total={self.total!r})"
+        )
+
+
+class AnnotationNumberTotalEntry(AnnotationEntry):
+    def __init__(self, name: str, **kwargs):
+        super().__init__(name, typefunc=NumberTotal.from_vep_string, **kwargs)
+
+
+PREDICTION_SCORE_REGEXP: re.Pattern = re.compile(r"(.*)\((.*)\)")
+
+
+class AnnotationPredictionScoreEntry(AnnotationEntry):
+    def __init__(self, name: str, **kwargs):
+        def typefunc(x: str) -> Dict[str, float]:
+            match = PREDICTION_SCORE_REGEXP.findall(x)[0]
+            return {match[0]: float(match[1])}
+
+        super().__init__(name, typefunc=typefunc, nafunc=lambda: dict(), **kwargs)
 
 
 class DefaultAnnotationEntry(AnnotationEntry):
@@ -155,7 +237,7 @@ class AnnotationTyper:
     def __init__(self, mapping: Dict[str, AnnotationEntry]):
         self._mapping = mapping
 
-    def get_entry(self, key: str) -> Tuple[str, AnnotationType]:
+    def get_entry(self, key: str) -> AnnotationEntry:
         entry = self._mapping.get(key)
         if not entry:
             print(
@@ -240,12 +322,12 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "ENSP": AnnotationEntry(
         "ENSP", description="The Ensembl protein identifier of the affected transcript"
     ),
-    # TODO parse flags: "cds_start_NF: CDS 5' incomplete, cds_end_NF: CDS 3' incomplete"
-    # "FLAGS": AnnotationEntry(
-    #     "FLAGS",
-    #     description="Transcript quality flags:
-    #     cds_start_NF: CDS 5' incomplete, cds_end_NF: CDS 3' incomplete",
-    # ),
+    "FLAGS": AnnotationListEntry(
+        "FLAGS",
+        sep="&",
+        description="Transcript quality flags: "
+        "cds_start_NF: CDS 5' incomplete, cds_end_NF: CDS 3' incomplete",
+    ),
     "SWISSPROT": AnnotationEntry(
         "SWISSPROT",
         description="Best match UniProtKB/Swiss-Prot accession of protein product",
@@ -267,18 +349,14 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     ),
     # "NEAREST": AnnotationEntry("NEAREST",
     #               description="Identifier(s) of nearest transcription start site"),
-    # TODO custom type:
-    #  "the SIFT prediction and/or score, with both given as prediction(score)"
-    # "SIFT": AnnotationEntry(
-    #     "SIFT",
-    #     description="The SIFT prediction and/or score,"
-    #     " with both given as prediction(score)",
-    # ),
-    # TODO custom type:
-    #  "the PolyPhen prediction and/or score"
-    # "PolyPhen": AnnotationEntry(
-    #     "PolyPhen", description="The PolyPhen prediction and/or score"
-    # ),
+    "SIFT": AnnotationPredictionScoreEntry(
+        "SIFT",
+        description="The SIFT prediction and/or score,"
+        " with both given as prediction(score)",
+    ),
+    "PolyPhen": AnnotationPredictionScoreEntry(
+        "PolyPhen", description="The PolyPhen prediction and/or score"
+    ),
     "MOTIF_NAME": AnnotationEntry(
         "MOTIF_NAME",
         description="The source and identifier of a transcription factor binding "
@@ -289,14 +367,12 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         int,
         description="The relative position of the variation in the aligned TFBP",
     ),
-    # TODO parse flag:
-    #  "a flag indicating if the variant falls in a high information position of a
-    #  transcription factor binding profile (TFBP)"
-    # "HIGH_INF_POS": AnnotationEntry(
-    #     "HIGH_INF_POS",
-    #     description="A flag indicating if the variant falls in a high information "
-    #                 "position of a transcription factor binding profile (TFBP)",
-    # ),
+    "HIGH_INF_POS": AnnotationEntry(
+        "HIGH_INF_POS",
+        typefunc="Y".__eq__,
+        description="A flag indicating if the variant falls in a high information "
+        "position of a transcription factor binding profile (TFBP)",
+    ),
     "MOTIF_SCORE_CHANGE": AnnotationEntry(
         "MOTIF_SCORE_CHANGE",
         float,
@@ -308,29 +384,25 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         ",",
         description="List of cell types and classifications for regulatory feature",
     ),
-    # TODO parse flag:
-    #  "a flag indicating if the transcript is denoted as the canonical transcript
-    #  for this gene"
-    # "CANONICAL": AnnotationEntry(
-    #     "CANONICAL",
-    #     description="A flag indicating if the transcript is denoted as the canonical "
-    #                 "transcript for this gene",
-    # ),
+    "CANONICAL": AnnotationEntry(
+        "CANONICAL",
+        typefunc="YES".__eq__,
+        description="A flag indicating if the transcript is denoted as the canonical "
+        "transcript for this gene",
+    ),
     "CCDS": AnnotationEntry(
         "CCDS", description="The CCDS identifer for this transcript, where applicable"
     ),
-    # TODO custom type: "the intron number (out of total number)"
-    # "INTRON": AnnotationEntry(
-    #     "INTRON", description="The intron number (out of total number)"
-    # ),
-    # TODO custom type: "the exon number (out of total number)"
-    # "EXON": AnnotationEntry(
-    #     "EXON", description="The exon number (out of total number)"
-    # ),
-    # "DOMAINS": AnnotationEntry(
-    #     "DOMAINS",
-    #     description="The source and identifer of any overlapping protein domains",
-    # ),
+    "INTRON": AnnotationNumberTotalEntry(
+        "INTRON", description="The intron number (out of total number)"
+    ),
+    "EXON": AnnotationNumberTotalEntry(
+        "EXON", description="The exon number (out of total number)"
+    ),
+    "DOMAINS": AnnotationListDictEntry(
+        "DOMAINS",
+        description="The source and identifer of any overlapping protein domains",
+    ),
     "DISTANCE": AnnotationEntry(
         "DISTANCE", int, description="Shortest distance from variant to transcript"
     ),
@@ -453,10 +525,11 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="Maximum observed allele frequency in "
         "1000 Genomes, ESP and gnomAD",
     ),
-    # "MAX_AF_POPS": AnnotationEntry(
-    #     "MAX_AF_POPS",
-    #     description="Populations in which maximum allele frequency was observed",
-    # ),
+    "MAX_AF_POPS": AnnotationListEntry(
+        "MAX_AF_POPS",
+        sep="&",
+        description="Populations in which maximum allele frequency was observed",
+    ),
     "CLIN_SIG": AnnotationListEntry(
         "CLIN_SIG",
         "&",
@@ -472,32 +545,35 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "NB: not available for GRCh37",
     ),
     "TSL": AnnotationEntry(
-        "TSL", description="Transcript support level. " "NB: not available for GRCh37"
+        "TSL", description="Transcript support level. NB: not available for GRCh37"
     ),
-    "PUBMED": AnnotationEntry(
-        "PUBMED", description="Pubmed ID(s) of publications that cite existing variant"
+    "PUBMED": AnnotationListEntry(
+        "PUBMED",
+        description="Pubmed ID(s) of publications that cite existing variant",
+        sep="&",
     ),
-    # TODO list type with unknown sep
-    # "SOMATIC": AnnotationEntry(
-    #     "SOMATIC",
-    #     description="Somatic status of existing variant(s); "
-    #                 "multiple values correspond to multiple values "
-    #                 "in the Existing_variation field",
-    # ),
-    # TODO list type with unknown sep
-    # "PHENO": AnnotationEntry(
-    #     "PHENO",
-    #     description="Indicates if existing variant is associated with a phenotype, "
-    #                 "disease or trait; "
-    #                 "multiple values correspond to multiple values "
-    #                 "in the Existing_variation field",
-    # ),
-    # TODO list type with unknown sep
-    # "GENE_PHENO": AnnotationEntry(
-    #     "GENE_PHENO",
-    #     description="Indicates if overlapped gene is associated with a phenotype, "
-    #                 "disease or trait",
-    # ),
+    "SOMATIC": AnnotationListEntry(
+        "SOMATIC",
+        description="Somatic status of existing variant(s); "
+        "multiple values correspond to multiple values "
+        "in the Existing_variation field",
+        sep="&",
+    ),
+    "PHENO": AnnotationListEntry(
+        "PHENO",
+        sep="&",
+        description="Indicates if existing variant is associated with a phenotype, "
+        "disease or trait; "
+        "multiple values correspond to multiple values "
+        "in the Existing_variation field",
+    ),
+    # TODO list type with unconfirmed sep
+    "GENE_PHENO": AnnotationListEntry(
+        "GENE_PHENO",
+        sep="&",
+        description="Indicates if overlapped gene is associated with a phenotype, "
+        "disease or trait",
+    ),
     "ALLELE_NUM": AnnotationEntry(
         "ALLELE_NUM",
         int,
@@ -553,6 +629,34 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     # ),
     "AMBIGUITY": AnnotationEntry(
         "AMBIGUITY", description="IUPAC allele ambiguity code"
+    ),
+    "Amino_acids": AnnotationListEntry(
+        "Amino_acids", description="Reference and variant amino acids", sep="/"
+    ),
+    "Codons": AnnotationListEntry(
+        "Codons", description="Reference and variant codon sequence", sep="/"
+    ),
+    # TODO HGNC_ID description
+    "HGNC_ID": AnnotationEntry("HGNC_ID"),
+    "MANE": AnnotationEntry(
+        "MANE", description="Matched Annotation from NCBI and EMBL-EBI (MANE)."
+    ),
+    "miRNA": AnnotationEntry(
+        "miRNA",
+        description="Determines where in the secondary structure of a miRNA "
+        "a variant falls",
+    ),
+    "Existing_variation": AnnotationListEntry(
+        "Existing_variation",
+        sep="&",
+        description="Identifier(s) of co-located known variants",
+    ),
+    "LoFtool": AnnotationEntry(
+        "LoFtool",
+        typefunc=float,
+        description="Provides a rank of genic intolerance and "
+        "consequent susceptibility to disease based on the ratio of Loss-of-function "
+        "(LoF) to synonymous mutations.",
     ),
 }
 

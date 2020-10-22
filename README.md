@@ -74,14 +74,8 @@ The following VCF fields can be accessed in the filter expression:
   vembrane filter 'any(entry in ANN["CLIN_SIG"] for entry in ("pathogenic", "likely_pathogenic", "drug_response"))' variants.vcf
   ```
 
-### Custom ANN types
-
-vembrane parses the following annotation fields to a custom type:
-* (snpeff) `cDNA.pos / cDNA.length`, `CDS.pos / CDS.length` and `AA.pos / AA.length` are re-exposed as `cDNA`, `CDS` and `AA` respectively with properties `start`, `end` and `length`, e.g. can be accessed like this: `ANN["cDNA"].start`
-* (vep) `cDNA_position`, `CDS_position` and `Protein_position` are re-exposed as `cDNA`, `CDS` and `Protein` respectively with properties `start`, `end` and `length`, e.g. can be accessed like this: `ANN["cDNA"].start`
-* `CLIN_SIG` is split at `'&'` into a list of entries
-
-Any unknown annotation field will be left as is.
+### Custom `ANN` types
+`vembrane` parses entries in the annotation field as outlined in [Types.md](Types.md)
 
 ### Missing values in annotations
 

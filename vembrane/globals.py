@@ -124,46 +124,68 @@ def custom_functions(env) -> Dict[str, Any]:
         ),
         "count_het": eval(
             "lambda: "
-            "sum(any(x != FORMAT['GT'][s][0] for x in FORMAT['GT'][s][1:]) "
+            "sum("
+            "any(x != next(f for f in FORMAT['GT'][s] if f is not NA) "
+            "for x in FORMAT['GT'][s][1:] if x is not NA) "
             "for s in SAMPLES)",
             env,
             {},
         ),
-        "count_ref": eval(
+        "count_any_ref": eval(
+            "lambda: sum(any(x == 0 for x in FORMAT['GT'][s]) for s in SAMPLES)",
+            env,
+            {},
+        ),
+        "count_any_var": eval(
             "lambda: "
-            "sum(all(x == 0 for x in FORMAT['GT'][s][1:]) "
+            "sum(any(x != 0 for x in FORMAT['GT'][s] if x is not NA) "
             "for s in SAMPLES)",
             env,
             {},
         ),
-        "count_var": eval(
-            "lambda: "
-            "sum(any(x != 0 for x in FORMAT['GT'][s][1:]) "
+        "count_hom_ref": eval(
+            "lambda: sum(all(x == 0 for x in FORMAT['GT'][s]) for s in SAMPLES)",
+            env,
+            {},
+        ),
+        "count_hom_var": eval(
+            "lambda: sum(all(x != 0 and x is not NA for x in FORMAT['GT'][s]) "
             "for s in SAMPLES)",
             env,
             {},
         ),
         "is_hom": eval(
-            f"lambda sample: "
-            f"all(x == FORMAT['GT'][sample][0] "
-            f"for x in FORMAT['GT'][sample][1:])",
+            "lambda sample: "
+            "all(x == next(f for f in FORMAT['GT'][sample] if f is not NA) "
+            "for x in FORMAT['GT'][sample][1:])",
             env,
             {},
         ),
         "is_het": eval(
-            f"lambda sample: "
-            f"any(x != FORMAT['GT'][sample][0] "
-            f"for x in FORMAT['GT'][sample][1:])",
+            "lambda sample: "
+            "any(x != next(f for f in FORMAT['GT'][sample] if f is not NA) "
+            "for x in FORMAT['GT'][sample][1:] if x is not NA)",
             env,
             {},
         ),
-        "is_ref": eval(
-            f"lambda sample: " f"all(x == 0 " f"for x in FORMAT['GT'][sample][1:])",
+        "is_hom_ref": eval(
+            "lambda sample: all(x == 0 for x in FORMAT['GT'][sample])",
             env,
             {},
         ),
-        "is_var": eval(
-            f"lambda sample: " f"any(x != 0 " f"for x in FORMAT['GT'][sample][1:])",
+        "is_hom_var": eval(
+            "lambda sample: all(x != 0 and x is not NA for x in FORMAT['GT'][s])",
+            env,
+            {},
+        ),
+        "has_ref": eval(
+            "lambda sample: any(x == 0 for x in FORMAT['GT'][sample])",
+            env,
+            {},
+        ),
+        "has_var": eval(
+            "lambda sample: "
+            "any(x != 0 for x in FORMAT['GT'][sample] if x is not NA)",
             env,
             {},
         ),
