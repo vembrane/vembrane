@@ -28,7 +28,7 @@ The following VCF fields can be accessed in the filter expression:
 |`REF`| `str` |  Reference allele  | `REF == "A"` |
 |`ALT`| `str` |  Alternative allele³  | `ALT == "C"`|
 |`QUAL`| `float`  | Quality |  `QUAL >= 60` |
-|`FILTER`|  |   |  |
+|`FILTER`| `List[str]` | Filter tags | `"PASS" in FILTER` |
 |`FORMAT`|`Dict[str, Dict[str, Any¹]]`| `Format -> (Sample -> Value)` | `FORMAT["DP"][SAMPLES[0]] > 0` |
 |`SAMPLES`|`List[str]`| `[Sample]`  |  `"Tumor" in SAMPLES` |
 
@@ -67,7 +67,7 @@ The following VCF fields can be accessed in the filter expression:
   ```
 * Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
   ```
-  vembrane filter 're.search("stream", ANN["Consequence"])' variants.vcf
+  vembrane filter 're.search("(up|down)stream", ANN["Consequence"])' variants.vcf
   ```
 * Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
   ```

@@ -1,0 +1,2 @@
+function: "filter"
+expression: 'count_hom() == 2 and count_het() == 2 and count_any_ref() == 5 and count_any_var() == 5 and count_hom_ref() == 1 and count_hom_var() == 1'
