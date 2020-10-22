@@ -545,10 +545,12 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "NB: not available for GRCh37",
     ),
     "TSL": AnnotationEntry(
-        "TSL", description="Transcript support level. " "NB: not available for GRCh37"
+        "TSL", description="Transcript support level. NB: not available for GRCh37"
     ),
-    "PUBMED": AnnotationEntry(
-        "PUBMED", description="Pubmed ID(s) of publications that cite existing variant"
+    "PUBMED": AnnotationListEntry(
+        "PUBMED",
+        description="Pubmed ID(s) of publications that cite existing variant",
+        sep="&",
     ),
     "SOMATIC": AnnotationListEntry(
         "SOMATIC",
@@ -654,7 +656,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         typefunc=float,
         description="Provides a rank of genic intolerance and "
         "consequent susceptibility to disease based on the ratio of Loss-of-function "
-        "(LoF)to synonymous mutations.",
+        "(LoF) to synonymous mutations.",
     ),
 }
 
