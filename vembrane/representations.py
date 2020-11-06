@@ -182,6 +182,7 @@ class Environment(dict):
             "INFO": self._get_info,
             "FORMAT": self._get_format,
             "SAMPLES": self._get_samples,
+            "INDEX": self._get_index,
         }
 
         # vembrane only supports bi-allelic records (i.e. one REF, one ALT allele).
@@ -285,6 +286,10 @@ class Environment(dict):
         if value is UNSET:
             value = self._getters[item]()
         return value
+
+    def _get_index(self) -> int:
+        self._globals["INDEX"] = self.idx
+        return self.idx
 
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
