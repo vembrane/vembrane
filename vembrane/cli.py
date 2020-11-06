@@ -1,10 +1,14 @@
 import argparse
 
 from .modules import filter, table
+from . import __version__
 
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
+    )
     subparsers = parser.add_subparsers(
         dest="command", description="valid subcommands", required=True
     )
