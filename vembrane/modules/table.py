@@ -54,6 +54,12 @@ def add_subcommmand(subparsers):
               disable any header output.',
     )
     parser.add_argument(
+        "--index", "-i",
+        default=False,
+        action="store_true",
+        help='Add a leading column that enumerates all distinct variants.',
+    )
+    parser.add_argument(
         "--output",
         "-o",
         default="-",
@@ -81,9 +87,9 @@ def tableize_vcf(
             except KeyError:
                 annotations = [""]
             for annotation in annotations:
-                yield env.table(annotation)
+                yield idx, env.table(annotation)
         else:
-            yield env.table()
+            yield idx, env.table()
 
 
 def get_header(args) -> Optional[List[str]]:
@@ -101,9 +107,11 @@ def get_header(args) -> Optional[List[str]]:
         return [header[n.col_offset : n.end_col_offset] for n in elts]
 
 
-def get_row(row):
+def get_row(idx, row, get_index=False):
     if not isinstance(row, tuple):
         row = (row,)
+    if get_index:
+        return (idx,) + row
     return row
 
 
@@ -134,7 +142,7 @@ def execute(args):
                 writer = csv.writer(csvfile, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
                 if args.header:
                     writer.writerow(get_header(args))
-                writer.writerows(get_row(row) for row in rows)
+                writer.writerows(get_row(idx, row, get_index=args.index) for idx, row in rows)
         except VembraneError as ve:
             print(ve, file=stderr)
             exit(1)
