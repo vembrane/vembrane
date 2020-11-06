@@ -31,6 +31,8 @@ The following VCF fields can be accessed in the filter expression:
 |`FILTER`| `List[str]` | Filter tags | `"PASS" in FILTER` |
 |`FORMAT`|`Dict[str, Dict[str, Any¹]]`| `Format -> (Sample -> Value)` | `FORMAT["DP"][SAMPLES[0]] > 0` |
 |`SAMPLES`|`List[str]`| `[Sample]`  |  `"Tumor" in SAMPLES` |
+|`INDEX`|`int`| `Increasing Variant index`  |  `index < 10` |
+
 
  ¹ depends on type specified in VCF header
 
