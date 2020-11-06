@@ -7,7 +7,7 @@ from . import __version__
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--version", "-v", action="version", version=f"%(prog)s {__version__}"
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
     subparsers = parser.add_subparsers(
         dest="command", description="valid subcommands", required=True
