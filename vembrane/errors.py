@@ -13,7 +13,7 @@ class UnknownAnnotation(VembraneError):
         self.key = key
 
 
-class UnknownSample(VembraneError):
+class UnknownSample(VembraneError, KeyError):
     """Unknown Sample"""
 
     def __init__(self, record, sample, msg=None):
@@ -24,7 +24,7 @@ class UnknownSample(VembraneError):
         self.field = sample
 
 
-class UnknownFormatField(VembraneError):
+class UnknownFormatField(VembraneError, KeyError):
     """Unknown FORMAT key"""
 
     def __init__(self, record, field, msg=None):
