@@ -1,6 +1,6 @@
 import ast
 from itertools import chain
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Set
 
 from pysam.libcbcf import (
     VariantRecordSamples,
@@ -158,7 +158,13 @@ UNSET = object()
 
 
 class Environment(dict):
-    def __init__(self, expression: str, ann_key: str, header: VariantHeader):
+    def __init__(
+        self,
+        expression: str,
+        ann_key: str,
+        header: VariantHeader,
+        auxiliary: Dict[str, Set[str]] = {},
+    ):
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
@@ -172,6 +178,7 @@ class Environment(dict):
         self._func = eval(f"lambda: {expression}", self, {})
 
         self._getters = {
+            "AUX": self._get_aux,
             "CHROM": self._get_chrom,
             "POS": self._get_pos,
             "ID": self._get_id,
@@ -206,6 +213,7 @@ class Environment(dict):
         self._empty_globals = {name: UNSET for name in self._getters}
         self.record: VariantRecord = None
         self.idx: int = -1
+        self.aux = auxiliary
 
     def expression_annotations(self):
         return self._has_ann
@@ -290,6 +298,10 @@ class Environment(dict):
     def _get_index(self) -> int:
         self._globals["INDEX"] = self.idx
         return self.idx
+
+    def _get_aux(self) -> Dict[str, Set[str]]:
+        self._globals["AUX"] = self.aux
+        return self.aux
 
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:

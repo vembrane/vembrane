@@ -3,7 +3,7 @@ import yaml
 
 from sys import stderr
 from collections import defaultdict
-from typing import Iterator
+from typing import Iterator, Set, Dict
 from itertools import islice, chain
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
@@ -47,6 +47,15 @@ def add_subcommmand(subparsers):
         metavar="FIELDNAME",
         default="ANN",
         help="The INFO key for the annotation field.",
+    )
+    parser.add_argument(
+        "--aux",
+        "-a",
+        nargs=2,
+        action="append",
+        metavar=("NAME", "PATH"),
+        default=[],
+        help="Path to an auxiliary file containing a set of symbols",
     )
     parser.add_argument(
         "--statistics",
@@ -115,9 +124,10 @@ def filter_vcf(
     ann_key: str,
     keep_unmatched: bool = False,
     preserve_order: bool = False,
+    auxiliary: Dict[str, Set[str]] = {},
 ) -> Iterator[VariantRecord]:
 
-    env = Environment(expression, ann_key, vcf.header)
+    env = Environment(expression, ann_key, vcf.header, auxiliary)
 
     events = set()
     info_keys = set(vcf.header.info.keys())
@@ -184,7 +194,17 @@ def statistics(
         yaml.dump(dict(counter), out)
 
 
+def read_auxiliary(aux) -> Dict[str, Set[str]]:
+    # read auxiliary files, split at any whitespace and store contents in a set
+    def read_set(path: str) -> Set[str]:
+        with open(path, "rt") as f:
+            return set(f.read().split())
+
+    return {name: read_set(contents) for name, contents in aux}
+
+
 def execute(args):
+    aux = read_auxiliary(args.aux)
     with VariantFile(args.vcf) as vcf:
         header: VariantHeader = vcf.header
         header.add_meta("vembraneVersion", __version__)
@@ -203,6 +223,7 @@ def execute(args):
             args.annotation_key,
             keep_unmatched=args.keep_unmatched,
             preserve_order=args.preserve_order,
+            auxiliary=aux,
         )
 
         try:
