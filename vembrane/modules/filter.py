@@ -198,7 +198,7 @@ def read_auxiliary(aux) -> Dict[str, Set[str]]:
     # read auxiliary files, split at any whitespace and store contents in a set
     def read_set(path: str) -> Set[str]:
         with open(path, "rt") as f:
-            return set(f.read().split())
+            return set(l.rstrip() for l in f)
 
     return {name: read_set(contents) for name, contents in aux}
 
