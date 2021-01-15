@@ -1,3 +1,4 @@
+import argparse
 import os
 from pathlib import Path
 
@@ -7,7 +8,7 @@ from pysam import VariantFile
 
 from vembrane import errors, __version__
 from vembrane.common import check_expression
-from vembrane.modules.filter import filter_vcf
+from vembrane.modules.filter import filter_vcf, read_auxiliary
 from vembrane.modules.table import tableize_vcf
 
 CASES = Path(__file__).parent.joinpath("testcases")
@@ -15,6 +16,20 @@ CASES = Path(__file__).parent.joinpath("testcases")
 
 def test_version():
     assert __version__ != "unknown"
+
+
+def aux_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--aux",
+        "-a",
+        nargs=2,
+        action="append",
+        metavar=("NAME", "PATH"),
+        default=[],
+        help="Path to an auxiliary file containing a set of symbols",
+    )
+    return parser
 
 
 @pytest.mark.parametrize(
@@ -42,6 +57,9 @@ def test_filter(testcase):
                         config.get("expression"),
                         config.get("ann_key", "ANN"),
                         config.get("keep_unmatched", False),
+                        auxiliary=read_auxiliary(
+                            aux_parser().parse_args(config.get("aux", "").split()).aux
+                        ),
                     )
                 )
             elif config["function"] == "table":
@@ -63,6 +81,9 @@ def test_filter(testcase):
                     config.get("expression"),
                     config.get("ann_key", "ANN"),
                     config.get("keep_unmatched", False),
+                    auxiliary=read_auxiliary(
+                        aux_parser().parse_args(config.get("aux", "").split()).aux
+                    ),
                 )
             )
             assert result == expected
