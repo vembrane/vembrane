@@ -33,6 +33,9 @@ class NoValue:
     def __repr__(self):
         return f"{self.__class__.__name__}()"
 
+    def __hash__(self) -> int:
+        return super().__hash__()
+
 
 NA = NoValue()
 
