@@ -6,7 +6,7 @@ import re
 from .errors import MoreThanOneAltAllele
 
 
-class NoValue:
+class NoValue(str):
     def __lt__(self, other):
         return False
 
