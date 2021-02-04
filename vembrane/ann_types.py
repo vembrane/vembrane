@@ -67,10 +67,13 @@ IntFloatStr = Union[int, float, str]
 def type_info(value, number="."):
     if value is None:
         return NA
-    if isinstance(value, tuple):
-        if number not in {"A", "R"}:
+    if number not in {"A", "R"}:
+        if isinstance(value, tuple):
             return InfoTuple(value)
         else:
+            return InfoTuple((value,))
+    else:
+        if isinstance(value, tuple):
             if number == "A":
                 if len(value) != 1:
                     raise MoreThanOneAltAllele()

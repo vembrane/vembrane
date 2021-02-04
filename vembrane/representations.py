@@ -253,7 +253,7 @@ class Environment(dict):
         return alts[0]
 
     def _get_qual(self) -> float:
-        value = type_info(self.record.qual)
+        value = self.record.qual
         self._globals["QUAL"] = value
         return value
 
