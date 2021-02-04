@@ -253,7 +253,7 @@ class Environment(dict):
         return alts[0]
 
     def _get_qual(self) -> float:
-        value = self.record.qual
+        value = self.record.qual or NA
         self._globals["QUAL"] = value
         return value
 
