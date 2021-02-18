@@ -67,23 +67,24 @@ IntFloatStr = Union[int, float, str]
 def type_info(value, number="."):
     if value is None:
         return NA
-    if number not in {"A", "R"}:
+    if number == "A":
+        if len(value) != 1:
+            raise MoreThanOneAltAllele()
+        return value[0] or NA
+    if number == "R":
+        if len(value) != 2:
+            raise MoreThanOneAltAllele()
+        return InfoTuple(value)
+    if number == "1":
         if isinstance(value, tuple):
+            if len(value) == 1:
+                return value[0] or NA
             return InfoTuple(value)
-        else:
-            return InfoTuple((value,))
+        return value or NA
+    if isinstance(value, tuple):
+        return InfoTuple(value)
     else:
-        if isinstance(value, tuple):
-            if number == "A":
-                if len(value) != 1:
-                    raise MoreThanOneAltAllele()
-                value = value[0]
-                return value if value is not None else NA
-            if number == "R":
-                if len(value) != 2:
-                    raise MoreThanOneAltAllele()
-                return InfoTuple(value)
-    return value
+        return InfoTuple((value,))
 
 
 class PosRange:
