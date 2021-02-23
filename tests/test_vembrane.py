@@ -1,4 +1,5 @@
 import argparse
+import builtins
 import os
 from pathlib import Path
 
@@ -48,8 +49,6 @@ def test_filter(testcase):
         try:
             exception = getattr(errors, exc)
         except AttributeError:
-            import builtins
-
             exception = getattr(builtins, exc)
 
         with pytest.raises(exception):
