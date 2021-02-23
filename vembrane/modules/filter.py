@@ -93,6 +93,7 @@ def add_subcommmand(subparsers):
     parser.add_argument(
         "--overwrite-number",
         action=StoreMapping,
+        default={},
         metavar="FIELD1=COUNT1,FIELD2=COUNT2,…",
         help="Overwrite the number specification for fields given in the VCF header. "
         "Example: `--overwrite-number cosmic_CNT=.`",
@@ -243,7 +244,7 @@ def execute(args):
             keep_unmatched=args.keep_unmatched,
             preserve_order=args.preserve_order,
             auxiliary=aux,
-            overwrite_number=args.overwrite_number or {},
+            overwrite_number=args.overwrite_number,
         )
 
         try:
