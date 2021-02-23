@@ -16,6 +16,17 @@ from ..errors import VembraneError
 from ..representations import Environment
 from .. import __version__
 
+from argparse import Action
+
+
+class StoreMapping(Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        items = getattr(namespace, self.dest, None)
+        if items is self.default or items is None:
+            items = {}
+        items.update(dict(m.split("=") for m in values.split(",")))
+        setattr(namespace, self.dest, items)
+
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("filter")
@@ -79,6 +90,14 @@ def add_subcommmand(subparsers):
               input. This is only useful if the input contains breakends (BNDs) \
               since the order of all other variants is preserved anyway.",
     )
+    parser.add_argument(
+        "--overwrite-number",
+        action=StoreMapping,
+        default={},
+        metavar="FIELD1=COUNT1,FIELD2=COUNT2,…",
+        help="Overwrite the number specification for fields given in the VCF header. "
+        "Example: `--overwrite-number cosmic_CNT=.`",
+    )
 
 
 def test_and_update_record(
@@ -125,9 +144,10 @@ def filter_vcf(
     keep_unmatched: bool = False,
     preserve_order: bool = False,
     auxiliary: Dict[str, Set[str]] = {},
+    overwrite_number: Dict[str, str] = {},
 ) -> Iterator[VariantRecord]:
 
-    env = Environment(expression, ann_key, vcf.header, auxiliary)
+    env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
 
     events = set()
     info_keys = set(vcf.header.info.keys())
@@ -198,7 +218,7 @@ def read_auxiliary(aux) -> Dict[str, Set[str]]:
     # read auxiliary files, split at any whitespace and store contents in a set
     def read_set(path: str) -> Set[str]:
         with open(path, "rt") as f:
-            return set(l.rstrip() for l in f)
+            return set(line.rstrip() for line in f)
 
     return {name: read_set(contents) for name, contents in aux}
 
@@ -224,6 +244,7 @@ def execute(args):
             keep_unmatched=args.keep_unmatched,
             preserve_order=args.preserve_order,
             auxiliary=aux,
+            overwrite_number=args.overwrite_number,
         )
 
         try:

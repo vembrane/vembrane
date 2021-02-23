@@ -58,7 +58,9 @@ class Format(NoValueDict):
                 record_sample = self._record_samples[sample]
             except KeyError:
                 raise UnknownSample(self._record_idx, sample)
-            value = type_info(record_sample[self._name], self._number)
+            value = type_info(
+                record_sample[self._name], self._number, self._name, self._record_idx
+            )
             self._sample_values[sample] = value
             return value
 
@@ -120,7 +122,10 @@ class Info(NoValueDict):
                     raise UnknownInfoField(self._record_idx, ke)
             else:
                 value = self._info_dict[item] = type_info(
-                    untyped_value, self._header_info_fields[item]
+                    untyped_value,
+                    self._header_info_fields[item],
+                    item,
+                    self._record_idx,
                 )
             return value
 
@@ -164,6 +169,7 @@ class Environment(dict):
         ann_key: str,
         header: VariantHeader,
         auxiliary: Dict[str, Set[str]] = {},
+        overwrite_number: Dict[str, str] = {},
     ):
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
@@ -201,12 +207,14 @@ class Environment(dict):
         # an index operation.
         self._numbers = {
             kind: {
-                record.get("ID"): record.get("Number")
+                record.get("ID"): overwrite_number.get(record.get("ID"))
+                or record.get("Number")
                 for record in header.records
                 if record.type == kind
             }
             for kind in set(r.type for r in header.records)
         }
+
         # At the moment, only INFO and FORMAT records are checked
         self._header_info_fields = self._numbers.get("INFO", dict())
         self._header_format_fields = self._numbers.get("FORMAT", dict())
@@ -253,7 +261,7 @@ class Environment(dict):
         return alts[0]
 
     def _get_qual(self) -> float:
-        value = type_info(self.record.qual)
+        value = NA if self.record.qual is None else self.record.qual
         self._globals["QUAL"] = value
         return value
 

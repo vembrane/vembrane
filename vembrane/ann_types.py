@@ -3,10 +3,13 @@ from sys import stderr
 from typing import Union, Iterable, Tuple, Dict, Callable, Any
 import re
 
-from .errors import MoreThanOneAltAllele
+from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
 
-class NoValue:
+# If NoValue inherits from str, re.search("something", NoValue()) does not error
+# but just comes up empty handed, which is convenient behaviour.
+# This way, we do not have to special case / monkey patch / wrap the regex module.
+class NoValue(str):
     def __lt__(self, other):
         return False
 
@@ -21,6 +24,9 @@ class NoValue:
 
     def __eq__(self, other):
         return False
+
+    def __ne__(self, other):
+        return True
 
     def __bool__(self):
         return False
@@ -64,23 +70,27 @@ class InfoTuple:
 IntFloatStr = Union[int, float, str]
 
 
-def type_info(value, number="."):
+def type_info(value, number=".", field=None, record_idx=None):
     if value is None:
         return NA
+    if number == "A":
+        if len(value) != 1:
+            raise MoreThanOneAltAllele()
+        return value[0] if value[0] is not None else NA
+    if number == "R":
+        if len(value) != 2:
+            raise MoreThanOneAltAllele()
+        return InfoTuple(value)
+    if number == "1":
+        if isinstance(value, tuple):
+            if len(value) != 1:
+                raise NotExactlyOneValue(field, len(value), record_idx)
+            return value[0] if value[0] is not None else NA
+        return value if value is not None else NA
     if isinstance(value, tuple):
-        if number not in {"A", "R"}:
-            return InfoTuple(value)
-        else:
-            if number == "A":
-                if len(value) != 1:
-                    raise MoreThanOneAltAllele()
-                value = value[0]
-                return value if value is not None else NA
-            if number == "R":
-                if len(value) != 2:
-                    raise MoreThanOneAltAllele()
-                return InfoTuple(value)
-    return value
+        return InfoTuple(value)
+    else:
+        return InfoTuple((value,))
 
 
 class PosRange:
