@@ -42,8 +42,13 @@ def test_filter(testcase):
         config = yaml.load(config_fp, Loader=yaml.FullLoader)
 
     vcf = VariantFile(path.joinpath("test.vcf"))
+
     if "raises" in config:
-        exception = getattr(errors, config["raises"])
+        exc = config["raises"]
+        try:
+            exception = getattr(errors, exc)
+        except AttributeError:
+            exception = __builtins__[exc]
 
         with pytest.raises(exception):
             # FIXME we have to explicitly check the filter expression here
@@ -60,6 +65,7 @@ def test_filter(testcase):
                         auxiliary=read_auxiliary(
                             aux_parser().parse_args(config.get("aux", "").split()).aux
                         ),
+                        overwrite_number=config.get("overwrite_number", {}),
                     )
                 )
             elif config["function"] == "table":
@@ -84,6 +90,7 @@ def test_filter(testcase):
                     auxiliary=read_auxiliary(
                         aux_parser().parse_args(config.get("aux", "").split()).aux
                     ),
+                    overwrite_number=config.get("overwrite_number", {}),
                 )
             )
             assert result == expected
