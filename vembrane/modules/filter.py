@@ -243,7 +243,7 @@ def execute(args):
             keep_unmatched=args.keep_unmatched,
             preserve_order=args.preserve_order,
             auxiliary=aux,
-            overwrite_number=args.overwrite_number,
+            overwrite_number=args.overwrite_number or {},
         )
 
         try:
