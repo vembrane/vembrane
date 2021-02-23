@@ -64,7 +64,7 @@ class InfoTuple:
 IntFloatStr = Union[int, float, str]
 
 
-def type_info(value, number="."):
+def type_info(value, number=".", field=None, record_idx=None):
     if value is None:
         return NA
     if number == "A":
@@ -78,7 +78,7 @@ def type_info(value, number="."):
     if number == "1":
         if isinstance(value, tuple):
             if len(value) != 1:
-                raise NotExactlyOneValue()
+                raise NotExactlyOneValue(field, len(value), record_idx)
             return value[0] or NA
         return value or NA
     if isinstance(value, tuple):

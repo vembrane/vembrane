@@ -58,7 +58,9 @@ class Format(NoValueDict):
                 record_sample = self._record_samples[sample]
             except KeyError:
                 raise UnknownSample(self._record_idx, sample)
-            value = type_info(record_sample[self._name], self._number)
+            value = type_info(
+                record_sample[self._name], self._number, self._name, self._record_idx
+            )
             self._sample_values[sample] = value
             return value
 
@@ -120,7 +122,10 @@ class Info(NoValueDict):
                     raise UnknownInfoField(self._record_idx, ke)
             else:
                 value = self._info_dict[item] = type_info(
-                    untyped_value, self._header_info_fields[item]
+                    untyped_value,
+                    self._header_info_fields[item],
+                    item,
+                    self._record_idx,
                 )
             return value
 
@@ -209,6 +214,7 @@ class Environment(dict):
             }
             for kind in set(r.type for r in header.records)
         }
+
         # At the moment, only INFO and FORMAT records are checked
         self._header_info_fields = self._numbers.get("INFO", dict())
         self._header_format_fields = self._numbers.get("FORMAT", dict())
