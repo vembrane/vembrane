@@ -6,6 +6,9 @@ import re
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
 
+# If NoValue inherits from str, re.search("something", NoValue()) does not error
+# but just comes up empty handed, which is convenient behaviour.
+# This way, we do not have to special case / monkey patch / wrap the regex module.
 class NoValue(str):
     def __lt__(self, other):
         return False
