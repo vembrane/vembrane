@@ -70,7 +70,7 @@ def type_info(value, number=".", field=None, record_idx=None):
     if number == "A":
         if len(value) != 1:
             raise MoreThanOneAltAllele()
-        return value[0] or NA
+        return value[0] if value[0] is not None else NA
     if number == "R":
         if len(value) != 2:
             raise MoreThanOneAltAllele()
@@ -79,8 +79,8 @@ def type_info(value, number=".", field=None, record_idx=None):
         if isinstance(value, tuple):
             if len(value) != 1:
                 raise NotExactlyOneValue(field, len(value), record_idx)
-            return value[0] or NA
-        return value or NA
+            return value[0] if value[0] is not None else NA
+        return value if value is not None else NA
     if isinstance(value, tuple):
         return InfoTuple(value)
     else:
