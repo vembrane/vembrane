@@ -3,7 +3,7 @@ from sys import stderr
 from typing import Union, Iterable, Tuple, Dict, Callable, Any
 import re
 
-from .errors import MoreThanOneAltAllele
+from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
 
 class NoValue(str):
@@ -77,9 +77,9 @@ def type_info(value, number="."):
         return InfoTuple(value)
     if number == "1":
         if isinstance(value, tuple):
-            if len(value) == 1:
-                return value[0] or NA
-            return InfoTuple(value)
+            if len(value) != 1:
+                raise NotExactlyOneValue()
+            return value[0] or NA
         return value or NA
     if isinstance(value, tuple):
         return InfoTuple(value)

@@ -164,6 +164,7 @@ class Environment(dict):
         ann_key: str,
         header: VariantHeader,
         auxiliary: Dict[str, Set[str]] = {},
+        overwrite_number: Dict[str, str] = {},
     ):
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
@@ -201,7 +202,8 @@ class Environment(dict):
         # an index operation.
         self._numbers = {
             kind: {
-                record.get("ID"): record.get("Number")
+                record.get("ID"): overwrite_number.get(record.get("ID"))
+                or record.get("Number")
                 for record in header.records
                 if record.type == kind
             }

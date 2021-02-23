@@ -68,3 +68,22 @@ class MoreThanOneAltAllele(VembraneError):
             "`vcfmulti2oneallele […]`"
         )
         super(MoreThanOneAltAllele, self).__init__(msg)
+
+
+class NotExactlyOneValue(VembraneError):
+    """There may only be one value in VCF fields with `Number=1`"""
+
+    def __init__(self):
+        msg = (
+            "vembrane enforces fields with `Number=1` to actually only have "
+            "one number, "
+            "as explained in the VCF specification v4.3 section 1.4.2.\n"
+            "To override this behaviour, use `--overwrite-number FIELD COUNT`, "
+            "where `FIELD` is the respective field and `COUNT` is one of: "
+            "- A: the field has one value per alternate allele\n"
+            "- R: the field has one value for each possible allele, "
+            "including the reference.\n"
+            "- .: the number of possible values varies, is unknown or unbounded\n"
+            "- G (FORMAT only): the field has one value for each possible genotype\n"
+        )
+        super(NotExactlyOneValue, self).__init__(msg)
