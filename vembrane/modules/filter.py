@@ -21,8 +21,11 @@ from argparse import Action
 
 class StoreMapping(Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        d = dict(m.split("=") for m in values.split(","))
-        setattr(namespace, self.dest, d)
+        items = getattr(namespace, self.dest, None)
+        if items is self.default or items is None:
+            items = {}
+        items.update(dict(m.split("=") for m in values.split(",")))
+        setattr(namespace, self.dest, items)
 
 
 def add_subcommmand(subparsers):
