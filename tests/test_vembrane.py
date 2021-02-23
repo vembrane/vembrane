@@ -48,7 +48,9 @@ def test_filter(testcase):
         try:
             exception = getattr(errors, exc)
         except AttributeError:
-            exception = __builtins__[exc]
+            import builtins
+
+            exception = getattr(builtins, exc)
 
         with pytest.raises(exception):
             # FIXME we have to explicitly check the filter expression here
