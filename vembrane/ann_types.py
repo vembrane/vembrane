@@ -66,6 +66,9 @@ class InfoTuple:
     def __repr__(self):
         return f"{self.__class__.__name__}(values={self.values!r})"
 
+    def __len__(self):
+        return len(self.values)
+
 
 IntFloatStr = Union[int, float, str]
 
