@@ -86,10 +86,8 @@ def tableize_vcf(
             yield env.table()
 
 
-def get_header(args) -> Optional[List[str]]:
-    if args.header == "none":
-        return
-    elif args.header == "auto":
+def get_header(args) -> List[str]:
+    if args.header == "auto":
         header = args.expression
     else:
         header = args.header
@@ -131,8 +129,10 @@ def execute(args):
 
         try:
             with smart_open(args.output, "wt", newline="") as csvfile:
-                writer = csv.writer(csvfile, delimiter="\t", quoting=csv.QUOTE_MINIMAL)
-                if args.header:
+                writer = csv.writer(
+                    csvfile, delimiter=args.separator, quoting=csv.QUOTE_MINIMAL
+                )
+                if args.header != "none":
                     writer.writerow(get_header(args))
                 writer.writerows(get_row(row) for row in rows)
         except VembraneError as ve:

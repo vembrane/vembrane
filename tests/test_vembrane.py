@@ -1,5 +1,6 @@
 import argparse
 import builtins
+import collections
 import os
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from pysam import VariantFile
 from vembrane import errors, __version__
 from vembrane.common import check_expression
 from vembrane.modules.filter import filter_vcf, read_auxiliary
-from vembrane.modules.table import tableize_vcf
+from vembrane.modules.table import tableize_vcf, get_header
 
 CASES = Path(__file__).parent.joinpath("testcases")
 
@@ -97,6 +98,9 @@ def test_filter(testcase):
             assert result == expected
         elif config["function"] == "table":
             separator = config.get("separator", "\t")
+            conf = collections.namedtuple("conf", ("header", "expression"))
+            conf.header = config.get("header", "auto")
+            conf.expression = config.get("expression")
             expected = list(
                 map(
                     lambda x: x.strip("\n"),
@@ -108,11 +112,16 @@ def test_filter(testcase):
                     lambda x: separator.join(map(str, x)),
                     tableize_vcf(
                         vcf,
-                        config.get("expression"),
+                        conf.expression,
                         config.get("ann_key", "ANN"),
                     ),
                 )
             )
-            assert result == expected[1:]  # avoid header check by now
+            if conf.header != "none":
+                header = get_header(conf)
+                assert separator.join(header) == expected[0]
+                assert result == expected[1:]
+            else:
+                assert result == expected
         else:
             assert config["function"] in {"filter", "table"}, "Unknown subcommand"
