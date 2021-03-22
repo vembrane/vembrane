@@ -19,7 +19,6 @@
 ##INFO=<ID=FLOATX,Number=.,Type=Integer,Description="A variable number of floats">
 ##INFO=<ID=STRINGX,Number=.,Type=Integer,Description="A variable number of strings">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
-##FORMAT=<ID=FLAG,Number=0,Type=Flag,Description="A boolean flag">
 ##FORMAT=<ID=INT,Number=1,Type=Integer,Description="One single integer">
 ##FORMAT=<ID=FLOAT,Number=1,Type=Float,Description="One single float">
 ##FORMAT=<ID=STR,Number=1,Type=String,Description="One single string">
