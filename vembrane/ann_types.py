@@ -76,6 +76,8 @@ IntFloatStr = Union[int, float, str]
 def type_info(value, number=".", field=None, record_idx=None):
     if value is None:
         return NA
+    if number == "0":
+        return NA if value is None else value
     if number == "A":
         if len(value) != 1:
             raise MoreThanOneAltAllele()
