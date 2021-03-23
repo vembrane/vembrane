@@ -2,7 +2,7 @@ import contextlib
 import csv
 import sys
 from sys import stderr
-from typing import Iterator, List
+from typing import Iterator, List, Optional
 
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
@@ -85,18 +85,80 @@ def tableize_vcf(
             yield env.table()
 
 
-def get_header(args) -> List[str]:
+def for_each_sample(s: str, vcf: VariantFile) -> List[str]:
+    from asttokens.util import replace
+
+    s = s.lstrip("for_each_sample")
+    assert s[0] == "(" and s[-1] == ")"
+    s = s[1:-1]
+    tok = asttokens.ASTTokens(s, parse=False)
+    samples = list(vcf.header.samples)
+    expanded = []
+    for sample in samples:
+        replacements = []
+        for t in tok.tokens:
+            if t.type == 1 and t.string == "s":
+                pos = (t.startpos, t.endpos)
+                replacements.append((*pos, f"'{sample}'"))
+        expanded.append(replace(s, replacements))
+    return expanded
+
+
+def preprocess_header_expression(header: str, vcf: Optional[VariantFile] = None) -> str:
+    """
+    Split the header expression at toplevel commas into parts.
+    Then, if one of these parts starts with 'for_each_sample',
+    that part is expanded for each sample in vcf.header.samples,
+    assuming a wildcard variable named `s`.
+    """
+    parts = get_toplevel(header)
+    to_expand = list(
+        filter(lambda x: x[1].startswith("for_each_sample"), enumerate(parts))
+    )
+    if len(to_expand) > 0 and vcf is None:
+        raise ValueError("If FORMAT is to be expanded, the VCF kwarg must not be none.")
+    parts = [[p] for p in parts]
+    for i, p in to_expand:
+        expanded = for_each_sample(p, vcf)
+        parts[i] = expanded
+    parts = [p for pp in parts for p in pp]
+    return ", ".join(parts)
+
+
+def get_header(args, vcf: Optional[VariantFile] = None) -> List[str]:
     if args.header == "auto":
         header = args.expression
     else:
         header = args.header
-    if "," not in header:
-        return [header]
-    else:
-        # use the nodes of the first layer of the ast tree as header names
-        atok = asttokens.ASTTokens(header, parse=True)
-        elts = atok.tree.body[0].value.elts
-        return [atok.get_text(n) for n in elts]
+    return get_toplevel(preprocess_header_expression(header, vcf))
+
+
+def get_toplevel(header: str) -> List[str]:
+    splitpos = [0]
+    level = 0
+    stack = []
+    for i, c in enumerate(header):
+        if c == "," and level == 0:
+            splitpos.append(i + 1)
+        elif c == "(":
+            stack.append("(")
+            level += 1
+        elif c == ")":
+            previous = stack[-1]
+            if previous == "(":
+                # found matching bracket pair
+                stack.pop()
+                level -= 1
+            else:
+                raise SyntaxError("No matching ( found.")
+    if len(stack) != 0:
+        raise SyntaxError("Imbalanced number of brackets.")
+    splitpos.append(len(header) + 1)
+    parts = []
+    for start, end in zip(splitpos, splitpos[1:]):
+        # remove leading + trailing whitespace
+        parts.append(header[start : end - 1].strip())
+    return parts
 
 
 def get_row(row):
@@ -123,7 +185,7 @@ def execute(args):
     with VariantFile(args.vcf) as vcf:
         rows = tableize_vcf(
             vcf,
-            args.expression,
+            preprocess_header_expression(args.expression, vcf),
             args.annotation_key,
         )
 
@@ -133,7 +195,7 @@ def execute(args):
                     csvfile, delimiter=args.separator, quoting=csv.QUOTE_MINIMAL
                 )
                 if args.header != "none":
-                    writer.writerow(get_header(args))
+                    writer.writerow(get_header(args, vcf))
                 writer.writerows(get_row(row) for row in rows)
         except VembraneError as ve:
             print(ve, file=stderr)
