@@ -1,16 +1,15 @@
 import contextlib
 import csv
 import sys
-
-from pysam.libcbcf import VariantFile, VariantRecord
-from typing import Iterator, List, Optional
 from sys import stderr
+from typing import Iterator, List
+
+import asttokens
+from pysam.libcbcf import VariantFile, VariantRecord
 
 from ..common import check_expression
 from ..errors import VembraneError
 from ..representations import Environment
-
-import ast
 
 
 def add_subcommmand(subparsers):
@@ -95,8 +94,9 @@ def get_header(args) -> List[str]:
         return [header]
     else:
         # use the nodes of the first layer of the ast tree as header names
-        elts = ast.parse(header).body[0].value.elts
-        return [header[n.col_offset : n.end_col_offset] for n in elts]
+        atok = asttokens.ASTTokens(header, parse=True)
+        elts = atok.tree.body[0].value.elts
+        return [atok.get_text(n) for n in elts]
 
 
 def get_row(row):
