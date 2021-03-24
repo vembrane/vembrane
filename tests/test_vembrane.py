@@ -11,7 +11,7 @@ from pysam import VariantFile
 from vembrane import errors, __version__
 from vembrane.common import check_expression
 from vembrane.modules.filter import filter_vcf, read_auxiliary
-from vembrane.modules.table import tableize_vcf, get_header
+from vembrane.modules.table import tableize_vcf, get_header, preprocess_header_expression
 
 CASES = Path(__file__).parent.joinpath("testcases")
 
@@ -112,13 +112,13 @@ def test_filter(testcase):
                     lambda x: separator.join(map(str, x)),
                     tableize_vcf(
                         vcf,
-                        conf.expression,
+                        preprocess_header_expression(conf.expression, vcf, True),
                         config.get("ann_key", "ANN"),
                     ),
                 )
             )
             if conf.header != "none":
-                header = get_header(conf)
+                header = get_header(conf, vcf)
                 assert separator.join(header) == expected[0]
                 assert result == expected[1:]
             else:
