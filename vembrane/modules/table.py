@@ -85,32 +85,16 @@ def tableize_vcf(
             yield env.table()
 
 
-def for_each_sample(s: str, vcf: VariantFile) -> List[str]:
+def generate_for_each_sample_expressions(s: str, vcf: VariantFile) -> List[str]:
     from asttokens.util import replace
-    import ast
 
-    # for_each_sample must be the top level function
-    # since that is the only place it is allowed in order to split the header expression
-    # such that there is one column per sample (instead of *one* list-valued column)
+    # parse the `for_each_sample(lambda var: inner) expression
+    var, inner = _var_and_body(s)
 
-    # first, parse the `for_each_sample(lambda ARGS: BODY) expression
-    tok = asttokens.ASTTokens(s, parse=True)
-    tok.mark_tokens(tok.tree)
-    var = None
-    inner = ""
-    # then walk the resulting AST, find the "for_each_sample" ast.Call node,
-    # and extract the variable name and lambda body code from that
-    for node in asttokens.util.walk(tok.tree):
-        if isinstance(node, ast.Call):
-            if node.func.id == "for_each_sample":
-                for arg in node.args:
-                    if isinstance(arg, ast.Lambda):
-                        var = ast.unparse(arg.args)
-                        inner = tok.get_text(arg.body)
     # here we parse the inner part again, so that position offsets start at 0
     tok = asttokens.ASTTokens(inner, parse=True)
 
-    # and replace `var` with each value from the list of samples
+    # *replace* `var` with each value from the list of samples
     samples = list(vcf.header.samples)
     expanded = []
     for sample in samples:
@@ -123,12 +107,45 @@ def for_each_sample(s: str, vcf: VariantFile) -> List[str]:
     return expanded
 
 
-def preprocess_header_expression(header: str, vcf: Optional[VariantFile] = None) -> str:
+def generate_for_each_sample_column_names(s: str, vcf: VariantFile) -> List[str]:
+    # parse the `for_each_sample(lambda var: inner) expression
+    var, inner = _var_and_body(s)
+
+    samples = list(vcf.header.samples)
+    return [eval(inner, {var: sample}, {}) for sample in samples]
+
+
+def _var_and_body(s):
+    import ast
+
+    tok = asttokens.ASTTokens(s, parse=True)
+    tok.mark_tokens(tok.tree)
+    var = None
+    inner = ""
+
+    # for_each_sample must be the top level function
+    # since that is the only place it is allowed in order to split the header expression
+    # such that there is one column per sample (instead of *one* list-valued column)
+
+    # walk the resulting AST, find the "for_each_sample" ast.Call node,
+    # and extract the variable name and lambda body code from that
+    for node in asttokens.util.walk(tok.tree):
+        if isinstance(node, ast.Call):
+            if node.func.id == "for_each_sample":
+                for arg in node.args:
+                    if isinstance(arg, ast.Lambda):
+                        var = ast.unparse(arg.args)
+                        inner = tok.get_text(arg.body)
+    return var, inner
+
+
+def preprocess_header_expression(
+    header: str, vcf: Optional[VariantFile] = None, make_expression: bool = True
+) -> str:
     """
     Split the header expression at toplevel commas into parts.
     Then, if one of these parts starts with 'for_each_sample',
-    that part is expanded for each sample in vcf.header.samples,
-    assuming a wildcard variable named `s`.
+    that part is expanded for each sample in vcf.header.samples
     """
     parts = get_toplevel(header)
     to_expand = list(
@@ -137,8 +154,13 @@ def preprocess_header_expression(header: str, vcf: Optional[VariantFile] = None)
     if len(to_expand) > 0 and vcf is None:
         raise ValueError("If FORMAT is to be expanded, the VCF kwarg must not be none.")
     parts = [[p] for p in parts]
+    func = (
+        generate_for_each_sample_expressions
+        if make_expression
+        else generate_for_each_sample_column_names
+    )
     for i, p in to_expand:
-        expanded = for_each_sample(p, vcf)
+        expanded = func(p, vcf)
         parts[i] = expanded
     parts = [p for pp in parts for p in pp]
     return ", ".join(parts)
@@ -149,7 +171,7 @@ def get_header(args, vcf: Optional[VariantFile] = None) -> List[str]:
         header = args.expression
     else:
         header = args.header
-    return get_toplevel(preprocess_header_expression(header, vcf))
+    return get_toplevel(preprocess_header_expression(header, vcf, False))
 
 
 def get_toplevel(header: str) -> List[str]:
@@ -204,7 +226,7 @@ def execute(args):
     with VariantFile(args.vcf) as vcf:
         rows = tableize_vcf(
             vcf,
-            preprocess_header_expression(args.expression, vcf),
+            preprocess_header_expression(args.expression, vcf, True),
             args.annotation_key,
         )
 
