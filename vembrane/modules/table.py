@@ -131,11 +131,12 @@ def _var_and_body(s):
     # and extract the variable name and lambda body code from that
     for node in asttokens.util.walk(tok.tree):
         if isinstance(node, ast.Call):
-            if node.func.id == "for_each_sample":
-                for arg in node.args:
-                    if isinstance(arg, ast.Lambda):
-                        var = ast.unparse(arg.args)
-                        inner = tok.get_text(arg.body)
+            if hasattr(node.func, "id"):
+                if node.func.id == "for_each_sample":
+                    for arg in node.args:
+                        if isinstance(arg, ast.Lambda):
+                            var = ast.unparse(arg.args)
+                            inner = tok.get_text(arg.body)
     return var, inner
 
 
