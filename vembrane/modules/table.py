@@ -152,7 +152,7 @@ def _var_and_body(s):
                 if node.func.id == "for_each_sample":
                     for arg in node.args:
                         if isinstance(arg, ast.Lambda):
-                            var = ast.unparse(arg.args)
+                            var = tok.get_text(arg.args)
                             inner = tok.get_text(arg.body)
     return var, inner
 
