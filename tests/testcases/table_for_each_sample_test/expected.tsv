@@ -1,0 +1,9 @@
+CHROM	lambda sample: (FORMAT['AD'][sample][0] / FORMAT['DP'][sample]) * INFO['MQ']	lambda sample: (FORMAT['AD'][sample][0] / FORMAT['DP'][sample]) * INFO['MQ']
+chr18	61	61
+chr18	7	61
+chr18	36	61
+chr18	4	61
+chr18	4	61
+chr18	144	61
+chr18	167	61
+chr18	88	61
