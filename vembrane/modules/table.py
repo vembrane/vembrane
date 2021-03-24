@@ -120,6 +120,13 @@ def generate_for_each_sample_column_names(s: str, vcf: VariantFile) -> List[str]
     for sample in samples:
         __globals[var] = sample
         column_name = eval(inner, __globals, {})
+        if not (
+            isinstance(column_name, (str, bytes)) or hasattr(column_name, "__str__")
+        ):
+            raise ValueError(
+                "The specified header expression does not evaluate to a string."
+                "Consider using `str(expression)` instead."
+            )
         column_names.append(column_name)
     return column_names
 
