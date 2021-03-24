@@ -112,7 +112,16 @@ def generate_for_each_sample_column_names(s: str, vcf: VariantFile) -> List[str]
     var, inner = _var_and_body(s)
 
     samples = list(vcf.header.samples)
-    return [eval(inner, {var: sample}, {}) for sample in samples]
+    from vembrane.globals import allowed_globals
+
+    __globals = allowed_globals.copy()
+
+    column_names = []
+    for sample in samples:
+        __globals[var] = sample
+        column_name = eval(inner, __globals, {})
+        column_names.append(column_name)
+    return column_names
 
 
 def _var_and_body(s):
