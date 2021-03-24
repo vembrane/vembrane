@@ -95,6 +95,7 @@ def for_each_sample(s: str, vcf: VariantFile) -> List[str]:
 
     # first, parse the `for_each_sample(lambda ARGS: BODY) expression
     tok = asttokens.ASTTokens(s, parse=True)
+    tok.mark_tokens(tok.tree)
     var = None
     inner = ""
     # then walk the resulting AST, find the "for_each_sample" ast.Call node,
@@ -105,8 +106,7 @@ def for_each_sample(s: str, vcf: VariantFile) -> List[str]:
                 for arg in node.args:
                     if isinstance(arg, ast.Lambda):
                         var = ast.unparse(arg.args)
-                        inner = ast.unparse(arg.body)
-
+                        inner = tok.get_text(arg.body)
     # here we parse the inner part again, so that position offsets start at 0
     tok = asttokens.ASTTokens(inner, parse=True)
 
