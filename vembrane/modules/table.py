@@ -87,20 +87,39 @@ def tableize_vcf(
 
 def for_each_sample(s: str, vcf: VariantFile) -> List[str]:
     from asttokens.util import replace
+    import ast
 
-    s = s.lstrip("for_each_sample")
-    assert s[0] == "(" and s[-1] == ")"
-    s = s[1:-1]
-    tok = asttokens.ASTTokens(s, parse=False)
+    # for_each_sample must be the top level function
+    # since that is the only place it is allowed in order to split the header expression
+    # such that there is one column per sample (instead of *one* list-valued column)
+
+    # first, parse the `for_each_sample(lambda ARGS: BODY) expression
+    tok = asttokens.ASTTokens(s, parse=True)
+    var = None
+    inner = ""
+    # then walk the resulting AST, find the "for_each_sample" ast.Call node,
+    # and extract the variable name and lambda body code from that
+    for node in asttokens.util.walk(tok.tree):
+        if isinstance(node, ast.Call):
+            if node.func.id == "for_each_sample":
+                for arg in node.args:
+                    if isinstance(arg, ast.Lambda):
+                        var = ast.unparse(arg.args)
+                        inner = ast.unparse(arg.body)
+
+    # here we parse the inner part again, so that position offsets start at 0
+    tok = asttokens.ASTTokens(inner, parse=True)
+
+    # and replace `var` with each value from the list of samples
     samples = list(vcf.header.samples)
     expanded = []
     for sample in samples:
         replacements = []
         for t in tok.tokens:
-            if t.type == 1 and t.string == "s":
+            if t.type == 1 and t.string == var:
                 pos = (t.startpos, t.endpos)
                 replacements.append((*pos, f"'{sample}'"))
-        expanded.append(replace(s, replacements))
+        expanded.append(replace(inner, replacements))
     return expanded
 
 
