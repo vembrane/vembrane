@@ -92,8 +92,24 @@ Handling missing/optional values in fields other than INFO or FORMAT can be done
 ## `vembrane table`
 In addition to the `filter` subcommand, vembrane (`≥ 0.5`) also supports writing tabular data with the `table` subcommand.
 In this case, an expression which evaluates to `tuple` is expected, for example:
+```sh
+vembrane table 'CHROM, POS, 10**(-QUAL/10), ANN["CLIN_SIG"]' > table.tsv
 ```
-vembrane table 'CHROM, POS, 10**(-QUAL/10)', ANN["CLIN_SIG"] > table.tsv`.
+
+In order to have one column for each sample (instead of a single list-valued column) in a multi-sample VCF file,
+there is the `for_each_sample` function.
+Given a VCF file with samples `Sample_1`, `Sample_2` and `Sample_3`,
+```python
+for_each_sample(lambda sample: FORMAT['DP'][sample])
+```
+expands to `FORMAT['DP']['Sample_1'], FORMAT['DP']['Sample_2'], FORMAT['DP']['Sample_3']`,
+which is then used as the expression that is evaluated for each record in the VCF.
+When supplying a header via `--header`,  `for_each_sample` expects an expression which can be evaluated to `str`, e.g.:
+`--header "for_each_sample(lambda s: f'{s}/DP')"` will produce the following header:`Sample_1/DP  Sample_2/DP Sample_3/DP`.
+
+Expanding the example from above to include sample specific depths in additional columns, we get:
+```sh
+vembrane table 'CHROM, POS, 10**(-QUAL/10), ANN["CLIN_SIG"], for_each_sample(lambda s: FORMAT["DP"][s])' > table.tsv
 ```
 
 ## Development
