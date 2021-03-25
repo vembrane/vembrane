@@ -1,0 +1,3 @@
+function: "table"
+expression: "CHROM, for_each_sample(lambda sample: str(FORMAT['DP'][sample]) + str(INFO['MQ']))"
+header: "CHROM, for_each_sample(lambda sample: f'useless_concat_on_sample_{sample}')"
