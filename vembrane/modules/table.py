@@ -189,7 +189,9 @@ def get_header(args, vcf: Optional[VariantFile] = None) -> List[str]:
         header = args.expression
     else:
         header = args.header
-    return get_toplevel(preprocess_header_expression(header, vcf, False))
+    return get_toplevel(
+        preprocess_header_expression(header, vcf, args.header == "auto")
+    )
 
 
 def get_toplevel(header: str) -> List[str]:
