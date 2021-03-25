@@ -90,3 +90,17 @@ class NotExactlyOneValue(VembraneError):
             "- {number}: the field has exactly {NUMBER} values\n"
         )
         super(NotExactlyOneValue, self).__init__(msg)
+
+
+class HeaderWrongColumnNumber(VembraneError):
+    """table --header expression generates different number of columns from main expression"""
+
+    def __init__(self, n_expr_cols, expr_cols, n_header_cols, header_cols):
+        msg = (
+            "The provided --header expression generates a different\n"
+            "number of columns than the main expression.\n\n"
+            f"{n_expr_cols} main expression columns: {expr_cols}\n"
+            f"{n_header_cols} main expression columns: {header_cols}\n"
+        )
+        super(HeaderWrongColumnNumber, self).__init__(msg)
+

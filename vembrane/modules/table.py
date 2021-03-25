@@ -8,7 +8,7 @@ import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
 
 from ..common import check_expression
-from ..errors import VembraneError
+from ..errors import VembraneError, HeaderWrongColumnNumber
 from ..representations import Environment
 
 
@@ -244,9 +244,10 @@ def smart_open(filename=None, *args, **kwargs):
 
 def execute(args):
     with VariantFile(args.vcf) as vcf:
+        expression = preprocess_header_expression(args.expression, vcf, True)
         rows = tableize_vcf(
             vcf,
-            preprocess_header_expression(args.expression, vcf, True),
+            expression,
             args.annotation_key,
         )
 
@@ -256,7 +257,13 @@ def execute(args):
                     csvfile, delimiter=args.separator, quoting=csv.QUOTE_MINIMAL
                 )
                 if args.header != "none":
-                    writer.writerow(get_header(args, vcf))
+                    header = get_header(args, vcf)
+                    n_header_cols = len(header)
+                    expr_cols = expression.split(", ")
+                    n_expr_cols = len(expr_cols)
+                    if n_header_cols != n_expr_cols:
+                        raise HeaderWrongColumnNumber(n_expr_cols, expr_cols, n_header_cols, header)
+                    writer.writerow(header)
                 writer.writerows(get_row(row) for row in rows)
         except VembraneError as ve:
             print(ve, file=stderr)
