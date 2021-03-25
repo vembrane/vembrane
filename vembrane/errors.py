@@ -103,4 +103,3 @@ class HeaderWrongColumnNumber(VembraneError):
             f"{n_header_cols} --header expression columns: {header_cols}\n"
         )
         super(HeaderWrongColumnNumber, self).__init__(msg)
-
