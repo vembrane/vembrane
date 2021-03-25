@@ -1,21 +1,15 @@
 import argparse
 import builtins
-import collections
 import os
 from pathlib import Path
+import tempfile
 
 import pytest
 import yaml
-from pysam import VariantFile
 
 from vembrane import errors, __version__
-from vembrane.common import check_expression
-from vembrane.modules.filter import filter_vcf, read_auxiliary
-from vembrane.modules.table import (
-    tableize_vcf,
-    get_header,
-    preprocess_header_expression,
-)
+from vembrane.modules import filter, table
+
 
 CASES = Path(__file__).parent.joinpath("testcases")
 
@@ -24,108 +18,77 @@ def test_version():
     assert __version__ != "unknown"
 
 
-def aux_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--aux",
-        "-a",
-        nargs=2,
-        action="append",
-        metavar=("NAME", "PATH"),
-        default=[],
-        help="Path to an auxiliary file containing a set of symbols",
-    )
-    return parser
-
-
 @pytest.mark.parametrize(
     "testcase", [d for d in os.listdir(CASES) if not d.startswith(".")]
 )
 def test_filter(testcase):
     path = CASES.joinpath(testcase)
 
+    vcf_path = path.joinpath("test.vcf")
+
     with open(path.joinpath("config.yaml")) as config_fp:
         config = yaml.load(config_fp, Loader=yaml.FullLoader)
 
-    vcf = VariantFile(path.joinpath("test.vcf"))
+    # emulate command-line command setup to use argparse afterwards
+    command = [config["function"], config["expression"], str(vcf_path)]
+    for key in config:
+        command.append(f"--{key.replace('_','-')}")
+        if isinstance(config[key], str):
+            command.append(config[key])
+        else:
+            for argument in config[key]:
+                command.append(argument)
+
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(
+        dest="command", description="valid subcommands", required=True
+    )
+    filter.add_subcommmand(subparsers)
+    table.add_subcommmand(subparsers)
+    try:
+        args, unknown = parser.parse_known_args(command)
+    # we have to catch and compare such exceptions here, because they
+    # do not cause a SystemExit like the .execute() instances below
+    except Exception as e:
+        assert type(e).__name__ == config["raises"]
+        return
 
     if "raises" in config:
-        exc = config["raises"]
+        exception = config["raises"]
         try:
-            exception = getattr(errors, exc)
+            exception = getattr(errors, exception)
+            with pytest.raises(SystemExit):
+                with pytest.raises(exception):
+                    if args.command == "filter":
+                        filter.execute(args)
+                    elif args.command == "table":
+                        table.execute(args)
+                    else:
+                        assert False
         except AttributeError:
-            exception = getattr(builtins, exc)
-
-        with pytest.raises(exception):
-            # FIXME we have to explicitly check the filter expression here
-            # until we change from calling filter_vcf
-            # to actually invoking vembrane.main
-            check_expression(config.get("expression"))
-            if config["function"] == "filter":
-                list(
-                    filter_vcf(
-                        vcf,
-                        config.get("expression"),
-                        config.get("ann_key", "ANN"),
-                        config.get("keep_unmatched", False),
-                        auxiliary=read_auxiliary(
-                            aux_parser().parse_args(config.get("aux", "").split()).aux
-                        ),
-                        overwrite_number=config.get("overwrite_number", {}),
-                    )
-                )
-            elif config["function"] == "table":
-                list(
-                    tableize_vcf(
-                        vcf,
-                        config.get("expression"),
-                        config.get("ann_key", "ANN"),
-                    )
-                )
-            else:
-                assert False
+            exception = getattr(builtins, exception)
+            with pytest.raises(exception):
+                if args.command == "filter":
+                    filter.execute(args)
+                elif args.command == "table":
+                    table.execute(args)
+                else:
+                    assert False
     else:
-        if config["function"] == "filter":
-            expected = list(VariantFile(path.joinpath("expected.vcf")))
-            result = list(
-                filter_vcf(
-                    vcf,
-                    config.get("expression"),
-                    config.get("ann_key", "ANN"),
-                    config.get("keep_unmatched", False),
-                    auxiliary=read_auxiliary(
-                        aux_parser().parse_args(config.get("aux", "").split()).aux
-                    ),
-                    overwrite_number=config.get("overwrite_number", {}),
-                )
-            )
-            assert result == expected
-        elif config["function"] == "table":
-            separator = config.get("separator", "\t")
-            conf = collections.namedtuple("conf", ("header", "expression"))
-            conf.header = config.get("header", "auto")
-            conf.expression = config.get("expression")
-            expected = list(
-                map(
-                    lambda x: x.strip("\n"),
-                    open(path.joinpath("expected.tsv"), "r").readlines(),
-                )
-            )
-            result = list(
-                map(
-                    lambda x: separator.join(map(str, x)),
-                    tableize_vcf(
-                        vcf,
-                        preprocess_header_expression(conf.expression, vcf, True),
-                        config.get("ann_key", "ANN"),
-                    ),
-                )
-            )
-            if conf.header != "none":
-                header = get_header(conf, vcf)
-                assert separator.join(header) == expected[0]
-                assert result == expected[1:]
+        with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
+            args.output = tmp_out.name
+            if args.command == "filter":
+                expected = str(path.joinpath("expected.vcf"))
+                filter.execute(args)
+            elif args.command == "table":
+                expected = str(path.joinpath("expected.tsv"))
+                table.execute(args)
             else:
-                assert result == expected
-        else:
-            assert config["function"] in {"filter", "table"}, "Unknown subcommand"
+                assert args.command in {"filter", "table"}, "Unknown subcommand"
+            t_out = ""
+            for line in tmp_out:
+                if not line.startswith("##vembrane"):
+                    t_out += line
+            with open(expected, mode="r") as e:
+                e_out = e.read()
+                assert t_out == e_out
