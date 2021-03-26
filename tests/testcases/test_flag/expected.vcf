@@ -16,8 +16,8 @@
 ##INFO=<ID=FLOATR,Number=R,Type=Float,Description="One float per allele">
 ##INFO=<ID=STRINGR,Number=R,Type=String,Description="One string per allele">
 ##INFO=<ID=INTX,Number=.,Type=Integer,Description="A variable number of integers">
-##INFO=<ID=FLOATX,Number=.,Type=Integer,Description="A variable number of floats">
-##INFO=<ID=STRINGX,Number=.,Type=Integer,Description="A variable number of strings">
+##INFO=<ID=FLOATX,Number=.,Type=Float,Description="A variable number of floats">
+##INFO=<ID=STRINGX,Number=.,Type=String,Description="A variable number of strings">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=INT,Number=1,Type=Integer,Description="One single integer">
 ##FORMAT=<ID=FLOAT,Number=1,Type=Float,Description="One single float">
@@ -32,10 +32,10 @@
 ##FORMAT=<ID=FLOATR,Number=R,Type=Float,Description="One float per allele">
 ##FORMAT=<ID=STRINGR,Number=R,Type=String,Description="One string per allele">
 ##FORMAT=<ID=INTG,Number=G,Type=Integer,Description="One integer per genotype">
-##FORMAT=<ID=FLOATG,Number=G,Type=Integer,Description="One float per genotype">
-##FORMAT=<ID=STRINGG,Number=G,Type=Integer,Description="One string per genotype">
+##FORMAT=<ID=FLOATG,Number=G,Type=Float,Description="One float per genotype">
+##FORMAT=<ID=STRINGG,Number=G,Type=String,Description="One string per genotype">
 ##FORMAT=<ID=INTX,Number=.,Type=Integer,Description="A variable number of integers">
-##FORMAT=<ID=FLOATX,Number=.,Type=Integer,Description="A variable number of floats">
-##FORMAT=<ID=STRINGX,Number=.,Type=Integer,Description="A variable number of strings">
+##FORMAT=<ID=FLOATX,Number=.,Type=Float,Description="A variable number of floats">
+##FORMAT=<ID=STRINGX,Number=.,Type=String,Description="A variable number of strings">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Sample
 chr1	1	.	G	A	276	PASS	FLAG;INT=1;FLOAT=0.5;STRING=String;INT2=1,2;FLOAT2=0.5,1.0;STRING2=String1,String2;INTA=1;FLOATA=0.5;STRINGA=StringA;INTR=1,2;FLOATR=0.5,1.0;STRINGR=StringR1,StringR2;INTX=1,2,3,4;FLOATX=0.5,0.75;STRINGX=String1,String2,String3	GT:INT:INT2:INTA:INTR:INTG:INTX	0/1:1:1,2:1:1,2:1:1,2,3,4

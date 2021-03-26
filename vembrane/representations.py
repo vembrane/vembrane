@@ -8,7 +8,6 @@ from pysam.libcbcf import (
     VariantRecordInfo,
     VariantHeader,
     VariantRecord,
-    VariantRecordSample,
 )
 
 from .ann_types import (
@@ -181,6 +180,7 @@ class Environment(dict):
         # We use self + self.func as a closure.
         self._globals = allowed_globals.copy()
         self._globals.update(custom_functions(self))
+        self._globals["SAMPLES"] = list(header.samples)
         self._func = eval(f"lambda: {expression}", self, {})
 
         self._getters = {
@@ -194,7 +194,6 @@ class Environment(dict):
             "FILTER": self._get_filter,
             "INFO": self._get_info,
             "FORMAT": self._get_format,
-            "SAMPLES": self._get_samples,
             "INDEX": self._get_index,
         }
 
@@ -288,11 +287,6 @@ class Environment(dict):
             self.record.samples,
         )
         self._globals["FORMAT"] = value
-        return value
-
-    def _get_samples(self) -> List[VariantRecordSample]:
-        value = list(self.record.samples)
-        self._globals["SAMPLES"] = value
         return value
 
     def __getitem__(self, item):
