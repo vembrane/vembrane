@@ -93,18 +93,12 @@ def test_filter(testcase):
                         for r1, r2 in zip(vcf_actual, vcf_expected):
                             assert r1 == r2
 
-                header_actual = "".join(
-                    line
-                    for line in tmp_out
-                    if line.startswith("#") and not line.startswith("##vembrane")
-                )
-                with open(expected, mode="r") as e:
-                    header_expected = "".join(
-                        line
-                        for line in e
-                        if line.startswith("#") and not line.startswith("##vembrane")
-                    )
-                assert header_actual == header_expected
+                        for r1, r2 in zip(
+                            vcf_actual.header.records, vcf_expected.header.records
+                        ):
+                            assert r1.key == r2.key
+                            assert r1.value == r2.value
+                            assert r1.items() == r2.items()
 
             elif args.command == "table":
                 t_out = "".join(
