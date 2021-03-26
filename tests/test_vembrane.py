@@ -92,6 +92,20 @@ def test_filter(testcase):
                     with VariantFile(expected) as vcf_expected:
                         for r1, r2 in zip(vcf_actual, vcf_expected):
                             assert r1 == r2
+
+                header_actual = "".join(
+                    line
+                    for line in tmp_out
+                    if line.startswith("#") and not line.startswith("##vembrane")
+                )
+                with open(expected, mode="r") as e:
+                    header_expected = "".join(
+                        line
+                        for line in e
+                        if line.startswith("#") and not line.startswith("##vembrane")
+                    )
+                assert header_actual == header_expected
+
             elif args.command == "table":
                 t_out = "".join(
                     line for line in tmp_out if not line.startswith("##vembrane")
