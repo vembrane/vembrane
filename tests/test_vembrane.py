@@ -6,6 +6,7 @@ import tempfile
 
 import pytest
 import yaml
+from pysam.libcbcf import VariantFile
 
 from vembrane import errors, __version__
 from vembrane.modules import filter, table
@@ -85,10 +86,16 @@ def test_filter(testcase):
                 table.execute(args)
             else:
                 assert args.command in {"filter", "table"}, "Unknown subcommand"
-            t_out = ""
-            for line in tmp_out:
-                if not line.startswith("##vembrane"):
-                    t_out += line
-            with open(expected, mode="r") as e:
-                e_out = e.read()
+
+            if args.command == "filter":
+                with VariantFile(tmp_out.name) as vcf_actual:
+                    with VariantFile(expected) as vcf_expected:
+                        for r1, r2 in zip(vcf_actual, vcf_expected):
+                            assert r1 == r2
+            elif args.command == "table":
+                t_out = "".join(
+                    line for line in tmp_out if not line.startswith("##vembrane")
+                )
+                with open(expected, mode="r") as e:
+                    e_out = e.read()
                 assert t_out == e_out
