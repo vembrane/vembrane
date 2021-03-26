@@ -1,5 +1,0 @@
-function: "filter"
-expression: 'ANN["Gene_Name"] in AUX["genes"] and ANN["Annotation_Impact"] == "HIGH"'
-aux:
-  - "genes"
-  - "tests/testcases/test17/genes.txt"
