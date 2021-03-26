@@ -6,7 +6,7 @@ import tempfile
 
 import pytest
 import yaml
-from pysam.libcbcf import VariantFile
+from pysam import VariantFile
 
 from vembrane import errors, __version__
 from vembrane.modules import filter, table
