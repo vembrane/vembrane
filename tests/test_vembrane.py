@@ -81,13 +81,6 @@ def test_filter(testcase):
             if args.command == "filter":
                 expected = str(path.joinpath("expected.vcf"))
                 filter.execute(args)
-            elif args.command == "table":
-                expected = str(path.joinpath("expected.tsv"))
-                table.execute(args)
-            else:
-                assert args.command in {"filter", "table"}, "Unknown subcommand"
-
-            if args.command == "filter":
                 with VariantFile(tmp_out.name) as vcf_actual:
                     with VariantFile(expected) as vcf_expected:
                         for r1, r2 in zip(vcf_actual, vcf_expected):
@@ -99,11 +92,14 @@ def test_filter(testcase):
                             assert r1.key == r2.key
                             assert r1.value == r2.value
                             assert r1.items() == r2.items()
-
             elif args.command == "table":
+                expected = str(path.joinpath("expected.tsv"))
+                table.execute(args)
                 t_out = "".join(
                     line for line in tmp_out if not line.startswith("##vembrane")
                 )
                 with open(expected, mode="r") as e:
                     e_out = e.read()
                 assert t_out == e_out
+            else:
+                assert args.command in {"filter", "table"}, "Unknown subcommand"
