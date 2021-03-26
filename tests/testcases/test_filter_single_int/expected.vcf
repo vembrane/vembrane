@@ -17,7 +17,7 @@
 ##INFO=<ID=STRINGR,Number=R,Type=String,Description="One string per allele">
 ##INFO=<ID=INTX,Number=.,Type=Integer,Description="A variable number of integers">
 ##INFO=<ID=FLOATX,Number=.,Type=Float,Description="A variable number of floats">
-##INFO=<ID=STRINGX,Number=.,Type=Strong,Description="A variable number of strings">
+##INFO=<ID=STRINGX,Number=.,Type=String,Description="A variable number of strings">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=FLAG,Number=0,Type=Flag,Description="A boolean flag">
 ##FORMAT=<ID=INT,Number=1,Type=Integer,Description="One single integer">
