@@ -113,7 +113,7 @@ Given a VCF file with samples `Sample_1`, `Sample_2` and `Sample_3`, the header 
 ```
 and the expression to evaluate on each VCF record would become:
 ```python
-(CHROM, POS, FORMAT['DP']['Sample_1'], FORMAT['DP']['Sample_2'], FORMAT['DP']['Sample_3']`)
+(CHROM, POS, FORMAT['DP']['Sample_1'], FORMAT['DP']['Sample_2'], FORMAT['DP']['Sample_3'])
 ```
 
 When not supplying a `--header` expression, the entries of the expanded main expression become the column names in the header.
