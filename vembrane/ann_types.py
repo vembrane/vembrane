@@ -1,6 +1,6 @@
 from collections import defaultdict
 from sys import stderr
-from typing import Union, Iterable, Tuple, Dict, Callable, Any
+from typing import Union, Iterable, Tuple, Dict, Callable, Any, DefaultDict
 import re
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
@@ -239,11 +239,15 @@ PREDICTION_SCORE_REGEXP: re.Pattern = re.compile(r"(.*)\((.*)\)")
 
 class AnnotationPredictionScoreEntry(AnnotationEntry):
     def __init__(self, name: str, **kwargs):
-        def typefunc(x: str) -> Dict[str, float]:
+        def typefunc(x: str) -> DefaultDict[str, Union[NoValue, float]]:
             match = PREDICTION_SCORE_REGEXP.findall(x)[0]
-            return {match[0]: float(match[1])}
+            res: DefaultDict[str, Union[NoValue, float]] = defaultdict(lambda: NA)
+            res[match[0]] = float(match[1])
+            return res
 
-        super().__init__(name, typefunc=typefunc, nafunc=lambda: dict(), **kwargs)
+        super().__init__(
+            name, typefunc=typefunc, nafunc=lambda: defaultdict(lambda: NA), **kwargs
+        )
 
 
 class DefaultAnnotationEntry(AnnotationEntry):
