@@ -259,10 +259,14 @@ def execute(args):
                     n_header_cols = len(header)
                     expr_cols = expression_parts
                     n_expr_cols = len(expr_cols)
-                    if n_header_cols != n_expr_cols:
-                        raise HeaderWrongColumnNumber(
-                            n_expr_cols, expr_cols, n_header_cols, header
-                        )
+                    if not (
+                        any(map(lambda s: s.startswith("*"), header))
+                        and any(map(lambda s: s.startswith("*"), expr_cols))
+                    ):
+                        if n_header_cols != n_expr_cols:
+                            raise HeaderWrongColumnNumber(
+                                n_expr_cols, expr_cols, n_header_cols, header
+                            )
                     writer.writerow(header)
                 writer.writerows(get_row(row) for row in rows)
         except VembraneError as ve:

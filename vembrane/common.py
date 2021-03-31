@@ -1,9 +1,9 @@
 import ast
 from typing import List
 
-from vembrane.errors import InvalidExpression
-
 from pysam.libcbcf import VariantHeader
+
+from vembrane.errors import InvalidExpression
 
 
 def check_expression(
@@ -12,12 +12,12 @@ def check_expression(
     if ".__" in expression:
         raise InvalidExpression(expression, "The expression must not contain '.__'")
     try:
-        tree = ast.parse(expression, mode="eval")
-        if isinstance(tree.body, (ast.BoolOp, ast.Compare)):
-            return expression
+        if not (expression.startswith("(") and expression.endswith(")")):
+            test_expression = "(" + expression + ")"
         else:
-            # TODO possibly check for ast.Call, func return type
-            return expression
+            test_expression = expression
+        ast.parse(test_expression, mode="eval")
+        return expression
     except SyntaxError:
         raise InvalidExpression(
             expression, "The expression has to be syntactically correct."
