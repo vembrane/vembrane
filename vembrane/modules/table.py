@@ -195,6 +195,8 @@ def get_header(args, vcf: Optional[VariantFile] = None) -> List[str]:
 def get_toplevel(header: str) -> List[str]:
     splitpos = [0]
     level = 0
+    if header.startswith("(") and header.endswith(")"):
+        level = -1
     stack = []
     for i, c in enumerate(header):
         if c == "," and level == 0:
