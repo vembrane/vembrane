@@ -159,7 +159,7 @@ def _var_and_body(s):
 
 def preprocess_header_expression(
     header: str, vcf: Optional[VariantFile] = None, make_expression: bool = True
-) -> str:
+) -> List[str]:
     """
     Split the header expression at toplevel commas into parts.
     Then, if one of these parts starts with 'for_each_sample',
@@ -181,7 +181,7 @@ def preprocess_header_expression(
         expanded = func(p, vcf)
         parts[i] = expanded
     parts = [p for pp in parts for p in pp]
-    return ", ".join(parts)
+    return parts
 
 
 def get_header(args, vcf: Optional[VariantFile] = None) -> List[str]:
@@ -189,9 +189,7 @@ def get_header(args, vcf: Optional[VariantFile] = None) -> List[str]:
         header = args.expression
     else:
         header = args.header
-    return get_toplevel(
-        preprocess_header_expression(header, vcf, args.header == "auto")
-    )
+    return preprocess_header_expression(header, vcf, args.header == "auto")
 
 
 def get_toplevel(header: str) -> List[str]:
@@ -244,10 +242,10 @@ def smart_open(filename=None, *args, **kwargs):
 
 def execute(args):
     with VariantFile(args.vcf) as vcf:
-        expression = preprocess_header_expression(args.expression, vcf, True)
+        expression_parts = preprocess_header_expression(args.expression, vcf, True)
         rows = tableize_vcf(
             vcf,
-            expression,
+            ", ".join(expression_parts),
             args.annotation_key,
         )
 
@@ -259,7 +257,7 @@ def execute(args):
                 if args.header != "none":
                     header = get_header(args, vcf)
                     n_header_cols = len(header)
-                    expr_cols = expression.split(", ")
+                    expr_cols = expression_parts
                     n_expr_cols = len(expr_cols)
                     if n_header_cols != n_expr_cols:
                         raise HeaderWrongColumnNumber(
