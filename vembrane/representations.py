@@ -133,6 +133,7 @@ class Annotation(NoValueDict):
     def __init__(self, ann_key: str, header: VariantHeader):
         self._record_idx = -1
         self._annotation_data = {}
+        self._num_annotations = 0
         self._data = {}
         annotation_keys = get_annotation_keys(header, ann_key)
         self._ann_conv = {
@@ -144,6 +145,7 @@ class Annotation(NoValueDict):
         self._record_idx = record_idx
         self._data.clear()
         self._annotation_data = split_annotation_entry(annotation)
+        self._num_annotations = len(self._annotation_data)
 
     def __getitem__(self, item):
         try:
@@ -153,7 +155,10 @@ class Annotation(NoValueDict):
                 ann_idx, convert = self._ann_conv[item]
             except KeyError as ke:
                 raise UnknownAnnotation(self._record_idx, ke)
-            raw_value = self._annotation_data[ann_idx].strip()
+            if ann_idx < self._num_annotations:
+                raw_value = self._annotation_data[ann_idx].strip()
+            else:
+                return NA
             value = self._data[item] = convert(raw_value)
             return value
 
