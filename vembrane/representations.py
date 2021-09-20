@@ -171,17 +171,21 @@ class Environment(dict):
         overwrite_number: Dict[str, str] = {},
     ):
         self._ann_key: str = ann_key
-        self._has_ann: bool = any(
-            hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
-            for node in ast.walk(ast.parse(expression))
-        )
+        # TODO:
+        # self._has_ann: bool = any(
+        #     hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
+        #     for node in ast.walk(ast.parse(expression))
+        # )
         self._annotation: Annotation = Annotation(ann_key, header)
         self._globals = {}
         # We use self + self.func as a closure.
         self._globals = allowed_globals.copy()
         self._globals.update(custom_functions(self))
         self._globals["SAMPLES"] = list(header.samples)
-        self._func = eval(f"lambda: {expression}", self, {})
+        
+        #TODO:
+        self._func = lambda: exec(expression, self, {})
+        # self._func = eval(f"lambda: {expression}", self, {})
 
         self._getters = {
             "AUX": self._get_aux,
@@ -229,6 +233,11 @@ class Environment(dict):
         self.idx = idx
         self.record = record
         self._globals.update(self._empty_globals)
+
+
+    def update_data(self, data):
+       self._globals["DATA"] = data
+
 
     def _get_chrom(self) -> str:
         value = self.record.chrom
