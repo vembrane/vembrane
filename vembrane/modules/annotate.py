@@ -1,21 +1,12 @@
-import contextlib
-import csv
-import sys
-import yaml
+from typing import Iterator
+
+import numpy as np
 import pandas as pd
-
-from sys import stderr
-from typing import Iterator, List, Optional
-
-import asttokens
+import yaml
 from pysam.libcbcf import VariantFile, VariantRecord
 
 from ..common import check_expression
-from ..errors import VembraneError, HeaderWrongColumnNumber
 from ..representations import Environment
-
-from itertools import chain
-import numpy as np
 
 
 def add_subcommmand(subparsers):
@@ -28,6 +19,19 @@ def add_subcommmand(subparsers):
     parser.add_argument(
         "vcf", help="The file containing the variants.", nargs="?", default="-"
     )
+    parser.add_argument(
+        "--output",
+        "-o",
+        default="-",
+        help="Output file, if not specified, output is written to STDOUT.",
+    )
+    parser.add_argument(
+        "--output-fmt",
+        "-O",
+        default="vcf",
+        choices=["vcf", "bcf", "uncompressed-bcf"],
+        help="Output format.",
+    )
 
 
 def annotate_vcf(
@@ -37,7 +41,6 @@ def annotate_vcf(
     ann_data: dict,
     config: dict,
 ) -> Iterator[tuple]:
-
     env = Environment(expression, ann_key, vcf.header)
 
     current_chrom = None
@@ -50,7 +53,7 @@ def annotate_vcf(
         if not current_chrom == record.chrom:
             current_chrom = record.chrom
             chrom = "chr" + record.chrom
-            if not chrom in ann_data:
+            if chrom not in ann_data:
                 continue
             current_data = ann_data[chrom].to_records()
             current_index = 0
@@ -71,7 +74,6 @@ def annotate_vcf(
         indices = valid_indices
 
         if len(indices):
-            pass
             env.update_data(current_data[(np.array(indices))])
             env.update_from_record(idx, record)
             ann_values = env.table()
@@ -112,12 +114,17 @@ def execute(args):
                 items=[
                     ("ID", value["vcf_name"]),
                     ("Number", value["number"]),
-                    ("Type", "Float"),
+                    ("Type", value["type"]),
                     ("Description", value["description"]),
                 ],
             )
 
-        with VariantFile("out.vcf", "w", header=vcf.header) as o:
+        fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
+        with VariantFile(
+            args.output,
+            f"w{fmt}",
+            header=vcf.header,
+        ) as out:
             variants = annotate_vcf(
                 vcf,
                 expression,
@@ -126,4 +133,4 @@ def execute(args):
                 config=config,
             )
             for v in variants:
-                o.write(v)
+                out.write(v)
