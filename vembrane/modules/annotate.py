@@ -71,7 +71,6 @@ def annotate_vcf(
         indices = valid_indices
 
         if len(indices):
-            pass
             env.update_data(current_data[(np.array(indices))])
             env.update_from_record(idx, record)
             ann_values = env.table()
@@ -112,7 +111,7 @@ def execute(args):
                 items=[
                     ("ID", value["vcf_name"]),
                     ("Number", value["number"]),
-                    ("Type", "Float"),
+                    ("Type", value["type"]),
                     ("Description", value["description"]),
                 ],
             )
