@@ -2,7 +2,7 @@ import contextlib
 import csv
 import sys
 import yaml
-import pandas
+import pandas as pd
 
 from sys import stderr
 from typing import Iterator, List, Optional
@@ -14,6 +14,8 @@ from ..common import check_expression
 from ..errors import VembraneError, HeaderWrongColumnNumber
 from ..representations import Environment
 
+from itertools import chain
+import numpy as np
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("annotate")
@@ -32,32 +34,49 @@ def annotate_vcf(
     expression: str,
     ann_key: str,
     ann_data: dict,
+    config: dict,
 ) -> Iterator[tuple]:
 
     env = Environment(expression, ann_key, vcf.header)
 
     current_chrom = None
+    current_index = None
+    current_data = None
+    indices = []
 
     record: VariantRecord
     for idx, record in enumerate(vcf):
         if not current_chrom == record.chrom:
             current_chrom = record.chrom
-            data_iter = ann_data["chr" + record.chrom]
-            env.update_data(data_iter)
+            chrom = "chr" + record.chrom
+            if not chrom in ann_data:
+                continue
+            current_data = ann_data[chrom].to_records()
+            current_index = 0
+            indices = []
 
-        env.update_from_record(idx, record)
-    #     if env.expression_annotations():
-    #         # if the expression contains a reference to the ANN field
-    #         # get all annotations from the record.info field
-    #         # (or supply an empty ANN value if the record has no ANN field)
-    #         try:
-    #             annotations = record.info[ann_key]
-    #         except KeyError:
-    #             annotations = [""]
-    #         for annotation in annotations:
-    #             yield env.table(annotation)
-    #     else:
-    #         yield env.table()
+        # append possible intervals
+        while current_index < len(current_data) and (current_data[current_index]["chromStart"] < record.start):
+            indices.append(current_index)
+            current_index += 1
+
+        # copy only overlapping intervals
+        valid_indices = []
+        for index in indices:
+            if current_data[index]["chromEnd"] > record.start:
+                valid_indices.append(index)
+        indices = valid_indices
+
+        if len(indices):
+            pass
+            env.update_data(current_data[(np.array(indices))])
+            env.update_from_record(idx, record)
+            ann_values = env.table()
+
+            for name, value in zip(map(lambda x: x["value"]["vcf_name"], config["annotation"]["values"]), ann_values):
+                record.info[name] = float(value)
+
+        yield record
 
 
 def execute(args):
@@ -68,12 +87,12 @@ def execute(args):
             print(exc)
 
     # load annotation data    
-    ann_data = pandas.read_csv(config["annotation"]["file"], sep="\t", header=0)
+    ann_data = pd.read_csv(config["annotation"]["file"], sep="\t", header=0)
     ann_data = dict(tuple(ann_data.groupby('chrom')))
 
     # build expression
-    expression = "\n".join(f'INFO["{value["vcf_name"]}"]={value["expression"]}' for value in map(lambda x: x["value"], config["annotation"]["values"]))
-    print(expression)
+    expression = ",".join(f'{value["expression"]}' for value in map(lambda x: x["value"], config["annotation"]["values"]))
+    expression = f"({expression})"
 
     with VariantFile(args.vcf) as vcf:
         # add new info
@@ -87,4 +106,7 @@ def execute(args):
                 expression,
                 "ann",
                 ann_data=ann_data,
-            ) 
+                config=config,
+            )
+            for v in variants:
+                o.write(v)
