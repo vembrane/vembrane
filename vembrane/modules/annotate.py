@@ -49,37 +49,44 @@ def annotate_vcf(
     for idx, record in enumerate(vcf):
         if not current_chrom == record.chrom:
             current_chrom = record.chrom
-            chrom = "chr" + record.chrom
-            if not chrom in ann_data:
-                continue
-            current_data = ann_data[chrom].to_records()
-            current_index = 0
-            indices = []
+            chrom = None
 
-        # append possible intervals
-        while current_index < len(current_data) and (
-            current_data[current_index]["chromStart"] < record.start
-        ):
-            indices.append(current_index)
-            current_index += 1
-
-        # copy only overlapping intervals
-        valid_indices = []
-        for index in indices:
-            if current_data[index]["chromEnd"] > record.start:
-                valid_indices.append(index)
-        indices = valid_indices
-
-        if len(indices):
-            env.update_data(current_data[(np.array(indices))])
-            env.update_from_record(idx, record)
-            ann_values = env.table()
-
-            for name, value in zip(
-                map(lambda x: x["value"]["vcf_name"], config["annotation"]["values"]),
-                ann_values,
+            # find the correct chrom name
+            tmp = current_chrom
+            if tmp.lower().startswith("chr"):
+                tmp = tmp[3:]
+            for prefix in ["", "chr", "Chr", "CHR"]:
+                if prefix + tmp in ann_data:
+                    chrom = prefix + tmp
+                    current_data = ann_data[chrom].to_records()
+                    current_index = 0
+                    indices = []
+        
+        if chrom:
+            # append possible intervals
+            while current_index < len(current_data) and (
+                current_data[current_index]["chromStart"] < record.start
             ):
-                record.info[name] = float(value)
+                indices.append(current_index)
+                current_index += 1
+
+            # copy only overlapping intervals
+            valid_indices = []
+            for index in indices:
+                if current_data[index]["chromEnd"] > record.start:
+                    valid_indices.append(index)
+
+            indices = valid_indices
+            if len(indices):
+                env.update_data(current_data[(np.array(indices))])
+                env.update_from_record(idx, record)
+                ann_values = env.table()
+
+                for name, value in zip(
+                    map(lambda x: x["value"]["vcf_name"], config["annotation"]["values"]),
+                    ann_values,
+                ):
+                    record.info[name] = float(value)
 
         yield record
 
