@@ -230,10 +230,8 @@ class Environment(dict):
         self.record = record
         self._globals.update(self._empty_globals)
 
-
     def update_data(self, data):
-       self._globals["DATA"] = data
-
+        self._globals["DATA"] = data
 
     def _get_chrom(self) -> str:
         value = self.record.chrom

@@ -17,6 +17,7 @@ from ..representations import Environment
 from itertools import chain
 import numpy as np
 
+
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("annotate")
     parser.add_argument(
@@ -56,7 +57,9 @@ def annotate_vcf(
             indices = []
 
         # append possible intervals
-        while current_index < len(current_data) and (current_data[current_index]["chromStart"] < record.start):
+        while current_index < len(current_data) and (
+            current_data[current_index]["chromStart"] < record.start
+        ):
             indices.append(current_index)
             current_index += 1
 
@@ -73,7 +76,10 @@ def annotate_vcf(
             env.update_from_record(idx, record)
             ann_values = env.table()
 
-            for name, value in zip(map(lambda x: x["value"]["vcf_name"], config["annotation"]["values"]), ann_values):
+            for name, value in zip(
+                map(lambda x: x["value"]["vcf_name"], config["annotation"]["values"]),
+                ann_values,
+            ):
                 record.info[name] = float(value)
 
         yield record
@@ -86,19 +92,30 @@ def execute(args):
         except yaml.YAMLError as exc:
             print(exc)
 
-    # load annotation data    
+    # load annotation data
     ann_data = pd.read_csv(config["annotation"]["file"], sep="\t", header=0)
-    ann_data = dict(tuple(ann_data.groupby('chrom')))
+    ann_data = dict(tuple(ann_data.groupby("chrom")))
 
     # build expression
-    expression = ",".join(f'{value["expression"]}' for value in map(lambda x: x["value"], config["annotation"]["values"]))
+    expression = ",".join(
+        f'{value["expression"]}'
+        for value in map(lambda x: x["value"], config["annotation"]["values"])
+    )
     expression = f"({expression})"
 
     with VariantFile(args.vcf) as vcf:
         # add new info
         for value in config["annotation"]["values"]:
             value = value["value"]
-            vcf.header.add_meta('INFO', items=[('ID',value["vcf_name"]), ('Number',value["number"]), ('Type','Float'), ('Description', value["description"])])
+            vcf.header.add_meta(
+                "INFO",
+                items=[
+                    ("ID", value["vcf_name"]),
+                    ("Number", value["number"]),
+                    ("Type", "Float"),
+                    ("Description", value["description"]),
+                ],
+            )
 
         with VariantFile("out.vcf", "w", header=vcf.header) as o:
             variants = annotate_vcf(
