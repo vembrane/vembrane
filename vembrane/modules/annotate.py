@@ -64,6 +64,7 @@ def annotate_vcf(
                     current_data = ann_data[ann_data["chrom"] == chrom]
                     current_index = 0
                     indices = []
+                    break
 
         if chrom:
             # append possible intervals
