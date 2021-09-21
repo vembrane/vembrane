@@ -64,11 +64,12 @@ def annotate_vcf(
                     current_data = ann_data[chrom].to_records()
                     current_index = 0
                     indices = []
-        
+
         if chrom:
             # append possible intervals
             while current_index < len(current_data) and (
                 current_data[current_index]["chromStart"] < record.start
+            ):
                 indices.append(current_index)
                 current_index += 1
 
@@ -85,7 +86,9 @@ def annotate_vcf(
                 ann_values = env.table()
 
                 for name, value in zip(
-                    map(lambda x: x["value"]["vcf_name"], config["annotation"]["values"]),
+                    map(
+                        lambda x: x["value"]["vcf_name"], config["annotation"]["values"]
+                    ),
                     ann_values,
                 ):
                     record.info[name] = float(value)
