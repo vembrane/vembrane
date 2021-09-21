@@ -2,7 +2,7 @@
 name = "vembrane"
 version = "0.7.0"
 description = "Filter VCF/BCF files with Python expressions."
-authors = ["Till Hartmann"]
+authors = ["Till Hartmann", "Christopher Schröder", "Johannes Köster", "Jan Forster", "Marcel Bargul", "Felix Mölder", "Elias Kuthe", "David Lähnemann"]
 readme = "README.md"
 homepage = "https://github.com/vembrane/vembrane"
 repository = "https://github.com/vembrane/vembrane"
@@ -25,7 +25,7 @@ black = { version = "^20.8b1", python = "^3.7" }
 
 [tool.black]
 line-length = 88
-target-version = ['py37', 'py38', 'py39']
+target-version = ['py37', 'py38']
 include = '\.pyi?$'
 exclude = '''
 /(
