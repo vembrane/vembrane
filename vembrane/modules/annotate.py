@@ -64,12 +64,14 @@ def annotate_vcf(
                     current_data = ann_data[ann_data["chrom"] == chrom]
                     current_index = 0
                     indices = []
-        
+
         if chrom:
             # append possible intervals
-            while current_index < len(current_data) and (current_data[current_index]["chromStart"] < record.start):
-                    indices.append(current_index)
-                    current_index += 1
+            while current_index < len(current_data) and (
+                current_data[current_index]["chromStart"] < record.start
+            ):
+                indices.append(current_index)
+                current_index += 1
 
             # copy only overlapping intervals
             valid_indices = []
@@ -84,7 +86,9 @@ def annotate_vcf(
                 ann_values = env.table()
 
                 for name, value in zip(
-                    map(lambda x: x["value"]["vcf_name"], config["annotation"]["values"]),
+                    map(
+                        lambda x: x["value"]["vcf_name"], config["annotation"]["values"]
+                    ),
                     ann_values,
                 ):
                     record.info[name] = float(value)
@@ -100,7 +104,13 @@ def execute(args):
             print(exc)
 
     # load annotation data
-    ann_data = np.genfromtxt(config["annotation"]["file"], delimiter="\t", names=True, dtype=None, encoding=None)
+    ann_data = np.genfromtxt(
+        config["annotation"]["file"],
+        delimiter="\t",
+        names=True,
+        dtype=None,
+        encoding=None,
+    )
     # ann_data = pd.read_csv(config["annotation"]["file"], sep="\t", header=0)
     # ann_data = dict(tuple(ann_data.groupby("chrom")))
 
