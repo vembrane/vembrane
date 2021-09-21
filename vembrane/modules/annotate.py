@@ -1,7 +1,6 @@
 from typing import Iterator
 
 import numpy as np
-import pandas as pd
 import yaml
 from pysam.libcbcf import VariantFile, VariantRecord
 
@@ -42,6 +41,7 @@ def annotate_vcf(
     config: dict,
 ) -> Iterator[tuple]:
     env = Environment(expression, ann_key, vcf.header)
+    available_chromsomes = set(np.unique(ann_data["chrom"]))
 
     current_chrom = None
     current_index = None
@@ -59,18 +59,17 @@ def annotate_vcf(
             if tmp.lower().startswith("chr"):
                 tmp = tmp[3:]
             for prefix in ["", "chr", "Chr", "CHR"]:
-                if prefix + tmp in ann_data:
+                if prefix + tmp in available_chromsomes:
                     chrom = prefix + tmp
-                    current_data = ann_data[chrom].to_records()
+                    current_data = ann_data[ann_data["chrom"] == chrom]
                     current_index = 0
                     indices = []
         
         if chrom:
             # append possible intervals
-            while current_index < len(current_data) and (
-                current_data[current_index]["chromStart"] < record.start
-                indices.append(current_index)
-                current_index += 1
+            while current_index < len(current_data) and (current_data[current_index]["chromStart"] < record.start):
+                    indices.append(current_index)
+                    current_index += 1
 
             # copy only overlapping intervals
             valid_indices = []
@@ -101,8 +100,9 @@ def execute(args):
             print(exc)
 
     # load annotation data
-    ann_data = pd.read_csv(config["annotation"]["file"], sep="\t", header=0)
-    ann_data = dict(tuple(ann_data.groupby("chrom")))
+    ann_data = np.genfromtxt(config["annotation"]["file"], delimiter="\t", names=True, dtype=None, encoding=None)
+    # ann_data = pd.read_csv(config["annotation"]["file"], sep="\t", header=0)
+    # ann_data = dict(tuple(ann_data.groupby("chrom")))
 
     # build expression
     expression = ",".join(
