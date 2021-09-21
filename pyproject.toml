@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vembrane"
-version = "0.6.1"
+version = "0.7.0"
 description = "Filter VCF/BCF files with Python expressions."
 authors = ["Till Hartmann"]
 readme = "README.md"
@@ -16,12 +16,14 @@ pysam = "^0.16"
 pyyaml = "^5.3"
 importlib_metadata = {version = "^1.7.0", python = "<3.8"}
 asttokens = "^2.0"
+numpy = "^1.21"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 pyyaml = "^5.3"
 pre-commit = "^1.10"
 black = { version = "^20.8b1", python = "^3.7" }
+numpy = "^1.21"
 
 [tool.black]
 line-length = 88
