@@ -9,6 +9,7 @@ from ..representations import Environment
 
 from intervaltree import Interval, IntervalTree
 
+
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("annotate")
     parser.add_argument(
@@ -49,7 +50,9 @@ def annotate_vcf(
     for chrom in available_chromsomes:
         d = ann_data[ann_data["chrom"] == chrom]
         chrom_ann_data[chrom] = d
-        tree[chrom] = IntervalTree(Interval(d["chromStart"], d["chromEnd"], i) for i, d in enumerate(d))
+        tree[chrom] = IntervalTree(
+            Interval(d["chromStart"], d["chromEnd"], i) for i, d in enumerate(d)
+        )
 
         # tree = IntervalTree.from_tuples(interval_tuples))
 
