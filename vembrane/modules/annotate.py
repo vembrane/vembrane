@@ -35,6 +35,15 @@ def add_subcommmand(subparsers):
     )
 
 
+typeparser = {
+    "Float": float,
+    "Integer": int,
+    "Character": lambda x: str(x)[0],
+    "String": str,
+    "Flag": bool,
+}
+
+
 def annotate_vcf(
     vcf: VariantFile,
     expression: str,
@@ -82,13 +91,11 @@ def annotate_vcf(
                 env.update_from_record(idx, record)
                 ann_values = env.table()
 
-                for name, value in zip(
-                    map(
-                        lambda x: x["value"]["vcf_name"], config["annotation"]["values"]
-                    ),
+                for v, expression_value in zip(
+                    map(lambda x: x["value"], config["annotation"]["values"]),
                     ann_values,
                 ):
-                    record.info[name] = float(value)
+                    record.info[v["vcf_name"]] = typeparser[v["type"]](expression_value)
 
         yield record
 
