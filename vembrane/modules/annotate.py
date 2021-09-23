@@ -7,6 +7,7 @@ from pysam.libcbcf import VariantFile, VariantRecord
 from ..common import check_expression
 from ..representations import Environment
 
+from intervaltree import Interval, IntervalTree
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("annotate")
@@ -37,16 +38,23 @@ def annotate_vcf(
     vcf: VariantFile,
     expression: str,
     ann_key: str,
-    ann_data: dict,
+    ann_data,
     config: dict,
 ) -> Iterator[tuple]:
     env = Environment(expression, ann_key, vcf.header)
     available_chromsomes = set(np.unique(ann_data["chrom"]))
 
+    tree = dict()
+    chrom_ann_data = dict()
+    for chrom in available_chromsomes:
+        d = ann_data[ann_data["chrom"] == chrom]
+        chrom_ann_data[chrom] = d
+        tree[chrom] = IntervalTree(Interval(d["chromStart"], d["chromEnd"], i) for i, d in enumerate(d))
+
+        # tree = IntervalTree.from_tuples(interval_tuples))
+
     current_chrom = None
-    current_index = None
-    current_data = None
-    indices = []
+    current_ann_data = None
 
     record: VariantRecord
     for idx, record in enumerate(vcf):
@@ -61,28 +69,13 @@ def annotate_vcf(
             for prefix in ["", "chr", "Chr", "CHR"]:
                 if prefix + tmp in available_chromsomes:
                     chrom = prefix + tmp
-                    current_data = ann_data[ann_data["chrom"] == chrom]
-                    current_index = 0
-                    indices = []
-                    break
+                    current_ann_data = chrom_ann_data[chrom]
+                    t = tree[chrom]
 
         if chrom:
-            # append possible intervals
-            while current_index < len(current_data) and (
-                current_data[current_index]["chromStart"] < record.start
-            ):
-                indices.append(current_index)
-                current_index += 1
-
-            # copy only overlapping intervals
-            valid_indices = []
-            for index in indices:
-                if current_data[index]["chromEnd"] > record.start:
-                    valid_indices.append(index)
-
-            indices = valid_indices
+            indices = np.fromiter((i for _, _, i in t[record.start]), dtype=np.int)
             if len(indices):
-                env.update_data(current_data[(np.array(indices))])
+                env.update_data(current_ann_data[(np.array(indices))])
                 env.update_from_record(idx, record)
                 ann_values = env.table()
 
