@@ -8,7 +8,7 @@ from ..common import check_expression
 from ..representations import Environment
 
 from intervaltree import Interval, IntervalTree
-
+from collections.abc import Iterable
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("annotate")
@@ -95,7 +95,21 @@ def annotate_vcf(
                     map(lambda x: x["value"], config["annotation"]["values"]),
                     ann_values,
                 ):
-                    record.info[v["vcf_name"]] = typeparser[v["type"]](expression_value)
+                    if not v["number"] == ".":
+                        number = int(v["number"])
+                    else:
+                        number = -1
+
+                    if number == -1:
+                        expression_value = list(map(typeparser[v["type"]], expression_value))
+                    elif number > 1:
+                        expression_value = list(map(typeparser[v["type"]], expression_value))
+                        assert(len(expression_value) == number)
+                    else:
+                        # number == 1
+                        assert(isinstance(expression_value, str) or not isinstance(expression_value, Iterable))
+                        expression_value = typeparser[v["type"]](expression_value)
+                    record.info[v["vcf_name"]] = expression_value
 
         yield record
 
