@@ -1,5 +1,6 @@
 import argparse
 import builtins
+from itertools import zip_longest
 import os
 from pathlib import Path
 import tempfile
@@ -83,15 +84,20 @@ def test_filter(testcase):
                 filter.execute(args)
                 with VariantFile(tmp_out.name) as vcf_actual:
                     with VariantFile(expected) as vcf_expected:
-                        for r1, r2 in zip(vcf_actual, vcf_expected):
+                        for r1, r2 in zip_longest(vcf_actual, vcf_expected):
                             assert r1 == r2
 
-                        for r1, r2 in zip(
+                        for r1, r2 in zip_longest(
                             vcf_actual.header.records, vcf_expected.header.records
                         ):
-                            assert r1.key == r2.key
-                            assert r1.value == r2.value
-                            assert r1.items() == r2.items()
+                            if r1.key == "vembraneVersion":
+                                assert r1.value == __version__
+                            elif r1.key == "vembraneCmd":
+                                assert r1.value.startswith("vembrane ")
+                            else:
+                                assert r1.key == r2.key
+                                assert r1.value == r2.value
+                                assert r1.items() == r2.items()
             elif args.command == "table":
                 expected = str(path.joinpath("expected.tsv"))
                 table.execute(args)
