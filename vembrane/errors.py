@@ -93,7 +93,9 @@ class NotExactlyOneValue(VembraneError):
 
 
 class HeaderWrongColumnNumber(VembraneError):
-    """table --header expression generates different number of columns than main expression"""
+    """
+    table --header expression generates different number of columns than main expression
+    """
 
     def __init__(self, n_expr_cols, expr_cols, n_header_cols, header_cols):
         msg = (

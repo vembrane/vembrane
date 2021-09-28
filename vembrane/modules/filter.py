@@ -228,6 +228,8 @@ def execute(args):
     with VariantFile(args.vcf) as vcf:
         header: VariantHeader = vcf.header
         header.add_meta("vembraneVersion", __version__)
+        # NOTE: If .modules.filter.execute might be used as a library function
+        #       in the future, we should not record sys.argv directly below.
         header.add_meta(
             "vembraneCmd",
             "vembrane "
