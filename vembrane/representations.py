@@ -181,6 +181,9 @@ class Environment(dict):
         self._globals = allowed_globals.copy()
         self._globals.update(custom_functions(self))
         self._globals["SAMPLES"] = list(header.samples)
+        # REF/ALT alleles are cached separately to raise "MoreThanOneAltAllele"
+        # only if ALT (but not REF) is accessed (and ALT has multiple entries).
+        self._alleles = None
         self._func = eval(f"lambda: {expression}", self, {})
 
         self._getters = {
@@ -229,6 +232,7 @@ class Environment(dict):
         self.idx = idx
         self.record = record
         self._globals.update(self._empty_globals)
+        self._alleles = None
 
     def update_data(self, data):
         self._globals["DATA"] = data
@@ -248,19 +252,25 @@ class Environment(dict):
         self._globals["ID"] = value
         return value
 
-    def _get_ref_alt(self) -> Tuple[str, List[str]]:
-        ref, *alt = chain(self.record.alleles)
-        self._globals["REF"], self._globals["ALT"] = ref, alt
-        return ref, alt
+    def _get_alleles(self) -> Tuple[str, List[str]]:
+        alleles = self._alleles
+        if not alleles:
+            alleles = self._alleles = tuple(chain(self.record.alleles))
+        return alleles
 
     def _get_ref(self) -> str:
-        return self._get_ref_alt()[0]
+        alleles = self._get_alleles()
+        value = alleles[0]
+        self._globals["REF"] = value
+        return value
 
     def _get_alt(self) -> str:
-        alts = self._get_ref_alt()[1]
-        if len(alts) > 1:
+        alleles = self._get_alleles()
+        if len(alleles) > 2:
             raise MoreThanOneAltAllele()
-        return alts[0]
+        value = alleles[1]
+        self._globals["ALT"] = value
+        return value
 
     def _get_qual(self) -> float:
         value = NA if self.record.qual is None else self.record.qual
