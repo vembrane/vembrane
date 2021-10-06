@@ -86,7 +86,7 @@ def annotate_vcf(
 
     record: VariantRecord
     for idx, record in enumerate(vcf):
-        if not current_chrom == record.chrom:
+        if current_chrom != record.chrom:
             current_chrom = record.chrom
             chrom = None
 
