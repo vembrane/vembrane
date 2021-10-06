@@ -12,6 +12,7 @@ from collections.abc import Iterable
 
 from sys import stderr
 
+
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("annotate")
     parser.add_argument(
@@ -67,7 +68,8 @@ def annotate_vcf(
         d = ann_data[ann_data[config_chrom_column] == chrom]
         chrom_ann_data[chrom] = d
         tree[chrom] = IntervalTree(
-            Interval(d[config_start_column], d[config_stop_column], i) for i, d in enumerate(d)
+            Interval(d[config_start_column], d[config_stop_column], i)
+            for i, d in enumerate(d)
         )
 
         # tree = IntervalTree.from_tuples(interval_tuples))
