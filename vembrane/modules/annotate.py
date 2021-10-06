@@ -86,9 +86,9 @@ def annotate_vcf(
 
     record: VariantRecord
     for idx, record in enumerate(vcf):
+        chrom = None
         if current_chrom != record.chrom:
             current_chrom = record.chrom
-            chrom = None
 
             # find the correct chrom name
             tmp = current_chrom
@@ -116,21 +116,18 @@ def annotate_vcf(
                     else:
                         number = -1
 
+                    parse = typeparser[v["type"]]
                     if number == -1:
-                        expression_value = list(
-                            map(typeparser[v["type"]], expression_value)
-                        )
+                        expression_value = list(map(parse, expression_value))
                     elif number > 1:
-                        expression_value = list(
-                            map(typeparser[v["type"]], expression_value)
-                        )
+                        expression_value = list(map(parse, expression_value))
                         assert len(expression_value) == number
                     else:
                         # number == 1
                         assert isinstance(expression_value, str) or not isinstance(
                             expression_value, Iterable
                         )
-                        expression_value = typeparser[v["type"]](expression_value)
+                        expression_value = parse(expression_value)
                     record.info[v["vcf_name"]] = expression_value
 
         yield record
