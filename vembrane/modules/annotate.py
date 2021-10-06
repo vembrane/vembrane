@@ -54,15 +54,20 @@ def annotate_vcf(
     config: dict,
 ) -> Iterator[tuple]:
     env = Environment(expression, ann_key, vcf.header)
-    available_chromsomes = set(np.unique(ann_data["chrom"]))
+
+    config_chrom_column = config["annotation"]["columns"]["chrom"]
+    config_start_column = config["annotation"]["columns"]["start"]
+    config_stop_column = config["annotation"]["columns"]["stop"]
+
+    available_chromsomes = set(np.unique(ann_data[config_chrom_column]))
 
     tree = dict()
     chrom_ann_data = dict()
     for chrom in available_chromsomes:
-        d = ann_data[ann_data["chrom"] == chrom]
+        d = ann_data[ann_data[config_chrom_column] == chrom]
         chrom_ann_data[chrom] = d
         tree[chrom] = IntervalTree(
-            Interval(d["chromStart"], d["chromEnd"], i) for i, d in enumerate(d)
+            Interval(d[config_start_column], d[config_stop_column], i) for i, d in enumerate(d)
         )
 
         # tree = IntervalTree.from_tuples(interval_tuples))
