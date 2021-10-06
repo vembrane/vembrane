@@ -24,6 +24,13 @@ def add_subcommmand(subparsers):
         "vcf", help="The file containing the variants.", nargs="?", default="-"
     )
     parser.add_argument(
+        "--annotation-key",
+        "-k",
+        metavar="FIELDNAME",
+        default="ANN",
+        help="The INFO key for the annotation field.",
+    )
+    parser.add_argument(
         "--output",
         "-o",
         default="-",
@@ -178,7 +185,7 @@ def execute(args):
             variants = annotate_vcf(
                 vcf,
                 expression,
-                "ann",
+                args.annotation_key,
                 ann_data=ann_data,
                 config=config,
             )
