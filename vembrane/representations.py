@@ -234,6 +234,9 @@ class Environment(dict):
         self._globals.update(self._empty_globals)
         self._alleles = None
 
+    def update_data(self, data):
+        self._globals["DATA"] = data
+
     def _get_chrom(self) -> str:
         value = self.record.chrom
         self._globals["CHROM"] = value
