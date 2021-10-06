@@ -125,6 +125,35 @@ So you can for example perform computations on fields or combine multiple fields
 vembrane table 'CHROM, POS, for_each_sample(lambda sample: FORMAT["AD"][sample] / FORMAT["DP"][sample] * QUAL)' input.vcf > table.tsv
 ```
 
+## `vembrane table`
+
+Vembrane is able to annotate vcf files with a given table-like file. In addition to the vcf and annotation file, the user has to provide a configuration file. 
+
+Example:
+
+```yaml
+annotation:
+    file: "example.tsv"
+    columns:
+      chrom: "chrom"
+      start: "chromStart"
+      stop: "chromEnd"
+    delimiter: "\t"
+    values:
+    - value:
+        vcf_name: "genehancer_score"
+        number: "1"
+        description: "Score from genehancer."
+        type: "Float"
+        expression: "DATA['score'][0]"
+    - value:
+        vcf_name: "genehancer_score2"
+        number: "1"
+        description: "Score from genehancer."
+        type: "Float"
+        expression: "log(max(DATA['score']) * 2)"
+```
+
 ## Development
 ### pre-commit hooks
 Since we enforce code formatting with `black` by checking for that in CI, we can avoid "fmt" commits by ensuring formatting is done upon comitting changes:
