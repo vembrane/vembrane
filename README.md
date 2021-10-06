@@ -133,20 +133,20 @@ Example:
 
 ```yaml
 annotation:
-    file: "example.tsv"
+    file: "example.tsv" # the table-like annotation file column with header
     columns:
-      chrom: "chrom"
-      start: "chromStart"
+      chrom: "chrom" # column name of the annotation file refering to the chromosome
+      start: "chromStart" # column name of the annotation file refering to the chromosome
       stop: "chromEnd"
-    delimiter: "\t"
-    values:
-    - value:
-        vcf_name: "genehancer_score"
-        number: "1"
-        description: "Score from genehancer."
-        type: "Float"
-        expression: "DATA['score'][0]"
-    - value:
+    delimiter: "\t" # delimiter of the columns
+    values: 
+    - value: # a new annotation entry in the info field of the vcf
+        vcf_name: "genehancer_score" # the name of annotation entry
+        number: "1" # number of values for each entry
+        description: "Score from genehancer." # description of this entry in the header
+        type: "Float" # type of the values
+        expression: "DATA['score'][0]" # any python expression to calulcate the value(s), DATA['score'] refers to the 'score' column of the annotation field
+    - value: # a second annotation entry to annotate
         vcf_name: "genehancer_score2"
         number: "1"
         description: "Score from genehancer."
