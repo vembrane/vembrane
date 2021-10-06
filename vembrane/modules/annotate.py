@@ -140,7 +140,7 @@ def execute(args):
     # load annotation data
     ann_data = np.genfromtxt(
         config["annotation"]["file"],
-        delimiter="\t",
+        delimiter=config["annotation"].get("delimiter", "\t"),
         names=True,
         dtype=None,
         encoding=None,
