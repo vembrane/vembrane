@@ -10,6 +10,7 @@ from ..representations import Environment
 from intervaltree import Interval, IntervalTree
 from collections.abc import Iterable
 
+from sys import stderr
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("annotate")
@@ -125,8 +126,9 @@ def execute(args):
     with open(args.config, "r") as stream:
         try:
             config = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
+        except yaml.YAMLError as e:
+            print(e, file=stderr)
+            exit(1)
 
     # load annotation data
     ann_data = np.genfromtxt(
