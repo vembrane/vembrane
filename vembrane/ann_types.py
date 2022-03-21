@@ -290,10 +290,7 @@ KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "CDS.pos / CDS.length": AnnotationEntry("CDS", PosRange.from_snpeff_str),
     "AA.pos / AA.length": AnnotationEntry("AA", PosRange.from_snpeff_str),
     "Distance": AnnotationEntry("Distance", str),
-    "ERRORS / WARNINGS / INFO": AnnotationListEntry(
-        "ERRORS / WARNINGS / INFO",
-        "/",
-    ),
+    "ERRORS / WARNINGS / INFO": AnnotationListEntry("ERRORS / WARNINGS / INFO", "/",),
 }
 
 # fields, types and description taken from:
@@ -661,7 +658,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="Matched Annotation from NCBI and EMBL-EBI (MANE) "
         "canonical transcript, indicated by the respective RefSeq NM ID."
         "For more info, see: "
-        "https://www.ensembl.org/info/genome/genebuild/mane.html"
+        "https://www.ensembl.org/info/genome/genebuild/mane.html",
     ),
     "MANE_PLUS_CLINICAL": AnnotationEntry(
         "MANE_PLUS_CLINICAL",
@@ -669,12 +666,9 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "transcripts beyond MANE_SELECT, that are important clinically. "
         "Indicated by their RefSeq NM IDs."
         "For more info, see: "
-        "https://www.ensembl.org/info/genome/genebuild/mane.html"
+        "https://www.ensembl.org/info/genome/genebuild/mane.html",
     ),
-    "GO": AnnotationEntry(
-        "GO",
-        description="Gene ontology (GO) terms."
-    ),
+    "GO": AnnotationEntry("GO", description="Gene ontology (GO) terms."),
     "miRNA": AnnotationEntry(
         "miRNA",
         description="Determines where in the secondary structure of a miRNA "
@@ -697,14 +691,14 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         typefunc=float,
         description="Estimate of the pathogenicity of missense variants. "
         "Please cite the REVEL publication alongside the VEP if you use this "
-        "resource: https://www.ncbi.nlm.nih.gov/pubmed/27666373"
+        "resource: https://www.ncbi.nlm.nih.gov/pubmed/27666373",
     ),
     "ExACpLI": AnnotationEntry(
         "ExACpLI",
         typefunc=float,
         description="Probabililty of a gene being loss-of-function intolerant (pLI). "
         "Please cite the respective ExAC publication alongside the VEP if you use this "
-        "resource: https://www.ncbi.nlm.nih.gov/pubmed/27535533"
+        "resource: https://www.ncbi.nlm.nih.gov/pubmed/27535533",
     ),
 }
 
