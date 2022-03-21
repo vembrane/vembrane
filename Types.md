@@ -59,6 +59,8 @@ Annotations with custom types:
 |`Codons`|`Codons`|`List[str]`|Reference and variant codon sequence| |
 |`Existing_variation`|`Existing_variation`|`List[str]`|Identifier(s) of co-located known variants| |
 |`LoFtool`|`LoFtool`|`float`|Provides a rank of genic intolerance and consequent susceptibility to disease based on the ratio of Loss-of-function (LoF) to synonymous mutations."| |
+|`REVEL`|`REVEL`|`float`|Estimate of the pathogenicity of missense variants.| |
+|`ExACpLI`|`ExACpLI`|`float`|Probabililty of a gene being loss-of-function intolerant (pLI).| |
 
 
 Annotations with type `str`:

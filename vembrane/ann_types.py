@@ -676,6 +676,20 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "consequent susceptibility to disease based on the ratio of Loss-of-function "
         "(LoF) to synonymous mutations.",
     ),
+    "REVEL": AnnotationEntry(
+        "REVEL",
+        typefunc=float,
+        description="Estimate of the pathogenicity of missense variants. "
+        "Please cite the REVEL publication alongside the VEP if you use this "
+        "resource: https://www.ncbi.nlm.nih.gov/pubmed/27666373"
+    ),
+    "ExACpLI": AnnotationEntry(
+        "ExACpLI",
+        typefunc=float,
+        description="Probabililty of a gene being loss-of-function intolerant (pLI). "
+        "Please cite the respective ExAC publication alongside the VEP if you use this "
+        "resource: https://www.ncbi.nlm.nih.gov/pubmed/27535533"
+    ),
 }
 
 KNOWN_ANN_TYPE_MAP = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}
