@@ -656,8 +656,24 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     ),
     # TODO HGNC_ID description
     "HGNC_ID": AnnotationEntry("HGNC_ID"),
-    "MANE": AnnotationEntry(
-        "MANE", description="Matched Annotation from NCBI and EMBL-EBI (MANE)."
+    "MANE_SELECT": AnnotationEntry(
+        "MANE_SELECT",
+        description="Matched Annotation from NCBI and EMBL-EBI (MANE) "
+        "canonical transcript, indicated by the respective RefSeq NM ID."
+        "For more info, see: "
+        "https://www.ensembl.org/info/genome/genebuild/mane.html"
+    ),
+    "MANE_PLUS_CLINICAL": AnnotationEntry(
+        "MANE_PLUS_CLINICAL",
+        description="Matched Annotation from NCBI and EMBL-EBI (MANE) "
+        "transcripts beyond MANE_SELECT, that are important clinically. "
+        "Indicated by their RefSeq NM IDs."
+        "For more info, see: "
+        "https://www.ensembl.org/info/genome/genebuild/mane.html"
+    ),
+    "GO": AnnotationEntry(
+        "GO",
+        description="Gene ontology (GO) terms."
     ),
     "miRNA": AnnotationEntry(
         "miRNA",
