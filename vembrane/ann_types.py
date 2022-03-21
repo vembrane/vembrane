@@ -290,7 +290,10 @@ KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "CDS.pos / CDS.length": AnnotationEntry("CDS", PosRange.from_snpeff_str),
     "AA.pos / AA.length": AnnotationEntry("AA", PosRange.from_snpeff_str),
     "Distance": AnnotationEntry("Distance", str),
-    "ERRORS / WARNINGS / INFO": AnnotationListEntry("ERRORS / WARNINGS / INFO", "/",),
+    "ERRORS / WARNINGS / INFO": AnnotationListEntry(
+        "ERRORS / WARNINGS / INFO",
+        "/",
+    ),
 }
 
 # fields, types and description taken from:
