@@ -97,6 +97,7 @@ Annotations with type `str`:
 |`USED_REF`|`USED_REF`|`str`|Reference allele as used to get consequences| |
 |`AMBIGUITY`|`AMBIGUITY`|`str`|IUPAC allele ambiguity code| |
 |`HGNC_ID`|`HGNC_ID`|`str`| | |
+|`MANE`|`MANE`|`str`|Matched Annotation from NCBI and EMBL-EBI (MANE).| |
 |`MANE_SELECT`|`MANE_SELECT`|`str`|Matched Annotation from NCBI and EMBL-EBI (MANE) canonical transcript.| |
 |`MANE_PLUS_CLINICAL`|`MANE_PLUS_CLINICAL`|`str`|MANE transcripts beyond MANE_SELECT that are clinically relevant.| |
 |`GO`|`GO`|`str`|Gene ontology (GO) terms.| |

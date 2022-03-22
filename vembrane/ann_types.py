@@ -656,6 +656,9 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     ),
     # TODO HGNC_ID description
     "HGNC_ID": AnnotationEntry("HGNC_ID"),
+    "MANE": AnnotationEntry(
+        "MANE", description="Matched Annotation from NCBI and EMBL-EBI (MANE)."
+    ),
     "MANE_SELECT": AnnotationEntry(
         "MANE_SELECT",
         description="Matched Annotation from NCBI and EMBL-EBI (MANE) "
