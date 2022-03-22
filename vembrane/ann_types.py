@@ -659,6 +659,22 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "MANE": AnnotationEntry(
         "MANE", description="Matched Annotation from NCBI and EMBL-EBI (MANE)."
     ),
+    "MANE_SELECT": AnnotationEntry(
+        "MANE_SELECT",
+        description="Matched Annotation from NCBI and EMBL-EBI (MANE) "
+        "canonical transcript, indicated by the respective RefSeq NM ID."
+        "For more info, see: "
+        "https://www.ensembl.org/info/genome/genebuild/mane.html",
+    ),
+    "MANE_PLUS_CLINICAL": AnnotationEntry(
+        "MANE_PLUS_CLINICAL",
+        description="Matched Annotation from NCBI and EMBL-EBI (MANE) "
+        "transcripts beyond MANE_SELECT, that are important clinically. "
+        "Indicated by their RefSeq NM IDs."
+        "For more info, see: "
+        "https://www.ensembl.org/info/genome/genebuild/mane.html",
+    ),
+    "GO": AnnotationEntry("GO", description="Gene ontology (GO) terms."),
     "miRNA": AnnotationEntry(
         "miRNA",
         description="Determines where in the secondary structure of a miRNA "
@@ -675,6 +691,20 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="Provides a rank of genic intolerance and "
         "consequent susceptibility to disease based on the ratio of Loss-of-function "
         "(LoF) to synonymous mutations.",
+    ),
+    "REVEL": AnnotationEntry(
+        "REVEL",
+        typefunc=float,
+        description="Estimate of the pathogenicity of missense variants. "
+        "Please cite the REVEL publication alongside the VEP if you use this "
+        "resource: https://www.ncbi.nlm.nih.gov/pubmed/27666373",
+    ),
+    "ExACpLI": AnnotationEntry(
+        "ExACpLI",
+        typefunc=float,
+        description="Probabililty of a gene being loss-of-function intolerant (pLI). "
+        "Please cite the respective ExAC publication alongside the VEP if you use this "
+        "resource: https://www.ncbi.nlm.nih.gov/pubmed/27535533",
     ),
 }
 

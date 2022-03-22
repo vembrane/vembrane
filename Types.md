@@ -59,6 +59,8 @@ Annotations with custom types:
 |`Codons`|`Codons`|`List[str]`|Reference and variant codon sequence| |
 |`Existing_variation`|`Existing_variation`|`List[str]`|Identifier(s) of co-located known variants| |
 |`LoFtool`|`LoFtool`|`float`|Provides a rank of genic intolerance and consequent susceptibility to disease based on the ratio of Loss-of-function (LoF) to synonymous mutations."| |
+|`REVEL`|`REVEL`|`float`|Estimate of the pathogenicity of missense variants.| |
+|`ExACpLI`|`ExACpLI`|`float`|Probabililty of a gene being loss-of-function intolerant (pLI).| |
 
 
 Annotations with type `str`:
@@ -96,6 +98,9 @@ Annotations with type `str`:
 |`AMBIGUITY`|`AMBIGUITY`|`str`|IUPAC allele ambiguity code| |
 |`HGNC_ID`|`HGNC_ID`|`str`| | |
 |`MANE`|`MANE`|`str`|Matched Annotation from NCBI and EMBL-EBI (MANE).| |
+|`MANE_SELECT`|`MANE_SELECT`|`str`|Matched Annotation from NCBI and EMBL-EBI (MANE) canonical transcript.| |
+|`MANE_PLUS_CLINICAL`|`MANE_PLUS_CLINICAL`|`str`|MANE transcripts beyond MANE_SELECT that are clinically relevant.| |
+|`GO`|`GO`|`str`|Gene ontology (GO) terms.| |
 |`miRNA`|`miRNA`|`str`|Determines where in the secondary structure of a miRNA a variant falls| |
 
 
