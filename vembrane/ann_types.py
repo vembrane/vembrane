@@ -221,12 +221,13 @@ class RangeTotal(object):
         v = value.split("/")
         r = [int(s) for s in v[0].split("-")]
         if len(r) == 1:
-            return cls(range(r[0], r[0]+1), int(v[1]))
+            return cls(range(r[0], r[0] + 1), int(v[1]))
         elif len(r) == 2:
-            return cls(range(r[0], r[1]+1), int(v[1]))
+            return cls(range(r[0], r[1] + 1), int(v[1]))
         else:
-            raise UnexpectedException("Found more than two values separated by '-', expected only one or two ints.")
-
+            raise UnexpectedException(
+                "Found more than two values separated by '-', expected only one or two ints."
+            )
 
     def __str__(self):
         if len(self.range) == 1:
@@ -234,11 +235,8 @@ class RangeTotal(object):
         else:
             return f"range / total: {self.range.start} - {self.range.stop - 1} / {self.total}"
 
-
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}(range={self.range.start!r}-{self.range.stop!r}, total={self.total!r})"
-        )
+        return f"{self.__class__.__name__}(range={self.range.start!r}-{self.range.stop!r}, total={self.total!r})"
 
 
 class AnnotationRangeTotalEntry(AnnotationEntry):
