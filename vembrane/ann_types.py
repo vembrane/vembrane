@@ -225,7 +225,7 @@ class RangeTotal(object):
             return cls(range(r[0], r[1] + 1), int(v[1]))
         else:
             raise ValueError(
-                "Found more than two values separated by '-', expected only a single int, or two ints separater by '-'."
+                "Found more than two values separated by '-', expected only a single int, or two ints separated by '-'."
             )
 
     def __str__(self):
