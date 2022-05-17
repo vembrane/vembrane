@@ -449,7 +449,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "INTRON", description="The intron number (out of total number)"
     ),
     "EXON": AnnotationRangeTotalEntry(
-        "EXON", description="The exon position range (out of total number of exons)"
+"EXON", description="The exon index range (out of total number of exons)"
     ),
     "DOMAINS": AnnotationListDictEntry(
         "DOMAINS",
