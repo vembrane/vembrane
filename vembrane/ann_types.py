@@ -236,7 +236,7 @@ class RangeTotal(object):
             return f"range / total: {self.range.start} - {self.range.stop - 1} / {self.total}"
 
     def __repr__(self):
-return f"{self.__class__.__name__}(range=range({self.range.start!r}, {self.range.stop!r}), total={self.total!r})"
+        return f"{self.__class__.__name__}(range=range({self.range.start!r}, {self.range.stop!r}), total={self.total!r})"
 
 
 class AnnotationRangeTotalEntry(AnnotationEntry):
