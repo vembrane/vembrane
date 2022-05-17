@@ -1,5 +1,4 @@
 from collections import defaultdict
-from doctest import UnexpectedException
 from sys import stderr
 from typing import Union, Iterable, Tuple, Dict, Callable, Any
 import re
