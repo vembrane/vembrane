@@ -210,6 +210,39 @@ class AnnotationListDictEntry(AnnotationEntry):
         super().__init__(name=name, typefunc=typefunc, **kwargs)
 
 
+class RangeTotal(object):
+    def __init__(self, r, total):
+        self.range = r
+        self.total = total
+
+    @classmethod
+    def from_vep_string(cls, value: str) -> "RangeTotal":
+        v = value.split("/")
+        r = [int(s) for s in v[0].split("-")]
+        if len(r) == 1:
+            return cls(range(r[0], r[0] + 1), int(v[1]))
+        elif len(r) == 2:
+            return cls(range(r[0], r[1] + 1), int(v[1]))
+        else:
+            raise ValueError(
+                "Found more than two values separated by '-', expected only a single int, or two ints separated by '-'."
+            )
+
+    def __str__(self):
+        if len(self.range) == 1:
+            return f"number / total: {self.range.start} / {self.total}"
+        else:
+            return f"range / total: {self.range.start} - {self.range.stop - 1} / {self.total}"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(range=range({self.range.start!r}, {self.range.stop!r}), total={self.total!r})"
+
+
+class AnnotationRangeTotalEntry(AnnotationEntry):
+    def __init__(self, name: str, **kwargs):
+        super().__init__(name, typefunc=RangeTotal.from_vep_string, **kwargs)
+
+
 class NumberTotal(object):
     def __init__(self, number, total):
         self.number = number
@@ -414,8 +447,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "INTRON": AnnotationNumberTotalEntry(
         "INTRON", description="The intron number (out of total number)"
     ),
-    "EXON": AnnotationNumberTotalEntry(
-        "EXON", description="The exon number (out of total number)"
+    "EXON": AnnotationRangeTotalEntry(
+        "EXON", description="The exon index range (out of total number of exons)"
     ),
     "DOMAINS": AnnotationListDictEntry(
         "DOMAINS",

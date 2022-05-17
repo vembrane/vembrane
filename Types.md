@@ -24,7 +24,7 @@ Annotations with custom types:
 |`CELL_TYPE`|`CELL_TYPE`|`List[str]`|List of cell types and classifications for regulatory feature| |
 |`CANONICAL`|`CANONICAL`|`bool`|A flag indicating if the transcript is denoted as the canonical transcript for this gene| |
 |`INTRON`|`INTRON`|`NumberTotal` with properties `number` and `total`|The intron number (out of total number)|`'ANN["INTRON"].number == 2'`|
-|`EXON`|`EXON`|`NumberTotal` with properties `number` and `total`|The exon number (out of total number)|`'ANN["EXON"].total >= 2'`|
+|`EXON`|`EXON`|`RangeTotal` with properties `range` and `total`|The known range of the exon indices (out of the total number of exons)|`'ANN["EXON"].total >= 2'`|
 |`DOMAINS`|`DOMAINS`|`List[Dict[str, Any]]`|The source and identifer of any overlapping protein domains|`'ANN["DOMAINS"] is not NA and ("PTHR16515" in ANN["DOMAINS"]["PANTHER"])'`|
 |`DISTANCE`|`DISTANCE`|`int`|Shortest distance from variant to transcript| |
 |`AF`|`AF`|`float`|Frequency of existing variant in 1000 Genomes| |
