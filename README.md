@@ -75,6 +75,10 @@ The following VCF fields can be accessed in the filter expression:
   ```
   vembrane filter 'any(entry in ANN["CLIN_SIG"] for entry in ("pathogenic", "likely_pathogenic", "drug_response"))' variants.vcf
   ```
+  Using set operations, the same may also be expressed as:
+  ```
+  vembrane filter 'not {"pathogenic", "likely_pathogenic", "drug_response"}.isdisjoint(ANN["CLIN_SIG"])' variants.vcf
+  ```
 
 ### Custom `ANN` types
 `vembrane` parses entries in the annotation field as outlined in [Types.md](Types.md)
