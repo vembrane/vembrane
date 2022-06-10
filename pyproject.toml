@@ -12,16 +12,17 @@ vembrane = 'vembrane.cli:main'
 
 [tool.poetry.dependencies]
 python = ">=3.7"
-pysam = "^0.16"
+pysam = "^0.19"
 pyyaml = "^5.3"
 importlib_metadata = {version = "^1.7.0", python = "<3.8"}
 asttokens = "^2.0"
 numpy = {version = "^1.20", python = ">=3.7"}
 intervaltree = "2.1"
+cyvcf2 = "^0.30.15"
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 pre-commit = "^1.10"
-black = { version = "^20.8b1", python = "^3.7" }
+black = { version = "^22.6.0", python = ">=3.7" }
 
 [tool.black]
 line-length = 88

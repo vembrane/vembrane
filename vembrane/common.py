@@ -3,7 +3,7 @@ from typing import List
 
 from vembrane.errors import InvalidExpression
 
-from pysam.libcbcf import VariantHeader
+from cyvcf2.cyvcf2 import HREC
 
 
 def check_expression(
@@ -24,17 +24,22 @@ def check_expression(
         )
 
 
-def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
+def get_annotation_keys(header: List[HREC], ann_key: str) -> List[str]:
     separator = "'"
-    for rec in header.records:
-        if rec.key == "VEP":
+    for rec in header:
+        # if rec.key == "VEP":
+        if True:
             separator = ":"
             continue
-        if rec.get("ID") == ann_key:
+        if rec.info().get("ID") == ann_key:
             return list(
                 map(
                     str.strip,
-                    rec.get("Description").strip('"').split(separator)[1].split("|"),
+                    rec.info()
+                    .get("Description")
+                    .strip('"')
+                    .split(separator)[1]
+                    .split("|"),
                 )
             )
     return []

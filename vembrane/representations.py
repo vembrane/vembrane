@@ -2,13 +2,8 @@ import ast
 from itertools import chain
 from typing import Dict, List, Tuple, Set
 
-from pysam.libcbcf import (
-    VariantRecordSamples,
-    VariantRecordFormat,
-    VariantRecordInfo,
-    VariantHeader,
-    VariantRecord,
-)
+from cyvcf2 import Variant, VCF
+from cyvcf2.cyvcf2 import HREC
 
 from .ann_types import (
     NA,
@@ -41,7 +36,7 @@ class Format(NoValueDict):
         record_idx: int,
         name: str,
         number: str,
-        record_samples: VariantRecordSamples,
+        record_samples,
     ):
         self._record_idx = record_idx
         self._name = name
@@ -69,8 +64,8 @@ class Formats(NoValueDict):
         self,
         record_idx: int,
         header_format_fields: Dict[str, str],
-        record_format: VariantRecordFormat,
-        record_samples: VariantRecordSamples,
+        record_format,
+        record_samples,
     ):
         self._record_idx = record_idx
         self._header_format_fields = header_format_fields
@@ -96,7 +91,7 @@ class Info(NoValueDict):
     def __init__(
         self,
         record_idx: int,
-        record_info: VariantRecordInfo,
+        record_info,
         header_info_fields: Dict[str, str],
         ann_key: str,
     ):
@@ -130,7 +125,7 @@ class Info(NoValueDict):
 
 
 class Annotation(NoValueDict):
-    def __init__(self, ann_key: str, header: VariantHeader):
+    def __init__(self, ann_key: str, header):
         self._record_idx = -1
         self._annotation_data = {}
         self._data = {}
@@ -166,7 +161,8 @@ class Environment(dict):
         self,
         expression: str,
         ann_key: str,
-        header: VariantHeader,
+        vcf: VCF,
+        header: List[HREC],
         auxiliary: Dict[str, Set[str]] = {},
         overwrite_number: Dict[str, str] = {},
     ):
@@ -180,7 +176,8 @@ class Environment(dict):
         # We use self + self.func as a closure.
         self._globals = allowed_globals.copy()
         self._globals.update(custom_functions(self))
-        self._globals["SAMPLES"] = list(header.samples)
+
+        self._globals["SAMPLES"] = vcf.samples
         # REF/ALT alleles are cached separately to raise "MoreThanOneAltAllele"
         # only if ALT (but not REF) is accessed (and ALT has multiple entries).
         self._alleles = None
@@ -209,26 +206,26 @@ class Environment(dict):
         # an index operation.
         self._numbers = {
             kind: {
-                record.get("ID"): overwrite_number.get(record.get("ID"))
-                or record.get("Number")
-                for record in header.records
+                record.info().get("ID"): overwrite_number.get(record.info().get("ID"))
+                or record.info().get("Number")
+                for record in header
                 if record.type == kind
             }
-            for kind in set(r.type for r in header.records)
+            for kind in set(r.type for r in header)
         }
 
         # At the moment, only INFO and FORMAT records are checked
         self._header_info_fields = self._numbers.get("INFO", dict())
         self._header_format_fields = self._numbers.get("FORMAT", dict())
         self._empty_globals = {name: UNSET for name in self._getters}
-        self.record: VariantRecord = None
+        self.record: Variant = None
         self.idx: int = -1
         self.aux = auxiliary
 
     def expression_annotations(self):
         return self._has_ann
 
-    def update_from_record(self, idx: int, record: VariantRecord):
+    def update_from_record(self, idx: int, record: Variant):
         self.idx = idx
         self.record = record
         self._globals.update(self._empty_globals)
@@ -285,7 +282,7 @@ class Environment(dict):
     def _get_info(self) -> Info:
         value = Info(
             self.idx,
-            self.record.info,
+            self.record.INFO,
             self._header_info_fields,
             self._ann_key,
         )
