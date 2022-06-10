@@ -1,4 +1,5 @@
 from collections import defaultdict
+
 from sys import stderr
 from typing import Union, Iterable, Tuple, Dict, Callable, Any
 import re
@@ -225,17 +226,25 @@ class RangeTotal(object):
             return cls(range(r[0], r[1] + 1), int(v[1]))
         else:
             raise ValueError(
-                "Found more than two values separated by '-', expected only a single int, or two ints separated by '-'."
+                "Found more than two values separated by '-', "
+                "expected only a single int, or two ints separated by '-'."
             )
 
     def __str__(self):
         if len(self.range) == 1:
-            return f"number / total: {self.range.start} / {self.total}"
+            return f"number / total: " f"{self.range.start} / {self.total}"
         else:
-            return f"range / total: {self.range.start} - {self.range.stop - 1} / {self.total}"
+            return (
+                f"range / total: "
+                f"{self.range.start} - {self.range.stop - 1} / {self.total}"
+            )
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(range=range({self.range.start!r}, {self.range.stop!r}), total={self.total!r})"
+        return (
+            f"{self.__class__.__name__}"
+            f"(range=range({self.range.start!r}, {self.range.stop!r}), "
+            f"total={self.total!r})"
+        )
 
 
 class AnnotationRangeTotalEntry(AnnotationEntry):

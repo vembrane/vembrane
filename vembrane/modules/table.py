@@ -5,7 +5,7 @@ from sys import stderr
 from typing import Iterator, List, Optional
 
 import asttokens
-from pysam.libcbcf import VariantFile, VariantRecord
+from cyvcf2 import VCF, Variant
 
 from ..common import check_expression
 from ..errors import VembraneError, HeaderWrongColumnNumber
@@ -61,14 +61,14 @@ def add_subcommmand(subparsers):
 
 
 def tableize_vcf(
-    vcf: VariantFile,
+    vcf: VCF,
     expression: str,
     ann_key: str,
 ) -> Iterator[tuple]:
     expression = f"({expression})"
-    env = Environment(expression, ann_key, vcf.header)
+    env = Environment(expression, ann_key, vcf, list(vcf.header_iter()))
 
-    record: VariantRecord
+    record: Variant
     for idx, record in enumerate(vcf):
         env.update_from_record(idx, record)
         if env.expression_annotations():
@@ -76,7 +76,7 @@ def tableize_vcf(
             # get all annotations from the record.info field
             # (or supply an empty ANN value if the record has no ANN field)
             try:
-                annotations = record.info[ann_key]
+                annotations = record.INFO[ann_key]
             except KeyError:
                 annotations = [""]
             for annotation in annotations:
@@ -85,7 +85,7 @@ def tableize_vcf(
             yield env.table()
 
 
-def generate_for_each_sample_expressions(s: str, vcf: VariantFile) -> List[str]:
+def generate_for_each_sample_expressions(s: str, vcf: VCF) -> List[str]:
     from asttokens.util import replace
 
     # parse the `for_each_sample(lambda var: inner) expression
@@ -95,7 +95,7 @@ def generate_for_each_sample_expressions(s: str, vcf: VariantFile) -> List[str]:
     tok = asttokens.ASTTokens(inner, parse=True)
 
     # *replace* `var` with each value from the list of samples
-    samples = list(vcf.header.samples)
+    samples = vcf.samples
     expanded = []
     for sample in samples:
         replacements = []
@@ -107,11 +107,11 @@ def generate_for_each_sample_expressions(s: str, vcf: VariantFile) -> List[str]:
     return expanded
 
 
-def generate_for_each_sample_column_names(s: str, vcf: VariantFile) -> List[str]:
+def generate_for_each_sample_column_names(s: str, vcf: VCF) -> List[str]:
     # parse the `for_each_sample(lambda var: inner) expression
     var, inner = _var_and_body(s)
 
-    samples = list(vcf.header.samples)
+    samples = vcf.samples
     from vembrane.globals import allowed_globals
 
     __globals = allowed_globals.copy()
@@ -158,7 +158,7 @@ def _var_and_body(s):
 
 
 def preprocess_header_expression(
-    header: str, vcf: Optional[VariantFile] = None, make_expression: bool = True
+    header: str, vcf: Optional[VCF] = None, make_expression: bool = True
 ) -> str:
     """
     Split the header expression at toplevel commas into parts.
@@ -184,7 +184,7 @@ def preprocess_header_expression(
     return ", ".join(parts)
 
 
-def get_header(args, vcf: Optional[VariantFile] = None) -> List[str]:
+def get_header(args, vcf: Optional[VCF] = None) -> List[str]:
     if args.header == "auto":
         header = args.expression
     else:
@@ -243,30 +243,30 @@ def smart_open(filename=None, *args, **kwargs):
 
 
 def execute(args):
-    with VariantFile(args.vcf) as vcf:
-        expression = preprocess_header_expression(args.expression, vcf, True)
-        rows = tableize_vcf(
-            vcf,
-            expression,
-            args.annotation_key,
-        )
+    vcf = VCF(args.vcf)
+    expression = preprocess_header_expression(args.expression, vcf, True)
+    rows = tableize_vcf(
+        vcf,
+        expression,
+        args.annotation_key,
+    )
 
-        try:
-            with smart_open(args.output, "wt", newline="") as csvfile:
-                writer = csv.writer(
-                    csvfile, delimiter=args.separator, quoting=csv.QUOTE_MINIMAL
-                )
-                if args.header != "none":
-                    header = get_header(args, vcf)
-                    n_header_cols = len(header)
-                    expr_cols = expression.split(", ")
-                    n_expr_cols = len(expr_cols)
-                    if n_header_cols != n_expr_cols:
-                        raise HeaderWrongColumnNumber(
-                            n_expr_cols, expr_cols, n_header_cols, header
-                        )
-                    writer.writerow(header)
-                writer.writerows(get_row(row) for row in rows)
-        except VembraneError as ve:
-            print(ve, file=stderr)
-            exit(1)
+    try:
+        with smart_open(args.output, "wt", newline="") as csvfile:
+            writer = csv.writer(
+                csvfile, delimiter=args.separator, quoting=csv.QUOTE_MINIMAL
+            )
+            if args.header != "none":
+                header = get_header(args, vcf)
+                n_header_cols = len(header)
+                expr_cols = expression.split(", ")
+                n_expr_cols = len(expr_cols)
+                if n_header_cols != n_expr_cols:
+                    raise HeaderWrongColumnNumber(
+                        n_expr_cols, expr_cols, n_header_cols, header
+                    )
+                writer.writerow(header)
+            writer.writerows(get_row(row) for row in rows)
+    except VembraneError as ve:
+        print(ve, file=stderr)
+        exit(1)

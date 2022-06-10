@@ -5,7 +5,6 @@ from sys import stderr
 from collections import defaultdict
 from typing import Iterator, Set, Dict, List, Any
 from itertools import islice, chain
-from pysam.libcbcf import VariantFile, VariantRecord
 
 from ..common import (
     check_expression,
@@ -117,7 +116,7 @@ def test_and_update_record(
         # get all annotations from the record.info field
         # (or supply an empty ANN value if the record has no ANN field)
         try:
-            annotations = record.info[ann_key]
+            annotations = [record.INFO[ann_key]]
         except KeyError:
             annotations = [""]
 
@@ -132,7 +131,7 @@ def test_and_update_record(
 
             if len(annotations) != len(filtered_annotations):
                 # update annotations if they have actually been filtered
-                record.info[ann_key] = filtered_annotations
+                record.INFO[ann_key] = filtered_annotations or ""
 
             return record, len(filtered_annotations) > 0
     else:
@@ -165,7 +164,7 @@ def filter_vcf(
         if record_has_passed:
             is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
             if is_bnd:
-                event = record.info.get("EVENT", None)
+                event = record.INFO.get("EVENT", None)
                 events.add(event)
             elif not preserve_order:
                 # if preserve_order is True, \
@@ -178,7 +177,7 @@ def filter_vcf(
         vcf.reset()
         for idx, record in enumerate(vcf):
             is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
-            event = record.info.get("EVENT", None)
+            event = record.INFO.get("EVENT", None)
 
             if is_bnd:
                 if event not in events:
@@ -195,12 +194,12 @@ def filter_vcf(
 
 
 def statistics(
-    records: Iterator[VariantRecord], vcf: VariantFile, filename: str, ann_key: str
-) -> Iterator[VariantRecord]:
-    annotation_keys = get_annotation_keys(vcf.header, ann_key)
+    records: Iterator[Variant], vcf: VCF, filename: str, ann_key: str
+) -> Iterator[Variant]:
+    annotation_keys = get_annotation_keys(list(vcf.header_iter()), ann_key)
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
-        for annotation in record.info[ann_key]:
+        for annotation in record.INFO[ann_key]:
             for key, raw_value in zip(
                 annotation_keys, split_annotation_entry(annotation)
             ):
@@ -230,7 +229,7 @@ def read_auxiliary(aux) -> Dict[str, Set[str]]:
 
 def execute(args):
     aux = read_auxiliary(args.aux)
-    vcf = VCF(args.vcf)
+    vcf = VCF(args.vcf, lazy=True)
     vcf.add_to_header(f"##vembraneVersion={__version__}")
     # NOTE: If .modules.filter.execute might be used as a library function
     #       in the future, we should not record sys.argv directly below.

@@ -26,11 +26,12 @@ def check_expression(
 
 def get_annotation_keys(header: List[HREC], ann_key: str) -> List[str]:
     separator = "'"
+    separator = ":"
     for rec in header:
         # if rec.key == "VEP":
-        if True:
-            separator = ":"
-            continue
+        # if True:
+        #     separator = ":"
+        # continue
         if rec.info().get("ID") == ann_key:
             return list(
                 map(

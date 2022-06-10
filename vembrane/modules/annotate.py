@@ -128,7 +128,7 @@ def annotate_vcf(
                             expression_value, Iterable
                         )
                         expression_value = parse(expression_value)
-                    record.info[v["vcf_name"]] = expression_value
+                    record.INFO[v["vcf_name"]] = expression_value
 
         yield record
 

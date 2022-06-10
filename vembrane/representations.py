@@ -37,23 +37,25 @@ class Format(NoValueDict):
         name: str,
         number: str,
         record_samples,
+        values,
     ):
         self._record_idx = record_idx
         self._name = name
         self._number = number
         self._record_samples = record_samples
         self._sample_values = {}
+        self._values = values
 
     def __getitem__(self, sample):
         try:
             return self._sample_values[sample]
         except KeyError:
             try:
-                record_sample = self._record_samples[sample]
+                sample_index = self._record_samples[sample]
             except KeyError:
                 raise UnknownSample(self._record_idx, sample)
             value = type_info(
-                record_sample[self._name], self._number, self._name, self._record_idx
+                self._values[sample_index], self._number, self._name, self._record_idx
             )
             self._sample_values[sample] = value
             return value
@@ -70,7 +72,7 @@ class Formats(NoValueDict):
         self._record_idx = record_idx
         self._header_format_fields = header_format_fields
         self._record_format = record_format
-        self._record_samples = record_samples
+        self._record_samples = dict((v, k) for k, v in enumerate(record_samples))
         self._formats = {}
 
     def __getitem__(self, item):
@@ -78,11 +80,15 @@ class Formats(NoValueDict):
             return self._formats[item]
         except KeyError:
             try:
-                self._record_format[item]
+                # FIXME cyvcf returns an ndarray of shape (n_samples, number),
+                # restructure code accordingly
+                values = self._record_format(item)
             except KeyError:
                 raise UnknownFormatField(self._record_idx, item)
             number = self._header_format_fields[item]
-            format_field = Format(self._record_idx, item, number, self._record_samples)
+            format_field = Format(
+                self._record_idx, item, number, self._record_samples, values
+            )
             self._formats[item] = format_field
             return format_field
 
@@ -178,6 +184,7 @@ class Environment(dict):
         self._globals.update(custom_functions(self))
 
         self._globals["SAMPLES"] = vcf.samples
+        self._samples = vcf.samples
         # REF/ALT alleles are cached separately to raise "MoreThanOneAltAllele"
         # only if ALT (but not REF) is accessed (and ALT has multiple entries).
         self._alleles = None
@@ -235,24 +242,24 @@ class Environment(dict):
         self._globals["DATA"] = data
 
     def _get_chrom(self) -> str:
-        value = self.record.chrom
+        value = self.record.CHROM
         self._globals["CHROM"] = value
         return value
 
     def _get_pos(self) -> int:
-        value = self.record.pos
+        value = self.record.POS
         self._globals["POS"] = value
         return value
 
     def _get_id(self) -> str:
-        value = self.record.id
+        value = self.record.ID
         self._globals["ID"] = value
         return value
 
     def _get_alleles(self) -> Tuple[str, List[str]]:
         alleles = self._alleles
         if not alleles:
-            alleles = self._alleles = tuple(chain(self.record.alleles))
+            alleles = self._alleles = tuple(chain([self.record.REF], self.record.ALT))
         return alleles
 
     def _get_ref(self) -> str:
@@ -270,12 +277,12 @@ class Environment(dict):
         return value
 
     def _get_qual(self) -> float:
-        value = NA if self.record.qual is None else self.record.qual
+        value = NA if self.record.QUAL is None else self.record.QUAL
         self._globals["QUAL"] = value
         return value
 
     def _get_filter(self) -> List[str]:
-        value = list(self.record.filter)
+        value = self.record.FILTERS
         self._globals["FILTER"] = value
         return value
 
@@ -294,7 +301,7 @@ class Environment(dict):
             self.idx,
             self._header_format_fields,
             self.record.format,
-            self.record.samples,
+            self._samples,
         )
         self._globals["FORMAT"] = value
         return value
