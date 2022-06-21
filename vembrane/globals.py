@@ -1,7 +1,8 @@
 import math
 import re
+import statistics
 
-from typing import Dict, Any, Iterable, SupportsFloat
+from typing import Dict, Any, Iterable
 
 from .ann_types import NA
 
@@ -96,23 +97,41 @@ _math_exports = {
 }
 
 
-def filter_na(values: Iterable[Any]) -> "filter":
+_statistics_whitelist = {
+    "hypot",
+    "sqrt",
+    "fabs",
+    "exp",
+    "erf",
+    "log",
+    "fsum",
+    "mean",
+    "fmean",
+    "geometric_mean",
+    "harmonic_mean",
+    "median",
+    "median_low",
+    "median_high",
+    "median_grouped",
+    "mode",
+    "multimode",
+    "quantiles",
+    "variance",
+    "pvariance",
+    "stdev",
+    "pstdev",
+}
+
+_statistics_exports = {
+    name: mod for name, mod in vars(statistics).items() if name in _statistics_whitelist
+}
+
+
+def without_na(values: Iterable[Any]) -> "filter":
     return filter(lambda v: v is not NA, values)
 
 
-def mean(values: Iterable[SupportsFloat]) -> float:
-    sum = 0.0
-    count = 0
-    for v in values:
-        sum += float(v)
-        count += 1
-    if count > 0:
-        return sum / float(count)
-    else:
-        return float("nan")
-
-
-_additional_functions = {"mean": mean, "filter_na": filter_na}
+_additional_functions = {"without_na": without_na}
 
 _explicit_clear = {
     "__builtins__": {},
@@ -127,8 +146,9 @@ allowed_globals = {
     **_builtins,
     **_modules,
     **_math_exports,
-    **_explicit_clear,
+    **_statistics_exports,
     **_additional_functions,
+    **_explicit_clear,
     "NA": NA,
 }
 
