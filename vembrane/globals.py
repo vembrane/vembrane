@@ -1,15 +1,15 @@
 import math
 import re
 
+from typing import Dict, Any, Iterable, SupportsFloat
+
+from .ann_types import NA
+
 # The builtins list below was generated with:
 #    python -c 'print(
 #        *sorted(o for o in dir(__builtins__) if o.islower() and not o.startswith("_")),
 #        sep="\n",
 #    )'
-from typing import Dict, Any
-
-from .ann_types import NA
-
 _builtins = {
     obj.__name__: obj
     for obj in (
@@ -95,6 +95,25 @@ _math_exports = {
     name: mod for name, mod in vars(math).items() if not name.startswith("__")
 }
 
+
+def filter_na(values: Iterable[Any]) -> "filter":
+    return filter(lambda v: v is not NA, values)
+
+
+def mean(values: Iterable[SupportsFloat]) -> float:
+    sum = 0.0
+    count = 0
+    for v in values:
+        sum += float(v)
+        count += 1
+    if count > 0:
+        return sum / float(count)
+    else:
+        return float("nan")
+
+
+_additional_functions = {"mean": mean, "filter_na": filter_na}
+
 _explicit_clear = {
     "__builtins__": {},
     "__builtin__": {},
@@ -109,6 +128,7 @@ allowed_globals = {
     **_modules,
     **_math_exports,
     **_explicit_clear,
+    **_additional_functions,
     "NA": NA,
 }
 
