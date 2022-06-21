@@ -17,8 +17,11 @@ The filter expression can be any valid python expression that evaluates to `bool
  * Any function from [`statistics`](https://docs.python.org/3/library/statistics.html)
  * Regular expressions via [`re`](https://docs.python.org/3/library/re.html)
  * custom functions:
-   * `filter_na` (keep only values that are not `NA`)
-   *  `mean` (calculate the mean of an iterable of values)
+   * `without_na` (keep only values that are not `NA`)
+   * genotype related:
+     * `count_hom`, `count_het` , `count_any_ref`, `count_any_var`, `count_hom_ref`, `count_hom_var`
+     * `is_hom`, `is_het`, `is_hom_ref` , `is_hom_var`
+     * `has_ref`, `has_var`
 
 ### Available fields
 The following VCF fields can be accessed in the filter expression:
