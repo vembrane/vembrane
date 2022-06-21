@@ -15,6 +15,9 @@ The filter expression can be any valid python expression that evaluates to `bool
  * `bool`, `chr`, `float`, `int`, `ord`, `str`
  * Any function or symbol from [`math`](https://docs.python.org/3/library/math.html)
  * Regular expressions via [`re`](https://docs.python.org/3/library/re.html)
+ * custom functions:
+   * `filter_na` (keep only values that are not `NA`)
+   *  `mean` (calculate the mean of an iterable of values)
 
 ### Available fields
 The following VCF fields can be accessed in the filter expression:
@@ -93,6 +96,8 @@ Since you may want to use the regex module to search for matches, `NA` also acts
 *Explicitly* handling missing/optional values in INFO or FORMAT fields can be done by checking for NA, e.g.: `INFO["DP"] is NA`.
 
 Handling missing/optional values in fields other than INFO or FORMAT can be done by checking for None, e.g `ID is not None`.
+
+Sometimes, multi-valued fields may contain missing values; in this case, the `filter_na` function can be convenient, for example: `mean(filter_na(FORMAT['DP'][s] for s in SAMPLES)) > 2.3`.
 
 ### Auxiliary files
 `vembrane` supports additional files, such as lists of genes or ids with the `--aux NAME path/to/file` option. The file should contain one item per line and is parsed as a set. For example `vembrane filter --aux genes genes.txt "ANN['SYMBOL'] in AUX['genes']" variants.vcf` will keep only records where the annotated symbol is in the set specified in `genes.txt`.
