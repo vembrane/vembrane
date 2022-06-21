@@ -98,13 +98,6 @@ _math_exports = {
 
 
 _statistics_whitelist = {
-    "hypot",
-    "sqrt",
-    "fabs",
-    "exp",
-    "erf",
-    "log",
-    "fsum",
     "mean",
     "fmean",
     "geometric_mean",
@@ -120,6 +113,9 @@ _statistics_whitelist = {
     "pvariance",
     "stdev",
     "pstdev",
+    "covariance",
+    "correlation",
+    "linear_regression",
 }
 
 _statistics_exports = {
