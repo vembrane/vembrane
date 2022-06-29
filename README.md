@@ -18,6 +18,7 @@ The filter expression can be any valid python expression that evaluates to `bool
  * Regular expressions via [`re`](https://docs.python.org/3/library/re.html)
  * custom functions:
    * `without_na` (keep only values that are not `NA`)
+   * `replace_na` (replace values that are `NA` with some other fixed value)
    * genotype related:
      * `count_hom`, `count_het` , `count_any_ref`, `count_any_var`, `count_hom_ref`, `count_hom_var`
      * `is_hom`, `is_het`, `is_hom_ref` , `is_hom_var`
