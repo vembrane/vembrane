@@ -127,7 +127,15 @@ def without_na(values: Iterable[Any]) -> "filter":
     return filter(lambda v: v is not NA, values)
 
 
-_additional_functions = {"without_na": without_na}
+def replace_na(values: Iterable[Any], replacement: Any) -> Iterable[Any]:
+    for v in values:
+        if v is not NA:
+            yield v
+        else:
+            yield replacement
+
+
+_additional_functions = {"without_na": without_na, "replace_na": replace_na}
 
 _explicit_clear = {
     "__builtins__": {},
