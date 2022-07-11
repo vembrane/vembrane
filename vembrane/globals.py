@@ -97,29 +97,10 @@ _math_exports = {
 }
 
 
-_statistics_whitelist = {
-    "mean",
-    "fmean",
-    "geometric_mean",
-    "harmonic_mean",
-    "median",
-    "median_low",
-    "median_high",
-    "median_grouped",
-    "mode",
-    "multimode",
-    "quantiles",
-    "variance",
-    "pvariance",
-    "stdev",
-    "pstdev",
-    "covariance",
-    "correlation",
-    "linear_regression",
-}
-
 _statistics_exports = {
-    name: mod for name, mod in vars(statistics).items() if name in _statistics_whitelist
+    name: mod
+    for name, mod in vars(statistics).items()
+    if name in statistics.__all__ and name[0].islower()
 }
 
 
