@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vembrane"
-version = "0.8.0"
+version = "0.10.0"
 description = "Filter VCF/BCF files with Python expressions."
 authors = ["Till Hartmann", "Christopher Schröder", "Johannes Köster", "Jan Forster", "Marcel Bargull", "Felix Mölder", "Elias Kuthe", "David Lähnemann"]
 readme = "README.md"
@@ -11,22 +11,22 @@ repository = "https://github.com/vembrane/vembrane"
 vembrane = 'vembrane.cli:main'
 
 [tool.poetry.dependencies]
-python = ">=3.7"
+python = ">=3.8"
 pysam = "^0.19"
-pyyaml = "^5.3"
-importlib_metadata = {version = "^1.7.0", python = "<3.8"}
+pyyaml = "^6.0"
 asttokens = "^2.0"
-numpy = {version = "^1.20", python = ">=3.7"}
-intervaltree = "2.1"
 cyvcf2 = "^0.30.15"
+numpy = {version = "^1.23", python = ">=3.8"}
+intervaltree = "^3.1"
+
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
-pre-commit = "^1.10"
-black = { version = "^22.6.0", python = ">=3.7" }
+pytest = "^7.1"
+pre-commit = "^2.20"
+black = { version = "^22.6", python = ">=3.8" }
 
 [tool.black]
 line-length = 88
-target-version = ['py37', 'py38']
+target-version = ['py38', 'py39', 'py310']
 include = '\.pyi?$'
 exclude = '''
 /(
