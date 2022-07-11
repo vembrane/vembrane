@@ -1,0 +1,10 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##fileDate=20191217
+##source=strelka
+##source_version=2.9.10
+##startTime=Tue Dec 17 17:01:25 2019
+##contig=<ID=chr18,length=80373285>
+##FORMAT=<ID=VALS,Number=10,Type=Integer,Description="Some values">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Sample
+chr18	27963423	.	G	A	276	PASS		VALS	0,0,1,1,1,1,1,1,2,2

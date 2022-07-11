@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vembrane"
-version = "0.8.0"
+version = "0.9.0"
 description = "Filter VCF/BCF files with Python expressions."
 authors = ["Till Hartmann", "Christopher Schröder", "Johannes Köster", "Jan Forster", "Marcel Bargull", "Felix Mölder", "Elias Kuthe", "David Lähnemann"]
 readme = "README.md"
