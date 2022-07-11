@@ -8,11 +8,24 @@ on:
     branches_ignore: []
 
 jobs:
+
+  # Define the job to run before your matrix job
+  get-python-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      python-matrix: ${{ steps.get-python-versions-action.outputs.latest-python-versions }}
+    steps:
+    - uses: snok/latest-python-versions@v1
+      id: get-python-versions-action
+      with:
+        min-version: 3.8
+
   test:
+    needs: [get-python-versions]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: ${{ fromJson(needs.get-python-versions.outputs.python-matrix) }}
         os: [ubuntu-latest, macos-latest]
 
     steps:
