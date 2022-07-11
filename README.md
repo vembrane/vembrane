@@ -17,8 +17,8 @@ The filter expression can be any valid python expression that evaluates to `bool
  * Any function from [`statistics`](https://docs.python.org/3/library/statistics.html)
  * Regular expressions via [`re`](https://docs.python.org/3/library/re.html)
  * custom functions:
-   * `without_na` (keep only values that are not `NA`)
-   * `replace_na` (replace values that are `NA` with some other fixed value)
+   * `without_na(values: Iterable[Any]) -> Iterable[Any]` (keep only values that are not `NA`)
+   * `replace_na(values: Iterable[Any], replacement: Any) -> Iterable[Any]` (replace values that are `NA` with some other fixed value)
    * genotype related:
      * `count_hom`, `count_het` , `count_any_ref`, `count_any_var`, `count_hom_ref`, `count_hom_var`
      * `is_hom`, `is_het`, `is_hom_ref` , `is_hom_var`
@@ -102,7 +102,7 @@ Since you may want to use the regex module to search for matches, `NA` also acts
 
 Handling missing/optional values in fields other than INFO or FORMAT can be done by checking for None, e.g `ID is not None`.
 
-Sometimes, multi-valued fields may contain missing values; in this case, the `without_na` function can be convenient, for example: `mean(without_na(FORMAT['DP'][s] for s in SAMPLES)) > 2.3`.
+Sometimes, multi-valued fields may contain missing values; in this case, the `without_na` function can be convenient, for example: `mean(without_na(FORMAT['DP'][s] for s in SAMPLES)) > 2.3`. It is also possible to replace `NA` with some constant value with the `replace_na` function: `mean(replace_na((FORMAT['DP'][s] for s in SAMPLES), 0.0)) > 2.3`
 
 ### Auxiliary files
 `vembrane` supports additional files, such as lists of genes or ids with the `--aux NAME path/to/file` option. The file should contain one item per line and is parsed as a set. For example `vembrane filter --aux genes genes.txt "ANN['SYMBOL'] in AUX['genes']" variants.vcf` will keep only records where the annotated symbol is in the set specified in `genes.txt`.
