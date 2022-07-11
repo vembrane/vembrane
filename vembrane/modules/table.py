@@ -2,7 +2,7 @@ import contextlib
 import csv
 import sys
 from sys import stderr
-from typing import Iterator, List, Optional
+from typing import Dict, Iterator, List, Optional
 
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
@@ -10,6 +10,7 @@ from pysam.libcbcf import VariantFile, VariantRecord
 from ..common import check_expression
 from ..errors import VembraneError, HeaderWrongColumnNumber
 from ..representations import Environment
+from ..modules.filter import StoreMapping
 
 
 def add_subcommmand(subparsers):
@@ -58,15 +59,26 @@ def add_subcommmand(subparsers):
         default="-",
         help="Output file, if not specified, output is written to STDOUT.",
     )
+    parser.add_argument(
+        "--overwrite-number",
+        action=StoreMapping,
+        default={},
+        metavar="FIELD1=COUNT1,FIELD2=COUNT2,…",
+        help="Overwrite the number specification for fields given in the VCF header. "
+        "Example: `--overwrite-number cosmic_CNT=.`",
+    )
 
 
 def tableize_vcf(
     vcf: VariantFile,
     expression: str,
     ann_key: str,
+    overwrite_number: Dict[str, str] = {},
 ) -> Iterator[tuple]:
     expression = f"({expression})"
-    env = Environment(expression, ann_key, vcf.header)
+    env = Environment(
+        expression, ann_key, vcf.header, overwrite_number=overwrite_number
+    )
 
     record: VariantRecord
     for idx, record in enumerate(vcf):
@@ -249,6 +261,7 @@ def execute(args):
             vcf,
             expression,
             args.annotation_key,
+            overwrite_number=args.overwrite_number,
         )
 
         try:
