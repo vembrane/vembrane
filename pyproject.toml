@@ -14,14 +14,14 @@ vembrane = 'vembrane.cli:main'
 python = ">=3.8"
 pysam = "^0.19"
 pyyaml = "^6.0"
-importlib_metadata = {version = "^1.7.0", python = "<3.8"}
 asttokens = "^2.0"
-numpy = {version = "^1.23", python = ">=3.7"}
+numpy = { version = "^1.23", python = ">=3.8" }
 intervaltree = "^3.1"
+
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
 pre-commit = "^2.20"
-black = { version = "^22.6", python = "^3.7" }
+black = { version = "^22.6", python = "^3.8" }
 
 [tool.black]
 line-length = 88
