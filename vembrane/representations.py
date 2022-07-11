@@ -1,4 +1,5 @@
 import ast
+import numpy as np
 from itertools import chain
 from typing import Dict, List, Tuple, Set
 
@@ -54,9 +55,17 @@ class Format(NoValueDict):
                 sample_index = self._record_samples[sample]
             except KeyError:
                 raise UnknownSample(self._record_idx, sample)
-            value = type_info(
-                self._values[sample_index], self._number, self._name, self._record_idx
-            )
+            v = self._values[sample_index]
+            if v.dtype == np.dtype("int32"):
+                mask = (v <= (-(2**31) + 7)) & (v >= (-(2**31)))
+                if mask.any():
+                    v = v.astype(np.object)
+                    v[mask] = NA
+            if v.ndim == 1:
+                v = tuple(v.tolist())
+            if self._number == "1":
+                v = v[0]
+            value = type_info(v, self._number, self._name, self._record_idx)
             self._sample_values[sample] = value
             return value
 
