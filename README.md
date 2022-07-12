@@ -129,7 +129,7 @@ vembrane table --header 'CHROM, POS, for_each_sample(lambda sample: f"{sample}_d
 ```
 Given a VCF file with samples `Sample_1`, `Sample_2` and `Sample_3`, the header would expand to be printed as:
 ```
-#CHROM  POS   Sample_1_depth   Sample_2_depth   Sample_3_depth
+CHROM  POS   Sample_1_depth   Sample_2_depth   Sample_3_depth
 ```
 and the expression to evaluate on each VCF record would become:
 ```python
