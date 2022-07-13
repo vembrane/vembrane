@@ -162,7 +162,7 @@ def filter_vcf(
             env, idx, record, ann_key, keep_unmatched
         )
         if record_has_passed:
-            is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
+            is_bnd = "SVTYPE" in info_keys and record.INFO.get("SVTYPE", None) == "BND"
             if is_bnd:
                 event = record.INFO.get("EVENT", None)
                 events.add(event)
@@ -176,7 +176,7 @@ def filter_vcf(
         # since these are compound events which have to be filtered jointly
         vcf.reset()
         for idx, record in enumerate(vcf):
-            is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
+            is_bnd = "SVTYPE" in info_keys and record.INFO.get("SVTYPE", None) == "BND"
             event = record.INFO.get("EVENT", None)
 
             if is_bnd:
