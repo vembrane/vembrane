@@ -284,7 +284,8 @@ def execute(args: Namespace):
     try:
         for record in records:
             out.write_record(record)
-
     except VembraneError as ve:
         print(ve, file=stderr)
         exit(1)
+    finally:
+        out.close()
