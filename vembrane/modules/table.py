@@ -91,7 +91,7 @@ def tableize_vcf(
             # get all annotations from the record.info field
             # (or supply an empty ANN value if the record has no ANN field)
             try:
-                annotations = record.INFO[ann_key]
+                annotations = record.INFO[ann_key].split(",")
             except KeyError:
                 annotations = [""]
             for annotation in annotations:

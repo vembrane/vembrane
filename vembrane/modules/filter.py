@@ -116,7 +116,7 @@ def test_and_update_record(
         # get all annotations from the record.info field
         # (or supply an empty ANN value if the record has no ANN field)
         try:
-            annotations = [record.INFO[ann_key]]
+            annotations = record.INFO[ann_key].split(",")
         except KeyError:
             annotations = [""]
 
@@ -131,7 +131,7 @@ def test_and_update_record(
 
             if len(annotations) != len(filtered_annotations):
                 # update annotations if they have actually been filtered
-                record.INFO[ann_key] = filtered_annotations or ""
+                record.INFO[ann_key] = ",".join(filtered_annotations) or ""
 
             return record, len(filtered_annotations) > 0
     else:
