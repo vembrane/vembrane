@@ -61,10 +61,29 @@ class Format(NoValueDict):
                 if mask.any():
                     v = v.astype(np.object)
                     v[mask] = NA
-            # always convert numpy arrays to python lists
-            v = v.tolist()
-            if self._number == "1" and isinstance(v, list):
-                v = v[0]
+
+            # TODO: convert float nans to NA,
+            # problem: cyvcf2 might encode both missing values and "true" NaNs
+            # to the same NaN (with the same bit representation)
+
+            # cyvcf2 does not split strings in format fields, so we do that here
+            if isinstance(v, str):
+                v = v.split(",")
+            else:
+                # always convert numpy arrays to python lists
+                # `tolist` will build nested lists
+                # and it will also unpack single-valued lists (to a single scalar)
+                v = v.tolist()
+
+            if isinstance(v, list):
+                # for single valued lists, unpack
+                if self._number == "1":
+                    v = v[0]
+            else:
+                # however, if the header does not specify single-valued-ness,
+                # make sure there's a list anyways
+                if self._number != "1":
+                    v = [v]
             value = type_info(v, self._number, self._name, self._record_idx)
             self._sample_values[sample] = value
             return value
