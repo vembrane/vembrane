@@ -21,6 +21,8 @@ from argparse import Action
 from cyvcf2 import VCF, Variant
 from cyvcf2 import Writer as VcfWriter
 
+from argparse import Namespace
+
 
 class StoreMapping(Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -144,6 +146,7 @@ def filter_vcf(
     vcf: VCF,
     expression: str,
     ann_key: str,
+    args: Namespace,
     keep_unmatched: bool = False,
     preserve_order: bool = False,
     auxiliary: Dict[str, Set[str]] = {},
@@ -173,7 +176,8 @@ def filter_vcf(
     if len(events) > 0:
         # perform a second pass if the first pass filtered breakend (BND) events
         # since these are compound events which have to be filtered jointly
-        vcf.reset()
+        # cyvcf2 has no reset method (yet), so we have to initialize a new VCF reader
+        vcf = initialize_vcf(args)
         for idx, record in enumerate(vcf):
             is_bnd = "SVTYPE" in info_keys and record.INFO.get("SVTYPE", None) == "BND"
             event = record.INFO.get("EVENT", None)
@@ -226,8 +230,7 @@ def read_auxiliary(aux) -> Dict[str, Set[str]]:
     return {name: read_set(contents) for name, contents in aux}
 
 
-def execute(args):
-    aux = read_auxiliary(args.aux)
+def initialize_vcf(args: Namespace) -> VCF:
     vcf = VCF(args.vcf, lazy=True)
     vcf.add_to_header(f"##vembraneVersion={__version__}")
     # NOTE: If .modules.filter.execute might be used as a library function
@@ -240,11 +243,18 @@ def execute(args):
             for arg in sys.argv[1:]
         ),
     )
+    return vcf
+
+
+def execute(args: Namespace):
+    aux = read_auxiliary(args.aux)
+    vcf = initialize_vcf(args)
 
     records = filter_vcf(
         vcf,
         args.expression,
         args.annotation_key,
+        args,
         keep_unmatched=args.keep_unmatched,
         preserve_order=args.preserve_order,
         auxiliary=aux,
