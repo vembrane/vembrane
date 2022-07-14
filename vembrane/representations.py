@@ -85,9 +85,11 @@ class Formats(NoValueDict):
         self,
         record_idx: int,
         header_format_fields: Dict[str, str],
+        record: Variant,
         record_format,
         record_samples,
     ):
+        self._record = record
         self._record_idx = record_idx
         self._header_format_fields = header_format_fields
         self._record_format = record_format
@@ -99,9 +101,13 @@ class Formats(NoValueDict):
             return self._formats[item]
         except KeyError:
             try:
-                # FIXME cyvcf returns an ndarray of shape (n_samples, number),
-                # restructure code accordingly
-                values = self._record_format(item)
+                if item == "GT":
+                    values = [
+                        [(NA if s == -1 else s) for s in v[:-1]]
+                        for v in self._record.genotypes
+                    ]
+                else:
+                    values = self._record_format(item)
             except KeyError:
                 raise UnknownFormatField(self._record_idx, item)
             number = self._header_format_fields[item]
@@ -319,6 +325,7 @@ class Environment(dict):
         value = Formats(
             self.idx,
             self._header_format_fields,
+            self.record,
             self.record.format,
             self._samples,
         )
