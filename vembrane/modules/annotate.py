@@ -40,7 +40,7 @@ def add_subcommmand(subparsers):
         "--output-fmt",
         "-O",
         default="vcf",
-        choices=["vcf", "bcf", "uncompressed-bcf"],
+        choices=["vcf", "bcf", "uncompressed-bcf", "compressed-vcf"],
         help="Output format.",
     )
 

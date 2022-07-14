@@ -272,7 +272,9 @@ def execute(args: Namespace):
     if args.statistics is not None:
         records = statistics(records, vcf, args.statistics, args.annotation_key)
 
-    fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
+    fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "bu", "compressed-vcf": "z"}[
+        args.output_fmt
+    ]
     out = VcfWriter(
         args.output,
         vcf,  # FIXME proper output header template
