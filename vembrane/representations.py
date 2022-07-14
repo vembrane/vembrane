@@ -61,9 +61,9 @@ class Format(NoValueDict):
                 if mask.any():
                     v = v.astype(np.object)
                     v[mask] = NA
-            if v.ndim == 1:
-                v = tuple(v.tolist())
-            if self._number == "1":
+            # always convert numpy arrays to python lists
+            v = v.tolist()
+            if self._number == "1" and isinstance(v, list):
                 v = v[0]
             value = type_info(v, self._number, self._name, self._record_idx)
             self._sample_values[sample] = value
