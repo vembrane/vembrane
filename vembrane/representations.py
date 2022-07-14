@@ -55,7 +55,7 @@ class Format(NoValueDict):
             except KeyError:
                 raise UnknownSample(self._record_idx, sample)
             v = self._values[sample_index]
-            if v.dtype == np.dtype("int32"):
+            if isinstance(v, np.ndarray) and v.dtype == np.dtype("int32"):
                 mask = (v <= (-(2**31) + 7)) & (v >= (-(2**31)))
                 if mask.any():
                     v = v.astype(object)
@@ -69,10 +69,11 @@ class Format(NoValueDict):
             if isinstance(v, str):
                 v = v.split(",")
             else:
-                # always convert numpy arrays to python lists
-                # `tolist` will build nested lists
-                # and it will also unpack single-valued lists (to a single scalar)
-                v = v.tolist()
+                if isinstance(v, np.ndarray):
+                    # always convert numpy arrays to python lists
+                    # `tolist` will build nested lists
+                    # and it will also unpack single-valued lists (to a single scalar)
+                    v = v.tolist()
 
             value = type_info(tuple(v), self._number, self._name, self._record_idx)
             self._sample_values[sample] = value
