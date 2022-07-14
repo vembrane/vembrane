@@ -82,6 +82,8 @@ def test_filter(testcase):
             if args.command == "filter":
                 expected = str(path.joinpath("expected.vcf"))
                 filter.execute(args)
+                tmp_out.flush()
+
                 vcf_actual = VCF(tmp_out.name)
                 vcf_expected = VCF(expected)
                 for r1, r2 in zip_longest(vcf_actual, vcf_expected):
