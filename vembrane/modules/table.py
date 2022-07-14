@@ -77,7 +77,11 @@ def tableize_vcf(
 ) -> Iterator[tuple]:
     expression = f"({expression})"
     env = Environment(
-        expression, ann_key, list(vcf.header_iter()), overwrite_number=overwrite_number
+        expression,
+        ann_key,
+        vcf,
+        list(vcf.header_iter()),
+        overwrite_number=overwrite_number,
     )
 
     record: Variant

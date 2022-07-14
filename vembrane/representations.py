@@ -59,7 +59,7 @@ class Format(NoValueDict):
             if v.dtype == np.dtype("int32"):
                 mask = (v <= (-(2**31) + 7)) & (v >= (-(2**31)))
                 if mask.any():
-                    v = v.astype(np.object)
+                    v = v.astype(object)
                     v[mask] = NA
 
             # TODO: convert float nans to NA,
