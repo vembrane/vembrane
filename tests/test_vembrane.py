@@ -85,19 +85,22 @@ def test_filter(testcase):
                 vcf_actual = VCF(tmp_out.name)
                 vcf_expected = VCF(expected)
                 for r1, r2 in zip_longest(vcf_actual, vcf_expected):
-                    assert r1 == r2
+                    # FIXME cyvcf2 doesn't properly implement __eq__ for all attributes
+                    # which is why we're using the string representation here instead
+                    s1 = str(r1)
+                    s2 = str(r2)
+                    assert s1 == s2
 
                 for r1, r2 in zip_longest(
-                    vcf_actual.header_iter(), vcf_expected.header_iter()
+                    vcf_actual.raw_header.split("\n"),
+                    vcf_expected.raw_header.split("\n"),
                 ):
-                    if r1.key == "vembraneVersion":
-                        assert r1.value == __version__
-                    elif r1.key == "vembraneCmd":
-                        assert r1.value.startswith("vembrane ")
-                    else:
-                        assert r1.key == r2.key
-                        assert r1.value == r2.value
-                        assert r1.items() == r2.items()
+                    if r1.startswith("##vembraneVersion="):
+                        assert r1.lstrip("##vembraneVersion=") == __version__
+                    elif r1.startswith("##vembraneCmd="):
+                        assert r1.lstrip("##vembraneCmd=").startswith("vembrane ")
+                    assert r1 == r2
+
             elif args.command == "table":
                 expected = str(path.joinpath("expected.tsv"))
                 table.execute(args)
