@@ -80,7 +80,6 @@ def tableize_vcf(
         expression,
         ann_key,
         vcf,
-        list(vcf.header_iter()),
         overwrite_number=overwrite_number,
     )
 

@@ -3,7 +3,7 @@ from typing import List
 
 from vembrane.errors import InvalidExpression
 
-from cyvcf2.cyvcf2 import HREC
+from cyvcf2 import VCF
 
 
 def check_expression(
@@ -24,14 +24,23 @@ def check_expression(
         )
 
 
-def get_annotation_keys(header: List[HREC], ann_key: str) -> List[str]:
-    separator = "'"
-    separator = ":"
-    for rec in header:
-        # if rec.key == "VEP":
-        # if True:
-        #     separator = ":"
-        # continue
+def get_annotation_keys(vcf: VCF, ann_key: str) -> List[str]:
+    has_snpeff_annotations = "##SnpEffCmd=" in vcf.raw_header
+    has_vep_annotations = "##VEP=" in vcf.raw_header
+
+    # TODO use match statement when minimum required python version is 3.10
+    if has_vep_annotations and not has_snpeff_annotations:
+        separator = ":"
+    elif has_snpeff_annotations and not has_vep_annotations:
+        separator = "'"
+    elif not has_vep_annotations and not has_vep_annotations:
+        separator = ":"
+    else:
+        raise ValueError(
+            "Ambiguous annotation, could be either of SnpEff or VEP annotations"
+        )
+
+    for rec in vcf.header_iter():
         if rec.info().get("ID") == ann_key:
             return list(
                 map(

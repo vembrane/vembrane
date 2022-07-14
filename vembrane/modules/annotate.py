@@ -61,7 +61,7 @@ def annotate_vcf(
     ann_data,
     config: dict,
 ) -> Iterator[tuple]:
-    env = Environment(expression, ann_key, vcf.header)
+    env = Environment(expression, ann_key, vcf)
 
     config_chrom_column = config["annotation"]["columns"]["chrom"]
     config_start_column = config["annotation"]["columns"]["start"]

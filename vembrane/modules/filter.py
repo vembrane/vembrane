@@ -3,7 +3,7 @@ import yaml
 
 from sys import stderr
 from collections import defaultdict
-from typing import Iterator, Set, Dict, List, Any
+from typing import Iterator, Set, Dict
 from itertools import islice, chain
 
 from ..common import (
@@ -150,8 +150,7 @@ def filter_vcf(
     overwrite_number: Dict[str, str] = {},
 ) -> Iterator[Variant]:
 
-    header: List[Dict[str, Any]] = list(vcf.header_iter())
-    env = Environment(expression, ann_key, vcf, header, auxiliary, overwrite_number)
+    env = Environment(expression, ann_key, vcf, auxiliary, overwrite_number)
 
     events = set()
     info_keys = set(r.info().get("ID") for r in vcf.header_iter() if r.type == "INFO")
@@ -196,7 +195,7 @@ def filter_vcf(
 def statistics(
     records: Iterator[Variant], vcf: VCF, filename: str, ann_key: str
 ) -> Iterator[Variant]:
-    annotation_keys = get_annotation_keys(list(vcf.header_iter()), ann_key)
+    annotation_keys = get_annotation_keys(vcf, ann_key)
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
         for annotation in record.INFO[ann_key]:

@@ -4,7 +4,6 @@ from itertools import chain
 from typing import Dict, List, Tuple, Set
 
 from cyvcf2 import Variant, VCF
-from cyvcf2.cyvcf2 import HREC
 
 from .ann_types import (
     NA,
@@ -75,16 +74,7 @@ class Format(NoValueDict):
                 # and it will also unpack single-valued lists (to a single scalar)
                 v = v.tolist()
 
-            if isinstance(v, list):
-                # for single valued lists, unpack
-                if self._number == "1":
-                    v = v[0]
-            else:
-                # however, if the header does not specify single-valued-ness,
-                # make sure there's a list anyways
-                if self._number != "1":
-                    v = [v]
-            value = type_info(v, self._number, self._name, self._record_idx)
+            value = type_info(tuple(v), self._number, self._name, self._record_idx)
             self._sample_values[sample] = value
             return value
 
@@ -159,11 +149,11 @@ class Info(NoValueDict):
 
 
 class Annotation(NoValueDict):
-    def __init__(self, ann_key: str, header):
+    def __init__(self, ann_key: str, vcf: VCF):
         self._record_idx = -1
         self._annotation_data = {}
         self._data = {}
-        annotation_keys = get_annotation_keys(header, ann_key)
+        annotation_keys = get_annotation_keys(vcf, ann_key)
         self._ann_conv = {
             entry.name: (ann_idx, entry.convert)
             for ann_idx, entry in enumerate(map(ANN_TYPER.get_entry, annotation_keys))
@@ -196,7 +186,6 @@ class Environment(dict):
         expression: str,
         ann_key: str,
         vcf: VCF,
-        header: List[HREC],
         auxiliary: Dict[str, Set[str]] = {},
         overwrite_number: Dict[str, str] = {},
     ):
@@ -205,7 +194,7 @@ class Environment(dict):
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
             for node in ast.walk(ast.parse(expression))
         )
-        self._annotation: Annotation = Annotation(ann_key, header)
+        self._annotation: Annotation = Annotation(ann_key, vcf)
         self._globals = {}
         # We use self + self.func as a closure.
         self._globals = allowed_globals.copy()
@@ -239,6 +228,7 @@ class Environment(dict):
         # Then, in the case of `number == "A"`, the value tuples only have one entry,
         # so that the value can be accessed directly and need not be accessed via
         # an index operation.
+        header = list(vcf.header_iter())
         self._numbers = {
             kind: {
                 record.info().get("ID"): overwrite_number.get(record.info().get("ID"))
