@@ -168,7 +168,7 @@ class Environment(dict):
         ann_key: str,
         header: VariantHeader,
         auxiliary: Dict[str, Set[str]] = {},
-        overwrite_number: Dict[str, str] = {},
+        overwrite_number: Dict[str, Dict[str, str]] = {},
     ):
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
@@ -209,13 +209,18 @@ class Environment(dict):
         # an index operation.
         self._numbers = {
             kind: {
-                record.get("ID"): overwrite_number.get(record.get("ID"))
+                record.get("ID"): overwrite_number.get(kind, {}).get(record.get("ID"))
                 or record.get("Number")
                 for record in header.records
                 if record.type == kind
             }
             for kind in set(r.type for r in header.records)
         }
+
+        # always explicitly set "Number" for certain fields
+        # which get special pysam treatment:
+        # - `FORMAT["GT"]` is always parsed as a list of integer values
+        self._numbers.get("FORMAT", {})["GT"] = "."
 
         # At the moment, only INFO and FORMAT records are checked
         self._header_info_fields = self._numbers.get("INFO", dict())
