@@ -3,6 +3,8 @@ from sys import stderr
 from typing import Union, Iterable, Tuple, Dict, Callable, Any
 import re
 
+import numpy
+
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
 
@@ -70,7 +72,7 @@ class InfoTuple:
         return len(self.values)
 
 
-IntFloatStr = Union[int, float, str]
+IntFloatStr = Union[int, float, str, numpy.floating]
 
 
 def type_info(value, number=".", field=None, record_idx=None):
@@ -225,17 +227,25 @@ class RangeTotal(object):
             return cls(range(r[0], r[1] + 1), int(v[1]))
         else:
             raise ValueError(
-                "Found more than two values separated by '-', expected only a single int, or two ints separated by '-'."
+                "Found more than two values separated by '-', "
+                "expected only a single int, or two ints separated by '-'."
             )
 
     def __str__(self):
         if len(self.range) == 1:
             return f"number / total: {self.range.start} / {self.total}"
         else:
-            return f"range / total: {self.range.start} - {self.range.stop - 1} / {self.total}"
+            return (
+                f"range / total: "
+                f"{self.range.start} - {self.range.stop - 1} / {self.total}"
+            )
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(range=range({self.range.start!r}, {self.range.stop!r}), total={self.total!r})"
+        return (
+            f"{self.__class__.__name__}"
+            f"(range=range({self.range.start!r}, {self.range.stop!r}), "
+            f"total={self.total!r})"
+        )
 
 
 class AnnotationRangeTotalEntry(AnnotationEntry):
@@ -274,7 +284,7 @@ class AnnotationPredictionScoreEntry(AnnotationEntry):
     def __init__(self, name: str, **kwargs):
         def typefunc(x: str) -> Dict[str, float]:
             match = PREDICTION_SCORE_REGEXP.findall(x)[0]
-            return {match[0]: float(match[1])}
+            return {match[0]: numpy.float32(match[1])}
 
         super().__init__(name, typefunc=typefunc, nafunc=lambda: dict(), **kwargs)
 
@@ -426,7 +436,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     ),
     "MOTIF_SCORE_CHANGE": AnnotationEntry(
         "MOTIF_SCORE_CHANGE",
-        float,
+        numpy.float32,
         description="The difference in motif score of the reference and variant "
         "sequences for the TFBP",
     ),
@@ -466,113 +476,113 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     #     "FREQS", description="Frequencies of overlapping variants used in filtering"
     # ),
     "AF": AnnotationEntry(
-        "AF", float, description="Frequency of existing variant in 1000 Genomes"
+        "AF", numpy.float32, description="Frequency of existing variant in 1000 Genomes"
     ),
     "AFR_AF": AnnotationEntry(
         "AFR_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in 1000 Genomes combined "
         "African population",
     ),
     "AMR_AF": AnnotationEntry(
         "AMR_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in 1000 Genomes combined "
         "American population",
     ),
     "ASN_AF": AnnotationEntry(
         "ASN_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in 1000 Genomes combined "
         "Asian population",
     ),
     "EUR_AF": AnnotationEntry(
         "EUR_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in 1000 Genomes combined "
         "European population",
     ),
     "EAS_AF": AnnotationEntry(
         "EAS_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in 1000 Genomes combined "
         "East Asian population",
     ),
     "SAS_AF": AnnotationEntry(
         "SAS_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in 1000 Genomes combined "
         "South Asian population",
     ),
     "AA_AF": AnnotationEntry(
         "AA_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in NHLBI-ESP "
         "African American population",
     ),
     "EA_AF": AnnotationEntry(
         "EA_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in NHLBI-ESP "
         "European American population",
     ),
     "gnomAD_AF": AnnotationEntry(
         "gnomAD_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in gnomAD exomes "
         "combined population",
     ),
     "gnomAD_AFR_AF": AnnotationEntry(
         "gnomAD_AFR_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in gnomAD exomes "
         "African/American population",
     ),
     "gnomAD_AMR_AF": AnnotationEntry(
         "gnomAD_AMR_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in gnomAD exomes "
         "American population",
     ),
     "gnomAD_ASJ_AF": AnnotationEntry(
         "gnomAD_ASJ_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in gnomAD exomes "
         "Ashkenazi Jewish population",
     ),
     "gnomAD_EAS_AF": AnnotationEntry(
         "gnomAD_EAS_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in gnomAD exomes "
         "East Asian population",
     ),
     "gnomAD_FIN_AF": AnnotationEntry(
         "gnomAD_FIN_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in gnomAD exomes "
         "Finnish population",
     ),
     "gnomAD_NFE_AF": AnnotationEntry(
         "gnomAD_NFE_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in gnomAD exomes "
         "Non-Finnish European population",
     ),
     "gnomAD_OTH_AF": AnnotationEntry(
         "gnomAD_OTH_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in gnomAD exomes "
         "combined other combined populations",
     ),
     "gnomAD_SAS_AF": AnnotationEntry(
         "gnomAD_SAS_AF",
-        float,
+        numpy.float32,
         description="Frequency of existing variant in gnomAD exomes "
         "South Asian population",
     ),
     "MAX_AF": AnnotationEntry(
         "MAX_AF",
-        float,
+        numpy.float32,
         description="Maximum observed allele frequency in "
         "1000 Genomes, ESP and gnomAD",
     ),
@@ -669,7 +679,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     ),
     "OverlapPC": AnnotationEntry(
         "OverlapPC",
-        float,
+        numpy.float32,
         description="Percentage of corresponding structural variation feature "
         "overlapped by the given input",
     ),
@@ -720,21 +730,21 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     ),
     "LoFtool": AnnotationEntry(
         "LoFtool",
-        typefunc=float,
+        typefunc=numpy.float32,
         description="Provides a rank of genic intolerance and "
         "consequent susceptibility to disease based on the ratio of Loss-of-function "
         "(LoF) to synonymous mutations.",
     ),
     "REVEL": AnnotationEntry(
         "REVEL",
-        typefunc=float,
+        typefunc=numpy.float32,
         description="Estimate of the pathogenicity of missense variants. "
         "Please cite the REVEL publication alongside the VEP if you use this "
         "resource: https://www.ncbi.nlm.nih.gov/pubmed/27666373",
     ),
     "ExACpLI": AnnotationEntry(
         "ExACpLI",
-        typefunc=float,
+        typefunc=numpy.float32,
         description="Probabililty of a gene being loss-of-function intolerant (pLI). "
         "Please cite the respective ExAC publication alongside the VEP if you use this "
         "resource: https://www.ncbi.nlm.nih.gov/pubmed/27535533",
