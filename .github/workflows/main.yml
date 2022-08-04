@@ -19,13 +19,14 @@ jobs:
       id: get-python-versions-action
       with:
         min-version: 3.8
+        max-version: 3.10.5
 
   test:
     needs: [get-python-versions]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ${{ fromJson(needs.get-python-versions.outputs.python-matrix) }}
+        python-version: ["3.8.13", "3.9.13", "3.10.5"]  # ${{ fromJson(needs.get-python-versions.outputs.python-matrix) }}
         os: [ubuntu-latest, macos-latest]
 
     steps:
