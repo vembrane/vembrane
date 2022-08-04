@@ -1,0 +1,9 @@
+##fileformat=VCFv4.1
+##fileDate=20220408
+##contig=<ID=chr1,length=3>
+##FILTER=<ID=PASS,Description="All filters passed">
+##INFO=<ID=FLOAT,Number=1,Type=Float,Description="One single float">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Sample
+chr1	2	.	G	A	276	PASS	FLOAT=0.7	.	.
+chr1	3	.	G	A	276	PASS	FLOAT=0.8	.	.
+chr1	3	.	G	A	276	PASS	FLOAT=0.9	.	.
