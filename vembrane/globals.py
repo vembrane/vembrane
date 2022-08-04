@@ -1,8 +1,9 @@
 import math
 import re
 import statistics
-
 from typing import Dict, Any, Iterable
+
+import numpy
 
 from .ann_types import NA
 
@@ -90,7 +91,8 @@ _builtins = {
     )
 }
 
-_modules = {mod.__name__: mod for mod in (re,)}
+
+_modules = {mod.__name__: mod for mod in (re, numpy)}
 
 _math_exports = {
     name: mod for name, mod in vars(math).items() if not name.startswith("__")

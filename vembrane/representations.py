@@ -161,6 +161,26 @@ class Annotation(NoValueDict):
 UNSET = object()
 
 
+class WrapFloat32Visitor(ast.NodeTransformer):
+    def visit_Constant(self, node):
+        if not isinstance(node.n, float):
+            return node
+
+        return ast.Call(
+            func=ast.Attribute(
+                value=ast.Name(
+                    id="numpy", ctx=ast.Load()
+                ),  # assumes numpy is available in the global or local namespace
+                attr="float32",
+                ctx=ast.Load(),
+            ),
+            args=[node],
+            keywords=[],
+            starargs=None,
+            kwargs=None,
+        )
+
+
 class Environment(dict):
     def __init__(
         self,
@@ -184,7 +204,29 @@ class Environment(dict):
         # REF/ALT alleles are cached separately to raise "MoreThanOneAltAllele"
         # only if ALT (but not REF) is accessed (and ALT has multiple entries).
         self._alleles = None
-        self._func = eval(f"lambda: {expression}", self, {})
+
+        func = f"lambda: {expression}"
+
+        # The VCF specification only allows 32bit floats.
+        # Comparisons such as `INFO["some_float"] > CONST` may yield unexpected results,
+        # because `some_float` is a 32bit float while `CONST` is a python 64bit float.
+        # Example: `c_float(0.6) = 0.6000000238418579 > 0.6`.
+        # We can work around this by wrapping user provided floats in numpy.float32
+        # as follows:
+
+        # parse the expression, obtaining an AST
+        expression_ast = ast.parse(func, mode="eval")
+
+        # wrap each float constant in numpy.float32
+        expression_ast = WrapFloat32Visitor().visit(expression_ast)
+
+        # housekeeping
+        expression_ast = ast.fix_missing_locations(expression_ast)
+
+        # compile the now-fixed code-tree
+        func = compile(expression_ast, filename="expression.py", mode="eval")
+
+        self._func = eval(func, self, {})
 
         self._getters = {
             "AUX": self._get_aux,
