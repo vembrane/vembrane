@@ -167,11 +167,9 @@ class WrapFloat32Visitor(ast.NodeTransformer):
             return node
 
         return ast.Call(
-            func=ast.Attribute(
-                value=ast.Name(
-                    id="numpy", ctx=ast.Load()
-                ),  # assumes numpy is available in the global or local namespace
-                attr="float32",
+            func=ast.Name(
+                # assumes float32 is available in the globals
+                id="float32",
                 ctx=ast.Load(),
             ),
             args=[node],

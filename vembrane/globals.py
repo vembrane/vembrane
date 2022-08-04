@@ -3,7 +3,7 @@ import re
 import statistics
 from typing import Dict, Any, Iterable
 
-import numpy
+from numpy import float32
 
 from .ann_types import NA
 
@@ -92,7 +92,7 @@ _builtins = {
 }
 
 
-_modules = {mod.__name__: mod for mod in (re, numpy)}
+_modules = {mod.__name__: mod for mod in (re,)}
 
 _math_exports = {
     name: mod for name, mod in vars(math).items() if not name.startswith("__")
@@ -118,7 +118,11 @@ def replace_na(values: Iterable[Any], replacement: Any) -> Iterable[Any]:
             yield replacement
 
 
-_additional_functions = {"without_na": without_na, "replace_na": replace_na}
+_additional_functions = {
+    "without_na": without_na,
+    "replace_na": replace_na,
+    "float32": float32,
+}
 
 _explicit_clear = {
     "__builtins__": {},
