@@ -183,10 +183,11 @@ def filter_vcf(
             else:
                 if not preserve_order:
                     continue
-            record, _ = test_and_update_record(
+            record, keep = test_and_update_record(
                 env, idx, record, ann_key, keep_unmatched
             )
-            yield record
+            if keep:
+                yield record
 
 
 def statistics(
