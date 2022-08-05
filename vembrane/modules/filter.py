@@ -176,18 +176,20 @@ def filter_vcf(
             event = record.info.get("EVENT", None)
 
             if is_bnd:
-                if event not in events:
+                if event in events:
+                    yield record
+                else:
                     # only bnds with a valid associated event need to be considered, \
                     # so skip the rest
                     continue
             else:
                 if not preserve_order:
                     continue
-            record, keep = test_and_update_record(
-                env, idx, record, ann_key, keep_unmatched
-            )
-            if keep:
-                yield record
+                record, keep = test_and_update_record(
+                    env, idx, record, ann_key, keep_unmatched
+                )
+                if keep:
+                    yield record
 
 
 def statistics(
