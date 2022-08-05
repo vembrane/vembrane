@@ -154,6 +154,10 @@ def filter_vcf(
 
     record: VariantRecord
     if not preserve_order:
+        # If the order is not important, emit records that pass the filter expression
+        # as we encounter them
+        # However, breakends have to be considered jointly, so keep track of the
+        # respective events.
         for idx, record in enumerate(vcf):
             record, record_has_passed = test_and_update_record(
                 env, idx, record, ann_key, keep_unmatched
@@ -165,9 +169,7 @@ def filter_vcf(
                 if is_bnd:
                     event = record.info.get("EVENT", None)
                     events.add(event)
-                elif not preserve_order:
-                    # if preserve_order is True, \
-                    # we will output everything in the second pass instead
+                else:
                     yield record
         if len(events) > 0:
             # perform a second pass if the first pass filtered breakend (BND) events
@@ -178,13 +180,16 @@ def filter_vcf(
                     "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
                 )
 
-                # only bnds with a valid associated event need to be considered, \
+                # only bnds with a valid associated event need to be considered,
                 # so skip the rest
                 if is_bnd:
                     event = record.info.get("EVENT", None)
                     if event in events:
                         yield record
     else:
+        # If order *is* important, the first pass cannot emit any records but only
+        # keep track of breakend events. The records will only be emitted during the
+        # second pass
         for idx, record in enumerate(vcf):
             is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
             if is_bnd:
@@ -195,8 +200,7 @@ def filter_vcf(
                     event = record.info.get("EVENT", None)
                     events.add(event)
 
-        # perform a second pass if the first pass filtered breakend (BND) events
-        # since these are compound events which have to be filtered jointly
+        # The second pass can now yield record in the correct order
         vcf.reset()
         for idx, record in enumerate(vcf):
             is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
