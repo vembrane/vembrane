@@ -1,8 +1,8 @@
 import math
 import re
 import statistics
-
 from typing import Dict, Any, Iterable
+
 
 from .ann_types import NA
 
@@ -90,6 +90,7 @@ _builtins = {
     )
 }
 
+
 _modules = {mod.__name__: mod for mod in (re,)}
 
 _math_exports = {
@@ -116,7 +117,10 @@ def replace_na(values: Iterable[Any], replacement: Any) -> Iterable[Any]:
             yield replacement
 
 
-_additional_functions = {"without_na": without_na, "replace_na": replace_na}
+_additional_functions = {
+    "without_na": without_na,
+    "replace_na": replace_na,
+}
 
 _explicit_clear = {
     "__builtins__": {},
