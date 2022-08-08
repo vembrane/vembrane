@@ -7,14 +7,15 @@ from typing import Dict, Iterator, List, Optional
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
 
+from .filter import DeprecatedAction
 from ..common import check_expression
 from ..errors import VembraneError, HeaderWrongColumnNumber
 from ..representations import Environment
-from ..modules.filter import StoreMapping
 
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("table")
+    parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
         "expression",
         type=check_expression,
@@ -61,11 +62,29 @@ def add_subcommmand(subparsers):
     )
     parser.add_argument(
         "--overwrite-number",
-        action=StoreMapping,
-        default={},
-        metavar="FIELD1=COUNT1,FIELD2=COUNT2,…",
-        help="Overwrite the number specification for fields given in the VCF header. "
-        "Example: `--overwrite-number cosmic_CNT=.`",
+        help="Deprecated. "
+        "Use --overwrite-number-info or --overwrite-number-format instead.",
+        action="deprecated",
+    )
+    parser.add_argument(
+        "--overwrite-number-info",
+        nargs=2,
+        action="append",
+        metavar=("FIELD", "NUMBER"),
+        default=[],
+        help="Overwrite the number specification for INFO fields "
+        "given in the VCF header. "
+        "Example: `--overwrite-number cosmic_CNT .`",
+    )
+    parser.add_argument(
+        "--overwrite-number-format",
+        nargs=2,
+        action="append",
+        metavar=("FIELD", "NUMBER"),
+        default=[],
+        help="Overwrite the number specification for FORMAT fields "
+        "given in the VCF header. "
+        "Example: `--overwrite-number-format DP 2`",
     )
 
 
@@ -73,7 +92,7 @@ def tableize_vcf(
     vcf: VariantFile,
     expression: str,
     ann_key: str,
-    overwrite_number: Dict[str, str] = {},
+    overwrite_number: Dict[str, Dict[str, str]] = {},
 ) -> Iterator[tuple]:
     expression = f"({expression})"
     env = Environment(
@@ -257,11 +276,15 @@ def smart_open(filename=None, *args, **kwargs):
 def execute(args):
     with VariantFile(args.vcf) as vcf:
         expression = preprocess_header_expression(args.expression, vcf, True)
+        overwrite_number = {
+            "INFO": dict(args.overwrite_number_info),
+            "FORMAT": dict(args.overwrite_number_format),
+        }
         rows = tableize_vcf(
             vcf,
             expression,
             args.annotation_key,
-            overwrite_number=args.overwrite_number,
+            overwrite_number=overwrite_number,
         )
 
         try:
