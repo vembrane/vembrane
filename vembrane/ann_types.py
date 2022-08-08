@@ -3,10 +3,13 @@ from collections import defaultdict
 from sys import stderr
 from typing import Union, Iterable, Tuple, Dict, Callable, Any
 
-import numpy
-from numpy import float32
+from ctypes import c_float
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
+
+
+def float32(val: str) -> float:
+    return c_float(float(val)).value
 
 
 # If NoValue inherits from str, re.search("something", NoValue()) does not error
@@ -73,7 +76,7 @@ class InfoTuple:
         return len(self.values)
 
 
-IntFloatStr = Union[int, float, str, numpy.floating]
+IntFloatStr = Union[int, float, str]
 
 
 def type_info(value, number=".", field=None, record_idx=None):
