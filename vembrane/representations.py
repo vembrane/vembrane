@@ -179,6 +179,7 @@ class Environment(dict):
         header: VariantHeader,
         auxiliary: Dict[str, Set[str]] = {},
         overwrite_number: Dict[str, Dict[str, str]] = {},
+        evaluation_function_template: str = "lambda: {expression}",
     ):
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
@@ -195,7 +196,7 @@ class Environment(dict):
         # only if ALT (but not REF) is accessed (and ALT has multiple entries).
         self._alleles = None
 
-        func = f"lambda: {expression}"
+        func = evaluation_function_template.format(expression=expression)
 
         # The VCF specification only allows 32bit floats.
         # Comparisons such as `INFO["some_float"] > CONST` may yield unexpected results,
@@ -203,7 +204,7 @@ class Environment(dict):
         # Example: `c_float(0.6) = 0.6000000238418579 > 0.6`.
         # We can work around this by wrapping user provided floats in `ctypes.c_float`,
         # which should follow the same IEEE 754 specification as the VCF spec, as most
-        # C compilers should follow this standard (https://stackoverflow.com/a/17904539):
+        # C compilers should follow this standard (https://stackoverflow.com/a/17904539)
 
         # parse the expression, obtaining an AST
         expression_ast = ast.parse(func, mode="eval")

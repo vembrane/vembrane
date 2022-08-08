@@ -55,6 +55,12 @@ def add_subcommmand(subparsers):
               disable any header output.',
     )
     parser.add_argument(
+        "--tidy",
+        help="Instead of using `for_each_sample` to generate multiple columns, "
+        "use only one sample column but one row for each sample.",
+        action="store_true",
+    )
+    parser.add_argument(
         "--output",
         "-o",
         default="-",
@@ -93,11 +99,17 @@ def tableize_vcf(
     expression: str,
     ann_key: str,
     overwrite_number: Dict[str, Dict[str, str]] = {},
+    tidy: bool = False,
 ) -> Iterator[tuple]:
-    expression = f"({expression})"
-    env = Environment(
-        expression, ann_key, vcf.header, overwrite_number=overwrite_number
-    )
+
+    kwargs = dict(overwrite_number=overwrite_number)
+    if tidy:
+        kwargs[
+            "evaluation_function_template"
+        ] = "lambda: (({expression}) for SAMPLE in SAMPLES)"
+    else:
+        expression = f"({expression})"
+    env = Environment(expression, ann_key, vcf.header, **kwargs)
 
     record: VariantRecord
     for idx, record in enumerate(vcf):
@@ -111,9 +123,15 @@ def tableize_vcf(
             except KeyError:
                 annotations = [""]
             for annotation in annotations:
-                yield env.table(annotation)
+                if tidy:
+                    yield from env.table(annotation)
+                else:
+                    yield env.table(annotation)
         else:
-            yield env.table()
+            if tidy:
+                yield from env.table()
+            else:
+                yield env.table()
 
 
 def generate_for_each_sample_expressions(s: str, vcf: VariantFile) -> List[str]:
@@ -220,6 +238,8 @@ def get_header(args, vcf: Optional[VariantFile] = None) -> List[str]:
         header = args.expression
     else:
         header = args.header
+    if args.tidy:
+        header = f"SAMPLE, {header}"
     return get_toplevel(
         preprocess_header_expression(header, vcf, args.header == "auto")
     )
@@ -276,6 +296,8 @@ def smart_open(filename=None, *args, **kwargs):
 def execute(args):
     with VariantFile(args.vcf) as vcf:
         expression = preprocess_header_expression(args.expression, vcf, True)
+        if args.tidy:
+            expression = f"SAMPLE, {expression}"
         overwrite_number = {
             "INFO": dict(args.overwrite_number_info),
             "FORMAT": dict(args.overwrite_number_format),
@@ -285,6 +307,7 @@ def execute(args):
             expression,
             args.annotation_key,
             overwrite_number=overwrite_number,
+            tidy=args.tidy,
         )
 
         try:
