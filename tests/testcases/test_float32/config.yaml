@@ -1,0 +1,2 @@
+function: "filter"
+expression: '0.6 < INFO["FLOAT"] <= 0.9'
