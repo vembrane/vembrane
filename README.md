@@ -6,7 +6,34 @@ vembrane allows to simultaneously filter variants based on any `INFO` or `FORMAT
 
 vembrane relies on [pysam](https://pysam.readthedocs.io/en/latest/) for reading/writing VCF/BCF files.
 
+## Installation
+vembrane is available in [bioconda](https://bioconda.github.io/) and can either be installed into an existing conda environment with `mamba install -c bioconda vembrane` or into a new named environment `mamba create -n environment_name -c bioconda vembrane`.
+Alternatively, if you are familiar with git and [poetry](https://python-poetry.org/), clone this repository and run `poetry install`.
+
 ## `vembrane filter`
+
+### Usage
+vembrane takes two positional arguments: The filter expression and the input file; the latter may be omitted to read from `stdin` instead, making it easy to use vembrane in pipe chains.
+```
+usage: vembrane filter [options] expression [input vcf/bcf]
+
+options:
+  -h, --help            show this help message and exit
+  --output OUTPUT, -o OUTPUT
+                        Output file. If not specified, output is written to STDOUT.
+  --output-fmt {vcf,bcf,uncompressed-bcf}, -O {vcf,bcf,uncompressed-bcf}
+                        Output format.
+  --annotation-key FIELDNAME, -k FIELDNAME
+                        The INFO key for the annotation field. Defaults to "ANN".
+  --aux NAME PATH, -a NAME PATH
+                        Path to an auxiliary file containing a set of symbols.
+  --keep-unmatched      Keep all annotations of a variant if at least one of them
+                        passes the expression (mimics SnpSift behaviour).
+  --preserve-order      Ensures that the order of the output matches that of the input. 
+                        This is only useful if the input contains breakends (BNDs)
+                        since the order of all other variants is preserved anyway.
+```
+
 
 ### Filter expression
 The filter expression can be any valid python expression that evaluates to `bool`. However, functions and symbols available have been restricted to the following:
