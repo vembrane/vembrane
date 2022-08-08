@@ -163,20 +163,12 @@ UNSET = object()
 
 class WrapFloat32Visitor(ast.NodeTransformer):
     def visit_Constant(self, node):
-        if not isinstance(node.n, float):
+        from ctypes import c_float
+
+        if not isinstance(node.value, float):
             return node
 
-        return ast.Call(
-            func=ast.Name(
-                # assumes float32 is available in the globals
-                id="float32",
-                ctx=ast.Load(),
-            ),
-            args=[node],
-            keywords=[],
-            starargs=None,
-            kwargs=None,
-        )
+        return ast.Constant(c_float(node.value).value)
 
 
 class Environment(dict):

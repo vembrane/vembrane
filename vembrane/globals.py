@@ -3,7 +3,6 @@ import re
 import statistics
 from typing import Dict, Any, Iterable
 
-from numpy import float32
 
 from .ann_types import NA
 
@@ -121,7 +120,6 @@ def replace_na(values: Iterable[Any], replacement: Any) -> Iterable[Any]:
 _additional_functions = {
     "without_na": without_na,
     "replace_na": replace_na,
-    "float32": float32,
 }
 
 _explicit_clear = {
