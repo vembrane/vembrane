@@ -1,3 +1,4 @@
+import argparse
 import sys
 import yaml
 
@@ -17,8 +18,18 @@ from ..representations import Environment
 from .. import __version__
 
 
+class DeprecatedAction(argparse.Action):
+    def __call__(self, *args, **kwargs):
+        print(
+            f"{'/'.join(self.option_strings)} is deprecated.\n{self.help}",
+            file=sys.stderr,
+        )
+        exit(1)
+
+
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("filter")
+    parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
         "expression",
         type=check_expression,
@@ -81,6 +92,12 @@ def add_subcommmand(subparsers):
     )
     parser.add_argument(
         "--overwrite-number",
+        help="Deprecated. "
+        "Use --overwrite-number-info or --overwrite-number-format instead.",
+        action="deprecated",
+    )
+    parser.add_argument(
+        "--overwrite-number-info",
         nargs=2,
         action="append",
         metavar=("FIELD", "NUMBER"),
@@ -268,7 +285,7 @@ def execute(args):
         )
 
         overwrite_number = {
-            "INFO": dict(args.overwrite_number),
+            "INFO": dict(args.overwrite_number_info),
             "FORMAT": dict(args.overwrite_number_format),
         }
 

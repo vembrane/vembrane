@@ -7,6 +7,7 @@ from typing import Dict, Iterator, List, Optional
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
 
+from .filter import DeprecatedAction
 from ..common import check_expression
 from ..errors import VembraneError, HeaderWrongColumnNumber
 from ..representations import Environment
@@ -14,6 +15,7 @@ from ..representations import Environment
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("table")
+    parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
         "expression",
         type=check_expression,
@@ -60,6 +62,12 @@ def add_subcommmand(subparsers):
     )
     parser.add_argument(
         "--overwrite-number",
+        help="Deprecated. "
+        "Use --overwrite-number-info or --overwrite-number-format instead.",
+        action="deprecated",
+    )
+    parser.add_argument(
+        "--overwrite-number-info",
         nargs=2,
         action="append",
         metavar=("FIELD", "NUMBER"),
@@ -269,7 +277,7 @@ def execute(args):
     with VariantFile(args.vcf) as vcf:
         expression = preprocess_header_expression(args.expression, vcf, True)
         overwrite_number = {
-            "INFO": dict(args.overwrite_number),
+            "INFO": dict(args.overwrite_number_info),
             "FORMAT": dict(args.overwrite_number_format),
         }
         rows = tableize_vcf(
