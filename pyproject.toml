@@ -15,7 +15,7 @@ python = ">=3.8"
 pysam = "^0.19"
 pyyaml = "^6.0"
 asttokens = "^2.0"
-cyvcf2 = "^0.30.15"
+cyvcf2 = "^0.30.16"
 numpy = {version = "^1.23", python = ">=3.8"}
 intervaltree = "^3.1"
 

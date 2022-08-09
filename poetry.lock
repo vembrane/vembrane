@@ -1,6 +1,6 @@
 [[package]]
 name = "asttokens"
-version = "2.0.5"
+version = "2.0.7"
 description = "Annotate AST trees with source code positions"
 category = "main"
 optional = false
@@ -10,7 +10,7 @@ python-versions = "*"
 six = "*"
 
 [package.extras]
-test = ["astroid", "pytest"]
+test = ["astroid (<=2.5.3)", "pytest"]
 
 [[package]]
 name = "atomicwrites"
@@ -22,17 +22,17 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "attrs"
-version = "21.4.0"
+version = "22.1.0"
 description = "Classes Without Boilerplate"
 category = "dev"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = ">=3.5"
 
 [package.extras]
-dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit", "cloudpickle"]
+dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "mypy (>=0.900,!=0.940)", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit", "cloudpickle"]
 docs = ["furo", "sphinx", "zope.interface", "sphinx-notfound-page"]
-tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "cloudpickle"]
-tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "cloudpickle"]
+tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "mypy (>=0.900,!=0.940)", "pytest-mypy-plugins", "zope.interface", "cloudpickle"]
+tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "mypy (>=0.900,!=0.940)", "pytest-mypy-plugins", "cloudpickle"]
 
 [[package]]
 name = "black"
@@ -99,7 +99,7 @@ cron = ["capturer (>=2.4)"]
 
 [[package]]
 name = "cyvcf2"
-version = "0.30.15"
+version = "0.30.16"
 description = "fast vcf parsing with cython + htslib"
 category = "main"
 optional = false
@@ -112,7 +112,7 @@ numpy = "*"
 
 [[package]]
 name = "distlib"
-version = "0.3.4"
+version = "0.3.5"
 description = "Distribution utilities"
 category = "dev"
 optional = false
@@ -143,7 +143,7 @@ pyreadline3 = {version = "*", markers = "sys_platform == \"win32\" and python_ve
 
 [[package]]
 name = "identify"
-version = "2.5.1"
+version = "2.5.3"
 description = "File identification library for Python"
 category = "dev"
 optional = false
@@ -360,34 +360,36 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "virtualenv"
-version = "20.15.1"
+version = "20.16.3"
 description = "Virtual Python Environment builder"
 category = "dev"
 optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+python-versions = ">=3.6"
 
 [package.dependencies]
-distlib = ">=0.3.1,<1"
-filelock = ">=3.2,<4"
-platformdirs = ">=2,<3"
-six = ">=1.9.0,<2"
+distlib = ">=0.3.5,<1"
+filelock = ">=3.4.1,<4"
+platformdirs = ">=2.4,<3"
 
 [package.extras]
-docs = ["proselint (>=0.10.2)", "sphinx (>=3)", "sphinx-argparse (>=0.2.5)", "sphinx-rtd-theme (>=0.4.3)", "towncrier (>=21.3)"]
-testing = ["coverage (>=4)", "coverage-enable-subprocess (>=1)", "flaky (>=3)", "pytest (>=4)", "pytest-env (>=0.6.2)", "pytest-freezegun (>=0.4.1)", "pytest-mock (>=2)", "pytest-randomly (>=1)", "pytest-timeout (>=1)", "packaging (>=20.0)"]
+docs = ["proselint (>=0.13)", "sphinx (>=5.1.1)", "sphinx-argparse (>=0.3.1)", "sphinx-rtd-theme (>=1)", "towncrier (>=21.9)"]
+testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=21.3)", "pytest (>=7.0.1)", "pytest-env (>=0.6.2)", "pytest-freezegun (>=0.4.2)", "pytest-mock (>=3.6.1)", "pytest-randomly (>=3.10.3)", "pytest-timeout (>=2.1)"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8"
-content-hash = "94ec3f07430c3049b6edaa25fc72bf2e8c42169a4f4c3be95b954eb35680fcf3"
+content-hash = "c669d683d16ae91fa980379ad173233c10b00a951d5dcbe0e0f2bf70d72df9ec"
 
 [metadata.files]
 asttokens = [
-    {file = "asttokens-2.0.5-py2.py3-none-any.whl", hash = "sha256:0844691e88552595a6f4a4281a9f7f79b8dd45ca4ccea82e5e05b4bbdb76705c"},
-    {file = "asttokens-2.0.5.tar.gz", hash = "sha256:9a54c114f02c7a9480d56550932546a3f1fe71d8a02f1bc7ccd0ee3ee35cf4d5"},
+    {file = "asttokens-2.0.7-py2.py3-none-any.whl", hash = "sha256:f5589ef8518f73dd82c15e1c19f795d8a62c133485e557c04443d4a1a730cf9f"},
+    {file = "asttokens-2.0.7.tar.gz", hash = "sha256:8444353e4e2a99661c8dfb85ec9c02eedded08f0006234bff7db44a06840acc2"},
 ]
 atomicwrites = []
-attrs = []
+attrs = [
+    {file = "attrs-22.1.0-py2.py3-none-any.whl", hash = "sha256:86efa402f67bf2df34f51a335487cf46b1ec130d02b8d39fd248abfd30da551c"},
+    {file = "attrs-22.1.0.tar.gz", hash = "sha256:29adc2665447e5191d0e7c568fde78b21f9672d344281d0c6e1ab085429b22b6"},
+]
 black = []
 cfgv = [
     {file = "cfgv-3.3.1-py2.py3-none-any.whl", hash = "sha256:c6a0883f3917a037485059700b9e75da2464e6c27051014ad85ba6aaa5884426"},
@@ -396,14 +398,32 @@ cfgv = [
 click = []
 colorama = []
 coloredlogs = []
-cyvcf2 = []
+cyvcf2 = [
+    {file = "cyvcf2-0.30.16-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:a091d1c4f10767ac12366b4e16c1ec07951b1714a6454dce4240c3f1000605bb"},
+    {file = "cyvcf2-0.30.16-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:5144d56fde7452a19fd042033f17d4b65b1dc9ebc0e0971d0dfa3bc2f74516da"},
+    {file = "cyvcf2-0.30.16-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:33911e301268b346baddd0668547788b8458e2ef4dc163e822cbf181ab6a4784"},
+    {file = "cyvcf2-0.30.16-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:2c62a75536a11e52ad3a042ec1954391fa9240b784ca2d1f999bb939db61ae87"},
+    {file = "cyvcf2-0.30.16-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:02e0a5e7cc4350648a18b65b48a5ef8dda3a2b3ca31e503d95277091a6434e66"},
+    {file = "cyvcf2-0.30.16-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:e24f6d93e4debc98548435a986136ffed8d28757e94f58277cf146568a9e431e"},
+    {file = "cyvcf2-0.30.16-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:06c88221263be536292127bb68a8068e36201176f0ee5dd48796ee954f546c49"},
+    {file = "cyvcf2-0.30.16-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:b28c0029c1760b79ed3d0f3757e9454a7a7fb877a294ee32cc7dad3a4e66f4a5"},
+    {file = "cyvcf2-0.30.16-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:2f0a65664c0579cd212cd9dba872eb672ce2e23c1214f5dd5fa9e6176f7b270b"},
+    {file = "cyvcf2-0.30.16-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0e6760580c251f3a4aaed5bc22d025641d2e50922e3c50f9b46fd5c5df122f37"},
+    {file = "cyvcf2-0.30.16-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:a08f82b0181b31c83f505717251ac8637a98cd556fdb57c3667de1aa2180d427"},
+    {file = "cyvcf2-0.30.16-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:8f30b3169d6f4bde70040d10a0277e07c4d21ed06dfaaf09b047ab561189b45c"},
+    {file = "cyvcf2-0.30.16-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ddf1520aafa49d0cc57f233cba110403e1c71b4bc2426515d17a1213ffe1bbc3"},
+    {file = "cyvcf2-0.30.16.tar.gz", hash = "sha256:8d48f0d09d8d400c05ac44cbbe173545eda00f6ee484be2aab966922715d8073"},
+]
 distlib = [
-    {file = "distlib-0.3.4-py2.py3-none-any.whl", hash = "sha256:6564fe0a8f51e734df6333d08b8b94d4ea8ee6b99b5ed50613f731fd4089f34b"},
-    {file = "distlib-0.3.4.zip", hash = "sha256:e4b58818180336dc9c529bfb9a0b58728ffc09ad92027a3f30b7cd91e3458579"},
+    {file = "distlib-0.3.5-py2.py3-none-any.whl", hash = "sha256:b710088c59f06338ca514800ad795a132da19fda270e3ce4affc74abf955a26c"},
+    {file = "distlib-0.3.5.tar.gz", hash = "sha256:a7f75737c70be3b25e2bee06288cec4e4c221de18455b2dd037fe2a795cab2fe"},
 ]
 filelock = []
 humanfriendly = []
-identify = []
+identify = [
+    {file = "identify-2.5.3-py2.py3-none-any.whl", hash = "sha256:25851c8c1370effb22aaa3c987b30449e9ff0cece408f810ae6ce408fdd20893"},
+    {file = "identify-2.5.3.tar.gz", hash = "sha256:887e7b91a1be152b0d46bbf072130235a8117392b9f1828446079a816a05ef44"},
+]
 iniconfig = []
 intervaltree = []
 mypy-extensions = [
@@ -477,4 +497,7 @@ toml = [
 ]
 tomli = []
 typing-extensions = []
-virtualenv = []
+virtualenv = [
+    {file = "virtualenv-20.16.3-py2.py3-none-any.whl", hash = "sha256:4193b7bc8a6cd23e4eb251ac64f29b4398ab2c233531e66e40b19a6b7b0d30c1"},
+    {file = "virtualenv-20.16.3.tar.gz", hash = "sha256:d86ea0bb50e06252d79e6c241507cb904fcd66090c3271381372d6221a3970f9"},
+]
