@@ -7,11 +7,11 @@ from typing import Dict, Iterator, List, Optional
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
 
-from .filter import DeprecatedAction
 from ..common import check_expression
-from ..errors import VembraneError, HeaderWrongColumnNumber
+from ..errors import HeaderWrongColumnNumber, VembraneError
 from ..globals import allowed_globals
 from ..representations import Environment
+from .filter import DeprecatedAction
 
 
 def add_subcommmand(subparsers):
