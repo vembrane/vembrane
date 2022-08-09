@@ -1,3 +1,4 @@
+import argparse
 import sys
 import yaml
 
@@ -15,26 +16,24 @@ from ..errors import VembraneError
 from ..representations import Environment
 from .. import __version__
 
-from argparse import Action
-
-
 from cyvcf2 import VCF, Variant
 from cyvcf2 import Writer as VcfWriter
 
 from argparse import Namespace
 
 
-class StoreMapping(Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        items = getattr(namespace, self.dest, None)
-        if items is self.default or items is None:
-            items = {}
-        items.update(dict(m.split("=") for m in values.split(",")))
-        setattr(namespace, self.dest, items)
+class DeprecatedAction(argparse.Action):
+    def __call__(self, *args, **kwargs):
+        print(
+            f"{'/'.join(self.option_strings)} is deprecated.\n{self.help}",
+            file=sys.stderr,
+        )
+        exit(1)
 
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("filter")
+    parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
         "expression",
         type=check_expression,
@@ -97,11 +96,29 @@ def add_subcommmand(subparsers):
     )
     parser.add_argument(
         "--overwrite-number",
-        action=StoreMapping,
-        default={},
-        metavar="FIELD1=COUNT1,FIELD2=COUNT2,…",
-        help="Overwrite the number specification for fields given in the VCF header. "
-        "Example: `--overwrite-number cosmic_CNT=.`",
+        help="Deprecated. "
+        "Use --overwrite-number-info or --overwrite-number-format instead.",
+        action="deprecated",
+    )
+    parser.add_argument(
+        "--overwrite-number-info",
+        nargs=2,
+        action="append",
+        metavar=("FIELD", "NUMBER"),
+        default=[],
+        help="Overwrite the number specification for INFO fields "
+        "given in the VCF header. "
+        "Example: `--overwrite-number cosmic_CNT .`",
+    )
+    parser.add_argument(
+        "--overwrite-number-format",
+        nargs=2,
+        action="append",
+        metavar=("FIELD", "NUMBER"),
+        default=[],
+        help="Overwrite the number specification for FORMAT fields "
+        "given in the VCF header. "
+        "Example: `--overwrite-number-format DP 2`",
     )
 
 
@@ -150,7 +167,7 @@ def filter_vcf(
     keep_unmatched: bool = False,
     preserve_order: bool = False,
     auxiliary: Dict[str, Set[str]] = {},
-    overwrite_number: Dict[str, str] = {},
+    overwrite_number: Dict[str, Dict[str]] = {},
 ) -> Iterator[Variant]:
 
     env = Environment(expression, ann_key, vcf, auxiliary, overwrite_number)
@@ -159,41 +176,67 @@ def filter_vcf(
     info_keys = set(r.info().get("ID") for r in vcf.header_iter() if r.type == "INFO")
 
     record: Variant
-    for idx, record in enumerate(vcf):
-        record, record_has_passed = test_and_update_record(
-            env, idx, record, ann_key, keep_unmatched
-        )
-        if record_has_passed:
-            is_bnd = "SVTYPE" in info_keys and record.INFO.get("SVTYPE", None) == "BND"
-            if is_bnd:
-                event = record.INFO.get("EVENT", None)
-                events.add(event)
-            elif not preserve_order:
-                # if preserve_order is True, \
-                # we will output everything in the second pass instead
-                yield record
-
-    if len(events) > 0:
-        # perform a second pass if the first pass filtered breakend (BND) events
-        # since these are compound events which have to be filtered jointly
-        # cyvcf2 has no reset method (yet), so we have to initialize a new VCF reader
-        vcf = initialize_vcf(args)
+    if not preserve_order:
+        # If the order is not important, emit records that pass the filter expression
+        # as we encounter them
+        # However, breakends have to be considered jointly, so keep track of the
+        # respective events.
         for idx, record in enumerate(vcf):
-            is_bnd = "SVTYPE" in info_keys and record.INFO.get("SVTYPE", None) == "BND"
-            event = record.INFO.get("EVENT", None)
-
-            if is_bnd:
-                if event not in events:
-                    # only bnds with a valid associated event need to be considered, \
-                    # so skip the rest
-                    continue
-            else:
-                if not preserve_order:
-                    continue
-            record, _ = test_and_update_record(
+            record, record_has_passed = test_and_update_record(
                 env, idx, record, ann_key, keep_unmatched
             )
-            yield record
+            if record_has_passed:
+                is_bnd = (
+                    "SVTYPE" in info_keys and record.INFO.get("SVTYPE", None) == "BND"
+                )
+                if is_bnd:
+                    event = record.INFO.get("EVENT", None)
+                    events.add(event)
+                else:
+                    yield record
+        if len(events) > 0:
+            # perform a second pass if the first pass filtered breakend (BND) events
+            # since these are compound events which have to be filtered jointly
+            vcf = initialize_vcf(args)
+            for idx, record in enumerate(vcf):
+                is_bnd = (
+                    "SVTYPE" in info_keys and record.INFO.get("SVTYPE", None) == "BND"
+                )
+
+                # only bnds with a valid associated event need to be considered,
+                # so skip the rest
+                if is_bnd:
+                    event = record.INFO.get("EVENT", None)
+                    if event in events:
+                        yield record
+    else:
+        # If order *is* important, the first pass cannot emit any records but only
+        # keep track of breakend events. The records will only be emitted during the
+        # second pass
+        for idx, record in enumerate(vcf):
+            is_bnd = "SVTYPE" in info_keys and record.INFO.get("SVTYPE", None) == "BND"
+            if is_bnd:
+                record, record_has_passed = test_and_update_record(
+                    env, idx, record, ann_key, keep_unmatched
+                )
+                if record_has_passed:
+                    event = record.INFO.get("EVENT", None)
+                    events.add(event)
+
+        # The second pass can now yield record in the correct order
+        vcf = initialize_vcf(args)
+        for idx, record in enumerate(vcf):
+            is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
+            if is_bnd:
+                event = record.INFO.get("EVENT", None)
+                if event in events:
+                    yield record
+            else:
+                record, keep = test_and_update_record(
+                    env, idx, record, ann_key, keep_unmatched
+                )
+                if keep:
+                    yield record
 
 
 def statistics(
@@ -246,9 +289,14 @@ def initialize_vcf(args: Namespace) -> VCF:
     return vcf
 
 
-def execute(args: Namespace):
+def execute(args):
     aux = read_auxiliary(args.aux)
     vcf = initialize_vcf(args)
+
+    overwrite_number = {
+        "INFO": dict(args.overwrite_number_info),
+        "FORMAT": dict(args.overwrite_number_format),
+    }
 
     records = filter_vcf(
         vcf,
@@ -258,7 +306,7 @@ def execute(args: Namespace):
         keep_unmatched=args.keep_unmatched,
         preserve_order=args.preserve_order,
         auxiliary=aux,
-        overwrite_number=args.overwrite_number,
+        overwrite_number=overwrite_number,
     )
 
     try:

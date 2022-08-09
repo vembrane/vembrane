@@ -2,4 +2,4 @@ function: "filter"
 expression: 'INFO["INT"] > 0'
 # TypeError: '>' not supported between instances of 'InfoTuple' and 'int'
 raises: "TypeError"
-overwrite_number: "INT=2"
+overwrite_number_info: ["INT", "2"]

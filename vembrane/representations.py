@@ -187,6 +187,16 @@ class Annotation(NoValueDict):
 UNSET = object()
 
 
+class WrapFloat32Visitor(ast.NodeTransformer):
+    def visit_Constant(self, node):
+        from ctypes import c_float
+
+        if not isinstance(node.value, float):
+            return node
+
+        return ast.Constant(c_float(node.value).value)
+
+
 class Environment(dict):
     def __init__(
         self,
@@ -194,7 +204,7 @@ class Environment(dict):
         ann_key: str,
         vcf: VCF,
         auxiliary: Dict[str, Set[str]] = {},
-        overwrite_number: Dict[str, str] = {},
+        overwrite_number: Dict[str, Dict[str, str]] = {},
     ):
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
@@ -212,7 +222,30 @@ class Environment(dict):
         # REF/ALT alleles are cached separately to raise "MoreThanOneAltAllele"
         # only if ALT (but not REF) is accessed (and ALT has multiple entries).
         self._alleles = None
-        self._func = eval(f"lambda: {expression}", self, {})
+
+        func = f"lambda: {expression}"
+
+        # The VCF specification only allows 32bit floats.
+        # Comparisons such as `INFO["some_float"] > CONST` may yield unexpected results,
+        # because `some_float` is a 32bit float while `CONST` is a python 64bit float.
+        # Example: `c_float(0.6) = 0.6000000238418579 > 0.6`.
+        # We can work around this by wrapping user provided floats in `ctypes.c_float`,
+        # which should follow the same IEEE 754 specification as the VCF spec, as most
+        # C compilers should follow this standard (https://stackoverflow.com/a/17904539)
+
+        # parse the expression, obtaining an AST
+        expression_ast = ast.parse(func, mode="eval")
+
+        # wrap each float constant in numpy.float32
+        expression_ast = WrapFloat32Visitor().visit(expression_ast)
+
+        # housekeeping
+        expression_ast = ast.fix_missing_locations(expression_ast)
+
+        # compile the now-fixed code-tree
+        func = compile(expression_ast, filename="expression.py", mode="eval")
+
+        self._func = eval(func, self, {})
 
         self._getters = {
             "AUX": self._get_aux,
@@ -238,13 +271,20 @@ class Environment(dict):
         header = list(vcf.header_iter())
         self._numbers = {
             kind: {
-                record.info().get("ID"): overwrite_number.get(record.info().get("ID"))
+                record.info()
+                .get("ID"): overwrite_number.get(kind, {})
+                .get(record.info().get("ID"))
                 or record.info().get("Number")
                 for record in header
                 if record.type == kind
             }
             for kind in set(r.type for r in header)
         }
+
+        # always explicitly set "Number" for certain fields
+        # which get special pysam treatment:
+        # - `FORMAT["GT"]` is always parsed as a list of integer values
+        self._numbers.get("FORMAT", {})["GT"] = "."
 
         # At the moment, only INFO and FORMAT records are checked
         self._header_info_fields = self._numbers.get("INFO", dict())
