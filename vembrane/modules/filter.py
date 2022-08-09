@@ -167,7 +167,7 @@ def filter_vcf(
     keep_unmatched: bool = False,
     preserve_order: bool = False,
     auxiliary: Dict[str, Set[str]] = {},
-    overwrite_number: Dict[str, Dict[str]] = {},
+    overwrite_number: Dict[str, Dict[str, str]] = {},
 ) -> Iterator[Variant]:
 
     env = Environment(expression, ann_key, vcf, auxiliary, overwrite_number)
@@ -226,7 +226,7 @@ def filter_vcf(
         # The second pass can now yield record in the correct order
         vcf = initialize_vcf(args)
         for idx, record in enumerate(vcf):
-            is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
+            is_bnd = "SVTYPE" in info_keys and record.INFO.get("SVTYPE", None) == "BND"
             if is_bnd:
                 event = record.INFO.get("EVENT", None)
                 if event in events:
