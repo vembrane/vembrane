@@ -5,14 +5,14 @@ repos:
       - id: black
 
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 4.0.1
+    rev: 5.0.4
     hooks:
       - id: flake8
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.3.0
     hooks:
-      - id: check-byte-order-marker
+      - id: fix-byte-order-marker
         exclude: ^tests/.*
       - id: check-case-conflict
         exclude: ^tests/.*
