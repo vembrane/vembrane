@@ -1,9 +1,9 @@
 import ast
 from typing import List
 
-from vembrane.errors import InvalidExpression
-
 from pysam.libcbcf import VariantHeader
+
+from .errors import InvalidExpression
 
 
 def check_expression(expression: str) -> str:

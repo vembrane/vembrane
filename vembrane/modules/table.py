@@ -143,7 +143,7 @@ def generate_for_each_sample_column_names(s: str, vcf: VariantFile) -> List[str]
     var, inner = _var_and_body(s)
 
     samples = list(vcf.header.samples)
-    from vembrane.globals import allowed_globals
+    from ..globals import allowed_globals
 
     __globals = allowed_globals.copy()
 
