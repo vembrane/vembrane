@@ -82,10 +82,15 @@ class InfoTuple:
         elif isinstance(other, value_type):
             return self.values == other
         else:
-            raise ValueError(
+            raise TypeError(
                 f"Incomparable: "
                 f"{type(self)} (value type: {type(self.values)}), "
                 f"{type(other)}"
+                + (
+                    f" (value type: {type(other.values)})"
+                    if isinstance(other, InfoTuple)
+                    else ""
+                )
             )
 
     def __hash__(self):
