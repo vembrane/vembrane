@@ -88,6 +88,9 @@ class InfoTuple:
                 f"{type(other)}"
             )
 
+    def __hash__(self):
+        return hash(self.values)
+
 
 IntFloatStr = Union[int, float, str]
 
