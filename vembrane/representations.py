@@ -197,8 +197,8 @@ class Environment(dict):
         # because `some_float` is a 32bit float while `CONST` is a python 64bit float.
         # Example: `c_float(0.6) = 0.6000000238418579 > 0.6`.
         # We can work around this by wrapping user provided floats in `ctypes.c_float`,
-        # which should follow the same IEEE 754 specification as the VCF spec, as most
-        # C compilers should follow this standard (https://stackoverflow.com/a/17904539):
+        # which should follow the same IEEE 754 specification as the VCF spec, as most C
+        # compilers should follow this standard (https://stackoverflow.com/a/17904539):
 
         # parse the expression, obtaining an AST
         expression_ast = ast.parse(func, mode="eval")
