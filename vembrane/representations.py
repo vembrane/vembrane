@@ -301,7 +301,7 @@ class Environment(dict):
         alleles = self._get_alleles()
         if len(alleles) > 2:
             raise MoreThanOneAltAllele()
-        value = alleles[1]
+        value = alleles[1] if len(alleles) == 2 else NA
         self._globals["ALT"] = value
         return value
 
