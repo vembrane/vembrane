@@ -1,21 +1,17 @@
 import argparse
 import sys
-import yaml
-
-from sys import stderr
 from collections import defaultdict
-from typing import Iterator, Set, Dict
-from itertools import islice, chain
+from itertools import chain, islice
+from sys import stderr
+from typing import Dict, Iterator, Set
+
+import yaml
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
-from ..common import (
-    check_expression,
-    get_annotation_keys,
-    split_annotation_entry,
-)
+from .. import __version__
+from ..common import check_expression, get_annotation_keys, split_annotation_entry
 from ..errors import VembraneError
 from ..representations import Environment
-from .. import __version__
 
 
 class DeprecatedAction(argparse.Action):

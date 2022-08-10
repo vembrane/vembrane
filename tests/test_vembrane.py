@@ -1,17 +1,16 @@
 import argparse
 import builtins
-from itertools import zip_longest
 import os
-from pathlib import Path
 import tempfile
+from itertools import zip_longest
+from pathlib import Path
 
 import pytest
 import yaml
 from pysam import VariantFile
 
-from vembrane import errors, __version__
+from vembrane import __version__, errors
 from vembrane.modules import filter, table
-
 
 CASES = Path(__file__).parent.joinpath("testcases")
 

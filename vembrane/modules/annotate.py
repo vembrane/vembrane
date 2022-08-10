@@ -1,16 +1,14 @@
+from collections.abc import Iterable
+from sys import stderr
 from typing import Iterator
 
 import numpy as np
 import yaml
+from intervaltree import Interval, IntervalTree
 from pysam.libcbcf import VariantFile, VariantRecord
 
 from ..common import check_expression
 from ..representations import Environment
-
-from intervaltree import Interval, IntervalTree
-from collections.abc import Iterable
-
-from sys import stderr
 
 
 def add_subcommmand(subparsers):

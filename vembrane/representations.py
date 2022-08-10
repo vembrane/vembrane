@@ -1,25 +1,16 @@
 import ast
 from itertools import chain
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Set, Tuple
 
-from pysam.libcbcf import (
-    VariantRecordSamples,
-    VariantHeader,
-    VariantRecord,
-)
+from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
-from .ann_types import (
-    NA,
-    type_info,
-    ANN_TYPER,
-    MoreThanOneAltAllele,
-)
+from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, type_info
 from .common import get_annotation_keys, split_annotation_entry
 from .errors import (
-    UnknownSample,
+    UnknownAnnotation,
     UnknownFormatField,
     UnknownInfoField,
-    UnknownAnnotation,
+    UnknownSample,
 )
 from .globals import allowed_globals, custom_functions
 
