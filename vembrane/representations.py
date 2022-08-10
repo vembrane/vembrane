@@ -1,27 +1,22 @@
 import ast
 from itertools import chain
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Set, Tuple
 
 from pysam.libcbcf import (
-    VariantRecordSamples,
-    VariantRecordFormat,
-    VariantRecordInfo,
     VariantHeader,
     VariantRecord,
+    VariantRecordFormat,
+    VariantRecordInfo,
+    VariantRecordSamples,
 )
 
-from .ann_types import (
-    NA,
-    type_info,
-    ANN_TYPER,
-    MoreThanOneAltAllele,
-)
+from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, type_info
 from .common import get_annotation_keys, split_annotation_entry
 from .errors import (
-    UnknownSample,
+    UnknownAnnotation,
     UnknownFormatField,
     UnknownInfoField,
-    UnknownAnnotation,
+    UnknownSample,
 )
 from .globals import allowed_globals, custom_functions
 
@@ -202,8 +197,8 @@ class Environment(dict):
         # because `some_float` is a 32bit float while `CONST` is a python 64bit float.
         # Example: `c_float(0.6) = 0.6000000238418579 > 0.6`.
         # We can work around this by wrapping user provided floats in `ctypes.c_float`,
-        # which should follow the same IEEE 754 specification as the VCF spec, as most
-        # C compilers should follow this standard (https://stackoverflow.com/a/17904539):
+        # which should follow the same IEEE 754 specification as the VCF spec, as most C
+        # compilers should follow this standard (https://stackoverflow.com/a/17904539):
 
         # parse the expression, obtaining an AST
         expression_ast = ast.parse(func, mode="eval")

@@ -1,8 +1,7 @@
 import math
 import re
 import statistics
-from typing import Dict, Any, Iterable
-
+from typing import Any, Dict, Iterable
 
 from .ann_types import NA
 

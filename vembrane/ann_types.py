@@ -1,9 +1,8 @@
 import re
 from collections import defaultdict
-from sys import stderr
-from typing import Union, Iterable, Tuple, Dict, Callable, Any
-
 from ctypes import c_float
+from sys import stderr
+from typing import Any, Callable, Dict, Iterable, Tuple, Union
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 

@@ -7,10 +7,11 @@ from typing import Dict, Iterator, List, Optional
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
 
-from .filter import DeprecatedAction
 from ..common import check_expression
-from ..errors import VembraneError, HeaderWrongColumnNumber
+from ..errors import HeaderWrongColumnNumber, VembraneError
+from ..globals import allowed_globals
 from ..representations import Environment
+from .filter import DeprecatedAction
 
 
 def add_subcommmand(subparsers):
@@ -143,8 +144,6 @@ def generate_for_each_sample_column_names(s: str, vcf: VariantFile) -> List[str]
     var, inner = _var_and_body(s)
 
     samples = list(vcf.header.samples)
-    from vembrane.globals import allowed_globals
-
     __globals = allowed_globals.copy()
 
     column_names = []
