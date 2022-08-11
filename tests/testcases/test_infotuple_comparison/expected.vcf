@@ -1,0 +1,10 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##fileDate=20191217
+##source=strelka
+##source_version=2.9.10
+##startTime=Tue Dec 17 17:01:25 2019
+##contig=<ID=chr18,length=80373285>
+##FORMAT=<ID=GT,Number=2,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S2	S3	S4	S5	S6	S7	S8	S9
+chr18	27963423	.	G	A	276	PASS	.	GT	./.	1/1	0/0	0/1	1/0	./0	./1	1/.	0/.

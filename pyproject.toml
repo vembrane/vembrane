@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vembrane"
-version = "0.11.0"
+version = "0.11.2"
 description = "Filter VCF/BCF files with Python expressions."
 authors = ["Till Hartmann", "Christopher Schröder", "Johannes Köster", "Jan Forster", "Marcel Bargull", "Felix Mölder", "Elias Kuthe", "David Lähnemann"]
 readme = "README.md"
@@ -41,6 +41,9 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.isort]
+profile = "black"
 
 [build-system]
 requires = ["poetry>=0.12"]

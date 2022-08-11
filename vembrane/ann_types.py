@@ -1,9 +1,8 @@
 import re
 from collections import defaultdict
-from sys import stderr
-from typing import Union, Iterable, Tuple, Dict, Callable, Any
-
 from ctypes import c_float
+from sys import stderr
+from typing import Any, Callable, Dict, Iterable, Tuple, Union
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
@@ -74,6 +73,27 @@ class InfoTuple:
 
     def __len__(self):
         return len(self.values)
+
+    def __eq__(self, other):
+        value_type = type(self.values)
+        if isinstance(other, InfoTuple) and isinstance(other.values, value_type):
+            return self.values == other.values
+        elif isinstance(other, value_type):
+            return self.values == other
+        else:
+            raise TypeError(
+                f"Incomparable: "
+                f"{type(self)} (value type: {type(self.values)}), "
+                f"{type(other)}"
+                + (
+                    f" (value type: {type(other.values)})"
+                    if isinstance(other, InfoTuple)
+                    else ""
+                )
+            )
+
+    def __hash__(self):
+        return hash(self.values)
 
 
 IntFloatStr = Union[int, float, str]

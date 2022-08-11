@@ -1,7 +1,7 @@
 import argparse
 
-from .modules import filter, table, annotate
 from . import __version__
+from .modules import annotate, filter, table
 
 
 def main():

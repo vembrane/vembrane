@@ -1,0 +1,2 @@
+function: "filter"
+expression: 'FORMAT["GT"]["S2"] == (1, 1) and FORMAT["GT"]["S3"] == (0, 0) and FORMAT["GT"]["S4"] == (0, 1) and FORMAT["GT"]["S5"] == (1, 0) and FORMAT["GT"]["S6"] == (None, 0) and FORMAT["GT"]["S7"] == (None, 1) and FORMAT["GT"]["S8"] == (1, None) and FORMAT["GT"]["S9"] == (0, None)'
