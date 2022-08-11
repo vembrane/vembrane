@@ -2,13 +2,7 @@ import ast
 from itertools import chain
 from typing import Dict, List, Set, Tuple
 
-from pysam.libcbcf import (
-    VariantHeader,
-    VariantRecord,
-    VariantRecordFormat,
-    VariantRecordInfo,
-    VariantRecordSamples,
-)
+from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
 from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, type_info
 from .common import get_annotation_keys, split_annotation_entry
@@ -34,11 +28,13 @@ class Format(NoValueDict):
     def __init__(
         self,
         record_idx: int,
+        record: VariantRecord,
         name: str,
         number: str,
         record_samples: VariantRecordSamples,
     ):
         self._record_idx = record_idx
+        self._record = record
         self._name = name
         self._number = number
         self._record_samples = record_samples
@@ -51,7 +47,7 @@ class Format(NoValueDict):
             try:
                 record_sample = self._record_samples[sample]
             except KeyError:
-                raise UnknownSample(self._record_idx, sample)
+                raise UnknownSample(self._record_idx, self._record, sample)
             value = type_info(
                 record_sample[self._name], self._number, self._name, self._record_idx
             )
@@ -63,14 +59,14 @@ class Formats(NoValueDict):
     def __init__(
         self,
         record_idx: int,
+        record: VariantRecord,
         header_format_fields: Dict[str, str],
-        record_format: VariantRecordFormat,
-        record_samples: VariantRecordSamples,
     ):
+        self._record = record
         self._record_idx = record_idx
         self._header_format_fields = header_format_fields
-        self._record_format = record_format
-        self._record_samples = record_samples
+        self._record_format = record.format
+        self._record_samples = record.samples
         self._formats = {}
 
     def __getitem__(self, item):
@@ -80,9 +76,11 @@ class Formats(NoValueDict):
             try:
                 self._record_format[item]
             except KeyError:
-                raise UnknownFormatField(self._record_idx, item)
+                raise UnknownFormatField(self._record_idx, self._record, item)
             number = self._header_format_fields[item]
-            format_field = Format(self._record_idx, item, number, self._record_samples)
+            format_field = Format(
+                self._record_idx, self._record, item, number, self._record_samples
+            )
             self._formats[item] = format_field
             return format_field
 
@@ -91,12 +89,13 @@ class Info(NoValueDict):
     def __init__(
         self,
         record_idx: int,
-        record_info: VariantRecordInfo,
+        record: VariantRecord,
         header_info_fields: Dict[str, str],
         ann_key: str,
     ):
         self._record_idx = record_idx
-        self._record_info = record_info
+        self._record = record
+        self._record_info = record.info
         self._header_info_fields = header_info_fields
         self._ann_key = ann_key
         self._info_dict = {}
@@ -109,11 +108,11 @@ class Info(NoValueDict):
                 if item == self._ann_key:
                     raise KeyError(item)
                 untyped_value = self._record_info[item]
-            except KeyError as ke:
+            except KeyError:
                 if item in self._header_info_fields:
                     value = NA
                 else:
-                    raise UnknownInfoField(self._record_idx, ke)
+                    raise UnknownInfoField(self._record_idx, self._record, item)
             else:
                 value = self._info_dict[item] = type_info(
                     untyped_value,
@@ -127,6 +126,7 @@ class Info(NoValueDict):
 class Annotation(NoValueDict):
     def __init__(self, ann_key: str, header: VariantHeader):
         self._record_idx = -1
+        self._record = None
         self._annotation_data = {}
         self._data = {}
         annotation_keys = get_annotation_keys(header, ann_key)
@@ -135,8 +135,9 @@ class Annotation(NoValueDict):
             for ann_idx, entry in enumerate(map(ANN_TYPER.get_entry, annotation_keys))
         }
 
-    def update(self, record_idx: int, annotation: str):
+    def update(self, record_idx: int, record: VariantRecord, annotation: str):
         self._record_idx = record_idx
+        self._record = record
         self._data.clear()
         self._annotation_data = split_annotation_entry(annotation)
 
@@ -146,8 +147,8 @@ class Annotation(NoValueDict):
         except KeyError:
             try:
                 ann_idx, convert = self._ann_conv[item]
-            except KeyError as ke:
-                raise UnknownAnnotation(self._record_idx, ke)
+            except KeyError:
+                raise UnknownAnnotation(self._record_idx, self._record, item)
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
@@ -318,7 +319,7 @@ class Environment(dict):
     def _get_info(self) -> Info:
         value = Info(
             self.idx,
-            self.record.info,
+            self.record,
             self._header_info_fields,
             self._ann_key,
         )
@@ -328,9 +329,8 @@ class Environment(dict):
     def _get_format(self) -> Formats:
         value = Formats(
             self.idx,
+            self.record,
             self._header_format_fields,
-            self.record.format,
-            self.record.samples,
         )
         self._globals["FORMAT"] = value
         return value
@@ -353,10 +353,10 @@ class Environment(dict):
 
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
-            self._annotation.update(self.idx, annotation)
+            self._annotation.update(self.idx, self.record, annotation)
         return self._func()
 
     def table(self, annotation: str = "") -> tuple:
         if self._has_ann:
-            self._annotation.update(self.idx, annotation)
+            self._annotation.update(self.idx, self.record, annotation)
         return self._func()

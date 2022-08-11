@@ -1,14 +1,23 @@
+from pysam import VariantRecord
+
+
 class VembraneError(Exception):
     """Basic exception for errors raised by vembrane"""
+
+    def __str__(self):
+        return self.args[0]
 
 
 class UnknownAnnotation(VembraneError):
     """Unknown annotation entry"""
 
-    def __init__(self, record, key, msg=None):
+    def __init__(
+        self, record_idx: int, record: VariantRecord, key: str, msg: str = None
+    ):
         if msg is None:
-            msg = f"No ANN entry for '{key}' in record {record}"
+            msg = f"No ANN entry for '{key}' in record {record_idx}:\n{str(record)}"
         super(UnknownAnnotation, self).__init__(msg)
+        self.record_idx = record_idx
         self.record = record
         self.key = key
 
@@ -16,10 +25,16 @@ class UnknownAnnotation(VembraneError):
 class UnknownSample(VembraneError, KeyError):
     """Unknown Sample"""
 
-    def __init__(self, record, sample, msg=None):
+    def __init__(
+        self, record_idx: int, record: VariantRecord, sample: str, msg: str = None
+    ):
         if msg is None:
-            msg = f"No sample with name '{sample}' in record {record}"
+            msg = (
+                f"No sample with name '{sample}' in record {record_idx}:\n{str(record)}"
+            )
+
         super(UnknownSample, self).__init__(msg)
+        self.record_idx = record_idx
         self.record = record
         self.field = sample
 
@@ -27,29 +42,34 @@ class UnknownSample(VembraneError, KeyError):
 class UnknownFormatField(VembraneError, KeyError):
     """Unknown FORMAT key"""
 
-    def __init__(self, record, field, msg=None):
+    def __init__(
+        self, record_idx: int, record: VariantRecord, field: str, msg: str = None
+    ):
         if msg is None:
-            msg = f"No FORMAT field '{field}' in record {record}"
+            msg = f"No FORMAT field '{field}' in record {record_idx}:\n{str(record)}"
         super(UnknownFormatField, self).__init__(msg)
-        self.record = record
+        self.record_idx = record_idx
+        self.record = record_idx
         self.field = field
 
 
 class UnknownInfoField(VembraneError):
     """Unknown INFO key"""
 
-    def __init__(self, record, field, msg=None):
+    def __init__(
+        self, record_idx: int, record: VariantRecord, field: str, msg: str = None
+    ):
         if msg is None:
-            msg = f"No INFO field '{field}' in record {record}"
+            msg = f"No INFO field '{field}' in record {record_idx}:\n{str(record)}"
         super(UnknownInfoField, self).__init__(msg)
-        self.record = record
+        self.record = record_idx
         self.field = field
 
 
 class InvalidExpression(VembraneError):
     """Filter expression is invalid"""
 
-    def __init__(self, expression, reason, msg=None):
+    def __init__(self, expression: str, reason: str, msg: str = None):
         if msg is None:
             msg = f"The provided expression '{expression}' is invalid. Reason: {reason}"
         super(InvalidExpression, self).__init__(msg)
