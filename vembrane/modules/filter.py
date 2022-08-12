@@ -163,7 +163,7 @@ def filter_vcf(
 
     env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
 
-    mate_key = lambda mates: "MATES: " + ",".join(sorted(mates))
+    mate_key = lambda mates: "__MATES: " + ",".join(sorted(mates))
 
     info_keys = set(vcf.header.info.keys())
     has_svtype = "SVTYPE" in info_keys
