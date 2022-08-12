@@ -3,7 +3,7 @@ import sys
 from collections import defaultdict
 from itertools import chain, islice
 from sys import stderr
-from typing import Dict, Iterator, Set
+from typing import Dict, Iterable, Iterator, Set
 
 import yaml
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
@@ -163,7 +163,8 @@ def filter_vcf(
 
     env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
 
-    mate_key = lambda mates: "__MATES: " + ",".join(sorted(mates))
+    def mate_key(mates: Iterable[str]) -> str:
+        return "__MATES: " + ",".join(sorted(mates))
 
     info_keys = set(vcf.header.info.keys())
     has_svtype = "SVTYPE" in info_keys
