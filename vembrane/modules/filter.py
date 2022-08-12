@@ -207,8 +207,8 @@ def filter_vcf(
                     event.add(record, record_has_passed)
                     if event.passed:
                         yield from event.emit()
-                    if event.is_mate_pair():
-                        del events[mate_pair]
+                        if event.is_mate_pair():
+                            del events[mate_pair]
                 else:
                     # if there's no entry for the event or mate pair yet, create one
                     is_mate_pair = mate_pair and not event_name
