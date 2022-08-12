@@ -183,9 +183,9 @@ def filter_vcf(
                 env, idx, record, ann_key, keep_unmatched
             )
 
-            # breakend records *may* have the "EVENT" specified, but don't have to
-            # in that case only the MATE_ID is available (which may contain more than
-            # one ID)
+            # Breakend records *may* have the "EVENT" specified, but don't have to.
+            # In that case only the MATEID *may* bee available
+            # (which may contain more than one ID)
             is_bnd = has_svtype and record.info.get("SVTYPE", None) == "BND"
             if is_bnd:
                 mate_ids = record.info.get("MATEID", [])
@@ -203,9 +203,14 @@ def filter_vcf(
                 event_name = event_name or mate_pair
                 event = events.get(event_name, None)
 
+                # if there's already an associated event
                 if event:
+                    # add this record to the event
                     event.add(record, record_has_passed)
+
+                    # if we already know that the event is a "PASS"…
                     if event.passed:
+                        # … emit all records associated with it
                         yield from event.emit()
                         if event.is_mate_pair():
                             del events[mate_pair]
