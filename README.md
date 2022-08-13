@@ -1,4 +1,6 @@
-[![CI](https://github.com/vembrane/vembrane/actions/workflows/main.yml/badge.svg)](https://github.com/vembrane/vembrane/actions/workflows/main.yml) [![DOI](https://zenodo.org/badge/276383670.svg)](https://zenodo.org/badge/latestdoi/276383670)
+[![CI](https://github.com/vembrane/vembrane/actions/workflows/main.yml/badge.svg)](https://github.com/vembrane/vembrane/actions/workflows/main.yml)
+[![DOI](https://zenodo.org/badge/276383670.svg)](https://zenodo.org/badge/latestdoi/276383670)
+[![Bioconda](https://anaconda.org/bioconda/misopy/badges/installer/conda.svg)](https://bioconda.github.io/recipes/vembrane/README.html)
 
 # vembrane: variant filtering using python expressions
 
