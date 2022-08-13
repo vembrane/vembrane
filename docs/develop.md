@@ -11,6 +11,11 @@ poetry install
 All packages that vembrane relies on can be found in the `[tool.poetry.dependencies]` section of `pyproject.toml`.
 The exact environment is usually locked (see `poetry.lock` for details).
 
+To see the dependencies in the `requirements.txt` format, type in the root directory
+```sh
+poetry export --without-hashes
+```
+
 
 ## `pre-commit` hooks
 
