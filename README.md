@@ -111,11 +111,16 @@ The following VCF fields can be accessed in the filter expression:
   ```
 * Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
   ```sh
-  vembrane filter 'any(entry in ANN["CLIN_SIG"] for entry in ("pathogenic", "likely_pathogenic", "drug_response"))' variants.vcf
+  vembrane filter \
+    'any(entry in ANN["CLIN_SIG"]
+         for entry in ("pathogenic", "likely_pathogenic", "drug_response"))' \
+    variants.vcf
   ```
   Using set operations, the same may also be expressed as:
   ```sh
-  vembrane filter 'not {"pathogenic", "likely_pathogenic", "drug_response"}.isdisjoint(ANN["CLIN_SIG"])' variants.vcf
+  vembrane filter \
+    'not {"pathogenic", "likely_pathogenic", "drug_response"}.isdisjoint(ANN["CLIN_SIG"])' \
+    variants.vcf
   ```
 
 ### Custom `ANN` types
