@@ -29,7 +29,7 @@ options:
                         Path to an auxiliary file containing a set of symbols.
   --keep-unmatched      Keep all annotations of a variant if at least one of them
                         passes the expression (mimics SnpSift behaviour).
-  --preserve-order      Ensures that the order of the output matches that of the input. 
+  --preserve-order      Ensures that the order of the output matches that of the input.
                         This is only useful if the input contains breakends (BNDs)
                         since the order of all other variants is preserved anyway.
 ```
@@ -47,8 +47,8 @@ The filter expression can be any valid python expression that evaluates to `bool
  * Any function from [`statistics`](https://docs.python.org/3/library/statistics.html)
  * Regular expressions via [`re`](https://docs.python.org/3/library/re.html)
  * custom functions:
-   * `without_na(values: Iterable[Any]) -> Iterable[Any]` (keep only values that are not `NA`)
-   * `replace_na(values: Iterable[Any], replacement: Any) -> Iterable[Any]` (replace values that are `NA` with some other fixed value)
+   * `without_na(values: Iterable[T]) -> Iterable[T]` (keep only values that are not `NA`)
+   * `replace_na(values: Iterable[T], replacement: T) -> Iterable[T]` (replace values that are `NA` with some other fixed value)
    * genotype related:
      * `count_hom`, `count_het` , `count_any_ref`, `count_any_var`, `count_hom_ref`, `count_hom_var`
      * `is_hom`, `is_het`, `is_hom_ref` , `is_hom_var`

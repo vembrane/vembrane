@@ -1,7 +1,7 @@
 import math
 import re
 import statistics
-from typing import Any, Dict, Iterable
+from typing import Callable, Dict, Iterable, TypeVar
 
 from .ann_types import NA
 
@@ -104,11 +104,14 @@ _statistics_exports = {
 }
 
 
-def without_na(values: Iterable[Any]) -> "filter":
+T = TypeVar("T")
+
+
+def without_na(values: Iterable[T]) -> Iterable[T]:
     return filter(lambda v: v is not NA, values)
 
 
-def replace_na(values: Iterable[Any], replacement: Any) -> Iterable[Any]:
+def replace_na(values: Iterable[T], replacement: T) -> Iterable[T]:
     for v in values:
         if v is not NA:
             yield v
@@ -141,7 +144,7 @@ allowed_globals = {
 }
 
 
-def custom_functions(env) -> Dict[str, Any]:
+def custom_functions(env) -> Dict[str, Callable]:
     return {
         "count_hom": eval(
             "lambda: "
