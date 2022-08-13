@@ -29,7 +29,7 @@ options:
                         Path to an auxiliary file containing a set of symbols.
   --keep-unmatched      Keep all annotations of a variant if at least one of them
                         passes the expression (mimics SnpSift behaviour).
-  --preserve-order      Ensures that the order of the output matches that of the input. 
+  --preserve-order      Ensures that the order of the output matches that of the input.
                         This is only useful if the input contains breakends (BNDs)
                         since the order of all other variants is preserved anyway.
 ```
@@ -86,35 +86,35 @@ The following VCF fields can be accessed in the filter expression:
 ### Examples
 
 * Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH":
-  ```
+  ```sh
   vembrane filter 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"' variants.bcf
   ```
 * Only keep variants with quality at least 30:
-  ```
+  ```sh
   vembrane filter 'QUAL >= 30' variants.vcf
   ```
 * Only keep annotations and variants where feature (transcript) is ENST00000307301:
-  ```
+  ```sh
   vembrane filter 'ANN["Feature"] == "ENST00000307301"' variants.bcf
   ```
 * Only keep annotations and variants where protein position is less than 10:
-  ```
+  ```sh
   vembrane filter 'ANN["Protein"].start < 10' variants.bcf
   ```
 * Only keep variants where mapping quality is exactly 60:
-  ```
+  ```sh
   vembrane filter 'INFO["MQ"] == 60' variants.bcf
   ```
 * Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
-  ```
+  ```sh
   vembrane filter 're.search("(up|down)stream", ANN["Consequence"])' variants.vcf
   ```
 * Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
-  ```
+  ```sh
   vembrane filter 'any(entry in ANN["CLIN_SIG"] for entry in ("pathogenic", "likely_pathogenic", "drug_response"))' variants.vcf
   ```
   Using set operations, the same may also be expressed as:
-  ```
+  ```sh
   vembrane filter 'not {"pathogenic", "likely_pathogenic", "drug_response"}.isdisjoint(ANN["CLIN_SIG"])' variants.vcf
   ```
 
