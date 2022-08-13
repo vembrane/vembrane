@@ -108,10 +108,12 @@ T = TypeVar("T")
 
 
 def without_na(values: Iterable[T]) -> Iterable[T]:
+    """Keep only values that are not `NA`."""
     return filter(lambda v: v is not NA, values)
 
 
 def replace_na(values: Iterable[T], replacement: T) -> Iterable[T]:
+    """Replace values that are `NA` with `replacement`."""
     for v in values:
         if v is not NA:
             yield v
