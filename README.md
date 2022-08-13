@@ -11,6 +11,7 @@ vembrane relies on [pysam](https://pysam.readthedocs.io/en/latest/) for reading/
 ## Installation
 vembrane is available in [bioconda](https://bioconda.github.io/) and can either be installed into an existing conda environment with `mamba install -c bioconda vembrane` or into a new named environment `mamba create -n environment_name -c bioconda vembrane`.
 Alternatively, if you are familiar with git and [poetry](https://python-poetry.org/), clone this repository and run `poetry install`.
+See [docs/develop.md](docs/develop.md) for further details.
 
 ## `vembrane filter`
 
@@ -224,14 +225,6 @@ chr10	654480	1000200	HSJKJSD	12
 Exemplary invocation: `vembrane annotate example.yaml example.bcf > annotated.vcf`.
 
 Internally for each vcf record the overlapping regions of the annotation file are determined and stored in `DATA`. The expression may then access the `DATA` object and its columns by the columns names to generate a single or multiple values of cardinality `number` of type `type`. These values are stored in the new annotation entry under the name `vcf_name` and with header description `description`.
-
-## Development
-### pre-commit hooks
-Since we enforce code formatting with `black` by checking for that in CI, we can avoid "fmt" commits by ensuring formatting is done upon comitting changes:
-1. make sure `pre-commit` is installed on your machine / in your env (should be available in pip, conda, archlinux repos, ...)
-2. run `pre-commit install`. This will activate pre-commit hooks to your _local_ .git
-
-Now when calling `git commit`, your changed code will be formatted with `black` and `isort`, checked with`flake8`, get trailing whitespace removed and trailing newlines added (if needed).
 
 ## Authors
 
