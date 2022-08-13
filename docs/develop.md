@@ -16,6 +16,9 @@ To see the dependencies in the `requirements.txt` format, type in the root direc
 poetry export --without-hashes
 ```
 
+Poetry uses `virtualenvs` internally.
+Often it is convinient to start a `poetry shell` where all environment variables are set.
+
 
 ## `pre-commit` hooks
 
