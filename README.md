@@ -8,6 +8,8 @@ vembrane allows to simultaneously filter variants based on any `INFO` or `FORMAT
 
 vembrane relies on [pysam](https://pysam.readthedocs.io/en/latest/) for reading/writing VCF/BCF files.
 
+For a comparison with similar tools have a look at the [vembrane benchmarks](https://github.com/vembrane/vembrane-benchmark).
+
 ## Installation
 vembrane is available in [bioconda](https://bioconda.github.io/) and can either be installed into an existing conda environment with `mamba install -c bioconda vembrane` or into a new named environment `mamba create -n environment_name -c bioconda vembrane`.
 Alternatively, if you are familiar with git and [poetry](https://python-poetry.org/), clone this repository and run `poetry install`.
