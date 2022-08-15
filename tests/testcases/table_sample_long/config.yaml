@@ -1,4 +1,4 @@
 function: "table"
-expression: "CHROM, FORMAT['AD'][SAMPLE][0] / FORMAT['DP'][SAMPLE] * INFO['MQ']"
+expression: "CHROM, round(FORMAT['AD'][SAMPLE][0] / FORMAT['DP'][SAMPLE] * INFO['MQ'])"
 header: "auto"
 long: []
