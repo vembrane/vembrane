@@ -171,6 +171,9 @@ def filter_vcf(
     info_keys = set(vcf.header.info.keys())
     has_svtype = "SVTYPE" in info_keys
 
+    def is_bnd_record(record: VariantRecord) -> bool:
+        return has_svtype and record.info.get("SVTYPE", None) == "BND"
+
     record: VariantRecord
     if not preserve_order:
         # If the order is not important, emit records that pass the filter expression
@@ -186,8 +189,7 @@ def filter_vcf(
             # Breakend records *may* have the "EVENT" specified, but don't have to.
             # In that case only the MATEID *may* bee available
             # (which may contain more than one ID)
-            is_bnd = has_svtype and record.info.get("SVTYPE", None) == "BND"
-            if is_bnd:
+            if is_bnd_record(record):
                 mate_ids = record.info.get("MATEID", [])
                 event_name = record.info.get("EVENT", None)
 
@@ -271,8 +273,7 @@ def filter_vcf(
         # second pass
         events: Set[str] = set()
         for idx, record in enumerate(vcf):
-            is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
-            if is_bnd:
+            if is_bnd_record(record):
                 record, record_has_passed = test_and_update_record(
                     env, idx, record, ann_key, keep_unmatched
                 )
@@ -283,8 +284,7 @@ def filter_vcf(
         # The second pass can now yield records in the correct order
         vcf.reset()
         for idx, record in enumerate(vcf):
-            is_bnd = has_svtype and record.info.get("SVTYPE", None) == "BND"
-            if is_bnd:
+            if is_bnd_record(record):
                 event_name = get_event_name(record)
                 if event_name in events:
                     yield record
