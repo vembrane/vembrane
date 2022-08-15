@@ -248,7 +248,7 @@ def filter_vcf(
             for event_name, event in events.items():
                 if event_name and event.passed:
                     yield from event.emit()
-    else:
+    elif preserve_order:
 
         # There may be BND record which have neither of
         # INFO['EVENT'], INFO['MATEID'] or even ID specified.
