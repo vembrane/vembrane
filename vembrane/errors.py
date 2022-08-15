@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pysam import VariantRecord
 
 
@@ -12,7 +14,11 @@ class UnknownAnnotation(VembraneError):
     """Unknown annotation entry"""
 
     def __init__(
-        self, record_idx: int, record: VariantRecord, key: str, msg: str = None
+        self,
+        record_idx: int,
+        record: VariantRecord,
+        key: str,
+        msg: Optional[str] = None,
     ):
         if msg is None:
             msg = f"No ANN entry for '{key}' in record {record_idx}:\n{str(record)}"
@@ -26,7 +32,11 @@ class UnknownSample(VembraneError, KeyError):
     """Unknown Sample"""
 
     def __init__(
-        self, record_idx: int, record: VariantRecord, sample: str, msg: str = None
+        self,
+        record_idx: int,
+        record: VariantRecord,
+        sample: str,
+        msg: Optional[str] = None,
     ):
         if msg is None:
             msg = (
@@ -43,7 +53,11 @@ class UnknownFormatField(VembraneError, KeyError):
     """Unknown FORMAT key"""
 
     def __init__(
-        self, record_idx: int, record: VariantRecord, field: str, msg: str = None
+        self,
+        record_idx: int,
+        record: VariantRecord,
+        field: str,
+        msg: Optional[str] = None,
     ):
         if msg is None:
             msg = f"No FORMAT field '{field}' in record {record_idx}:\n{str(record)}"
@@ -57,7 +71,11 @@ class UnknownInfoField(VembraneError):
     """Unknown INFO key"""
 
     def __init__(
-        self, record_idx: int, record: VariantRecord, field: str, msg: str = None
+        self,
+        record_idx: int,
+        record: VariantRecord,
+        field: str,
+        msg: Optional[str] = None,
     ):
         if msg is None:
             msg = f"No INFO field '{field}' in record {record_idx}:\n{str(record)}"
@@ -69,7 +87,7 @@ class UnknownInfoField(VembraneError):
 class InvalidExpression(VembraneError):
     """Filter expression is invalid"""
 
-    def __init__(self, expression: str, reason: str, msg: str = None):
+    def __init__(self, expression: str, reason: str, msg: Optional[str] = None):
         if msg is None:
             msg = f"The provided expression '{expression}' is invalid. Reason: {reason}"
         super(InvalidExpression, self).__init__(msg)
