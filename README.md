@@ -183,6 +183,13 @@ So you can for example perform computations on fields or combine multiple fields
 vembrane table 'CHROM, POS, for_each_sample(lambda sample: FORMAT["AD"][sample] / FORMAT["DP"][sample] * QUAL)' input.vcf > table.tsv
 ```
 
+Instead of using the `for_each_sample` (wide format) machinery, it is also possible to generate the data in long format by specifying the `--long` flag.
+In this case, the first column will always be called `SAMPLE` and there's an additional variable of the same name available for the expressions.
+For example:
+```sh
+vembrane table --long 'CHROM, POS, FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL' input.vcf > long_table.tsv
+```
+
 ## `vembrane annotate`
 
 vembrane is able to annotate vcf files with a given table-like file. In addition to the vcf and annotation file, the user has to provide a configuration file.

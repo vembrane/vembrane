@@ -175,6 +175,7 @@ class Environment(dict):
         header: VariantHeader,
         auxiliary: Dict[str, Set[str]] = {},
         overwrite_number: Dict[str, Dict[str, str]] = {},
+        evaluation_function_template: str = "lambda: {expression}",
     ):
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
@@ -191,7 +192,7 @@ class Environment(dict):
         # only if ALT (but not REF) is accessed (and ALT has multiple entries).
         self._alleles = None
 
-        func = f"lambda: {expression}"
+        func = evaluation_function_template.format(expression=expression)
 
         # The VCF specification only allows 32bit floats.
         # Comparisons such as `INFO["some_float"] > CONST` may yield unexpected results,
