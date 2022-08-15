@@ -244,7 +244,7 @@ def filter_vcf(
                 yield record
 
         if len(events) > 0:
-            # output BNDs if any are were left unprocessed
+            # output BNDs if any are left unprocessed
             for event_name, event in events.items():
                 if event_name and event.passed:
                     yield from event.emit()
