@@ -1,4 +1,6 @@
-[![CI](https://github.com/vembrane/vembrane/actions/workflows/main.yml/badge.svg)](https://github.com/vembrane/vembrane/actions/workflows/main.yml) [![DOI](https://zenodo.org/badge/276383670.svg)](https://zenodo.org/badge/latestdoi/276383670)
+[![CI](https://github.com/vembrane/vembrane/actions/workflows/main.yml/badge.svg)](https://github.com/vembrane/vembrane/actions/workflows/main.yml)
+[![DOI](https://zenodo.org/badge/276383670.svg)](https://zenodo.org/badge/latestdoi/276383670)
+[![Bioconda](https://anaconda.org/bioconda/misopy/badges/installer/conda.svg)](https://bioconda.github.io/recipes/vembrane/README.html)
 
 # vembrane: variant filtering using python expressions
 
@@ -6,9 +8,12 @@ vembrane allows to simultaneously filter variants based on any `INFO` or `FORMAT
 
 vembrane relies on [pysam](https://pysam.readthedocs.io/en/latest/) for reading/writing VCF/BCF files.
 
+For a comparison with similar tools have a look at the [vembrane benchmarks](https://github.com/vembrane/vembrane-benchmark).
+
 ## Installation
 vembrane is available in [bioconda](https://bioconda.github.io/) and can either be installed into an existing conda environment with `mamba install -c bioconda vembrane` or into a new named environment `mamba create -n environment_name -c bioconda vembrane`.
 Alternatively, if you are familiar with git and [poetry](https://python-poetry.org/), clone this repository and run `poetry install`.
+See [docs/develop.md](docs/develop.md) for further details.
 
 ## `vembrane filter`
 
@@ -29,7 +34,7 @@ options:
                         Path to an auxiliary file containing a set of symbols.
   --keep-unmatched      Keep all annotations of a variant if at least one of them
                         passes the expression (mimics SnpSift behaviour).
-  --preserve-order      Ensures that the order of the output matches that of the input. 
+  --preserve-order      Ensures that the order of the output matches that of the input.
                         This is only useful if the input contains breakends (BNDs)
                         since the order of all other variants is preserved anyway.
 ```
@@ -47,8 +52,8 @@ The filter expression can be any valid python expression that evaluates to `bool
  * Any function from [`statistics`](https://docs.python.org/3/library/statistics.html)
  * Regular expressions via [`re`](https://docs.python.org/3/library/re.html)
  * custom functions:
-   * `without_na(values: Iterable[Any]) -> Iterable[Any]` (keep only values that are not `NA`)
-   * `replace_na(values: Iterable[Any], replacement: Any) -> Iterable[Any]` (replace values that are `NA` with some other fixed value)
+   * `without_na(values: Iterable[T]) -> Iterable[T]` (keep only values that are not `NA`)
+   * `replace_na(values: Iterable[T], replacement: T) -> Iterable[T]` (replace values that are `NA` with some other fixed value)
    * genotype related:
      * `count_hom`, `count_het` , `count_any_ref`, `count_any_var`, `count_hom_ref`, `count_hom_var`
      * `is_hom`, `is_het`, `is_hom_ref` , `is_hom_var`
@@ -86,40 +91,45 @@ The following VCF fields can be accessed in the filter expression:
 ### Examples
 
 * Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH":
-  ```
+  ```sh
   vembrane filter 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"' variants.bcf
   ```
 * Only keep variants with quality at least 30:
-  ```
+  ```sh
   vembrane filter 'QUAL >= 30' variants.vcf
   ```
 * Only keep annotations and variants where feature (transcript) is ENST00000307301:
-  ```
+  ```sh
   vembrane filter 'ANN["Feature"] == "ENST00000307301"' variants.bcf
   ```
 * Only keep annotations and variants where protein position is less than 10:
-  ```
+  ```sh
   vembrane filter 'ANN["Protein"].start < 10' variants.bcf
   ```
 * Only keep variants where mapping quality is exactly 60:
-  ```
+  ```sh
   vembrane filter 'INFO["MQ"] == 60' variants.bcf
   ```
 * Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
-  ```
+  ```sh
   vembrane filter 're.search("(up|down)stream", ANN["Consequence"])' variants.vcf
   ```
 * Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
-  ```
-  vembrane filter 'any(entry in ANN["CLIN_SIG"] for entry in ("pathogenic", "likely_pathogenic", "drug_response"))' variants.vcf
+  ```sh
+  vembrane filter \
+    'any(entry in ANN["CLIN_SIG"]
+         for entry in ("pathogenic", "likely_pathogenic", "drug_response"))' \
+    variants.vcf
   ```
   Using set operations, the same may also be expressed as:
-  ```
-  vembrane filter 'not {"pathogenic", "likely_pathogenic", "drug_response"}.isdisjoint(ANN["CLIN_SIG"])' variants.vcf
+  ```sh
+  vembrane filter \
+    'not {"pathogenic", "likely_pathogenic", "drug_response"}.isdisjoint(ANN["CLIN_SIG"])' \
+    variants.vcf
   ```
 
 ### Custom `ANN` types
-`vembrane` parses entries in the annotation field as outlined in [Types.md](Types.md)
+`vembrane` parses entries in the annotation field as outlined in [docs/ann_types.md](docs/ann_types.md).
 
 ### Missing values in annotations
 
@@ -224,14 +234,6 @@ chr10	654480	1000200	HSJKJSD	12
 Exemplary invocation: `vembrane annotate example.yaml example.bcf > annotated.vcf`.
 
 Internally for each vcf record the overlapping regions of the annotation file are determined and stored in `DATA`. The expression may then access the `DATA` object and its columns by the columns names to generate a single or multiple values of cardinality `number` of type `type`. These values are stored in the new annotation entry under the name `vcf_name` and with header description `description`.
-
-## Development
-### pre-commit hooks
-Since we enforce code formatting with `black` by checking for that in CI, we can avoid "fmt" commits by ensuring formatting is done upon comitting changes:
-1. make sure `pre-commit` is installed on your machine / in your env (should be available in pip, conda, archlinux repos, ...)
-2. run `pre-commit install`. This will activate pre-commit hooks to your _local_ .git
-
-Now when calling `git commit`, your changed code will be formatted with `black`, checked with`flake8`, get trailing whitespace removed and trailing newlines added (if needed)
 
 ## Authors
 
