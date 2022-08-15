@@ -33,6 +33,7 @@ def test_filter(testcase):
 
     # emulate command-line command setup to use argparse afterwards
     command = [config["function"], config["expression"], str(vcf_path)]
+    print("vembrane", " ".join(f"'{s}'" if " " in s else s for s in command))
     for key in config:
         command.append(f"--{key.replace('_','-')}")
         if isinstance(config[key], str):
