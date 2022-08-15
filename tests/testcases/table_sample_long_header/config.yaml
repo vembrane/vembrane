@@ -1,0 +1,4 @@
+function: "table"
+expression: "CHROM, FORMAT['AD'][SAMPLE][0] / FORMAT['DP'][SAMPLE] * INFO['MQ']"
+header: "CHROM, AD/DP*MQ"
+long: []
