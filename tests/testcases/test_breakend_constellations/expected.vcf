@@ -22,5 +22,5 @@ fake	500	.	A	]fake:550]A	.	PASS	SVTYPE=BND;ints=1,2	.	.
 fake	525	.	T	G	.	PASS	ints=0,2	.	.
 fake	321681	bnd_W	G	G]fake:421681]	.	PASS	SVTYPE=BND;MATEID=bnd_U;EVENT=INV0	.	.
 fake	321682	bnd_V	T	[fake:421682[T	.	PASS	SVTYPE=BND;MATEID=bnd_X;EVENT=INV0	.	.
-fake	421681	bnd U	A	A]fake:321681]	.	PASS	SVTYPE=BND;MATEID=bnd_W;EVENT=INV0	.	.
-fake	421682	bnd X	C	[fake:321682[C	.	PASS	SVTYPE=BND;MATEID=bnd_V;EVENT=INV0;ints=1,2	.	.
+fake	421681	bnd_U	A	A]fake:321681]	.	PASS	SVTYPE=BND;MATEID=bnd_W;EVENT=INV0	.	.
+fake	421682	bnd_X	C	[fake:321682[C	.	PASS	SVTYPE=BND;MATEID=bnd_V;EVENT=INV0;ints=1,2	.	.
