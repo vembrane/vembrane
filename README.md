@@ -29,7 +29,7 @@ options:
                         Path to an auxiliary file containing a set of symbols.
   --keep-unmatched      Keep all annotations of a variant if at least one of them
                         passes the expression (mimics SnpSift behaviour).
-  --preserve-order      Ensures that the order of the output matches that of the input. 
+  --preserve-order      Ensures that the order of the output matches that of the input.
                         This is only useful if the input contains breakends (BNDs)
                         since the order of all other variants is preserved anyway.
 ```
@@ -173,11 +173,11 @@ So you can for example perform computations on fields or combine multiple fields
 vembrane table 'CHROM, POS, for_each_sample(lambda sample: FORMAT["AD"][sample] / FORMAT["DP"][sample] * QUAL)' input.vcf > table.tsv
 ```
 
-Instead of using the `for_each_sample` machinery, it is also possible to generate the data in tidy tabular format (long format) by specifying the `--tidy` flag.
+Instead of using the `for_each_sample` (wide format) machinery, it is also possible to generate the data in long format by specifying the `--long` flag.
 In this case, the first column will always be called `SAMPLE` and there's an additional variable of the same name available for the expressions.
 For example:
 ```sh
-vembrane table --tidy 'CHROM, POS, FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL' input.vcf > tidy_table.tsv
+vembrane table --long 'CHROM, POS, FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL' input.vcf > long_table.tsv
 ```
 
 ## `vembrane annotate`

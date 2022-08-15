@@ -56,9 +56,10 @@ def add_subcommmand(subparsers):
               disable any header output.',
     )
     parser.add_argument(
-        "--tidy",
-        help="Instead of using `for_each_sample` to generate multiple columns, "
-        "use only one sample column but one row for each sample.",
+        "--long",
+        help="Instead of using `for_each_sample` to generate multiple columns "
+        "(wide format), "
+        "use only one sample column but one row for each sample (long format).",
         action="store_true",
     )
     parser.add_argument(
@@ -100,11 +101,11 @@ def tableize_vcf(
     expression: str,
     ann_key: str,
     overwrite_number: Dict[str, Dict[str, str]] = {},
-    tidy: bool = False,
+    long: bool = False,
 ) -> Iterator[tuple]:
 
     kwargs = dict(overwrite_number=overwrite_number)
-    if tidy:
+    if long:
         kwargs[
             "evaluation_function_template"
         ] = "lambda: (({expression}) for SAMPLE in SAMPLES)"
@@ -124,12 +125,12 @@ def tableize_vcf(
             except KeyError:
                 annotations = [""]
             for annotation in annotations:
-                if tidy:
+                if long:
                     yield from env.table(annotation)
                 else:
                     yield env.table(annotation)
         else:
-            if tidy:
+            if long:
                 yield from env.table()
             else:
                 yield env.table()
@@ -237,7 +238,7 @@ def get_header(args, vcf: Optional[VariantFile] = None) -> List[str]:
         header = args.expression
     else:
         header = args.header
-    if args.tidy:
+    if args.long:
         header = f"SAMPLE, {header}"
     return get_toplevel(
         preprocess_header_expression(header, vcf, args.header == "auto")
@@ -295,7 +296,7 @@ def smart_open(filename=None, *args, **kwargs):
 def execute(args):
     with VariantFile(args.vcf) as vcf:
         expression = preprocess_header_expression(args.expression, vcf, True)
-        if args.tidy:
+        if args.long:
             expression = f"SAMPLE, {expression}"
         overwrite_number = {
             "INFO": dict(args.overwrite_number_info),
@@ -306,7 +307,7 @@ def execute(args):
             expression,
             args.annotation_key,
             overwrite_number=overwrite_number,
-            tidy=args.tidy,
+            long=args.long,
         )
 
         try:
