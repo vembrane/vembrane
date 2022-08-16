@@ -43,26 +43,26 @@ def split_annotation_entry(entry: str) -> List[str]:
 
 
 class BreakendEvent(object):
-    __slots__ = ["name", "passed", "records", "records_passed", "mate_pair"]
+    __slots__ = ["name", "keep", "records", "keep_records", "mate_pair"]
 
     def __init__(self, name: str, mate_pair: bool = False):
         self.name = name
         self.records = []
-        self.records_passed = []
-        self.passed = False
+        self.keep_records = []
+        self.keep = False
         self.mate_pair = mate_pair
 
-    def add(self, record: VariantRecord, record_passed: bool):
+    def add(self, record: VariantRecord, keep_record: bool):
         self.records.append(record)
-        self.records_passed.append(record_passed)
-        self.passed |= record_passed
+        self.keep_records.append(keep_record)
+        self.keep |= keep_record
 
     def emit(self) -> Iterator[VariantRecord]:
-        assert self.passed
+        assert self.keep
         yield from self.records
         self.records = []
-        self.records_passed = []
-        # do not reset self.passed!
+        self.keep_records = []
+        # do not reset self.keep!
 
     def is_mate_pair(self) -> bool:
         return self.mate_pair
