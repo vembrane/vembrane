@@ -3,13 +3,19 @@ import sys
 from collections import defaultdict
 from itertools import chain, islice
 from sys import stderr
-from typing import Dict, Iterator, Set
+from typing import Dict, Iterator, Set, Tuple
 
 import yaml
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
-from ..common import check_expression, get_annotation_keys, split_annotation_entry
+from ..common import (
+    BreakendEvent,
+    check_expression,
+    get_annotation_keys,
+    mate_key,
+    split_annotation_entry,
+)
 from ..errors import VembraneError
 from ..representations import Environment
 
@@ -160,11 +166,28 @@ def filter_vcf(
     auxiliary: Dict[str, Set[str]] = {},
     overwrite_number: Dict[str, Dict[str, str]] = {},
 ) -> Iterator[VariantRecord]:
-
     env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
 
-    events = set()
     info_keys = set(vcf.header.info.keys())
+    has_svtype = "SVTYPE" in info_keys
+
+    def is_bnd_record(record: VariantRecord) -> bool:
+        return has_svtype and record.info.get("SVTYPE", None) == "BND"
+
+    def get_event_name(record: VariantRecord) -> Tuple[str, str]:
+        mate_ids = record.info.get("MATEID", [])
+        event_name = record.info.get("EVENT", None)
+
+        if len(mate_ids) > 1 and not event_name:
+            raise ValueError(
+                f"Filtering of BND records with multiple mates is unsupported "
+                f"(see VCF 4.3, section 5.4.3 'Multiple mates'):\n{str(record)}"
+            )
+
+        mate_id = mate_ids[0] if len(mate_ids) == 1 else None
+        mate_pair = mate_key([record.id, mate_id]) if mate_ids else None
+
+        return event_name, mate_pair
 
     record: VariantRecord
     if not preserve_order:
@@ -172,55 +195,95 @@ def filter_vcf(
         # as we encounter them
         # However, breakends have to be considered jointly, so keep track of the
         # respective events.
+        events: Dict[str, BreakendEvent] = dict()
         for idx, record in enumerate(vcf):
-            record, record_has_passed = test_and_update_record(
+            record, keep = test_and_update_record(
                 env, idx, record, ann_key, keep_unmatched
             )
-            if record_has_passed:
-                is_bnd = (
-                    "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
-                )
-                if is_bnd:
-                    event = record.info.get("EVENT", None)
-                    events.add(event)
-                else:
-                    yield record
-        if len(events) > 0:
-            # perform a second pass if the first pass filtered breakend (BND) events
-            # since these are compound events which have to be filtered jointly
-            vcf.reset()
-            for idx, record in enumerate(vcf):
-                is_bnd = (
-                    "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
-                )
 
-                # only bnds with a valid associated event need to be considered,
-                # so skip the rest
-                if is_bnd:
-                    event = record.info.get("EVENT", None)
-                    if event in events:
+            # Breakend records *may* have the "EVENT" specified, but don't have to.
+            # In that case only the MATEID *may* bee available
+            # (which may contain more than one ID)
+            if is_bnd_record(record):
+                event_name, mate_pair_name = get_event_name(record)
+
+                # if EVENT is set, it has priority over MATEID.
+                event_name = event_name or mate_pair_name
+
+                # if both EVENT and MATEID are not set
+                # we can only treat this BND record as a regular one,
+                # (or somehow try to guess its correct mate)
+                if not event_name:
+                    print(
+                        f"Warning: Encountered breakend record at index {idx} "
+                        f"without either of MATEID or EVENT specified, "
+                        f"treating it as a regular record:\n{str(record)}",
+                        file=stderr,
+                    )
+                    if keep:
                         yield record
-    else:
+                    continue
+
+                event = events.get(event_name, None)
+
+                # if there's already an associated event
+                if event:
+                    # add this record to the event
+                    event.add(record, keep)
+
+                    # if we already know that the event is a "PASS"…
+                    if event.keep:
+                        # … emit all records associated with it
+                        yield from event.emit()
+
+                        # in the case of a simple mate pair, we can delete the event
+                        # at this point, because no more records will be added to it
+                        if event.is_mate_pair():
+                            del events[mate_pair_name]
+                else:
+                    # if there's no entry for the event or mate pair yet, create one
+                    is_mate_pair = mate_pair_name and mate_pair_name == event_name
+                    event = BreakendEvent(event_name, is_mate_pair)
+                    event.add(record, keep)
+                    events[event_name] = event
+            elif keep:
+                yield record
+
+        if len(events) > 0:
+            # output BNDs if any are left unprocessed
+            for event_name, event in events.items():
+                if event_name and event.keep:
+                    yield from event.emit()
+    elif preserve_order:
         # If order *is* important, the first pass cannot emit any records but only
         # keep track of breakend events. The records will only be emitted during the
-        # second pass
+        # second pass.
+        events: Set[str] = set()
+
+        def fallback_name(record: VariantRecord) -> str:
+            event_name, mate_pair_name = get_event_name(record)
+
+            # There may be BND record which have neither of
+            # INFO['EVENT'], INFO['MATEID'] or even ID specified.
+            # In that case, we still need a pseudo-event name,
+            # which we construct from the record's index in the file.
+            return event_name or mate_pair_name or record.id or f"DUMMY: {idx}"
+
         for idx, record in enumerate(vcf):
-            is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
-            if is_bnd:
-                record, record_has_passed = test_and_update_record(
+            if is_bnd_record(record):
+                record, keep = test_and_update_record(
                     env, idx, record, ann_key, keep_unmatched
                 )
-                if record_has_passed:
-                    event = record.info.get("EVENT", None)
-                    events.add(event)
+                if keep:
+                    event_name = fallback_name(record)
+                    events.add(event_name)
 
-        # The second pass can now yield record in the correct order
+        # The second pass can now yield records in the correct order
         vcf.reset()
         for idx, record in enumerate(vcf):
-            is_bnd = "SVTYPE" in info_keys and record.info.get("SVTYPE", None) == "BND"
-            if is_bnd:
-                event = record.info.get("EVENT", None)
-                if event in events:
+            if is_bnd_record(record):
+                event_name = fallback_name(record)
+                if event_name in events:
                     yield record
             else:
                 record, keep = test_and_update_record(

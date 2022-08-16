@@ -1,0 +1,32 @@
+##fileformat=VCFv4.3
+##fileDate=20222807
+##reference=fake_reference
+##contig=<ID=fake,length=1234567>
+##INFO=<ID=ints,Number=2,Type=Integer,Description="Two integers">
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=MATEID,Number=.,Type=String,Description="ID of mate breakends">
+##INFO=<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE1
+fake	100	bnd_1_0	A	]fake:150]A	.	PASS	SVTYPE=BND;MATEID=bnd_1_1;ints=1,2	.	.
+fake	125	.	T	G	.	PASS	ints=0,2	.	.
+fake	150	bnd_1_1	C	C[fake:100[	.	PASS	SVTYPE=BND;MATEID=bnd_1_0	.	.
+fake	200	bnd_2_0	A	]fake:250]A	.	PASS	SVTYPE=BND;EVENT=an_event;ints=1,2	.	.
+fake	225	.	T	G	.	PASS	ints=0,2	.	.
+fake	250	bnd_2_1	C	C[fake:200[	.	PASS	SVTYPE=BND;EVENT=an_event	.	.
+fake	300	bnd_3_0	A	]fake:350]A	.	PASS	SVTYPE=BND;MATEID=bnd_3_1;EVENT=mate_pair_event;ints=1,2	.	.
+fake	325	.	T	G	.	PASS	ints=0,2	.	.
+fake	350	bnd_3_1	C	C[fake:300[	.	PASS	SVTYPE=BND;MATEID=bnd_3_0;EVENT=mate_pair_event	.	.
+fake	400	bnd_4_0	A	]fake:450]A	.	PASS	SVTYPE=BND;ints=1,2	.	.
+fake	425	.	T	G	.	PASS	ints=0,2	.	.
+fake	450	bnd_4_1	C	C[fake:400[	.	PASS	SVTYPE=BND;	.	.
+fake	500	.	A	]fake:550]A	.	PASS	SVTYPE=BND;ints=1,2	.	.
+fake	525	.	T	G	.	PASS	ints=0,2	.	.
+fake	550	.	C	C[fake:500[	.	PASS	SVTYPE=BND;	.	.
+fake	321681	bnd_W	G	G]fake:421681]	.	PASS	SVTYPE=BND;MATEID=bnd_U;EVENT=INV0	.	.
+fake	321682	bnd_V	T	[fake:421682[T	.	PASS	SVTYPE=BND;MATEID=bnd_X;EVENT=INV0	.	.
+fake	421681	bnd_U	A	A]fake:321681]	.	PASS	SVTYPE=BND;MATEID=bnd_W;EVENT=INV0	.	.
+fake	421682	bnd_X	C	[fake:321682[C	.	PASS	SVTYPE=BND;MATEID=bnd_V;EVENT=INV0;ints=1,2	.	.
+fake	521681	bnd_W2	G	G]fake:621681]	.	PASS	SVTYPE=BND;MATEID=bnd_U2;EVENT=INV1	.	.
+fake	521682	bnd_V2	T	[fake:621682[T	.	PASS	SVTYPE=BND;MATEID=bnd_X2;EVENT=INV1	.	.
+fake	621681	bnd_U2	A	A]fake:521681]	.	PASS	SVTYPE=BND;MATEID=bnd_W2;EVENT=INV1	.	.
+fake	621682	bnd_X2	C	[fake:521682[C	.	PASS	SVTYPE=BND;MATEID=bnd_V2;EVENT=INV1;ints=0,0	.	.

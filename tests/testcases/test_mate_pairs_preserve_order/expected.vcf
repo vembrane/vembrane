@@ -1,0 +1,12 @@
+##fileformat=VCFv4.3
+##fileDate=20222807
+##reference=fake_reference
+##contig=<ID=fake,length=1234567>
+##INFO=<ID=ints,Number=2,Type=Integer,Description="Two integers">
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=MATEID,Number=.,Type=String,Description="ID of mate breakends">
+##INFO=<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE1
+fake	100	bnd_0_0	A	]fake:200]A	.	PASS	SVTYPE=BND;MATEID=bnd_0_1;ints=1,2	.	.
+fake	150	.	T	G	.	PASS	ints=2,3	.	.
+fake	200	bnd_0_1	C	C[fake:100[	.	PASS	SVTYPE=BND;MATEID=bnd_0_0	.	.
