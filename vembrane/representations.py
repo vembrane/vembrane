@@ -12,7 +12,7 @@ from .errors import (
     UnknownInfoField,
     UnknownSample,
 )
-from .globals import allowed_globals, custom_functions
+from .globals import _explicit_clear, allowed_globals, custom_functions
 
 
 class NoValueDict:
@@ -212,8 +212,9 @@ class Environment(dict):
         expression_ast = ast.fix_missing_locations(expression_ast)
 
         # compile the now-fixed code-tree
-        func = compile(expression_ast, filename="expression.py", mode="eval")
+        func = compile(expression_ast, filename="<string>", mode="eval")
 
+        self.update(**_explicit_clear)
         self._func = eval(func, self, {})
 
         self._getters = {

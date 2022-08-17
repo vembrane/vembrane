@@ -133,6 +133,7 @@ _explicit_clear = {
     "__name__": None,
     "__doc__": None,
     "__package__": None,
+    "__import__": None,
 }
 
 allowed_globals = {
