@@ -114,3 +114,10 @@ class HeaderWrongColumnNumber(VembraneError):
             f"{n_header_cols} --header expression columns: {header_cols}\n"
         )
         super(HeaderWrongColumnNumber, self).__init__(msg)
+
+
+class FilterAlreadyDefined(VembraneError):
+    def __init__(self, tag: str):
+        super(FilterAlreadyDefined, self).__init__(
+            f"Filter {tag} already defined in the header. Choose a different name."
+        )

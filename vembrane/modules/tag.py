@@ -8,7 +8,7 @@ from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
 from ..common import check_expression
-from ..errors import VembraneError
+from ..errors import FilterAlreadyDefined, VembraneError
 from ..representations import Environment
 from .filter import DeprecatedAction, read_auxiliary
 
@@ -164,6 +164,11 @@ def execute(args):
 
         expressions = dict(args.expression)
         for tag, expr in expressions.items():
+            for t, rec in vcf.header.filters.items():
+                if t == tag:
+                    e = FilterAlreadyDefined(tag)
+                    print(e, file=stderr)
+                    exit(1)
             vcf.header.add_meta(
                 key="FILTER", items=[("ID", tag), ("Description", expr)]
             )
