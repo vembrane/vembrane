@@ -126,7 +126,7 @@ def test_and_update_record(
     record: VariantRecord,
     ann_key: str,
     keep_unmatched: bool,
-) -> (VariantRecord, bool):
+) -> Tuple[VariantRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
