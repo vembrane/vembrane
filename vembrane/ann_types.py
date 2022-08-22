@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from collections import defaultdict
 from ctypes import c_float
@@ -130,12 +132,12 @@ class PosRange:
         self.end = end
 
     @classmethod
-    def from_snpeff_str(cls, value: str) -> "PosRange":
+    def from_snpeff_str(cls, value: str) -> PosRange:
         pos, length = [int(v.strip()) for v in value.split("/")]
         return cls(pos, pos + length)
 
     @classmethod
-    def from_vep_str(cls, value: str) -> "PosRange":
+    def from_vep_str(cls, value: str) -> PosRange:
         start, end = (
             #  the "-" is optional, so vep either has either start and end position
             [NA if v == "?" else int(v) for v in map(str.strip, value.split("-"))]
@@ -163,7 +165,7 @@ def na_func() -> NoValue:
     return NA
 
 
-AnnotationType = Union[IntFloatStr, Iterable["IntFloatStr"], NoValue]
+AnnotationType = Union[IntFloatStr, Iterable[IntFloatStr], NoValue]
 
 
 class AnnotationEntry:
@@ -242,7 +244,7 @@ class RangeTotal(object):
         self.total = total
 
     @classmethod
-    def from_vep_string(cls, value: str) -> "RangeTotal":
+    def from_vep_string(cls, value: str) -> RangeTotal:
         v = value.split("/")
         r = [int(s) for s in v[0].split("-")]
         if len(r) == 1:
@@ -283,7 +285,7 @@ class NumberTotal(object):
         self.total = total
 
     @classmethod
-    def from_vep_string(cls, value: str) -> "NumberTotal":
+    def from_vep_string(cls, value: str) -> NumberTotal:
         v = value.split("/")
         return cls(int(v[0]), int(v[1]))
 
