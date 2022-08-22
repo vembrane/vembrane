@@ -1,10 +1,10 @@
 import ast
 from itertools import chain
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
-from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, type_info
+from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, NoValue, type_info
 from .common import get_annotation_keys, split_annotation_entry
 from .errors import (
     UnknownAnnotation,
@@ -308,7 +308,7 @@ class Environment(dict):
         self._globals["ALT"] = value
         return value
 
-    def _get_qual(self) -> float:
+    def _get_qual(self) -> Union[float, NoValue]:
         value = NA if self.record.qual is None else self.record.qual
         self._globals["QUAL"] = value
         return value
