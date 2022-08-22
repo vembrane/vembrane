@@ -3,7 +3,7 @@ import sys
 from collections import defaultdict
 from itertools import chain, islice
 from sys import stderr
-from typing import Dict, Iterator, Set, Tuple
+from typing import Dict, Iterator, Optional, Set, Tuple
 
 import yaml
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
@@ -174,9 +174,9 @@ def filter_vcf(
     def is_bnd_record(record: VariantRecord) -> bool:
         return has_svtype and record.info.get("SVTYPE", None) == "BND"
 
-    def get_event_name(record: VariantRecord) -> Tuple[str, str]:
+    def get_event_name(record: VariantRecord) -> Tuple[Optional[str], Optional[str]]:
         mate_ids = record.info.get("MATEID", [])
-        event_name = record.info.get("EVENT", None)
+        event_name: Optional[str] = record.info.get("EVENT", None)
 
         if len(mate_ids) > 1 and not event_name:
             raise ValueError(
