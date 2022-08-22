@@ -127,7 +127,7 @@ class Annotation(NoValueDict):
     def __init__(self, ann_key: str, header: VariantHeader):
         self._record_idx = -1
         self._record: Optional[VariantRecord] = None
-        self._annotation_data = {}
+        self._annotation_data: List[str] = []
         self._data = {}
         annotation_keys = get_annotation_keys(header, ann_key)
         self._ann_conv = {
