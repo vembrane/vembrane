@@ -185,7 +185,7 @@ class Environment(dict):
         self._annotation: Annotation = Annotation(ann_key, header)
         self._globals = {}
         # We use self + self.func as a closure.
-        self._globals = allowed_globals.copy()
+        self._globals = dict(allowed_globals)
         self._globals.update(custom_functions(self))
         self._globals["SAMPLES"] = list(header.samples)
         # REF/ALT alleles are cached separately to raise "MoreThanOneAltAllele"
