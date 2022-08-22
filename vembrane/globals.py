@@ -1,7 +1,8 @@
 import math
 import re
 import statistics
-from typing import Callable, Dict, Iterable, TypeVar, Union
+from collections.abc import Mapping
+from typing import Any, Callable, Dict, Iterable, TypeVar, Union
 
 from .ann_types import NA, NoValue
 
@@ -136,7 +137,7 @@ _explicit_clear = {
     "__import__": None,
 }
 
-allowed_globals = {
+allowed_globals: Mapping[str, Any] = {
     **_builtins,
     **_modules,
     **_math_exports,
