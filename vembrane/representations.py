@@ -1,6 +1,6 @@
 import ast
 from itertools import chain
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
@@ -126,7 +126,7 @@ class Info(NoValueDict):
 class Annotation(NoValueDict):
     def __init__(self, ann_key: str, header: VariantHeader):
         self._record_idx = -1
-        self._record = None
+        self._record: Optional[VariantRecord] = None
         self._annotation_data = {}
         self._data = {}
         annotation_keys = get_annotation_keys(header, ann_key)
