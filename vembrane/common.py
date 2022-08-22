@@ -47,8 +47,8 @@ class BreakendEvent(object):
 
     def __init__(self, name: str, mate_pair: bool = False):
         self.name = name
-        self.records = []
-        self.keep_records = []
+        self.records: List[VariantRecord] = []
+        self.keep_records: List[bool] = []
         self.keep = False
         self.mate_pair = mate_pair
 
