@@ -8,6 +8,8 @@
 ##INFO=<ID=FLOAT,Number=1,Type=Float,Description="One single float">
 ##INFO=<ID=STRING,Number=1,Type=String,Description="One single string">
 ##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=MATEID,Number=.,Type=String,Description="ID of mate breakends">
+##INFO=<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">
 ##INFO=<ID=INT2,Number=2,Type=Integer,Description="Exactly two integers">
 ##INFO=<ID=FLOAT2,Number=2,Type=Float,Description="Exactly two floats">
 ##INFO=<ID=STRING2,Number=2,Type=String,Description="Exactly two strings">
