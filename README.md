@@ -62,21 +62,21 @@ The filter expression can be any valid python expression that evaluates to `bool
 ### Available fields
 The following VCF fields can be accessed in the filter expression:
 
-| Name      | Type                         | Interpretation                     | Example expression             |
-| --------- | ---------------------------- | ---------------------------------- | ------------------------------ |
-| `INFO`    | `Dict[str, Any¹]`            | `INFO field -> Value`              | `INFO["DP"] > 0`               |
-| `ANN`     | `Dict[str, Any²]`            | `ANN field -> Value`               | `ANN["Gene_Name"] == "CDH2"`   |
-| `CHROM`   | `str`                        | Chromosome Name                    | `CHROM == "chr2"`              |
-| `POS`     | `int`                        | Chromosomal position (1-based)     | `24 < POS < 42`                |
-| `END`     | `int`                        | Chromosomal end position (1-based) | `24 < END < 42`                |
-| `ID`      | `str`                        | Variant ID                         | `ID == "rs11725853"`           |
-| `REF`     | `str`                        | Reference allele                   | `REF == "A"`                   |
-| `ALT`     | `str`                        | Alternative allele³                | `ALT == "C"`                   |
-| `QUAL`    | `float`                      | Quality                            | `QUAL >= 60`                   |
-| `FILTER`  | `List[str]`                  | Filter tags                        | `"PASS" in FILTER`             |
-| `FORMAT`  | `Dict[str, Dict[str, Any¹]]` | `Format -> (Sample -> Value)`      | `FORMAT["DP"][SAMPLES[0]] > 0` |
-| `SAMPLES` | `List[str]`                  | `[Sample]`                         | `"Tumor" in SAMPLES`           |
-| `INDEX`   | `int`                        | Index of variant in the file       | `INDEX < 10`                   |
+| Name      | Type                         | Interpretation                                                                                     | Example expression             |
+| --------- | ---------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `INFO`    | `Dict[str, Any¹]`            | `INFO field -> Value`                                                                              | `INFO["DP"] > 0`               |
+| `ANN`     | `Dict[str, Any²]`            | `ANN field -> Value`                                                                               | `ANN["Gene_Name"] == "CDH2"`   |
+| `CHROM`   | `str`                        | Chromosome Name                                                                                    | `CHROM == "chr2"`              |
+| `POS`     | `int`                        | Chromosomal position (1-based)                                                                     | `24 < POS < 42`                |
+| `END`     | `int`                        | Chromosomal end position (1-based, inclusive, NA for breakends); also accessible via `INFO["END"]` | `24 < END < 42`                |
+| `ID`      | `str`                        | Variant ID                                                                                         | `ID == "rs11725853"`           |
+| `REF`     | `str`                        | Reference allele                                                                                   | `REF == "A"`                   |
+| `ALT`     | `str`                        | Alternative allele³                                                                                | `ALT == "C"`                   |
+| `QUAL`    | `float`                      | Quality                                                                                            | `QUAL >= 60`                   |
+| `FILTER`  | `List[str]`                  | Filter tags                                                                                        | `"PASS" in FILTER`             |
+| `FORMAT`  | `Dict[str, Dict[str, Any¹]]` | `Format -> (Sample -> Value)`                                                                      | `FORMAT["DP"][SAMPLES[0]] > 0` |
+| `SAMPLES` | `List[str]`                  | `[Sample]`                                                                                         | `"Tumor" in SAMPLES`           |
+| `INDEX`   | `int`                        | Index of variant in the file                                                                       | `INDEX < 10`                   |
 
  ¹ depends on type specified in VCF header
 
