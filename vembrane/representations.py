@@ -101,30 +101,32 @@ class Info(NoValueDict):
         self._info_dict = {}
 
     def __getitem__(self, item):
-        if item == "END":
-            # pysam removes END from info. In order to fit with user expectations,
-            # (they will expect INFO["END"] to work) we emulate it being present by
-            # inferring it from pysams record representation.
-            return get_end(self._record)
         try:
             return self._info_dict[item]
         except KeyError:
-            try:
-                if item == self._ann_key:
-                    raise KeyError(item)
-                untyped_value = self._record_info[item]
-            except KeyError:
-                if item in self._header_info_fields:
-                    value = NA
-                else:
-                    raise UnknownInfoField(self._record_idx, self._record, item)
+            if item == "END":
+                # pysam removes END from info. In order to fit with user expectations,
+                # (they will expect INFO["END"] to work) we emulate it being present by
+                # inferring it from pysams record representation.
+                value = get_end(self._record)
             else:
-                value = self._info_dict[item] = type_info(
-                    untyped_value,
-                    self._header_info_fields[item],
-                    item,
-                    self._record_idx,
-                )
+                try:
+                    if item == self._ann_key:
+                        raise KeyError(item)
+                    untyped_value = self._record_info[item]
+                except KeyError:
+                    if item in self._header_info_fields:
+                        value = NA
+                    else:
+                        raise UnknownInfoField(self._record_idx, self._record, item)
+                else:
+                    value = type_info(
+                        untyped_value,
+                        self._header_info_fields[item],
+                        item,
+                        self._record_idx,
+                    )
+            self._info_dict[item] = value
             return value
 
 
