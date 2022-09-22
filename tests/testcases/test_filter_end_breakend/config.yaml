@@ -1,2 +1,2 @@
 function: "filter"
-expression: 'END == NA'
+expression: 'END is NA'
