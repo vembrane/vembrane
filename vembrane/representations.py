@@ -379,4 +379,6 @@ def get_end(record):
     # record.stop is pysams unified approach to get the end position of a variant.
     # It either considers the alt allele or the END field, depending on the record.
     # Stop is 0-based, but for consistency with POS we convert into 1-based.
-    return record.stop + 1
+    # Since for 1-based coordinates, the expectation is that END is inclusive
+    # instead of exclusive (as it is with 0-based), we do not need to add 1.
+    return record.stop
