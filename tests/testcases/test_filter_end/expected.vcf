@@ -3,7 +3,7 @@
 ##fileDate=20210218
 ##contig=<ID=chr1,length=1>
 ##INFO=<ID=FLAG,Number=0,Type=Flag,Description="A boolean flag">
-##INFO=<ID=INT,Number=1,Type=Integer,Description="One single integer">
+##INFO=<ID=END,Number=1,Type=Integer,Description="End of variant">
 ##INFO=<ID=FLOAT,Number=1,Type=Float,Description="One single float">
 ##INFO=<ID=STRING,Number=1,Type=String,Description="One single string">
 ##INFO=<ID=INT2,Number=2,Type=Integer,Description="Exactly two integers">
@@ -20,7 +20,7 @@
 ##INFO=<ID=STRINGX,Number=.,Type=String,Description="A variable number of strings">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=FLAG,Number=0,Type=Flag,Description="A boolean flag">
-##FORMAT=<ID=END,Number=1,Type=Integer,Description="End position of variant">
+##FORMAT=<ID=INT,Number=1,Type=Integer,Description="One single integer">
 ##FORMAT=<ID=FLOAT,Number=1,Type=Float,Description="One single float">
 ##FORMAT=<ID=STR,Number=1,Type=String,Description="One single string">
 ##FORMAT=<ID=INT2,Number=2,Type=Integer,Description="Exactly two integers">
