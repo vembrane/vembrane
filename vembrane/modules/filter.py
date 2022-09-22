@@ -15,6 +15,7 @@ from ..common import (
     get_annotation_keys,
     mate_key,
     split_annotation_entry,
+    is_bnd_record,
 )
 from ..errors import VembraneError
 from ..representations import Environment
@@ -167,12 +168,6 @@ def filter_vcf(
     overwrite_number: Dict[str, Dict[str, str]] = {},
 ) -> Iterator[VariantRecord]:
     env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
-
-    info_keys = set(vcf.header.info.keys())
-    has_svtype = "SVTYPE" in info_keys
-
-    def is_bnd_record(record: VariantRecord) -> bool:
-        return has_svtype and record.info.get("SVTYPE", None) == "BND"
 
     def get_event_name(record: VariantRecord) -> Tuple[str, str]:
         mate_ids = record.info.get("MATEID", [])

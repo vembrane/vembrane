@@ -42,6 +42,10 @@ def split_annotation_entry(entry: str) -> List[str]:
     return entry.split("|")
 
 
+def is_bnd_record(record: VariantRecord) -> bool:
+    return "SVTYPE" in record.info and record.info.get("SVTYPE", None) == "BND"
+
+
 class BreakendEvent(object):
     __slots__ = ["name", "keep", "records", "keep_records", "mate_pair"]
 

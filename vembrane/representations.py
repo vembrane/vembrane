@@ -5,7 +5,7 @@ from typing import Dict, List, Set, Tuple
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
 from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, type_info
-from .common import get_annotation_keys, split_annotation_entry
+from .common import get_annotation_keys, split_annotation_entry, is_bnd_record
 from .errors import (
     UnknownAnnotation,
     UnknownFormatField,
@@ -377,10 +377,13 @@ class Environment(dict):
         return self._func()
 
 
-def get_end(record):
-    # record.stop is pysams unified approach to get the end position of a variant.
-    # It either considers the alt allele or the END field, depending on the record.
-    # Stop is 0-based, but for consistency with POS we convert into 1-based.
-    # Since for 1-based coordinates, the expectation is that END is inclusive
-    # instead of exclusive (as it is with 0-based), we do not need to add 1.
-    return record.stop
+def get_end(record: VariantRecord):
+    if is_bnd_record(record):
+        return NA
+    else:
+        # record.stop is pysams unified approach to get the end position of a variant.
+        # It either considers the alt allele or the END field, depending on the record.
+        # Stop is 0-based, but for consistency with POS we convert into 1-based.
+        # Since for 1-based coordinates, the expectation is that END is inclusive
+        # instead of exclusive (as it is with 0-based), we do not need to add 1.
+        return record.stop
