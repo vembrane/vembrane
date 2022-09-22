@@ -1,11 +1,13 @@
 ##fileformat=VCFv4.1
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##fileDate=20210218
-##contig=<ID=chr1,length=1>
+##contig=<ID=chr1,length=10>
+##contig=<ID=chr17,length=1000000>
 ##INFO=<ID=FLAG,Number=0,Type=Flag,Description="A boolean flag">
 ##INFO=<ID=END,Number=1,Type=Integer,Description="End of variant">
 ##INFO=<ID=FLOAT,Number=1,Type=Float,Description="One single float">
 ##INFO=<ID=STRING,Number=1,Type=String,Description="One single string">
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
 ##INFO=<ID=INT2,Number=2,Type=Integer,Description="Exactly two integers">
 ##INFO=<ID=FLOAT2,Number=2,Type=Float,Description="Exactly two floats">
 ##INFO=<ID=STRING2,Number=2,Type=String,Description="Exactly two strings">
@@ -39,4 +41,4 @@
 ##FORMAT=<ID=FLOATX,Number=.,Type=Float,Description="A variable number of floats">
 ##FORMAT=<ID=STRINGX,Number=.,Type=String,Description="A variable number of strings">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Sample
-chr1	1	.	G	 G]17:198982]	276	PASS	FLAG;FLOAT=0.5;STRING=String;INT2=1,2;FLOAT2=0.5,1.0;STRING2=String1,String2;INTA=1;FLOATA=0.5;STRINGA=StringA;INTR=1,2;FLOATR=0.5,1.0;STRINGR=StringR1,StringR2;INTX=1,2,3,4;FLOATX=0.5,0.75;STRINGX=String1,String2,String3	GT:INT:INT2:INTA:INTR:INTG:INTX	0/1:1:1,2:1:1,2:1:1,2,3,4
+chr1	1	.	G	 G]chr17:198982]	276	PASS	SVTYPE=BND;FLAG;FLOAT=0.5;STRING=String;INT2=1,2;FLOAT2=0.5,1.0;STRING2=String1,String2;INTA=1;FLOATA=0.5;STRINGA=StringA;INTR=1,2;FLOATR=0.5,1.0;STRINGR=StringR1,StringR2;INTX=1,2,3,4;FLOATX=0.5,0.75;STRINGX=String1,String2,String3	GT:INT:INT2:INTA:INTR:INTG:INTX	0/1:1:1,2:1:1,2:1:1,2,3,4
