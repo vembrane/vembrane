@@ -101,6 +101,11 @@ class Info(NoValueDict):
         self._info_dict = {}
 
     def __getitem__(self, item):
+        if item == "END":
+            # pysam removes END from info. In order to fit with user expectations,
+            # (they will expect INFO["END"] to work) we emulate it being present by
+            # inferring it from pysams record representation.
+            return get_end(self._record)
         try:
             return self._info_dict[item]
         except KeyError:
@@ -221,6 +226,7 @@ class Environment(dict):
             "AUX": self._get_aux,
             "CHROM": self._get_chrom,
             "POS": self._get_pos,
+            "END": self._get_end,
             "ID": self._get_id,
             "ALT": self._get_alt,
             "REF": self._get_ref,
@@ -281,6 +287,11 @@ class Environment(dict):
     def _get_pos(self) -> int:
         value = self.record.pos
         self._globals["POS"] = value
+        return value
+
+    def _get_end(self) -> int:
+        value = get_end(self.record)
+        self._globals["END"] = value
         return value
 
     def _get_id(self) -> str:
@@ -362,3 +373,10 @@ class Environment(dict):
         if self._has_ann:
             self._annotation.update(self.idx, self.record, annotation)
         return self._func()
+
+
+def get_end(record):
+    # record.stop is pysams unified approach to get the end position of a variant.
+    # It either considers the alt allele or the END field, depending on the record.
+    # Stop is 0-based, but for consistency with POS we convert into 1-based.
+    return record.stop + 1
