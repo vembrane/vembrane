@@ -1,0 +1,2 @@
+function: "filter"
+expression: 'END == 1500 or INFO["END"] == 1400'
