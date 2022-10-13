@@ -3,7 +3,7 @@ import sys
 from collections import defaultdict
 from itertools import chain, islice
 from sys import stderr
-from typing import Dict, Iterator, Set, Tuple
+from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import yaml
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
@@ -127,7 +127,7 @@ def test_and_update_record(
     record: VariantRecord,
     ann_key: str,
     keep_unmatched: bool,
-) -> (VariantRecord, bool):
+) -> Tuple[VariantRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
@@ -169,9 +169,9 @@ def filter_vcf(
 ) -> Iterator[VariantRecord]:
     env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
 
-    def get_event_name(record: VariantRecord) -> Tuple[str, str]:
-        mate_ids = record.info.get("MATEID", [])
-        event_name = record.info.get("EVENT", None)
+    def get_event_name(record: VariantRecord) -> Tuple[Optional[str], Optional[str]]:
+        mate_ids: List[str] = record.info.get("MATEID", [])
+        event_name: Optional[str] = record.info.get("EVENT", None)
 
         if len(mate_ids) > 1 and not event_name:
             raise ValueError(

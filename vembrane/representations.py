@@ -1,10 +1,10 @@
 import ast
 from itertools import chain
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
-from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, type_info
+from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, NoValue, type_info
 from .common import get_annotation_keys, split_annotation_entry, is_bnd_record
 from .errors import (
     UnknownAnnotation,
@@ -133,8 +133,8 @@ class Info(NoValueDict):
 class Annotation(NoValueDict):
     def __init__(self, ann_key: str, header: VariantHeader):
         self._record_idx = -1
-        self._record = None
-        self._annotation_data = {}
+        self._record: Optional[VariantRecord] = None
+        self._annotation_data: List[str] = []
         self._data = {}
         annotation_keys = get_annotation_keys(header, ann_key)
         self._ann_conv = {
@@ -192,7 +192,7 @@ class Environment(dict):
         self._annotation: Annotation = Annotation(ann_key, header)
         self._globals = {}
         # We use self + self.func as a closure.
-        self._globals = allowed_globals.copy()
+        self._globals = dict(allowed_globals)
         self._globals.update(custom_functions(self))
         self._globals["SAMPLES"] = list(header.samples)
         # REF/ALT alleles are cached separately to raise "MoreThanOneAltAllele"
@@ -321,7 +321,7 @@ class Environment(dict):
         self._globals["ALT"] = value
         return value
 
-    def _get_qual(self) -> float:
+    def _get_qual(self) -> Union[float, NoValue]:
         value = NA if self.record.qual is None else self.record.qual
         self._globals["QUAL"] = value
         return value
