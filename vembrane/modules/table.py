@@ -206,7 +206,7 @@ def _var_and_body(s):
     return var, inner
 
 
-def preprocess_header_expression(
+def preprocess_expression(
     header: str, vcf: Optional[VariantFile] = None, make_expression: bool = True
 ) -> str:
     """
@@ -240,9 +240,7 @@ def get_header(args, vcf: Optional[VariantFile] = None) -> List[str]:
         header = args.header
     if args.long:
         header = f"SAMPLE, {header}"
-    return get_toplevel(
-        preprocess_header_expression(header, vcf, args.header == "auto")
-    )
+    return get_toplevel(preprocess_expression(header, vcf, args.header == "auto"))
 
 
 def get_toplevel(header: str) -> List[str]:
@@ -295,7 +293,7 @@ def smart_open(filename=None, *args, **kwargs):
 
 def execute(args):
     with VariantFile(args.vcf) as vcf:
-        expression = preprocess_header_expression(args.expression, vcf, True)
+        expression = preprocess_expression(args.expression, vcf, True)
         if args.long:
             expression = f"SAMPLE, {expression}"
         overwrite_number = {
@@ -318,7 +316,7 @@ def execute(args):
                 if args.header != "none":
                     header = get_header(args, vcf)
                     n_header_cols = len(header)
-                    expr_cols = expression.split(", ")
+                    expr_cols = get_toplevel(expression)
                     n_expr_cols = len(expr_cols)
                     if n_header_cols != n_expr_cols:
                         raise HeaderWrongColumnNumber(

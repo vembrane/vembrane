@@ -1,5 +1,5 @@
 import ast
-from typing import Iterable, Iterator, List
+from typing import Iterable, Iterator, List, Optional
 
 from pysam.libcbcf import VariantHeader, VariantRecord
 
@@ -51,8 +51,8 @@ class BreakendEvent(object):
 
     def __init__(self, name: str, mate_pair: bool = False):
         self.name = name
-        self.records = []
-        self.keep_records = []
+        self.records: List[VariantRecord] = []
+        self.keep_records: List[bool] = []
         self.keep = False
         self.mate_pair = mate_pair
 
@@ -81,5 +81,5 @@ class BreakendEvent(object):
         return self.name == other.name
 
 
-def mate_key(mates: Iterable[str]) -> str:
-    return "__MATES: " + ",".join(sorted(mates))
+def mate_key(mates: Iterable[Optional[str]]) -> str:
+    return "__MATES: " + ",".join(sorted(m for m in mates if m is not None))
