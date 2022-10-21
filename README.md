@@ -128,6 +128,26 @@ The following VCF fields can be accessed in the filter expression:
     'not {"pathogenic", "likely_pathogenic", "drug_response"}.isdisjoint(ANN["CLIN_SIG"])' \
     variants.vcf
   ```
+* Filter on sample specific values:
+  ```sh
+  vembrane filter \
+    'mean(FORMAT["DP"][s] for s in SAMPLES) > 10. and (FORMAT["AD"][SAMPLES[0]] 0 + FORMAT["AD"]["specific_sample_name"]) > 0' \
+    variants.vcf
+  ```
+* Filter on genotypes for specific samples (named "kid", "mom", "dad"):
+  ```sh
+  vembrane filter \
+    'is_het("kid") and is_hom_ref("mom") and is_hom_ref("dad") and all(FORMAT["DP"][s] > 10 for s in ["kid", "mom", "dad"])' \
+    variants.vcf
+  ```
+* Explicitly access the `GT` field for the first sample in the file:
+  ```sh
+  vembrane filter 'FORMAT["GT"][SAMPLES[0]] == (1, 1)' variants.vcf
+  ```
+  Samples can be referenced both by index and by name, so the expression could also be written as:
+  ```sh
+  vembrane filter 'FORMAT["GT"][0] == (1, 1)' variants.vcf
+  ```
 
 ### Custom `ANN` types
 `vembrane` parses entries in the annotation field as outlined in [docs/ann_types.md](docs/ann_types.md).
