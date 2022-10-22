@@ -131,7 +131,7 @@ The following VCF fields can be accessed in the filter expression:
 * Filter on sample specific values:
   ```sh
   vembrane filter \
-    'mean(FORMAT["DP"][s] for s in SAMPLES) > 10. and (FORMAT["AD"][SAMPLES[0]] 0 + FORMAT["AD"]["specific_sample_name"]) > 0' \
+    'mean(FORMAT["DP"][s] for s in SAMPLES) > 10 and (FORMAT["AD"][SAMPLES[0]] + FORMAT["AD"]["specific_sample_name"]) > 0' \
     variants.vcf
   ```
 * Filter on genotypes for specific samples (named "kid", "mom", "dad"):
