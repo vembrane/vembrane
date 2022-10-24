@@ -131,15 +131,15 @@ The following VCF fields can be accessed in the filter expression:
 * Filter on sample specific values:
   * by sample name:
     ```sh
-    vembrane filter 'FORMAT["AD"]["specific_sample_name"] > 0' variants.vcf
+    vembrane filter 'FORMAT["DP"]["specific_sample_name"] > 0' variants.vcf
     ```
   * by sample index:
     ```sh
-    vembrane filter 'FORMAT["AD"][0] > 0' variants.vcf
+    vembrane filter 'FORMAT["DP"][0] > 0' variants.vcf
     ```
   * by sample name based on the index in the list of `SAMPLES`:
     ```sh
-    vembrane filter 'FORMAT["AD"][SAMPLES[0]] > 0' variants.vcf
+    vembrane filter 'FORMAT["DP"][SAMPLES[0]] > 0' variants.vcf
     ```
   * using all or a subset of `SAMPLES`:
       ```sh
