@@ -1,4 +1,5 @@
 import argparse
+import shlex
 import sys
 from collections import defaultdict
 from itertools import chain, islice
@@ -13,9 +14,9 @@ from ..common import (
     BreakendEvent,
     check_expression,
     get_annotation_keys,
+    is_bnd_record,
     mate_key,
     split_annotation_entry,
-    is_bnd_record,
 )
 from ..errors import VembraneError
 from ..representations import Environment
@@ -329,13 +330,23 @@ def execute(args):
         header.add_meta("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
         #       in the future, we should not record sys.argv directly below.
+
+        def swap_quotes(s: str) -> str:
+            return s.replace('"', '\\"').replace("'", '"').replace('\\"', "'")
+
+        def single_outer(s: str) -> bool:
+            return '"' in s and s.index('"') > 0
+
+        def normalize(s: str) -> str:
+            return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
+
+        cmd_parts = [normalize(arg) if " " in arg else arg for arg in sys.argv[3:]]
+        expr = " ".join(a.strip() for a in args.expression.split("\n"))
+        expr = normalize(expr)
+
         header.add_meta(
             "vembraneCmd",
-            "vembrane "
-            + " ".join(
-                "'" + arg.replace("'", '"') + '"' if " " in arg else arg
-                for arg in sys.argv[1:]
-            ),
+            "vembrane " + expr + " " + " ".join(cmd_parts),
         )
 
         overwrite_number = {
