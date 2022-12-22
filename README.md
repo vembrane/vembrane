@@ -269,7 +269,7 @@ Internally for each vcf record the overlapping regions of the annotation file ar
 ## Citation
 Read [should-I-cite-this-software](https://github.com/mr-c/shouldacite/blob/main/should-I-cite-this-software.md) first.
 
-For the paper and citation options, see [doi.org/10.1093/bioinformatics/btac810](https://doi.org/10.1093/bioinformatics/btac810).
+Check the "Cite this repository" entry in the sidebar for citation options.
 
 ## Authors
 
