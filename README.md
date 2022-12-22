@@ -267,9 +267,9 @@ Exemplary invocation: `vembrane annotate example.yaml example.bcf > annotated.vc
 Internally for each vcf record the overlapping regions of the annotation file are determined and stored in `DATA`. The expression may then access the `DATA` object and its columns by the columns names to generate a single or multiple values of cardinality `number` of type `type`. These values are stored in the new annotation entry under the name `vcf_name` and with header description `description`.
 
 ## Citation
-Read [should-I-cite-this-software](https://github.com/mr-c/shouldacite/blob/main/should-I-cite-this-software.md) first.
-
 Check the "Cite this repository" entry in the sidebar for citation options.
+
+Also, please read [should-I-cite-this-software](https://github.com/mr-c/shouldacite/blob/main/should-I-cite-this-software.md) for background.
 
 ## Authors
 
