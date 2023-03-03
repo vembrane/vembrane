@@ -777,15 +777,6 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     ),
 }
 
-# VEP now uses gnomADe_* and gnomADg_* instead of gnomAD_*.
-# Therefore, we need to add these new entries to the KNOWN_ANN_TYPE_MAP_VEP
-NEW_GNOMAD_ENTRIES = {
-    f"gnomAD{t}_{key.split('_', 1)[1]}": typer
-    for t in ("e", "g")
-    for key, typer in KNOWN_ANN_TYPE_MAP_VEP.items()
-    if key.startswith("gnomAD_")
-}
-KNOWN_ANN_TYPE_MAP_VEP.update(NEW_GNOMAD_ENTRIES)
 KNOWN_ANN_TYPE_MAP = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}
 
 ANN_TYPER = AnnotationTyper(KNOWN_ANN_TYPE_MAP)
