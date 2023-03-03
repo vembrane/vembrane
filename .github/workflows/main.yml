@@ -39,9 +39,6 @@ jobs:
         run:  |
               python -m pip install --upgrade pip
               python -m pip install poetry black flake8
-              # Use setuptools<58 until pysam>0.16.0.1 (w/o use_2to3) is released.
-              # ref: https://github.com/pysam-developers/pysam/commit/f31f6dc5f5876957bf9bb1eb393e3344d3e9768b
-              poetry run python -m pip install --upgrade setuptools\<58
               poetry install --no-interaction
       - name: Check formatting with black
         run:  poetry run black --check .
