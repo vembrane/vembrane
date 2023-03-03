@@ -103,7 +103,6 @@ def tableize_vcf(
     overwrite_number: Dict[str, Dict[str, str]] = {},
     long: bool = False,
 ) -> Iterator[tuple]:
-
     kwargs = dict(overwrite_number=overwrite_number)
     if long:
         kwargs[
