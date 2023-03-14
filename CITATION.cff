@@ -1,0 +1,55 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Hartmann"
+  given-names: "Till"
+  orcid: "https://orcid.org/0000-0002-6993-347X"
+- family-names: "Schröder"
+  given-names: "Christopher"
+  orcid: "https://orcid.org/0000-0002-4483-8951"
+- family-names: "Kuthe"
+  given-names: "Elias"
+  orcid: "https://orcid.org/0000-0002-4704-9536"
+- family-names: "Lähnemann"
+  given-names: "David"
+  orcid: "https://orcid.org/0000-0002-9138-4112"
+- family-names: "Köster"
+  given-names: "Johannes"
+  orcid: "https://orcid.org/0000-0001-9818-9320"
+- family-names: "Bargull"
+  given-names: "Marcel"
+  orcid: "https://orcid.org/0000-0002-7185-3508"
+- family-names: "Forster"
+  given-names: "Jan"
+  orcid: "https://orcid.org/0000-0002-1587-7732"
+- family-names: "Mölder"
+  given-names: "Felix"
+  orcid: "https://orcid.org/0000-0002-3976-9701"
+title: "vembrane"
+version: 0.13.2
+doi: 10.5281/zenodo.7244278
+date-released: 2022-10-24
+url: "https://github.com/vembrane/vembrane"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Hartmann"
+    given-names: "Till"
+    orcid: "https://orcid.org/0000-0002-6993-347X"
+  - family-names: "Schröder"
+    given-names: "Christopher"
+    orcid: "https://orcid.org/0000-0002-4483-8951"
+  - family-names: "Kuthe"
+    given-names: "Elias"
+    orcid: "https://orcid.org/0000-0002-4704-9536"
+  - family-names: "Lähnemann"
+    given-names: "David"
+    orcid: "https://orcid.org/0000-0002-9138-4112"
+  - family-names: "Köster"
+    given-names: "Johannes"
+    orcid: "https://orcid.org/0000-0001-9818-9320"
+  doi: "10.1093/bioinformatics/btac810"
+  journal: "Bioinformatics"
+  month: 12
+  year: 2022
+  title: "Insane in the vembrane: filtering and transforming VCF/BCF files"

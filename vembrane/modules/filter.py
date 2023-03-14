@@ -1,9 +1,10 @@
 import argparse
+import shlex
 import sys
 from collections import defaultdict
 from itertools import chain, islice
 from sys import stderr
-from typing import Dict, Iterator, Set, Tuple
+from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import yaml
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
@@ -13,6 +14,7 @@ from ..common import (
     BreakendEvent,
     check_expression,
     get_annotation_keys,
+    is_bnd_record,
     mate_key,
     split_annotation_entry,
 )
@@ -126,7 +128,7 @@ def test_and_update_record(
     record: VariantRecord,
     ann_key: str,
     keep_unmatched: bool,
-) -> (VariantRecord, bool):
+) -> Tuple[VariantRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
@@ -168,15 +170,9 @@ def filter_vcf(
 ) -> Iterator[VariantRecord]:
     env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
 
-    info_keys = set(vcf.header.info.keys())
-    has_svtype = "SVTYPE" in info_keys
-
-    def is_bnd_record(record: VariantRecord) -> bool:
-        return has_svtype and record.info.get("SVTYPE", None) == "BND"
-
-    def get_event_name(record: VariantRecord) -> Tuple[str, str]:
-        mate_ids = record.info.get("MATEID", [])
-        event_name = record.info.get("EVENT", None)
+    def get_event_name(record: VariantRecord) -> Tuple[Optional[str], Optional[str]]:
+        mate_ids: List[str] = record.info.get("MATEID", [])
+        event_name: Optional[str] = record.info.get("EVENT", None)
 
         if len(mate_ids) > 1 and not event_name:
             raise ValueError(
@@ -334,13 +330,23 @@ def execute(args):
         header.add_meta("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
         #       in the future, we should not record sys.argv directly below.
+
+        def swap_quotes(s: str) -> str:
+            return s.replace('"', '\\"').replace("'", '"').replace('\\"', "'")
+
+        def single_outer(s: str) -> bool:
+            return '"' in s and s.index('"') > 0
+
+        def normalize(s: str) -> str:
+            return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
+
+        cmd_parts = [normalize(arg) if " " in arg else arg for arg in sys.argv[3:]]
+        expr = " ".join(a.strip() for a in args.expression.split("\n"))
+        expr = normalize(expr)
+
         header.add_meta(
             "vembraneCmd",
-            "vembrane "
-            + " ".join(
-                "'" + arg.replace("'", '"') + '"' if " " in arg else arg
-                for arg in sys.argv[1:]
-            ),
+            "vembrane " + expr + " " + " ".join(cmd_parts),
         )
 
         overwrite_number = {

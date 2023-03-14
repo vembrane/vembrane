@@ -1,6 +1,7 @@
 [![CI](https://github.com/vembrane/vembrane/actions/workflows/main.yml/badge.svg)](https://github.com/vembrane/vembrane/actions/workflows/main.yml)
-[![DOI](https://zenodo.org/badge/276383670.svg)](https://zenodo.org/badge/latestdoi/276383670)
-[![Bioconda](https://anaconda.org/bioconda/misopy/badges/installer/conda.svg)](https://bioconda.github.io/recipes/vembrane/README.html)
+[![Zenodo DOI](https://zenodo.org/badge/276383670.svg)](https://zenodo.org/badge/latestdoi/276383670)
+[![Paper DOI:10.1093/bioinformatics/btac810](http://img.shields.io/badge/DOI-10.1093/bioinformatics/btac810-3c799f.svg)](https://doi.org/10.1093/bioinformatics/btac810)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/vembrane/README.html)
 
 # vembrane: variant filtering using python expressions
 
@@ -62,20 +63,21 @@ The filter expression can be any valid python expression that evaluates to `bool
 ### Available fields
 The following VCF fields can be accessed in the filter expression:
 
-|Name|Type|Interpretation|Example expression|
-|---|---|---|---|
-|`INFO`|`Dict[str, Any¹]`| `INFO field -> Value`  | `INFO["DP"] > 0`|
-|`ANN`| `Dict[str, Any²]`| `ANN field -> Value` | `ANN["Gene_Name"] == "CDH2"`|
-|`CHROM`| `str` | Chromosome Name  |  `CHROM == "chr2"` |
-|`POS`| `int` | Chromosomal position  | `24 < POS < 42`|
-|`ID`| `str`  | Variant ID |  `ID == "rs11725853"` |
-|`REF`| `str` |  Reference allele  | `REF == "A"` |
-|`ALT`| `str` |  Alternative allele³  | `ALT == "C"`|
-|`QUAL`| `float`  | Quality |  `QUAL >= 60` |
-|`FILTER`| `List[str]` | Filter tags | `"PASS" in FILTER` |
-|`FORMAT`|`Dict[str, Dict[str, Any¹]]`| `Format -> (Sample -> Value)` | `FORMAT["DP"][SAMPLES[0]] > 0` |
-|`SAMPLES`|`List[str]`| `[Sample]`  |  `"Tumor" in SAMPLES` |
-|`INDEX`|`int`| Index of variant in the file  |  `INDEX < 10` |
+| Name      | Type                         | Interpretation                                                                                     | Example expression             |
+| --------- | ---------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `INFO`    | `Dict[str, Any¹]`            | `INFO field -> Value`                                                                              | `INFO["DP"] > 0`               |
+| `ANN`     | `Dict[str, Any²]`            | `ANN field -> Value`                                                                               | `ANN["Gene_Name"] == "CDH2"`   |
+| `CHROM`   | `str`                        | Chromosome Name                                                                                    | `CHROM == "chr2"`              |
+| `POS`     | `int`                        | Chromosomal position (1-based)                                                                     | `24 < POS < 42`                |
+| `END`     | `int`                        | Chromosomal end position (1-based, inclusive, NA for breakends); also accessible via `INFO["END"]` | `24 < END < 42`                |
+| `ID`      | `str`                        | Variant ID                                                                                         | `ID == "rs11725853"`           |
+| `REF`     | `str`                        | Reference allele                                                                                   | `REF == "A"`                   |
+| `ALT`     | `str`                        | Alternative allele³                                                                                | `ALT == "C"`                   |
+| `QUAL`    | `float`                      | Quality                                                                                            | `QUAL >= 60`                   |
+| `FILTER`  | `List[str]`                  | Filter tags                                                                                        | `"PASS" in FILTER`             |
+| `FORMAT`  | `Dict[str, Dict[str, Any¹]]` | `Format -> (Sample -> Value)`                                                                      | `FORMAT["DP"][SAMPLES[0]] > 0` |
+| `SAMPLES` | `List[str]`                  | `[Sample]`                                                                                         | `"Tumor" in SAMPLES`           |
+| `INDEX`   | `int`                        | Index of variant in the file                                                                       | `INDEX < 10`                   |
 
  ¹ depends on type specified in VCF header
 
@@ -126,6 +128,35 @@ The following VCF fields can be accessed in the filter expression:
   vembrane filter \
     'not {"pathogenic", "likely_pathogenic", "drug_response"}.isdisjoint(ANN["CLIN_SIG"])' \
     variants.vcf
+  ```
+* Filter on sample specific values:
+  * by sample name:
+    ```sh
+    vembrane filter 'FORMAT["DP"]["specific_sample_name"] > 0' variants.vcf
+    ```
+  * by sample index:
+    ```sh
+    vembrane filter 'FORMAT["DP"][0] > 0' variants.vcf
+    ```
+  * by sample name based on the index in the list of `SAMPLES`:
+    ```sh
+    vembrane filter 'FORMAT["DP"][SAMPLES[0]] > 0' variants.vcf
+    ```
+  * using all or a subset of `SAMPLES`:
+      ```sh
+      vembrane filter 'mean(FORMAT["DP"][s] for s in SAMPLES) > 10' variants.vcf
+      ```
+
+* Filter on genotypes for specific samples (named "kid", "mom", "dad"):
+  ```sh
+  vembrane filter \
+    'is_het("kid") and is_hom_ref("mom") and is_hom_ref("dad") and \
+     all(FORMAT["DP"][s] > 10 for s in ["kid", "mom", "dad"])' \
+    variants.vcf
+  ```
+* Explicitly access the `GT` field for the first sample in the file:
+  ```sh
+  vembrane filter 'FORMAT["GT"][0] == (1, 1)' variants.vcf
   ```
 
 ### Custom `ANN` types
@@ -234,6 +265,11 @@ chr10	654480	1000200	HSJKJSD	12
 Exemplary invocation: `vembrane annotate example.yaml example.bcf > annotated.vcf`.
 
 Internally for each vcf record the overlapping regions of the annotation file are determined and stored in `DATA`. The expression may then access the `DATA` object and its columns by the columns names to generate a single or multiple values of cardinality `number` of type `type`. These values are stored in the new annotation entry under the name `vcf_name` and with header description `description`.
+
+## Citation
+Check the "Cite this repository" entry in the sidebar for citation options.
+
+Also, please read [should-I-cite-this-software](https://github.com/mr-c/shouldacite/blob/main/should-I-cite-this-software.md) for background.
 
 ## Authors
 

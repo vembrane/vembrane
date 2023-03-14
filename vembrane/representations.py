@@ -1,11 +1,11 @@
 import ast
 from itertools import chain
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
-from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, type_info
-from .common import get_annotation_keys, split_annotation_entry
+from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, NoValue, type_info
+from .common import get_annotation_keys, split_annotation_entry, is_bnd_record
 from .errors import (
     UnknownAnnotation,
     UnknownFormatField,
@@ -104,30 +104,37 @@ class Info(NoValueDict):
         try:
             return self._info_dict[item]
         except KeyError:
-            try:
-                if item == self._ann_key:
-                    raise KeyError(item)
-                untyped_value = self._record_info[item]
-            except KeyError:
-                if item in self._header_info_fields:
-                    value = NA
-                else:
-                    raise UnknownInfoField(self._record_idx, self._record, item)
+            if item == "END":
+                # pysam removes END from info. In order to fit with user expectations,
+                # (they will expect INFO["END"] to work) we emulate it being present by
+                # inferring it from pysams record representation.
+                value = get_end(self._record)
             else:
-                value = self._info_dict[item] = type_info(
-                    untyped_value,
-                    self._header_info_fields[item],
-                    item,
-                    self._record_idx,
-                )
+                try:
+                    if item == self._ann_key:
+                        raise KeyError(item)
+                    untyped_value = self._record_info[item]
+                except KeyError:
+                    if item in self._header_info_fields:
+                        value = NA
+                    else:
+                        raise UnknownInfoField(self._record_idx, self._record, item)
+                else:
+                    value = type_info(
+                        untyped_value,
+                        self._header_info_fields[item],
+                        item,
+                        self._record_idx,
+                    )
+            self._info_dict[item] = value
             return value
 
 
 class Annotation(NoValueDict):
     def __init__(self, ann_key: str, header: VariantHeader):
         self._record_idx = -1
-        self._record = None
-        self._annotation_data = {}
+        self._record: Optional[VariantRecord] = None
+        self._annotation_data: List[str] = []
         self._data = {}
         annotation_keys = get_annotation_keys(header, ann_key)
         self._ann_conv = {
@@ -185,7 +192,7 @@ class Environment(dict):
         self._annotation: Annotation = Annotation(ann_key, header)
         self._globals = {}
         # We use self + self.func as a closure.
-        self._globals = allowed_globals.copy()
+        self._globals = dict(allowed_globals)
         self._globals.update(custom_functions(self))
         self._globals["SAMPLES"] = list(header.samples)
         # REF/ALT alleles are cached separately to raise "MoreThanOneAltAllele"
@@ -221,6 +228,7 @@ class Environment(dict):
             "AUX": self._get_aux,
             "CHROM": self._get_chrom,
             "POS": self._get_pos,
+            "END": self._get_end,
             "ID": self._get_id,
             "ALT": self._get_alt,
             "REF": self._get_ref,
@@ -283,6 +291,11 @@ class Environment(dict):
         self._globals["POS"] = value
         return value
 
+    def _get_end(self) -> int:
+        value = get_end(self.record)
+        self._globals["END"] = value
+        return value
+
     def _get_id(self) -> str:
         value = self.record.id
         self._globals["ID"] = value
@@ -308,7 +321,7 @@ class Environment(dict):
         self._globals["ALT"] = value
         return value
 
-    def _get_qual(self) -> float:
+    def _get_qual(self) -> Union[float, NoValue]:
         value = NA if self.record.qual is None else self.record.qual
         self._globals["QUAL"] = value
         return value
@@ -362,3 +375,15 @@ class Environment(dict):
         if self._has_ann:
             self._annotation.update(self.idx, self.record, annotation)
         return self._func()
+
+
+def get_end(record: VariantRecord):
+    if is_bnd_record(record):
+        return NA
+    else:
+        # record.stop is pysams unified approach to get the end position of a variant.
+        # It either considers the alt allele or the END field, depending on the record.
+        # Stop is 0-based, but for consistency with POS we convert into 1-based.
+        # Since for 1-based coordinates, the expectation is that END is inclusive
+        # instead of exclusive (as it is with 0-based), we do not need to add 1.
+        return record.stop
