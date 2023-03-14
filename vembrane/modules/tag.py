@@ -18,7 +18,7 @@ class TagExpressionList(argparse.Action):
         setattr(namespace, self.dest, dict())
         values = values[0].strip().split(",")
         for value in values:
-            key, value = value.strip().split("=")
+            key, value = value.strip().split("=", 1)
             expr = check_expression(value)
             getattr(namespace, self.dest)[key] = expr
 
