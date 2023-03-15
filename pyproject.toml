@@ -12,7 +12,7 @@ vembrane = 'vembrane.cli:main'
 
 [tool.poetry.dependencies]
 python = ">=3.8"
-pysam = "^0.19"
+pysam = "^0.20"
 pyyaml = "^6.0"
 asttokens = "^2.0"
 numpy = { version = "^1.23", python = ">=3.8" }
@@ -20,12 +20,13 @@ intervaltree = "^3.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
-pre-commit = "^2.20"
-black = { version = "^22.6", python = "^3.8" }
+pre-commit = "^3.1"
+black = { version = "^23.1", python = "^3.8" }
+isort = "^5.12"
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310']
+target-version = ['py38', 'py39', 'py310', 'py311']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -46,5 +47,5 @@ exclude = '''
 profile = "black"
 
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry-core>=1.5.1"]
 build-backend = "poetry.masonry.api"

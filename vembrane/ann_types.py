@@ -355,9 +355,15 @@ KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "Rank": AnnotationEntry("Rank"),
     "HGVS.c": AnnotationEntry("HGVS.c"),
     "HGVS.p": AnnotationEntry("HGVS.p"),
-    "cDNA.pos / cDNA.length": AnnotationEntry("cDNA", PosRange.from_snpeff_str),
-    "CDS.pos / CDS.length": AnnotationEntry("CDS", PosRange.from_snpeff_str),
-    "AA.pos / AA.length": AnnotationEntry("AA", PosRange.from_snpeff_str),
+    "cDNA.pos / cDNA.length": AnnotationEntry(
+        "cDNA.pos / cDNA.length", PosRange.from_snpeff_str
+    ),
+    "CDS.pos / CDS.length": AnnotationEntry(
+        "CDS.pos / CDS.length", PosRange.from_snpeff_str
+    ),
+    "AA.pos / AA.length": AnnotationEntry(
+        "AA.pos / AA.length", PosRange.from_snpeff_str
+    ),
     "Distance": AnnotationEntry("Distance", str),
     "ERRORS / WARNINGS / INFO": AnnotationListEntry(
         "ERRORS / WARNINGS / INFO",
@@ -385,9 +391,9 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "Consequence": AnnotationEntry(
         "Consequence", description="Consequence type of this variant"
     ),
-    "cDNA_position": AnnotationEntry("cDNA", PosRange.from_vep_str),
-    "CDS_position": AnnotationEntry("CDS", PosRange.from_vep_str),
-    "Protein_position": AnnotationEntry("Protein", PosRange.from_vep_str),
+    "cDNA_position": AnnotationEntry("cDNA_position", PosRange.from_vep_str),
+    "CDS_position": AnnotationEntry("CDS_position", PosRange.from_vep_str),
+    "Protein_position": AnnotationEntry("Protein_position", PosRange.from_vep_str),
     "HGSVc": AnnotationEntry("HGSVc"),
     "HGSVp": AnnotationEntry("HGSVp"),
     "REF_ALLELE": AnnotationEntry("REF_ALLELE", description="The reference allele"),
