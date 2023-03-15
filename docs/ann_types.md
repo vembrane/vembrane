@@ -10,9 +10,9 @@ Annotations with custom types:
 
 | Name in vep `ANN`    | Type                                                   | Description                                                                                                                                                   | Example expression                                                          |
 |----------------------|--------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| `cDNA_position`      | `PosRange` with properties `start`, `end` and `length` |                                                                                                                                                               | `'ANN["cDNA"].start < 42'`                                                  |
-| `CDS_position`       | `PosRange` with properties `start`, `end` and `length` |                                                                                                                                                               | `'ANN["CDS"].end > 42'`                                                     |
-| `Protein_position`   | `PosRange` with properties `start`, `end` and `length` |                                                                                                                                                               | `'ANN["AA"].length == 42'`                                                  |
+| `cDNA_position`      | `PosRange` with properties `start`, `end` and `length` |                                                                                                                                                               | `'ANN["cDNA_position"].start < 42'`                                         |
+| `CDS_position`       | `PosRange` with properties `start`, `end` and `length` |                                                                                                                                                               | `'ANN["CDS_position"].end > 42'`                                            |
+| `Protein_position`   | `PosRange` with properties `start`, `end` and `length` |                                                                                                                                                               | `'ANN["Protein_position"].length == 42'`                                    |
 | `STRAND`             | `int`                                                  | The DNA strand (1 or -1) on which the transcript/feature lies                                                                                                 |                                                                             |
 | `FLAGS`              | `List[str]`                                            | Transcript quality flags: `cds_start_NF`: CDS 5' incomplete, `cds_end_NF`: CDS 3' incomplete                                                                  |                                                                             |
 | `HGVS_OFFSET`        | `int`                                                  | Indicates by how many bases the HGVS notations for this variant have been shifted                                                                             |                                                                             |
@@ -107,12 +107,12 @@ Annotations with type `str`:
 ## snpEff
 Annotations with custom types:
 
-| Name in snpEff `ANN`       | Type                                                   | Description | Example expression                         |
-|----------------------------|--------------------------------------------------------|-------------|--------------------------------------------|
-| `cDNA.pos / cDNA.length`   | `PosRange` with properties `start`, `end` and `length` |             | `vembrane filter 'ANN["cDNA"].start < 42'` |
-| `CDS.pos / CDS.length`     | `PosRange` with properties `start`, `end` and `length` |             | `vembrane filter 'ANN["CDS"].end > 42'`    |
-| `AA.pos / AA.length`       | `PosRange` with properties `start`, `end` and `length` |             | `vembrane filter 'ANN["AA"].length == 42'` |
-| `ERRORS / WARNINGS / INFO` | `List[str]`                                            |             |                                            |
+| Name in snpEff `ANN`       | Type                                                   | Description | Example expression                                           |
+|----------------------------|--------------------------------------------------------|-------------|--------------------------------------------------------------|
+| `cDNA.pos / cDNA.length`   | `PosRange` with properties `start`, `end` and `length` |             | `vembrane filter 'ANN["cDNA.pos / cDNA.length"].start < 42'` |
+| `CDS.pos / CDS.length`     | `PosRange` with properties `start`, `end` and `length` |             | `vembrane filter 'ANN["CDS.pos / CDS.length"].end > 42'`     |
+| `AA.pos / AA.length`       | `PosRange` with properties `start`, `end` and `length` |             | `vembrane filter 'ANN["AA.pos / AA.length"].length == 42'`   |
+| `ERRORS / WARNINGS / INFO` | `List[str]`                                            |             |                                                              |
 
 
 Annotations with type `str`:
