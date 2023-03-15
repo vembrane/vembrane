@@ -355,9 +355,15 @@ KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "Rank": AnnotationEntry("Rank"),
     "HGVS.c": AnnotationEntry("HGVS.c"),
     "HGVS.p": AnnotationEntry("HGVS.p"),
-    "cDNA.pos / cDNA.length": AnnotationEntry("cDNA.pos / cDNA.length", PosRange.from_snpeff_str),
-    "CDS.pos / CDS.length": AnnotationEntry("CDS.pos / CDS.length", PosRange.from_snpeff_str),
-    "AA.pos / AA.length": AnnotationEntry("AA.pos / AA.length", PosRange.from_snpeff_str),
+    "cDNA.pos / cDNA.length": AnnotationEntry(
+        "cDNA.pos / cDNA.length", PosRange.from_snpeff_str
+    ),
+    "CDS.pos / CDS.length": AnnotationEntry(
+        "CDS.pos / CDS.length", PosRange.from_snpeff_str
+    ),
+    "AA.pos / AA.length": AnnotationEntry(
+        "AA.pos / AA.length", PosRange.from_snpeff_str
+    ),
     "Distance": AnnotationEntry("Distance", str),
     "ERRORS / WARNINGS / INFO": AnnotationListEntry(
         "ERRORS / WARNINGS / INFO",
