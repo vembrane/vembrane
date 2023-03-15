@@ -13,25 +13,28 @@ from ..representations import Environment
 from .filter import DeprecatedAction, read_auxiliary
 
 
-class TagExpressionList(argparse.Action):
+class AppendTagExpression(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, dict())
-        values = values[0].strip().split(",")
-        for value in values:
-            key, value = value.strip().split("=", 1)
-            expr = check_expression(value)
-            getattr(namespace, self.dest)[key] = expr
+        assert len(values) == 1
+        if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
+            setattr(namespace, self.dest, dict())
+        value = values[0].strip()
+        key, value = value.strip().split("=", 1)
+        expr = check_expression(value)
+        getattr(namespace, self.dest)[key.strip()] = expr
 
 
 def add_subcommand(subparsers):
     parser = subparsers.add_parser("tag")
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
-        "expression",
+        "-t",
+        "--tag",
         help="Tag records using the FILTER field.",
         nargs=1,
-        metavar="[TAG=EXPRESSION,]+",
-        action=TagExpressionList,
+        metavar="TAG=EXPRESSION",
+        action=AppendTagExpression,
+        required=True,
     )
     parser.add_argument(
         "vcf", help="The file containing the variants.", nargs="?", default="-"
@@ -125,7 +128,6 @@ def tag_vcf(
     auxiliary: Dict[str, Set[str]] = {},
     overwrite_number: Dict[str, Dict[str, str]] = {},
 ) -> Iterator[VariantRecord]:
-
     # For each tag-expression pair, a different Environment must be used.
     envs = {
         tag: Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
@@ -162,7 +164,7 @@ def execute(args):
             "FORMAT": dict(args.overwrite_number_format),
         }
 
-        expressions = dict(args.expression)
+        expressions = dict(args.tag)
         for tag, expr in expressions.items():
             for t, rec in vcf.header.filters.items():
                 if t == tag:
