@@ -51,7 +51,8 @@ class NoValue(str):
 
     def __getattr__(self, item):
         print(
-            f"Warning: attribute '{item}' does not exist, returning NA instead.",
+            f"Warning: Trying to access attribute '{item}' of NoValue. "
+            "Returning NA instead.",
             file=stderr,
         )
         return self
