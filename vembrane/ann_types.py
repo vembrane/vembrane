@@ -49,6 +49,13 @@ class NoValue(str):
     def __hash__(self) -> int:
         return super().__hash__()
 
+    def __getattr__(self, item):
+        print(
+            f"Warning: attribute '{item}' does not exist, returning NA instead.",
+            file=stderr,
+        )
+        return self
+
 
 NA = NoValue()
 
