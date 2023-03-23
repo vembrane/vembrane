@@ -106,7 +106,7 @@ The following VCF fields can be accessed in the filter expression:
   ```
 * Only keep annotations and variants where protein position is less than 10:
   ```sh
-  vembrane filter 'ANN["Protein"].start < 10' variants.bcf
+  vembrane filter 'ANN["Protein_position"].start < 10' variants.bcf
   ```
 * Only keep variants where mapping quality is exactly 60:
   ```sh
