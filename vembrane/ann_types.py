@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from ctypes import c_float
 from sys import stderr
-from typing import Any, Callable, Dict, Iterable, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Set, Tuple, Union
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
@@ -17,7 +17,7 @@ def float32(val: str) -> float:
 # but just comes up empty-handed, which is convenient behaviour.
 # This way, we do not have to special case / monkey patch / wrap the regex module.
 class NoValue(str):
-    warnings: Dict[str, bool] = defaultdict(lambda: True)
+    warnings: Set[str] = set()
 
     def __lt__(self, other):
         return False
@@ -52,8 +52,8 @@ class NoValue(str):
         return super().__hash__()
 
     def __getattr__(self, item):
-        if self.warnings[item]:
-            self.warnings[item] = False
+        if item not in self.warnings:
+            self.warnings.add(item)
             print(
                 f"Warning: Trying to access non-existent attribute '{item}' of NoValue."
                 " Returning NA instead.\n"
