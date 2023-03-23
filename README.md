@@ -178,6 +178,24 @@ Sometimes, multi-valued fields may contain missing values; in this case, the `wi
 ### Auxiliary files
 `vembrane` supports additional files, such as lists of genes or ids with the `--aux NAME path/to/file` option. The file should contain one item per line and is parsed as a set. For example `vembrane filter --aux genes genes.txt "ANN['SYMBOL'] in AUX['genes']" variants.vcf` will keep only records where the annotated symbol is in the set specified in `genes.txt`.
 
+
+## `vembrane tag`
+While `vembrane filter` removes/skips records which do not pass the supplied expression,
+`vembrane tag` applies tags to records which do pass the expression.
+In other words, `tag` is a non-destructive version of `filter`, which only adds tags to records (hence never removes information from the input).
+As such, multiple tags can be applied to a single record in the same run.
+
+### Examples
+* Tag records with quality at least 30 with a tag named `quality_at_least_30`:
+  ```sh
+  vembrane tag -t quality_at_least_30="QUAL >= 30" variants.vcf
+  ```
+* Tag records with quality at least 30 with a tag named `quality_at_least_30`
+  and records which have "Illumina" in their list of platforms with a tag named `illumina`:
+  ```sh
+  vembrane tag -t quality_at_least_30="QUAL >= 30" -t illumina="'Illumina' in INFO['platformnames']" variants.vcf
+  ```
+
 ## `vembrane table`
 
 In addition to the `filter` subcommand, vembrane (`≥ 0.5`) also supports writing tabular data with the `table` subcommand.
