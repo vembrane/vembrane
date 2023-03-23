@@ -167,6 +167,9 @@ The following VCF fields can be accessed in the filter expression:
 If a certain annotation field lacks a value, it will be replaced with the special value of `NA`. Comparing with this value will always result in `False`, e.g.
 `ANN["MOTIF_POS"] > 0` will always evaluate to `False` *if* there was no value in the "MOTIF_POS" field of ANN (otherwise the comparison will be carried out with the usual semantics).
 
+For fields with custom types, such as `ANN["Protein_position"]` which is of type `PosRange` with attributes `start`, `end` and `length`, trying to access `ANN["Protein_position"].start` will result in `NA` if there was no value for `"Protein_position"` in the annotation of the respective record, i.e. the access will return `NA` instead of raising an `AttributeError`.
+In general, any attribute access on `NA` will result in `NA` (and issue a warning to stderr).
+
 Since you may want to use the regex module to search for matches, `NA` also acts as an empty `str`, such that `re.search("nothing", NA)` returns nothing instead of raising an exception.
 
 *Explicitly* handling missing/optional values in INFO or FORMAT fields can be done by checking for NA, e.g.: `INFO["DP"] is NA`.
