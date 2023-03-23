@@ -1,2 +1,2 @@
 function: "table"
-expression: "CHROM, POS, ANN['Protein_position'].start, ANN['Protein_position'].length"
+expression: "CHROM, POS, ANN['Protein_position'].start, ANN['Protein_position'].length, ANN['Protein_position']"
