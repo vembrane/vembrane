@@ -1,5 +1,4 @@
 import argparse
-import shlex
 import sys
 from collections import defaultdict
 from itertools import chain, islice
@@ -7,6 +6,7 @@ from sys import stderr
 from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import yaml
+from common import normalize
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
@@ -330,16 +330,6 @@ def execute(args):
         header.add_meta("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
         #       in the future, we should not record sys.argv directly below.
-
-        def swap_quotes(s: str) -> str:
-            return s.replace('"', '\\"').replace("'", '"').replace('\\"', "'")
-
-        def single_outer(s: str) -> bool:
-            return '"' in s and s.index('"') > 0
-
-        def normalize(s: str) -> str:
-            return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
-
         cmd_parts = [normalize(arg) if " " in arg else arg for arg in sys.argv[3:]]
         expr = " ".join(a.strip() for a in args.expression.split("\n"))
         expr = normalize(expr)

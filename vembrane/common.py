@@ -1,4 +1,5 @@
 import ast
+import shlex
 from typing import Iterable, Iterator, List, Optional
 
 from pysam.libcbcf import VariantHeader, VariantRecord
@@ -20,6 +21,23 @@ def check_expression(expression: str) -> str:
         raise InvalidExpression(
             expression, "The expression has to be syntactically correct."
         )
+
+
+def swap_quotes(s: str) -> str:
+    return s.replace('"', '\\"').replace("'", '"').replace('\\"', "'")
+
+
+def single_outer(s: str) -> bool:
+    if '"' in s and "'" in s:
+        return s.index('"') > s.index("'")
+    elif '"' in s:
+        return True
+    elif "'" in s:
+        return False
+
+
+def normalize(s: str) -> str:
+    return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
 
 
 def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:

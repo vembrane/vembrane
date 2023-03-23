@@ -4,6 +4,7 @@ from itertools import chain, islice
 from sys import stderr
 from typing import Dict, Iterator, Set
 
+from common import single_outer, swap_quotes
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
@@ -171,6 +172,7 @@ def execute(args):
                     e = FilterAlreadyDefined(tag)
                     print(e, file=stderr)
                     exit(1)
+            expr = swap_quotes(expr) if single_outer(expr) else expr
             vcf.header.add_meta(
                 key="FILTER", items=[("ID", tag), ("Description", expr)]
             )
