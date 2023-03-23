@@ -4,11 +4,10 @@ from itertools import chain, islice
 from sys import stderr
 from typing import Dict, Iterator, Set
 
-from common import single_outer, swap_quotes
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
-from ..common import check_expression
+from ..common import check_expression, single_outer, swap_quotes
 from ..errors import FilterAlreadyDefined, VembraneError
 from ..representations import Environment
 from .filter import DeprecatedAction, read_auxiliary

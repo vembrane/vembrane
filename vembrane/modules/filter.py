@@ -6,7 +6,6 @@ from sys import stderr
 from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import yaml
-from common import normalize
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
@@ -16,6 +15,7 @@ from ..common import (
     get_annotation_keys,
     is_bnd_record,
     mate_key,
+    normalize,
     split_annotation_entry,
 )
 from ..errors import VembraneError
