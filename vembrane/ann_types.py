@@ -149,7 +149,7 @@ class PosRange:
 
     @property
     def length(self):
-        if self.end != NA and self.start != NA:
+        if self.end is not NA and self.start is not NA:
             return self.end - self.start
         else:
             return NA
