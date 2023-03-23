@@ -132,6 +132,8 @@ class PosRange:
         self.end = end
         self._raw = raw
 
+    raw = property(lambda self: self._raw, None, None)
+
     @classmethod
     def from_snpeff_str(cls, value: str) -> PosRange:
         pos, length = [int(v.strip()) for v in value.split("/")]
@@ -147,9 +149,6 @@ class PosRange:
             else [int(value.strip())] * 2
         )
         return cls(start, end, value)
-
-    def raw(self) -> str:
-        return self._raw
 
     @property
     def length(self):
@@ -248,6 +247,8 @@ class RangeTotal(object):
         self.total = total
         self._raw = raw
 
+    raw = property(lambda self: self._raw, None, None)
+
     @classmethod
     def from_vep_string(cls, value: str) -> RangeTotal:
         v = value.split("/")
@@ -261,9 +262,6 @@ class RangeTotal(object):
                 "Found more than two values separated by '-', "
                 "expected only a single int, or two ints separated by '-'."
             )
-
-    def raw(self) -> str:
-        return self._raw
 
     def __str__(self):
         if len(self.range) == 1:
@@ -293,13 +291,12 @@ class NumberTotal(object):
         self.total = total
         self._raw = raw
 
+    raw = property(lambda self: self._raw, None, None)
+
     @classmethod
     def from_vep_string(cls, value: str) -> NumberTotal:
         v = value.split("/")
         return cls(int(v[0]), int(v[1]), value)
-
-    def raw(self) -> str:
-        return self._raw
 
     def __str__(self):
         return f"number / total: {self.number} / {self.total}"
