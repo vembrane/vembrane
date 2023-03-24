@@ -143,14 +143,17 @@ def type_info(value, number=".", field=None, record_idx=None):
 
 
 class PosRange:
-    def __init__(self, start: int, end: int):
+    def __init__(self, start: int, end: int, raw: str):
         self.start = start
         self.end = end
+        self._raw = raw
+
+    raw = property(lambda self: self._raw, None, None)
 
     @classmethod
     def from_snpeff_str(cls, value: str) -> PosRange:
         pos, length = [int(v.strip()) for v in value.split("/")]
-        return cls(pos, pos + length)
+        return cls(pos, pos + length, value)
 
     @classmethod
     def from_vep_str(cls, value: str) -> PosRange:
@@ -161,7 +164,7 @@ class PosRange:
             #  or start position only
             else [int(value.strip())] * 2
         )
-        return cls(start, end)
+        return cls(start, end, value)
 
     @property
     def length(self):
@@ -255,18 +258,21 @@ class AnnotationListDictEntry(AnnotationEntry):
 
 
 class RangeTotal(object):
-    def __init__(self, r, total):
+    def __init__(self, r: range, total: int, raw: str):
         self.range = r
         self.total = total
+        self._raw = raw
+
+    raw = property(lambda self: self._raw, None, None)
 
     @classmethod
     def from_vep_string(cls, value: str) -> RangeTotal:
         v = value.split("/")
         r = [int(s) for s in v[0].split("-")]
         if len(r) == 1:
-            return cls(range(r[0], r[0] + 1), int(v[1]))
+            return cls(range(r[0], r[0] + 1), int(v[1]), value)
         elif len(r) == 2:
-            return cls(range(r[0], r[1] + 1), int(v[1]))
+            return cls(range(r[0], r[1] + 1), int(v[1]), value)
         else:
             raise ValueError(
                 "Found more than two values separated by '-', "
@@ -296,14 +302,17 @@ class AnnotationRangeTotalEntry(AnnotationEntry):
 
 
 class NumberTotal(object):
-    def __init__(self, number, total):
+    def __init__(self, number: int, total: int, raw: str):
         self.number = number
         self.total = total
+        self._raw = raw
+
+    raw = property(lambda self: self._raw, None, None)
 
     @classmethod
     def from_vep_string(cls, value: str) -> NumberTotal:
         v = value.split("/")
-        return cls(int(v[0]), int(v[1]))
+        return cls(int(v[0]), int(v[1]), value)
 
     def __str__(self):
         return f"number / total: {self.number} / {self.total}"
