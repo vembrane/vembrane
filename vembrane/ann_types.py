@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from ctypes import c_float
 from sys import stderr
-from typing import Any, Callable, Dict, Iterable, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Set, Tuple, Union
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
@@ -14,9 +14,11 @@ def float32(val: str) -> float:
 
 
 # If NoValue inherits from str, re.search("something", NoValue()) does not error
-# but just comes up empty handed, which is convenient behaviour.
+# but just comes up empty-handed, which is convenient behaviour.
 # This way, we do not have to special case / monkey patch / wrap the regex module.
 class NoValue(str):
+    warnings: Set[str] = set()
+
     def __lt__(self, other):
         return False
 
@@ -48,6 +50,20 @@ class NoValue(str):
 
     def __hash__(self) -> int:
         return super().__hash__()
+
+    def __getattr__(self, item):
+        if item not in self.warnings:
+            self.warnings.add(item)
+            print(
+                f"Warning: Trying to access non-existent attribute '{item}' of NoValue."
+                " Returning NA instead.\n"
+                "This warning will only be printed once per attribute.\n"
+                "It either indicates a typo in the attribute name or "
+                "the access of an attribute of a field with a custom type "
+                "which is empty/has no value.",
+                file=stderr,
+            )
+        return self
 
 
 NA = NoValue()
