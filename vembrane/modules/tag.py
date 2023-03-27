@@ -147,17 +147,6 @@ def execute(args):
     aux = read_auxiliary(args.aux)
     with VariantFile(args.vcf) as vcf:
         header: VariantHeader = vcf.header
-        header.add_meta("vembraneVersion", __version__)
-        # NOTE: If .modules.filter.execute might be used as a library function
-        #       in the future, we should not record sys.argv directly below.
-        header.add_meta(
-            "vembraneCmd",
-            "vembrane "
-            + " ".join(
-                "'" + arg.replace("'", '"') + '"' if " " in arg else arg
-                for arg in sys.argv[1:]
-            ),
-        )
 
         overwrite_number = {
             "INFO": dict(args.overwrite_number_info),
@@ -175,6 +164,16 @@ def execute(args):
             vcf.header.add_meta(
                 key="FILTER", items=[("ID", tag), ("Description", expr)]
             )
+
+        header.add_meta("vembraneVersion", __version__)
+        header.add_meta(
+            "vembraneCmd",
+            "vembrane "
+            + " ".join(
+                "'" + arg.replace("'", '"') + '"' if " " in arg else arg
+                for arg in sys.argv[1:]
+            ),
+        )
 
         records = tag_vcf(
             vcf,
