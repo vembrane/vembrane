@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from ctypes import c_float
 from sys import stderr
-from typing import Any, Callable, Dict, Iterable, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Set, Tuple, Union
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
@@ -14,9 +14,11 @@ def float32(val: str) -> float:
 
 
 # If NoValue inherits from str, re.search("something", NoValue()) does not error
-# but just comes up empty handed, which is convenient behaviour.
+# but just comes up empty-handed, which is convenient behaviour.
 # This way, we do not have to special case / monkey patch / wrap the regex module.
 class NoValue(str):
+    warnings: Set[str] = set()
+
     def __lt__(self, other):
         return False
 
@@ -48,6 +50,20 @@ class NoValue(str):
 
     def __hash__(self) -> int:
         return super().__hash__()
+
+    def __getattr__(self, item):
+        if item not in self.warnings:
+            self.warnings.add(item)
+            print(
+                f"Warning: Trying to access non-existent attribute '{item}' of NoValue."
+                " Returning NA instead.\n"
+                "This warning will only be printed once per attribute.\n"
+                "It either indicates a typo in the attribute name or "
+                "the access of an attribute of a field with a custom type "
+                "which is empty/has no value.",
+                file=stderr,
+            )
+        return self
 
 
 NA = NoValue()
@@ -127,29 +143,32 @@ def type_info(value, number=".", field=None, record_idx=None):
 
 
 class PosRange:
-    def __init__(self, start: int, end: int):
+    def __init__(self, start: int, end: int, raw: str):
         self.start = start
         self.end = end
+        self._raw = raw
+
+    raw = property(lambda self: self._raw, None, None)
 
     @classmethod
     def from_snpeff_str(cls, value: str) -> PosRange:
         pos, length = [int(v.strip()) for v in value.split("/")]
-        return cls(pos, pos + length)
+        return cls(pos, pos + length, value)
 
     @classmethod
     def from_vep_str(cls, value: str) -> PosRange:
         start, end = (
-            #  the "-" is optional, so vep either has either start and end position
+            #  the "-" is optional, so vep either has start and end position
             [NA if v == "?" else int(v) for v in map(str.strip, value.split("-"))]
             if "-" in value
             #  or start position only
-            else [int(value.strip())] * 2
+            else [int(value.strip()), int(value.strip()) + 1]
         )
-        return cls(start, end)
+        return cls(start, end, value)
 
     @property
     def length(self):
-        if self.end != NA and self.start != NA:
+        if self.end is not NA and self.start is not NA:
             return self.end - self.start
         else:
             return NA
@@ -239,18 +258,21 @@ class AnnotationListDictEntry(AnnotationEntry):
 
 
 class RangeTotal(object):
-    def __init__(self, r, total):
+    def __init__(self, r: range, total: int, raw: str):
         self.range = r
         self.total = total
+        self._raw = raw
+
+    raw = property(lambda self: self._raw, None, None)
 
     @classmethod
     def from_vep_string(cls, value: str) -> RangeTotal:
         v = value.split("/")
         r = [int(s) for s in v[0].split("-")]
         if len(r) == 1:
-            return cls(range(r[0], r[0] + 1), int(v[1]))
+            return cls(range(r[0], r[0] + 1), int(v[1]), value)
         elif len(r) == 2:
-            return cls(range(r[0], r[1] + 1), int(v[1]))
+            return cls(range(r[0], r[1] + 1), int(v[1]), value)
         else:
             raise ValueError(
                 "Found more than two values separated by '-', "
@@ -280,14 +302,17 @@ class AnnotationRangeTotalEntry(AnnotationEntry):
 
 
 class NumberTotal(object):
-    def __init__(self, number, total):
+    def __init__(self, number: int, total: int, raw: str):
         self.number = number
         self.total = total
+        self._raw = raw
+
+    raw = property(lambda self: self._raw, None, None)
 
     @classmethod
     def from_vep_string(cls, value: str) -> NumberTotal:
         v = value.split("/")
-        return cls(int(v[0]), int(v[1]))
+        return cls(int(v[0]), int(v[1]), value)
 
     def __str__(self):
         return f"number / total: {self.number} / {self.total}"
