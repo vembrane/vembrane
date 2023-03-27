@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from ctypes import c_float
 from sys import stderr
-from typing import Any, Callable, Dict, Iterable, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Set, Tuple, Union
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
@@ -14,9 +14,11 @@ def float32(val: str) -> float:
 
 
 # If NoValue inherits from str, re.search("something", NoValue()) does not error
-# but just comes up empty handed, which is convenient behaviour.
+# but just comes up empty-handed, which is convenient behaviour.
 # This way, we do not have to special case / monkey patch / wrap the regex module.
 class NoValue(str):
+    warnings: Set[str] = set()
+
     def __lt__(self, other):
         return False
 
@@ -48,6 +50,20 @@ class NoValue(str):
 
     def __hash__(self) -> int:
         return super().__hash__()
+
+    def __getattr__(self, item):
+        if item not in self.warnings:
+            self.warnings.add(item)
+            print(
+                f"Warning: Trying to access non-existent attribute '{item}' of NoValue."
+                " Returning NA instead.\n"
+                "This warning will only be printed once per attribute.\n"
+                "It either indicates a typo in the attribute name or "
+                "the access of an attribute of a field with a custom type "
+                "which is empty/has no value.",
+                file=stderr,
+            )
+        return self
 
 
 NA = NoValue()
@@ -142,17 +158,17 @@ class PosRange:
     @classmethod
     def from_vep_str(cls, value: str) -> PosRange:
         start, end = (
-            #  the "-" is optional, so vep either has either start and end position
+            #  the "-" is optional, so vep either has start and end position
             [NA if v == "?" else int(v) for v in map(str.strip, value.split("-"))]
             if "-" in value
             #  or start position only
-            else [int(value.strip())] * 2
+            else [int(value.strip()), int(value.strip()) + 1]
         )
         return cls(start, end, value)
 
     @property
     def length(self):
-        if self.end != NA and self.start != NA:
+        if self.end is not NA and self.start is not NA:
             return self.end - self.start
         else:
             return NA
@@ -792,6 +808,24 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     ),
 }
 
+# VEP now uses gnomADe_* and gnomADg_* instead of gnomAD_*.
+# Therefore, we need to add these new entries to the KNOWN_ANN_TYPE_MAP_VEP
+NEW_GNOMAD_ENTRIES = {}
+for key, typer in KNOWN_ANN_TYPE_MAP_VEP.items():
+    if key.startswith("gnomAD_"):
+        sub_key = key.split("_", 1)[1]
+        for t in ("e", "g"):
+            name = f"gnomAD{t}_{sub_key}"
+            description = typer.description()
+            if t == "g":
+                description = description.replace("gnomAD exomes", "gnomAD genomes")
+            typer = AnnotationEntry(
+                name=name,
+                typefunc=typer._typefunc,
+                description=description,
+            )
+            NEW_GNOMAD_ENTRIES[name] = typer
+KNOWN_ANN_TYPE_MAP_VEP.update(NEW_GNOMAD_ENTRIES)
 KNOWN_ANN_TYPE_MAP = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}
 
 ANN_TYPER = AnnotationTyper(KNOWN_ANN_TYPE_MAP)
