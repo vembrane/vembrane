@@ -45,7 +45,7 @@ def test_filter(testcase):
         command = [cmd]
         tags = config["tags"]
         for name, expr in tags.items():
-            command += ["--tag", f"{name}={expr}"]
+            command += ["--tag", name, expr]
         command.append(str(vcf_path))
     else:
         raise ValueError(f"Unknown subcommand {config['function']}")

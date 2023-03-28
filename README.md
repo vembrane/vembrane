@@ -191,12 +191,12 @@ As such, multiple tags can be applied to a single record in the same run.
 ### Examples
 * Tag records with quality at least 30 with a tag named `quality_at_least_30`:
   ```sh
-  vembrane tag -t quality_at_least_30="QUAL >= 30" variants.vcf
+  vembrane tag --tag quality_at_least_30 "QUAL >= 30" variants.vcf
   ```
 * Tag records with quality at least 30 with a tag named `quality_at_least_30`
   and records which have "Illumina" in their list of platforms with a tag named `illumina`:
   ```sh
-  vembrane tag -t quality_at_least_30="QUAL >= 30" -t illumina="'Illumina' in INFO['platformnames']" variants.vcf
+  vembrane tag -t quality_at_least_30 "QUAL >= 30" -t illumina "'Illumina' in INFO['platformnames']" variants.vcf
   ```
 
 ## `vembrane table`

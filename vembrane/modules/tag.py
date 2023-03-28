@@ -1,4 +1,3 @@
-import argparse
 import sys
 from itertools import chain, islice
 from sys import stderr
@@ -13,17 +12,6 @@ from ..representations import Environment
 from .filter import DeprecatedAction, read_auxiliary
 
 
-class AppendTagExpression(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        assert len(values) == 1
-        if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, dict())
-        value = values[0].strip()
-        key, value = value.strip().split("=", 1)
-        expr = check_expression(value)
-        getattr(namespace, self.dest)[key.strip()] = expr
-
-
 def add_subcommand(subparsers):
     parser = subparsers.add_parser("tag")
     parser.register("action", "deprecated", DeprecatedAction)
@@ -31,9 +19,9 @@ def add_subcommand(subparsers):
         "-t",
         "--tag",
         help="Tag records using the FILTER field.",
-        nargs=1,
-        metavar="TAG=EXPRESSION",
-        action=AppendTagExpression,
+        nargs=2,
+        metavar=("TAG", "EXPRESSION"),
+        action="append",
         required=True,
     )
     parser.add_argument(
@@ -161,6 +149,7 @@ def execute(args):
                     print(e, file=stderr)
                     exit(1)
             expr = swap_quotes(expr) if single_outer(expr) else expr
+            check_expression(expr)
             vcf.header.add_meta(
                 key="FILTER", items=[("ID", tag), ("Description", expr)]
             )
