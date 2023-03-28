@@ -1,3 +1,4 @@
+import re
 import sys
 from itertools import chain, islice
 from sys import stderr
@@ -7,7 +8,7 @@ from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
 from ..common import check_expression, single_outer, swap_quotes
-from ..errors import FilterAlreadyDefined, VembraneError
+from ..errors import FilterAlreadyDefined, FilterTagNameInvalid, VembraneError
 from ..representations import Environment
 from .filter import DeprecatedAction, read_auxiliary
 
@@ -131,6 +132,15 @@ def tag_vcf(
         yield record
 
 
+def check_tag(tag: str):
+    if tag == "0":
+        raise VembraneError(
+            "A Filter tag name of '0' is not allowed by the VCF specification v4.3."
+        )
+    if re.search(r"[\s,;<>]", tag):
+        raise FilterTagNameInvalid(tag)
+
+
 def execute(args):
     aux = read_auxiliary(args.aux)
     with VariantFile(args.vcf) as vcf:
@@ -148,6 +158,7 @@ def execute(args):
                     e = FilterAlreadyDefined(tag)
                     print(e, file=stderr)
                     exit(1)
+            check_tag(tag)
             expr = swap_quotes(expr) if single_outer(expr) else expr
             check_expression(expr)
             vcf.header.add_meta(

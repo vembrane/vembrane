@@ -121,3 +121,10 @@ class FilterAlreadyDefined(VembraneError):
         super(FilterAlreadyDefined, self).__init__(
             f"Filter {tag} already defined in the header. Choose a different name."
         )
+
+
+class FilterTagNameInvalid(VembraneError):
+    def __init__(self, tag: str):
+        super(FilterTagNameInvalid, self).__init__(
+            f"Filter {tag} contains invalid characters (any of r'\\s,;<>')."
+        )
