@@ -24,7 +24,16 @@ class NoValueDict:
         return value is not NA
 
 
-class Format(NoValueDict):
+class DefaultGet:
+    def get(self, item, default=NA):
+        v = self[item]
+        if v is not NA:
+            return v
+        else:
+            return default
+
+
+class Format(NoValueDict, DefaultGet):
     def __init__(
         self,
         record_idx: int,
@@ -53,13 +62,6 @@ class Format(NoValueDict):
             )
             self._sample_values[sample] = value
             return value
-
-    def get(self, item, default=NA):
-        v = self[item]
-        if v is not NA:
-            return v
-        else:
-            return default
 
 
 class Formats(NoValueDict):
@@ -92,7 +94,7 @@ class Formats(NoValueDict):
             return format_field
 
 
-class Info(NoValueDict):
+class Info(NoValueDict, DefaultGet):
     def __init__(
         self,
         record_idx: int,
@@ -136,15 +138,8 @@ class Info(NoValueDict):
             self._info_dict[item] = value
             return value
 
-    def get(self, item, default=NA):
-        v = self[item]
-        if v is not NA:
-            return v
-        else:
-            return default
 
-
-class Annotation(NoValueDict):
+class Annotation(NoValueDict, DefaultGet):
     def __init__(self, ann_key: str, header: VariantHeader):
         self._record_idx = -1
         self._record: Optional[VariantRecord] = None
@@ -173,13 +168,6 @@ class Annotation(NoValueDict):
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
-
-    def get(self, item, default=NA):
-        v = self[item]
-        if v is not NA:
-            return v
-        else:
-            return default
 
 
 UNSET = object()
