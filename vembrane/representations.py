@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
 from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, NoValue, type_info
-from .common import get_annotation_keys, split_annotation_entry, is_bnd_record
+from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
 from .errors import (
     UnknownAnnotation,
     UnknownFormatField,
@@ -24,7 +24,16 @@ class NoValueDict:
         return value is not NA
 
 
-class Format(NoValueDict):
+class DefaultGet:
+    def get(self, item, default=NA):
+        v = self[item]
+        if v is not NA:
+            return v
+        else:
+            return default
+
+
+class Format(NoValueDict, DefaultGet):
     def __init__(
         self,
         record_idx: int,
@@ -85,7 +94,7 @@ class Formats(NoValueDict):
             return format_field
 
 
-class Info(NoValueDict):
+class Info(NoValueDict, DefaultGet):
     def __init__(
         self,
         record_idx: int,
@@ -130,7 +139,7 @@ class Info(NoValueDict):
             return value
 
 
-class Annotation(NoValueDict):
+class Annotation(NoValueDict, DefaultGet):
     def __init__(self, ann_key: str, header: VariantHeader):
         self._record_idx = -1
         self._record: Optional[VariantRecord] = None
