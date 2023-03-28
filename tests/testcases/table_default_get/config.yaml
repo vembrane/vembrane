@@ -1,0 +1,2 @@
+function: "table"
+expression: "CHROM, POS, ANN.get('IMPACT', 'DEFAULT'), ANN.get('IMPACT', NA), ANN.get('IMPACT'), ANN['IMPACT'], INFO.get('SVLEN', 0)"
