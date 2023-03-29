@@ -83,6 +83,14 @@ def add_subcommand(subparsers):
         "given in the VCF header. "
         "Example: `--overwrite-number-format DP 2`",
     )
+    parser.add_argument(
+        "--invert",
+        "-i",
+        action="store_true",
+        help="Invert/negate the expression. "
+        "By default, records for which the tag expressions pass are tagged."
+        "To tag records for which the tag expressions fail, use this option.",
+    )
 
 
 def test_record(
@@ -116,6 +124,7 @@ def tag_vcf(
     ann_key: str,
     auxiliary: Dict[str, Set[str]] = {},
     overwrite_number: Dict[str, Dict[str, str]] = {},
+    invert: bool = False,
 ) -> Iterator[VariantRecord]:
     # For each tag-expression pair, a different Environment must be used.
     envs = {
@@ -127,6 +136,8 @@ def tag_vcf(
     for idx, record in enumerate(vcf):
         for tag, env in envs.items():
             record, keep = test_record(env, idx, record, ann_key)
+            if invert:
+                keep = not keep
             if keep:
                 record.filter.add(tag)
         yield record
@@ -181,6 +192,7 @@ def execute(args):
             args.annotation_key,
             auxiliary=aux,
             overwrite_number=overwrite_number,
+            invert=args.invert,
         )
 
         try:

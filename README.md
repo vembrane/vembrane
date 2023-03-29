@@ -191,7 +191,6 @@ As such, multiple tags can be applied to a single record in the same run.
 Note that the VCF specification explicitly defines the `FILTER` field as a "list of codes for filters that *fail*" (emphasis by us).
 As such, `PASS` *should* indicate that all filters have passed, and `.` (missing) *should* indicate that no filters have been applied, while custom tags should be used in a negative sense (e.g. `QUAL < 30`).
 
-That being said, most tools do not adhere to this specification, and `PASS` is often used to indicate that no filters have been applied / nothing has changed / don't care, and custom filters are often applied in a positive sense (e.g. `QUAL >= 30`).
 
 
 ### Examples
