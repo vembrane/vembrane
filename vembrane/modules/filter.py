@@ -95,12 +95,6 @@ def add_subcommmand(subparsers):
               since the order of all other variants is preserved anyway.",
     )
     parser.add_argument(
-        "--overwrite-number",
-        help="Deprecated. "
-        "Use --overwrite-number-info or --overwrite-number-format instead.",
-        action="deprecated",
-    )
-    parser.add_argument(
         "--overwrite-number-info",
         nargs=2,
         action="append",
