@@ -82,7 +82,7 @@ def add_subcommand(subparsers):
         default=[],
         help="Overwrite the number specification for FORMAT fields "
         "given in the VCF header. "
-        "Example: `--overwrite-number-format DP 2`",
+        "Example: `--overwrite-number-format DP=2`",
     )
     parser.add_argument(
         "--tag-mode",
@@ -91,11 +91,11 @@ def add_subcommand(subparsers):
         choices=["pass", "fail"],
         help="Set, whether to tag records that pass the tag expression(s), "
         "or records that fail them."
-        "By default, records for which the tag expression(s) pass are tagged. "
-        "This allows for descriptive tag names such as `q_at_least_30` "
-        "to correspond to `QUAL >= 30`. "
+        "By default, vembrane tags records for which the tag expression(s) pass. "
+        "This allows for descriptive tag names such as `q_at_least_30`, "
+        "which would correspond to an expression `QUAL >= 30`. "
         "However, the VCF specification (`v4.4`) defines tags to be set when a "
-        "filter expression is failed.",
+        "filter expression is failed, so vembrane also offers the `fail` mode.",
     )
 
 

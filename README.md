@@ -209,12 +209,12 @@ To toggle between applying tags in a positive (tagging records that *pass*) or n
     ```sh
     vembrane tag --tag-mode fail --tag q_below_30 "QUAL >= 30" variants.vcf
     ```
-* Tag records with quality *less than* 30 with a tag named `q30` by negating the expression itself:
+* Tag records with quality *less than* 30 with a tag named `q_below_30` by negating the expression itself:
     * ```sh
-      vembrane tag --tag q30 "not (QUAL >= 30)" variants.vcf
+      vembrane tag --tag q_below_30 "not (QUAL >= 30)" variants.vcf
       ```
     * ```sh
-      vembrane tag --tag q30 "QUAL < 30" variants.vcf
+      vembrane tag --tag q_below_30 "QUAL < 30" variants.vcf
       ```
 
 
