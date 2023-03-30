@@ -193,7 +193,7 @@ As such, `PASS` *should* indicate that all filters have passed, and `.` (missing
 Custom tags should therefore indicate whether a record failed a certain filter, and not whether it passed.
 
 However, the default behaviour is to tag records which pass the expression, and not those which fail.
-To toggle between applying tags in a positive (tagging records that *pass*) or negative (tagging records that *fail*) sense, use the `--invert`/`-i` flag.
+To toggle between applying tags in a positive (tagging records that *pass*) or negative (tagging records that *fail*) sense, use the `--tag-mode [pass|fail]`/`-m [pass|fail]` flag.
 
 ### Examples
 * Tag records with quality at least 30 with a tag named `quality_at_least_30`:
@@ -207,7 +207,7 @@ To toggle between applying tags in a positive (tagging records that *pass*) or n
   ```
 * Tag records with quality *less than* 30 with a tag named `q30` using the `--invert` option:
     ```sh
-    vembrane tag --invert --tag q30 "QUAL >= 30" variants.vcf
+    vembrane tag --tag-mode fail --tag q30 "QUAL >= 30" variants.vcf
     ```
 * Tag records with quality *less than* 30 with a tag named `q30` by negating the expression itself:
     * ```sh
