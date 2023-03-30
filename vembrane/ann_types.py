@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from ctypes import c_float
 from sys import stderr
-from typing import Any, Callable, Dict, Iterable, Set, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Set, Tuple, Union
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
@@ -115,6 +115,7 @@ class InfoTuple:
 
 
 IntFloatStr = Union[int, float, str]
+OptionalInt = Union[int, NoValue]
 
 
 def type_info(value, number=".", field=None, record_idx=None):
@@ -143,7 +144,7 @@ def type_info(value, number=".", field=None, record_idx=None):
 
 
 class PosRange:
-    def __init__(self, start: int, end: int, raw: str):
+    def __init__(self, start: OptionalInt, end: OptionalInt, raw: str):
         self.start = start
         self.end = end
         self._raw = raw
@@ -193,7 +194,7 @@ class AnnotationEntry:
         name: str,
         typefunc: Callable[[str], Any] = str,
         nafunc: Callable[[], Any] = na_func,
-        description: str = None,
+        description: Optional[str] = None,
     ):
         self._name = name
         self._typefunc = typefunc
