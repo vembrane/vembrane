@@ -78,12 +78,16 @@ def add_subcommand(subparsers):
         "Example: `--overwrite-number-format DP 2`",
     )
     parser.add_argument(
-        "--invert",
-        "-i",
+        "--tag-mode",
+        "-m",
+        default="pass",
+        choices=["pass", "fail"],
         action="store_true",
-        help="Invert/negate the expression. "
-        "By default, records for which the tag expressions pass are tagged."
-        "To tag records for which the tag expressions fail, use this option.",
+        help="Set, whether to tag records that pass the tag expression(s), or records that fail them."
+        "By default, records for which the tag expression(s) pass are tagged. This allows for "
+        "descriptive tag names such as `q_at_least_30` to correspond to `QUAL >= 30`. "
+        "However, the VCF specification (`v4.4` at time of writing) defines tags to be set when a "
+        "filter expression is failed.",
     )
 
 
