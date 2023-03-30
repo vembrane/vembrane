@@ -115,10 +115,13 @@ class InfoTuple:
 
 
 IntFloatStr = Union[int, float, str]
-OptionalInt = Union[int, NoValue]
+NvIntFloatStr = Union[IntFloatStr, NoValue]
+NvInt = Union[int, NoValue]
 
 
-def type_info(value, number=".", field=None, record_idx=None):
+def type_info(
+    value, number=".", field=None, record_idx=None
+) -> Union[NvIntFloatStr, InfoTuple]:
     if value is None:
         return NA
     if number == "0":
@@ -144,7 +147,7 @@ def type_info(value, number=".", field=None, record_idx=None):
 
 
 class PosRange:
-    def __init__(self, start: OptionalInt, end: OptionalInt, raw: str):
+    def __init__(self, start: NvInt, end: NvInt, raw: str):
         self.start = start
         self.end = end
         self._raw = raw
@@ -205,7 +208,7 @@ class AnnotationEntry:
     def name(self):
         return self._name
 
-    def convert(self, value: str) -> Tuple[str, Any]:
+    def convert(self, value: str) -> Any:
         if value:
             return self._typefunc(value)
         else:
@@ -230,7 +233,7 @@ class AnnotationListEntry(AnnotationEntry):
         self,
         name: str,
         sep: str,
-        typefunc: Callable[[str], Any] = None,
+        typefunc: Optional[Callable[[str], Any]] = None,
         inner_typefunc: Callable[[str], Any] = lambda x: x,
         **kwargs,
     ):

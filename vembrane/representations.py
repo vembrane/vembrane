@@ -1,10 +1,19 @@
 import ast
 from itertools import chain
-from typing import Dict, List, Optional, Set, Tuple, Union
+from types import CodeType
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
-from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, NoValue, type_info
+from .ann_types import (
+    ANN_TYPER,
+    NA,
+    MoreThanOneAltAllele,
+    NoValue,
+    NvInt,
+    NvIntFloatStr,
+    type_info,
+)
 from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
 from .errors import (
     UnknownAnnotation,
@@ -47,7 +56,7 @@ class Format(NoValueDict, DefaultGet):
         self._name = name
         self._number = number
         self._record_samples = record_samples
-        self._sample_values = {}
+        self._sample_values: Dict[str, NvIntFloatStr] = {}
 
     def __getitem__(self, sample):
         try:
@@ -76,7 +85,7 @@ class Formats(NoValueDict):
         self._header_format_fields = header_format_fields
         self._record_format = record.format
         self._record_samples = record.samples
-        self._formats = {}
+        self._formats: Dict[str, Format] = {}
 
     def __getitem__(self, item):
         try:
@@ -107,7 +116,7 @@ class Info(NoValueDict, DefaultGet):
         self._record_info = record.info
         self._header_info_fields = header_info_fields
         self._ann_key = ann_key
-        self._info_dict = {}
+        self._info_dict: Dict[str, NvIntFloatStr] = {}
 
     def __getitem__(self, item):
         try:
@@ -144,7 +153,7 @@ class Annotation(NoValueDict, DefaultGet):
         self._record_idx = -1
         self._record: Optional[VariantRecord] = None
         self._annotation_data: List[str] = []
-        self._data = {}
+        self._data: Dict[str, Any] = {}
         annotation_keys = get_annotation_keys(header, ann_key)
         self._ann_conv = {
             entry.name: (ann_idx, entry.convert)
@@ -208,7 +217,7 @@ class Environment(dict):
         # only if ALT (but not REF) is accessed (and ALT has multiple entries).
         self._alleles = None
 
-        func = evaluation_function_template.format(expression=expression)
+        func_str: str = evaluation_function_template.format(expression=expression)
 
         # The VCF specification only allows 32bit floats.
         # Comparisons such as `INFO["some_float"] > CONST` may yield unexpected results,
@@ -219,7 +228,7 @@ class Environment(dict):
         # compilers should follow this standard (https://stackoverflow.com/a/17904539):
 
         # parse the expression, obtaining an AST
-        expression_ast = ast.parse(func, mode="eval")
+        expression_ast = ast.parse(func_str, mode="eval")
 
         # wrap each float constant in numpy.float32
         expression_ast = WrapFloat32Visitor().visit(expression_ast)
@@ -228,7 +237,7 @@ class Environment(dict):
         expression_ast = ast.fix_missing_locations(expression_ast)
 
         # compile the now-fixed code-tree
-        func = compile(expression_ast, filename="<string>", mode="eval")
+        func: CodeType = compile(expression_ast, filename="<string>", mode="eval")
 
         self.update(**_explicit_clear)
         self._func = eval(func, self, {})
@@ -300,12 +309,12 @@ class Environment(dict):
         self._globals["POS"] = value
         return value
 
-    def _get_end(self) -> int:
+    def _get_end(self) -> NvInt:
         value = get_end(self.record)
         self._globals["END"] = value
         return value
 
-    def _get_id(self) -> str:
+    def _get_id(self) -> Optional[str]:
         value = self.record.id
         self._globals["ID"] = value
         return value
