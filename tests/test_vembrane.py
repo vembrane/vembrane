@@ -34,19 +34,6 @@ def test_filter(testcase):
     cmd = config["function"]
     if cmd in ("filter", "table"):
         command = [cmd, config["expression"], str(vcf_path)]
-        for key in config:
-            if isinstance(config[key], str):
-                command.append(f"--{key.replace('_', '-')}")
-                command.append(config[key])
-            else:
-                if isinstance(config[key], dict):
-                    for k, v in config[key].items():
-                        command.append(f"--{key.replace('_', '-')}")
-                        command.append(f"{k}={v}")
-                else:
-                    command.append(f"--{key.replace('_', '-')}")
-                    for argument in config[key]:
-                        command.append(argument)
     elif cmd == "tag":
         command = [cmd]
         tags = config["tags"]
@@ -55,6 +42,20 @@ def test_filter(testcase):
         command.append(str(vcf_path))
     else:
         raise ValueError(f"Unknown subcommand {config['function']}")
+
+    for key in config:
+        if isinstance(config[key], str):
+            command.append(f"--{key.replace('_', '-')}")
+            command.append(config[key])
+        else:
+            if isinstance(config[key], dict):
+                for k, v in config[key].items():
+                    command.append(f"--{key.replace('_', '-')}")
+                    command.append(f"{k}={v}")
+            else:
+                command.append(f"--{key.replace('_', '-')}")
+                for argument in config[key]:
+                    command.append(argument)
 
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(
