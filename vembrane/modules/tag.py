@@ -12,12 +12,13 @@ from ..common import (
     AppendTagExpression,
     check_expression,
     normalize,
+    read_auxiliary,
     single_outer,
     swap_quotes,
 )
 from ..errors import FilterAlreadyDefined, FilterTagNameInvalid, VembraneError
 from ..representations import Environment
-from .filter import DeprecatedAction, read_auxiliary
+from .filter import DeprecatedAction
 
 
 def add_subcommand(subparsers):
