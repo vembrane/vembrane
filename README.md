@@ -205,9 +205,9 @@ To toggle between applying tags in a positive (tagging records that *pass*) or n
   ```sh
   vembrane tag -t quality_at_least_30 "QUAL >= 30" -t illumina "'Illumina' in INFO['platformnames']" variants.vcf
   ```
-* Tag records with quality *less than* 30 with a tag named `q30` using the `--invert` option:
+* Tag records with quality *less than* 30 with a tag named `q_below_30` using the `--tag-mode fail` setting:
     ```sh
-    vembrane tag --tag-mode fail --tag q30 "QUAL >= 30" variants.vcf
+    vembrane tag --tag-mode fail --tag q_below_30 "QUAL >= 30" variants.vcf
     ```
 * Tag records with quality *less than* 30 with a tag named `q30` by negating the expression itself:
     * ```sh
