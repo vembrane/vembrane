@@ -150,11 +150,7 @@ def tag_vcf(
 
 
 def check_tag(tag: str):
-    if tag == "0":
-        raise VembraneError(
-            "A Filter tag name of '0' is not allowed by the VCF specification v4.3."
-        )
-    if re.search(r"[\s;]", tag):
+    if re.search(r"[\s;]|0", tag):
         raise FilterTagNameInvalid(tag)
 
 
@@ -175,7 +171,11 @@ def execute(args):
                     e = FilterAlreadyDefined(tag)
                     print(e, file=stderr)
                     exit(1)
-            check_tag(tag)
+            try:
+                check_tag(tag)
+            except VembraneError as ve:
+                print(ve, file=stderr)
+                exit(1)
             expr = swap_quotes(expr) if single_outer(expr) else expr
             check_expression(expr)
             vcf.header.add_meta(
