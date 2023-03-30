@@ -7,7 +7,7 @@ from typing import Dict, Iterator, List, Optional
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
 
-from ..common import check_expression
+from ..common import AppendKeyValuePair, check_expression
 from ..errors import HeaderWrongColumnNumber, VembraneError
 from ..globals import allowed_globals
 from ..representations import Environment
@@ -70,23 +70,23 @@ def add_subcommmand(subparsers):
     )
     parser.add_argument(
         "--overwrite-number-info",
-        nargs=2,
-        action="append",
-        metavar=("FIELD", "NUMBER"),
-        default=[],
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="FIELD=NUMBER",
+        default={},
         help="Overwrite the number specification for INFO fields "
         "given in the VCF header. "
-        "Example: `--overwrite-number cosmic_CNT .`",
+        "Example: `--overwrite-number cosmic_CNT=.`",
     )
     parser.add_argument(
         "--overwrite-number-format",
-        nargs=2,
-        action="append",
-        metavar=("FIELD", "NUMBER"),
-        default=[],
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="FIELD=NUMBER",
+        default={},
         help="Overwrite the number specification for FORMAT fields "
         "given in the VCF header. "
-        "Example: `--overwrite-number-format DP 2`",
+        "Example: `--overwrite-number-format DP=2`",
     )
 
 

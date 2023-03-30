@@ -1,0 +1,4 @@
+function: "tag"
+tags:
+ high_impact: '"HIGH" in ANN["Annotation_Impact"]'
+ missense: "'missense_variant' in ANN['Annotation']"

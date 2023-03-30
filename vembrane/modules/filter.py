@@ -1,5 +1,4 @@
 import argparse
-import shlex
 import sys
 from collections import defaultdict
 from itertools import chain, islice
@@ -11,11 +10,13 @@ from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
 from ..common import (
+    AppendKeyValuePair,
     BreakendEvent,
     check_expression,
     get_annotation_keys,
     is_bnd_record,
     mate_key,
+    normalize,
     split_annotation_entry,
 )
 from ..errors import VembraneError
@@ -66,10 +67,10 @@ def add_subcommmand(subparsers):
     parser.add_argument(
         "--aux",
         "-a",
-        nargs=2,
-        action="append",
-        metavar=("NAME", "PATH"),
-        default=[],
+        nargs=1,
+        action=AppendKeyValuePair,
+        default={},
+        metavar="NAME=PATH",
         help="Path to an auxiliary file containing a set of symbols",
     )
     parser.add_argument(
@@ -96,23 +97,23 @@ def add_subcommmand(subparsers):
     )
     parser.add_argument(
         "--overwrite-number-info",
-        nargs=2,
-        action="append",
-        metavar=("FIELD", "NUMBER"),
-        default=[],
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="FIELD=NUMBER",
+        default={},
         help="Overwrite the number specification for INFO fields "
         "given in the VCF header. "
-        "Example: `--overwrite-number cosmic_CNT .`",
+        "Example: `--overwrite-number cosmic_CNT=.`",
     )
     parser.add_argument(
         "--overwrite-number-format",
-        nargs=2,
-        action="append",
-        metavar=("FIELD", "NUMBER"),
-        default=[],
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="FIELD=NUMBER",
+        default={},
         help="Overwrite the number specification for FORMAT fields "
         "given in the VCF header. "
-        "Example: `--overwrite-number-format DP 2`",
+        "Example: `--overwrite-number-format DP=2`",
     )
 
 
@@ -308,13 +309,13 @@ def statistics(
         yaml.dump(dict(counter), out)
 
 
-def read_auxiliary(aux) -> Dict[str, Set[str]]:
+def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
     # read auxiliary files, split at any whitespace and store contents in a set
     def read_set(path: str) -> Set[str]:
         with open(path, "rt") as f:
             return set(line.rstrip() for line in f)
 
-    return {name: read_set(contents) for name, contents in aux}
+    return {name: read_set(contents) for name, contents in aux.items()}
 
 
 def execute(args):
@@ -324,16 +325,6 @@ def execute(args):
         header.add_meta("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
         #       in the future, we should not record sys.argv directly below.
-
-        def swap_quotes(s: str) -> str:
-            return s.replace('"', '\\"').replace("'", '"').replace('\\"', "'")
-
-        def single_outer(s: str) -> bool:
-            return '"' in s and s.index('"') > 0
-
-        def normalize(s: str) -> str:
-            return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
-
         cmd_parts = [normalize(arg) if " " in arg else arg for arg in sys.argv[3:]]
         expr = " ".join(a.strip() for a in args.expression.split("\n"))
         expr = normalize(expr)
