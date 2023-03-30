@@ -58,12 +58,6 @@ def add_subcommand(subparsers):
         help="Path to an auxiliary file containing a set of symbols",
     )
     parser.add_argument(
-        "--overwrite-number",
-        help="Deprecated. "
-        "Use --overwrite-number-info or --overwrite-number-format instead.",
-        action="deprecated",
-    )
-    parser.add_argument(
         "--overwrite-number-info",
         nargs=2,
         action="append",
