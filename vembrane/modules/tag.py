@@ -7,7 +7,14 @@ from typing import Dict, Iterator, Set
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
-from ..common import check_expression, single_outer, swap_quotes
+from ..common import (
+    AppendKeyValuePair,
+    AppendTagExpression,
+    check_expression,
+    normalize,
+    single_outer,
+    swap_quotes,
+)
 from ..errors import FilterAlreadyDefined, FilterTagNameInvalid, VembraneError
 from ..representations import Environment
 from .filter import DeprecatedAction, read_auxiliary
@@ -17,12 +24,12 @@ def add_subcommand(subparsers):
     parser = subparsers.add_parser("tag")
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
-        "-t",
         "--tag",
+        "-t",
         help="Tag records using the FILTER field.",
-        nargs=2,
-        metavar=("TAG", "EXPRESSION"),
-        action="append",
+        nargs=1,
+        metavar="TAG=EXPRESSION",
+        action=AppendTagExpression,
         required=True,
     )
     parser.add_argument(
@@ -51,10 +58,10 @@ def add_subcommand(subparsers):
     parser.add_argument(
         "--aux",
         "-a",
-        nargs=2,
-        action="append",
-        metavar=("NAME", "PATH"),
-        default=[],
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="NAME=PATH",
+        default={},
         help="Path to an auxiliary file containing a set of symbols",
     )
     parser.add_argument(
@@ -179,10 +186,7 @@ def execute(args):
         header.add_meta(
             "vembraneCmd",
             "vembrane "
-            + " ".join(
-                "'" + arg.replace("'", '"') + '"' if " " in arg else arg
-                for arg in sys.argv[1:]
-            ),
+            + " ".join(normalize(arg) if " " in arg else arg for arg in sys.argv[1:]),
         )
 
         records = tag_vcf(

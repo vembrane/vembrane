@@ -1,3 +1,4 @@
+import argparse
 import ast
 import shlex
 from typing import Iterable, Iterator, List, Optional
@@ -101,3 +102,24 @@ class BreakendEvent(object):
 
 def mate_key(mates: Iterable[Optional[str]]) -> str:
     return "__MATES: " + ",".join(sorted(m for m in mates if m is not None))
+
+
+class AppendTagExpression(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        assert len(values) == 1
+        if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
+            setattr(namespace, self.dest, dict())
+        value = values[0].strip()
+        key, value = value.strip().split("=", 1)
+        expr = check_expression(value)
+        getattr(namespace, self.dest)[key.strip()] = expr
+
+
+class AppendKeyValuePair(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        assert len(values) == 1
+        if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
+            setattr(namespace, self.dest, dict())
+        value = values[0].strip()
+        key, value = value.strip().split("=", 1)
+        getattr(namespace, self.dest)[key.strip()] = value

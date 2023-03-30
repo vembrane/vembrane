@@ -10,6 +10,7 @@ from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
 from ..common import (
+    AppendKeyValuePair,
     BreakendEvent,
     check_expression,
     get_annotation_keys,
@@ -66,10 +67,10 @@ def add_subcommmand(subparsers):
     parser.add_argument(
         "--aux",
         "-a",
-        nargs=2,
-        action="append",
-        metavar=("NAME", "PATH"),
-        default=[],
+        nargs=1,
+        action=AppendKeyValuePair,
+        default={},
+        metavar="NAME=PATH",
         help="Path to an auxiliary file containing a set of symbols",
     )
     parser.add_argument(
@@ -314,13 +315,13 @@ def statistics(
         yaml.dump(dict(counter), out)
 
 
-def read_auxiliary(aux) -> Dict[str, Set[str]]:
+def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
     # read auxiliary files, split at any whitespace and store contents in a set
     def read_set(path: str) -> Set[str]:
         with open(path, "rt") as f:
             return set(line.rstrip() for line in f)
 
-    return {name: read_set(contents) for name, contents in aux}
+    return {name: read_set(contents) for name, contents in aux.items()}
 
 
 def execute(args):
