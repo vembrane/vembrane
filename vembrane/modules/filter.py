@@ -103,23 +103,23 @@ def add_subcommmand(subparsers):
     )
     parser.add_argument(
         "--overwrite-number-info",
-        nargs=2,
-        action="append",
-        metavar=("FIELD", "NUMBER"),
-        default=[],
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="FIELD=NUMBER",
+        default={},
         help="Overwrite the number specification for INFO fields "
         "given in the VCF header. "
-        "Example: `--overwrite-number cosmic_CNT .`",
+        "Example: `--overwrite-number cosmic_CNT=.`",
     )
     parser.add_argument(
         "--overwrite-number-format",
-        nargs=2,
-        action="append",
-        metavar=("FIELD", "NUMBER"),
-        default=[],
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="FIELD=NUMBER",
+        default={},
         help="Overwrite the number specification for FORMAT fields "
         "given in the VCF header. "
-        "Example: `--overwrite-number-format DP 2`",
+        "Example: `--overwrite-number-format DP=2`",
     )
 
 

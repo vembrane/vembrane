@@ -35,17 +35,23 @@ def test_filter(testcase):
     if cmd in ("filter", "table"):
         command = [cmd, config["expression"], str(vcf_path)]
         for key in config:
-            command.append(f"--{key.replace('_','-')}")
             if isinstance(config[key], str):
+                command.append(f"--{key.replace('_', '-')}")
                 command.append(config[key])
             else:
-                for argument in config[key]:
-                    command.append(argument)
+                if isinstance(config[key], dict):
+                    for k, v in config[key].items():
+                        command.append(f"--{key.replace('_', '-')}")
+                        command.append(f"{k}={v}")
+                else:
+                    command.append(f"--{key.replace('_', '-')}")
+                    for argument in config[key]:
+                        command.append(argument)
     elif cmd == "tag":
         command = [cmd]
         tags = config["tags"]
         for name, expr in tags.items():
-            command += ["--tag", name, expr]
+            command += ["--tag", f"{name}={expr}"]
         command.append(str(vcf_path))
     else:
         raise ValueError(f"Unknown subcommand {config['function']}")
