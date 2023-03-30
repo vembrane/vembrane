@@ -26,7 +26,9 @@ def add_subcommand(subparsers):
     parser.add_argument(
         "--tag",
         "-t",
-        help="Tag records using the FILTER field.",
+        help="Tag records using the FILTER field.\n"
+        "Note: tag names cannot contain `;` or whitespace and must not be '0'.\n"
+        'Example: `--tag q_above_30="not (QUAL<=30)"`',
         nargs=1,
         metavar="TAG=EXPRESSION",
         action=AppendTagExpression,
@@ -150,7 +152,7 @@ def tag_vcf(
 
 
 def check_tag(tag: str):
-    if re.search(r"[\s;]|0", tag):
+    if re.search(r"^0$|[\s;]", tag):
         raise FilterTagNameInvalid(tag)
 
 
