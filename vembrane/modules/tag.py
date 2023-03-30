@@ -154,7 +154,7 @@ def check_tag(tag: str):
         raise VembraneError(
             "A Filter tag name of '0' is not allowed by the VCF specification v4.3."
         )
-    if re.search(r"[\s,;<>]", tag):
+    if re.search(r"[\s;]", tag):
         raise FilterTagNameInvalid(tag)
 
 
