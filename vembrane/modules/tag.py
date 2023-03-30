@@ -72,7 +72,7 @@ def add_subcommand(subparsers):
         default=[],
         help="Overwrite the number specification for INFO fields "
         "given in the VCF header. "
-        "Example: `--overwrite-number cosmic_CNT .`",
+        "Example: `--overwrite-number cosmic_CNT=.`",
     )
     parser.add_argument(
         "--overwrite-number-format",
