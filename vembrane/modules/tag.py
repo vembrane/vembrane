@@ -82,11 +82,12 @@ def add_subcommand(subparsers):
         "-m",
         default="pass",
         choices=["pass", "fail"],
-        action="store_true",
-        help="Set, whether to tag records that pass the tag expression(s), or records that fail them."
-        "By default, records for which the tag expression(s) pass are tagged. This allows for "
-        "descriptive tag names such as `q_at_least_30` to correspond to `QUAL >= 30`. "
-        "However, the VCF specification (`v4.4` at time of writing) defines tags to be set when a "
+        help="Set, whether to tag records that pass the tag expression(s), "
+        "or records that fail them."
+        "By default, records for which the tag expression(s) pass are tagged. "
+        "This allows for descriptive tag names such as `q_at_least_30` "
+        "to correspond to `QUAL >= 30`. "
+        "However, the VCF specification (`v4.4`) defines tags to be set when a "
         "filter expression is failed.",
     )
 
@@ -190,7 +191,7 @@ def execute(args):
             args.annotation_key,
             auxiliary=aux,
             overwrite_number=overwrite_number,
-            invert=args.invert,
+            invert=(args.tag_mode == "fail"),
         )
 
         try:
