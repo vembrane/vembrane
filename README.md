@@ -31,7 +31,7 @@ options:
                         Output format.
   --annotation-key FIELDNAME, -k FIELDNAME
                         The INFO key for the annotation field. Defaults to "ANN".
-  --aux NAME PATH, -a NAME PATH
+  --aux NAME=PATH, -a NAME=PATH
                         Path to an auxiliary file containing a set of symbols.
   --keep-unmatched      Keep all annotations of a variant if at least one of them
                         passes the expression (mimics SnpSift behaviour).
@@ -179,7 +179,7 @@ Handling missing/optional values in fields other than INFO or FORMAT can be done
 Sometimes, multi-valued fields may contain missing values; in this case, the `without_na` function can be convenient, for example: `mean(without_na(FORMAT['DP'][s] for s in SAMPLES)) > 2.3`. It is also possible to replace `NA` with some constant value with the `replace_na` function: `mean(replace_na((FORMAT['DP'][s] for s in SAMPLES), 0.0)) > 2.3`
 
 ### Auxiliary files
-`vembrane` supports additional files, such as lists of genes or ids with the `--aux NAME path/to/file` option. The file should contain one item per line and is parsed as a set. For example `vembrane filter --aux genes genes.txt "ANN['SYMBOL'] in AUX['genes']" variants.vcf` will keep only records where the annotated symbol is in the set specified in `genes.txt`.
+`vembrane` supports additional files, such as lists of genes or ids with the `--aux NAME=path/to/file` option. The file should contain one item per line and is parsed as a set. For example `vembrane filter --aux genes=genes.txt "ANN['SYMBOL'] in AUX['genes']" variants.vcf` will keep only records where the annotated symbol is in the set specified in `genes.txt`.
 
 
 ## `vembrane tag`
