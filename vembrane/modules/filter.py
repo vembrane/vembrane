@@ -310,8 +310,6 @@ def statistics(
         yaml.dump(dict(counter), out)
 
 
-
-
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
     with VariantFile(args.vcf) as vcf:
