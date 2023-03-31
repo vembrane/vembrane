@@ -2,7 +2,7 @@ import contextlib
 import csv
 import sys
 from sys import stderr
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator, List, Set
 
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
@@ -100,7 +100,9 @@ def tableize_vcf(
     long: bool = False,
     auxiliary: Dict[str, Set[str]] = {},
 ) -> Iterator[tuple]:
-    kwargs: Dict[str, Any] = dict(overwrite_number=overwrite_number, auxiliary=auxiliary)
+    kwargs: Dict[str, Any] = dict(
+        overwrite_number=overwrite_number, auxiliary=auxiliary
+    )
     if long:
         kwargs[
             "evaluation_function_template"
