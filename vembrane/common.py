@@ -1,7 +1,7 @@
 import argparse
 import ast
 import shlex
-from typing import Iterable, Iterator, List, Optional
+from typing import Dict, Iterable, Iterator, List, Optional, Set
 
 from pysam.libcbcf import VariantHeader, VariantRecord
 
@@ -124,3 +124,12 @@ class AppendKeyValuePair(argparse.Action):
         value = values[0].strip()
         key, value = value.strip().split("=", 1)
         getattr(namespace, self.dest)[key.strip()] = value
+
+
+def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
+    # read auxiliary files, split at any whitespace and store contents in a set
+    def read_set(path: str) -> Set[str]:
+        with open(path, "rt") as f:
+            return set(line.rstrip() for line in f)
+
+    return {name: read_set(contents) for name, contents in aux.items()}

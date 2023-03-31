@@ -195,6 +195,8 @@ Custom tags should therefore indicate whether a record failed a certain filter, 
 However, the default behaviour is to tag records which pass the expression, and not those which fail.
 To toggle between applying tags in a positive (tagging records that *pass*) or negative (tagging records that *fail*) sense, use the `--tag-mode [pass|fail]`/`-m [pass|fail]` flag.
 
+Tag names must neither contain whitespace nor semicolons. Additionally, the tag name must also not be `"0"`.
+
 ### Examples
 * Tag records with quality at least 30 with a tag named `quality_at_least_30`:
   ```sh

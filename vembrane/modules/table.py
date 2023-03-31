@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterator, List
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
 
-from ..common import AppendKeyValuePair, check_expression
+from ..common import AppendKeyValuePair, check_expression, read_auxiliary
 from ..errors import HeaderWrongColumnNumber, VembraneError
 from ..globals import allowed_globals
 from ..representations import Environment
@@ -40,13 +40,6 @@ def add_subcommmand(subparsers):
         help="Define the field separator (default: \\t).",
     )
     parser.add_argument(
-        "--all",
-        "-a",
-        default=False,
-        action="store_true",
-        help="Do not filter duplicate entries.",
-    )
-    parser.add_argument(
         "--header",
         default="auto",
         metavar="TEXT",
@@ -67,6 +60,15 @@ def add_subcommmand(subparsers):
         "-o",
         default="-",
         help="Output file, if not specified, output is written to STDOUT.",
+    )
+    parser.add_argument(
+        "--aux",
+        "-a",
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="NAME=PATH",
+        default={},
+        help="Path to an auxiliary file containing a set of symbols",
     )
     parser.add_argument(
         "--overwrite-number-info",
@@ -96,8 +98,9 @@ def tableize_vcf(
     ann_key: str,
     overwrite_number: Dict[str, Dict[str, str]] = {},
     long: bool = False,
+    auxiliary: Dict[str, Set[str]] = {},
 ) -> Iterator[tuple]:
-    kwargs: Dict[str, Any] = dict(overwrite_number=overwrite_number)
+    kwargs: Dict[str, Any] = dict(overwrite_number=overwrite_number, auxiliary=auxiliary)
     if long:
         kwargs[
             "evaluation_function_template"
@@ -285,6 +288,7 @@ def smart_open(filename=None, *args, **kwargs):
 
 
 def execute(args):
+    aux = read_auxiliary(args.aux)
     with VariantFile(args.vcf) as vcf:
         expression = preprocess_expression(args.expression, vcf, True)
         if args.long:
@@ -299,6 +303,7 @@ def execute(args):
             args.annotation_key,
             overwrite_number=overwrite_number,
             long=args.long,
+            auxiliary=aux,
         )
 
         try:
