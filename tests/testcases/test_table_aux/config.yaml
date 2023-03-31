@@ -1,0 +1,5 @@
+function: "table"
+expression: 'ANN["Gene_Name"] in AUX["genes"] and ANN["Annotation_Impact"] == "HIGH"'
+header: "known_with_high_impact"
+aux:
+  genes: 'tests/testcases/test_auxiliary_gene_set/genes.txt'
