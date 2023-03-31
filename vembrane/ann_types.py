@@ -117,6 +117,7 @@ class InfoTuple:
 IntFloatStr = Union[int, float, str]
 NvIntFloatStr = Union[IntFloatStr, NoValue]
 NvInt = Union[int, NoValue]
+NvFloat = Union[float, NoValue]
 
 
 def type_info(

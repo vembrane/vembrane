@@ -2,7 +2,7 @@ import re
 import sys
 from itertools import chain, islice
 from sys import stderr
-from typing import Dict, Iterator, Set
+from typing import Dict, Iterator, Set, Tuple
 
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
@@ -104,7 +104,7 @@ def test_record(
     idx: int,
     record: VariantRecord,
     ann_key: str,
-) -> (VariantRecord, bool):
+) -> Tuple[VariantRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
@@ -154,7 +154,7 @@ def check_tag(tag: str):
         raise FilterTagNameInvalid(tag)
 
 
-def execute(args):
+def execute(args) -> None:
     aux = read_auxiliary(args.aux)
     with VariantFile(args.vcf) as vcf:
         header: VariantHeader = vcf.header

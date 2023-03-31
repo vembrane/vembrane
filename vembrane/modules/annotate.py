@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from sys import stderr
-from typing import Iterator
+from typing import Any, Callable, Dict, Iterator
 
 import numpy as np
 import yaml
@@ -43,7 +43,7 @@ def add_subcommmand(subparsers):
     )
 
 
-typeparser = {
+typeparser: Dict[str, Callable[[str], Any]] = {
     "Float": float,
     "Integer": int,
     "Character": lambda x: str(x)[0],
@@ -58,7 +58,7 @@ def annotate_vcf(
     ann_key: str,
     ann_data,
     config: dict,
-) -> Iterator[tuple]:
+) -> Iterator[VariantRecord]:
     env = Environment(expression, ann_key, vcf.header)
 
     config_chrom_column = config["annotation"]["columns"]["chrom"]
@@ -99,7 +99,7 @@ def annotate_vcf(
                     t = tree[chrom]
 
         if chrom:
-            indices = np.fromiter((i for _, _, i in t[record.start]), dtype=np.int)
+            indices = np.fromiter((i for _, _, i in t[record.start]), dtype=int)
             if len(indices):
                 env.update_data(current_ann_data[(np.array(indices))])
                 env.update_from_record(idx, record)

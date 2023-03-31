@@ -186,7 +186,7 @@ def filter_vcf(
         # as we encounter them
         # However, breakends have to be considered jointly, so keep track of the
         # respective events.
-        events: Dict[str, BreakendEvent] = dict()
+        event_dict: Dict[str, BreakendEvent] = dict()
         for idx, record in enumerate(vcf):
             record, keep = test_and_update_record(
                 env, idx, record, ann_key, keep_unmatched
@@ -215,7 +215,7 @@ def filter_vcf(
                         yield record
                     continue
 
-                event = events.get(event_name, None)
+                event = event_dict.get(event_name, None)
 
                 # if there's already an associated event
                 if event:
@@ -230,26 +230,26 @@ def filter_vcf(
                         # in the case of a simple mate pair, we can delete the event
                         # at this point, because no more records will be added to it
                         if event.is_mate_pair():
-                            del events[mate_pair_name]
+                            del event_dict[mate_pair_name]
                 else:
                     # if there's no entry for the event or mate pair yet, create one
                     is_mate_pair = mate_pair_name and mate_pair_name == event_name
                     event = BreakendEvent(event_name, is_mate_pair)
                     event.add(record, keep)
-                    events[event_name] = event
+                    event_dict[event_name] = event
             elif keep:
                 yield record
 
-        if len(events) > 0:
+        if len(event_dict) > 0:
             # output BNDs if any are left unprocessed
-            for event_name, event in events.items():
+            for event_name, event in event_dict.items():
                 if event_name and event.keep:
                     yield from event.emit()
     elif preserve_order:
         # If order *is* important, the first pass cannot emit any records but only
         # keep track of breakend events. The records will only be emitted during the
         # second pass.
-        events: Set[str] = set()
+        event_set: Set[str] = set()
 
         def fallback_name(record: VariantRecord) -> str:
             event_name, mate_pair_name = get_event_name(record)
@@ -267,14 +267,14 @@ def filter_vcf(
                 )
                 if keep:
                     event_name = fallback_name(record)
-                    events.add(event_name)
+                    event_set.add(event_name)
 
         # The second pass can now yield records in the correct order
         vcf.reset()
         for idx, record in enumerate(vcf):
             if is_bnd_record(record):
                 event_name = fallback_name(record)
-                if event_name in events:
+                if event_name in event_set:
                     yield record
             else:
                 record, keep = test_and_update_record(

@@ -1,7 +1,7 @@
 import ast
 from itertools import chain
 from types import CodeType
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
@@ -9,7 +9,7 @@ from .ann_types import (
     ANN_TYPER,
     NA,
     MoreThanOneAltAllele,
-    NoValue,
+    NvFloat,
     NvInt,
     NvIntFloatStr,
     type_info,
@@ -208,7 +208,7 @@ class Environment(dict):
             for node in ast.walk(ast.parse(expression))
         )
         self._annotation: Annotation = Annotation(ann_key, header)
-        self._globals = {}
+        self._globals: Dict[str, Any] = {}
         # We use self + self.func as a closure.
         self._globals = dict(allowed_globals)
         self._globals.update(custom_functions(self))
@@ -319,7 +319,7 @@ class Environment(dict):
         self._globals["ID"] = value
         return value
 
-    def _get_alleles(self) -> Tuple[str, List[str]]:
+    def _get_alleles(self) -> Tuple[str, ...]:
         alleles = self._alleles
         if not alleles:
             alleles = self._alleles = tuple(chain(self.record.alleles))
@@ -339,8 +339,8 @@ class Environment(dict):
         self._globals["ALT"] = value
         return value
 
-    def _get_qual(self) -> Union[float, NoValue]:
-        value = NA if self.record.qual is None else self.record.qual
+    def _get_qual(self) -> NvFloat:
+        value: NvFloat = NA if self.record.qual is None else self.record.qual
         self._globals["QUAL"] = value
         return value
 
