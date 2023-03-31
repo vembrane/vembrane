@@ -2,7 +2,7 @@ import contextlib
 import csv
 import sys
 from sys import stderr
-from typing import Dict, Iterator, List, Optional, Set
+from typing import Any, Dict, Iterator, List, Set
 
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
@@ -100,7 +100,9 @@ def tableize_vcf(
     long: bool = False,
     auxiliary: Dict[str, Set[str]] = {},
 ) -> Iterator[tuple]:
-    kwargs = dict(overwrite_number=overwrite_number, auxiliary=auxiliary)
+    kwargs: Dict[str, Any] = dict(
+        overwrite_number=overwrite_number, auxiliary=auxiliary
+    )
     if long:
         kwargs[
             "evaluation_function_template"
@@ -203,20 +205,20 @@ def _var_and_body(s):
 
 
 def preprocess_expression(
-    header: str, vcf: Optional[VariantFile] = None, make_expression: bool = True
+    header: str, vcf: VariantFile, make_expression: bool = True
 ) -> str:
     """
     Split the header expression at toplevel commas into parts.
     Then, if one of these parts starts with 'for_each_sample',
     that part is expanded for each sample in vcf.header.samples
     """
-    parts = get_toplevel(header)
+    parts: List[str] = get_toplevel(header)
     to_expand = list(
         filter(lambda x: x[1].startswith("for_each_sample"), enumerate(parts))
     )
     if len(to_expand) > 0 and vcf is None:
         raise ValueError("If FORMAT is to be expanded, the VCF kwarg must not be none.")
-    parts = [[p] for p in parts]
+    parts_expanded: List[List[str]] = [[p] for p in parts]
     func = (
         generate_for_each_sample_expressions
         if make_expression
@@ -224,12 +226,12 @@ def preprocess_expression(
     )
     for i, p in to_expand:
         expanded = func(p, vcf)
-        parts[i] = expanded
-    parts = [p for pp in parts for p in pp]
-    return ", ".join(parts)
+        parts_expanded[i] = expanded
+    parts_flattened = [p for pp in parts_expanded for p in pp]
+    return ", ".join(parts_flattened)
 
 
-def get_header(args, vcf: Optional[VariantFile] = None) -> List[str]:
+def get_header(args, vcf: VariantFile) -> List[str]:
     if args.header == "auto":
         header = args.expression
     else:

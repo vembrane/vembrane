@@ -35,6 +35,7 @@ def single_outer(s: str) -> bool:
         return True
     elif "'" in s:
         return False
+    return True
 
 
 def normalize(s: str) -> str:

@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from ctypes import c_float
 from sys import stderr
-from typing import Any, Callable, Dict, Iterable, Set, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Set, Tuple, Union
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
@@ -115,9 +115,14 @@ class InfoTuple:
 
 
 IntFloatStr = Union[int, float, str]
+NvIntFloatStr = Union[IntFloatStr, NoValue]
+NvInt = Union[int, NoValue]
+NvFloat = Union[float, NoValue]
 
 
-def type_info(value, number=".", field=None, record_idx=None):
+def type_info(
+    value, number=".", field=None, record_idx=None
+) -> Union[NvIntFloatStr, InfoTuple]:
     if value is None:
         return NA
     if number == "0":
@@ -143,7 +148,7 @@ def type_info(value, number=".", field=None, record_idx=None):
 
 
 class PosRange:
-    def __init__(self, start: int, end: int, raw: str):
+    def __init__(self, start: NvInt, end: NvInt, raw: str):
         self.start = start
         self.end = end
         self._raw = raw
@@ -157,14 +162,16 @@ class PosRange:
 
     @classmethod
     def from_vep_str(cls, value: str) -> PosRange:
-        start, end = (
-            #  the "-" is optional, so vep either has start and end position
-            [NA if v == "?" else int(v) for v in map(str.strip, value.split("-"))]
-            if "-" in value
-            #  or start position only
-            else [int(value.strip()), int(value.strip()) + 1]
-        )
-        return cls(start, end, value)
+        if "-" in value:
+            s, e = map(str.strip, value.split("-", 1))
+            start: NvInt = NA if s == "?" else int(s)
+            end: NvInt = NA if e == "?" else int(e)
+            return cls(start, end, value)
+        elif len(value) > 0:
+            start = int(value.strip())
+            return cls(start, start + 1, value)
+        else:
+            return cls(NA, NA, value)
 
     @property
     def length(self):
@@ -193,7 +200,7 @@ class AnnotationEntry:
         name: str,
         typefunc: Callable[[str], Any] = str,
         nafunc: Callable[[], Any] = na_func,
-        description: str = None,
+        description: Optional[str] = None,
     ):
         self._name = name
         self._typefunc = typefunc
@@ -204,7 +211,7 @@ class AnnotationEntry:
     def name(self):
         return self._name
 
-    def convert(self, value: str) -> Tuple[str, Any]:
+    def convert(self, value: str) -> Any:
         if value:
             return self._typefunc(value)
         else:
@@ -229,7 +236,7 @@ class AnnotationListEntry(AnnotationEntry):
         self,
         name: str,
         sep: str,
-        typefunc: Callable[[str], Any] = None,
+        typefunc: Optional[Callable[[str], Any]] = None,
         inner_typefunc: Callable[[str], Any] = lambda x: x,
         **kwargs,
     ):

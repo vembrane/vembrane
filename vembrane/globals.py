@@ -1,7 +1,7 @@
 import math
 import re
 import statistics
-from typing import Any, Callable, Dict, Iterable, Mapping, TypeVar, Union
+from typing import Any, Callable, Dict, Iterable, Iterator, Optional, TypeVar, Union
 
 from .ann_types import NA, NoValue
 
@@ -107,12 +107,12 @@ _statistics_exports = {
 T = TypeVar("T")
 
 
-def without_na(values: Iterable[Union[T, NoValue]]) -> Iterable[T]:
+def without_na(values: Iterable[Union[T, NoValue]]) -> Iterator[T]:
     """Keep only values that are not `NA`."""
     return filter(lambda v: v is not NA, values)
 
 
-def replace_na(values: Iterable[Union[T, NoValue]], replacement: T) -> Iterable[T]:
+def replace_na(values: Iterable[Union[T, NoValue]], replacement: T) -> Iterator[T]:
     """Replace values that are `NA` with `replacement`."""
     for v in values:
         if v is not NA:
@@ -126,7 +126,7 @@ _additional_functions = {
     "replace_na": replace_na,
 }
 
-_explicit_clear = {
+_explicit_clear: Dict[str, Optional[Dict[str, Any]]] = {
     "__builtins__": {},
     "__builtin__": {},
     "__file__": None,
@@ -136,7 +136,7 @@ _explicit_clear = {
     "__import__": None,
 }
 
-allowed_globals: Mapping[str, Any] = {
+allowed_globals: Dict[str, Any] = {
     **_builtins,
     **_modules,
     **_math_exports,
