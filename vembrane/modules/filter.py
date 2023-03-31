@@ -318,7 +318,7 @@ def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
     return {name: read_set(contents) for name, contents in aux.items()}
 
 
-def execute(args):
+def execute(args) -> None:
     aux = read_auxiliary(args.aux)
     with VariantFile(args.vcf) as vcf:
         header: VariantHeader = vcf.header
