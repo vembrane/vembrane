@@ -17,6 +17,7 @@ from ..common import (
     is_bnd_record,
     mate_key,
     normalize,
+    read_auxiliary,
     split_annotation_entry,
 )
 from ..errors import VembraneError
@@ -309,13 +310,6 @@ def statistics(
         yaml.dump(dict(counter), out)
 
 
-def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
-    # read auxiliary files, split at any whitespace and store contents in a set
-    def read_set(path: str) -> Set[str]:
-        with open(path, "rt") as f:
-            return set(line.rstrip() for line in f)
-
-    return {name: read_set(contents) for name, contents in aux.items()}
 
 
 def execute(args) -> None:
