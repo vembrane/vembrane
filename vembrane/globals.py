@@ -1,8 +1,7 @@
 import math
 import re
 import statistics
-from collections.abc import Iterator
-from typing import Any, Callable, Dict, Iterable, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, Iterable, Iterator, Optional, TypeVar, Union
 
 from .ann_types import NA, NoValue
 
