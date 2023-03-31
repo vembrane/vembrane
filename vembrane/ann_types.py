@@ -162,14 +162,16 @@ class PosRange:
 
     @classmethod
     def from_vep_str(cls, value: str) -> PosRange:
-        start, end = (
-            #  the "-" is optional, so vep either has start and end position
-            [NA if v == "?" else int(v) for v in map(str.strip, value.split("-"))]
-            if "-" in value
-            #  or start position only
-            else [int(value.strip()), int(value.strip()) + 1]
-        )
-        return cls(start, end, value)
+        if "-" in value:
+            s, e = map(str.strip, value.split("-", 1))
+            start: NvInt = NA if s == "?" else int(s)
+            end: NvInt = NA if e == "?" else int(e)
+            return cls(start, end, value)
+        elif len(value) > 0:
+            start = int(value.strip())
+            return cls(start, start + 1, value)
+        else:
+            return cls(NA, NA, value)
 
     @property
     def length(self):
