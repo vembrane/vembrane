@@ -207,13 +207,12 @@ def _var_and_body(s):
     # walk the resulting AST, find the "for_each_sample" ast.Call node,
     # and extract the variable name and lambda body code from that
     for node in asttokens.util.walk(tok.tree):
-        if isinstance(node, ast.Call):
-            if hasattr(node.func, "id"):
-                if node.func.id == "for_each_sample":
-                    for arg in node.args:
-                        if isinstance(arg, ast.Lambda):
-                            var = tok.get_text(arg.args)
-                            inner = tok.get_text(arg.body)
+        if isinstance(node, ast.Call) and hasattr(node.func, "id"):
+            if node.func.id == "for_each_sample":
+                for arg in node.args:
+                    if isinstance(arg, ast.Lambda):
+                        var = tok.get_text(arg.args)
+                        inner = tok.get_text(arg.body)
     return var, inner
 
 
@@ -247,10 +246,7 @@ def preprocess_expression(
 
 
 def get_header(args, vcf: VariantFile) -> list[str]:
-    if args.header == "auto":
-        header = args.expression
-    else:
-        header = args.header
+    header = args.expression if args.header == "auto" else args.header
     if args.long:
         header = f"SAMPLE, {header}"
     return get_toplevel(preprocess_expression(header, vcf, args.header == "auto"))
@@ -296,10 +292,7 @@ def get_row(row):
 
 @contextlib.contextmanager
 def smart_open(filename=None, *args, **kwargs):
-    if filename and filename != "-":
-        fh = open(filename, *args, **kwargs)
-    else:
-        fh = sys.stdout
+    fh = open(filename, *args, **kwargs) if filename and filename != "-" else sys.stdout
 
     try:
         yield fh
