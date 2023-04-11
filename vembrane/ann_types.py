@@ -4,7 +4,8 @@ import re
 from collections import defaultdict
 from ctypes import c_float
 from sys import stderr
-from typing import Any, Callable, Dict, Iterable, Optional, Set, Tuple, Union
+from typing import Any, Union
+from collections.abc import Callable, Iterable
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
@@ -17,7 +18,7 @@ def float32(val: str) -> float:
 # but just comes up empty-handed, which is convenient behaviour.
 # This way, we do not have to special case / monkey patch / wrap the regex module.
 class NoValue(str):
-    warnings: Set[str] = set()
+    warnings: set[str] = set()
 
     def __lt__(self, other) -> bool:
         return False
@@ -122,7 +123,7 @@ NvFloat = Union[float, NoValue]
 
 def type_info(
     value, number=".", field=None, record_idx=None
-) -> Union[NvIntFloatStr, InfoTuple]:
+) -> NvIntFloatStr | InfoTuple:
     if value is None:
         return NA
     if number == "0":
@@ -157,7 +158,7 @@ class PosRange:
 
     @classmethod
     def from_snpeff_str(cls, value: str) -> PosRange:
-        pos, length = [int(v.strip()) for v in value.split("/")]
+        pos, length = (int(v.strip()) for v in value.split("/"))
         return cls(pos, pos + length, value)
 
     @classmethod
@@ -200,7 +201,7 @@ class AnnotationEntry:
         name: str,
         typefunc: Callable[[str], Any] = str,
         nafunc: Callable[[], Any] = na_func,
-        description: Optional[str] = None,
+        description: str | None = None,
     ) -> None:
         self._name = name
         self._typefunc = typefunc
@@ -236,7 +237,7 @@ class AnnotationListEntry(AnnotationEntry):
         self,
         name: str,
         sep: str,
-        typefunc: Optional[Callable[[str], Any]] = None,
+        typefunc: Callable[[str], Any] | None = None,
         inner_typefunc: Callable[[str], Any] = lambda x: x,
         **kwargs,
     ) -> None:
@@ -264,7 +265,7 @@ class AnnotationListDictEntry(AnnotationEntry):
         super().__init__(name=name, typefunc=typefunc, **kwargs)
 
 
-class RangeTotal(object):
+class RangeTotal:
     def __init__(self, r: range, total: int, raw: str) -> None:
         self.range = r
         self.total = total
@@ -308,7 +309,7 @@ class AnnotationRangeTotalEntry(AnnotationEntry):
         super().__init__(name, typefunc=RangeTotal.from_vep_string, **kwargs)
 
 
-class NumberTotal(object):
+class NumberTotal:
     def __init__(self, number: int, total: int, raw: str) -> None:
         self.number = number
         self.total = total
@@ -340,7 +341,7 @@ PREDICTION_SCORE_REGEXP: re.Pattern = re.compile(r"(.*)\((.*)\)")
 
 class AnnotationPredictionScoreEntry(AnnotationEntry):
     def __init__(self, name: str, **kwargs) -> None:
-        def typefunc(x: str) -> Dict[str, float]:
+        def typefunc(x: str) -> dict[str, float]:
             match = PREDICTION_SCORE_REGEXP.findall(x)[0]
             return {match[0]: float32(match[1])}
 
@@ -353,7 +354,7 @@ class DefaultAnnotationEntry(AnnotationEntry):
 
 
 class AnnotationTyper:
-    def __init__(self, mapping: Dict[str, AnnotationEntry]) -> None:
+    def __init__(self, mapping: dict[str, AnnotationEntry]) -> None:
         self._mapping = mapping
 
     def get_entry(self, key: str) -> AnnotationEntry:
@@ -370,7 +371,7 @@ class AnnotationTyper:
             entry = self._mapping[key]
         return entry
 
-    def convert(self, key: str, value: str) -> Tuple[str, AnnotationType]:
+    def convert(self, key: str, value: str) -> tuple[str, AnnotationType]:
         entry = self.get_entry(key)
         return entry.name, entry.convert(value)
 

@@ -1,7 +1,7 @@
 import argparse
 import ast
 import shlex
-from typing import Dict, Iterable, Iterator, List, Optional, Set
+from collections.abc import Iterable, Iterator
 
 from pysam.libcbcf import VariantHeader, VariantRecord
 
@@ -13,7 +13,7 @@ def check_expression(expression: str) -> str:
         raise InvalidExpression(expression, "The expression must not contain '.__'")
     try:
         tree = ast.parse(expression, mode="eval")
-        if isinstance(tree.body, (ast.BoolOp, ast.Compare)):
+        if isinstance(tree.body, ast.BoolOp | ast.Compare):
             return expression
         else:
             # TODO possibly check for ast.Call, func return type
@@ -42,7 +42,7 @@ def normalize(s: str) -> str:
     return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
 
 
-def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
+def get_annotation_keys(header: VariantHeader, ann_key: str) -> list[str]:
     separator = "'"
     for rec in header.records:
         if rec.key == "VEP":
@@ -58,7 +58,7 @@ def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
     return []
 
 
-def split_annotation_entry(entry: str) -> List[str]:
+def split_annotation_entry(entry: str) -> list[str]:
     return entry.split("|")
 
 
@@ -66,13 +66,13 @@ def is_bnd_record(record: VariantRecord) -> bool:
     return "SVTYPE" in record.info and record.info.get("SVTYPE", None) == "BND"
 
 
-class BreakendEvent(object):
+class BreakendEvent:
     __slots__ = ["name", "keep", "records", "keep_records", "mate_pair"]
 
     def __init__(self, name: str, mate_pair: bool = False) -> None:
         self.name = name
-        self.records: List[VariantRecord] = []
-        self.keep_records: List[bool] = []
+        self.records: list[VariantRecord] = []
+        self.keep_records: list[bool] = []
         self.keep = False
         self.mate_pair = mate_pair
 
@@ -101,7 +101,7 @@ class BreakendEvent(object):
         return self.name == other.name
 
 
-def mate_key(mates: Iterable[Optional[str]]) -> str:
+def mate_key(mates: Iterable[str | None]) -> str:
     return "__MATES: " + ",".join(sorted(m for m in mates if m is not None))
 
 
@@ -126,10 +126,10 @@ class AppendKeyValuePair(argparse.Action):
         getattr(namespace, self.dest)[key.strip()] = value
 
 
-def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
+def read_auxiliary(aux: dict[str, str]) -> dict[str, set[str]]:
     # read auxiliary files, split at any whitespace and store contents in a set
-    def read_set(path: str) -> Set[str]:
-        with open(path, "rt") as f:
+    def read_set(path: str) -> set[str]:
+        with open(path) as f:
             return {line.rstrip() for line in f}
 
     return {name: read_set(contents) for name, contents in aux.items()}

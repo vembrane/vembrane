@@ -3,7 +3,8 @@ import csv
 import sys
 from sys import stderr
 from types import MappingProxyType
-from typing import Any, Dict, Iterator, List, Set
+from typing import Any
+from collections.abc import Iterator
 
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
@@ -97,11 +98,11 @@ def tableize_vcf(
     vcf: VariantFile,
     expression: str,
     ann_key: str,
-    overwrite_number: Dict[str, Dict[str, str]] = MappingProxyType({}),
+    overwrite_number: dict[str, dict[str, str]] = MappingProxyType({}),
     long: bool = False,
-    auxiliary: Dict[str, Set[str]] = MappingProxyType({}),
+    auxiliary: dict[str, set[str]] = MappingProxyType({}),
 ) -> Iterator[tuple]:
-    kwargs: Dict[str, Any] = {
+    kwargs: dict[str, Any] = {
         "overwrite_number": overwrite_number,
         "auxiliary": auxiliary,
     }
@@ -136,7 +137,7 @@ def tableize_vcf(
                 yield env.table()
 
 
-def generate_for_each_sample_expressions(s: str, vcf: VariantFile) -> List[str]:
+def generate_for_each_sample_expressions(s: str, vcf: VariantFile) -> list[str]:
     from asttokens.util import replace
 
     # parse the `for_each_sample(lambda var: inner) expression
@@ -158,7 +159,7 @@ def generate_for_each_sample_expressions(s: str, vcf: VariantFile) -> List[str]:
     return expanded
 
 
-def generate_for_each_sample_column_names(s: str, vcf: VariantFile) -> List[str]:
+def generate_for_each_sample_column_names(s: str, vcf: VariantFile) -> list[str]:
     # parse the `for_each_sample(lambda var: inner) expression
     var, inner = _var_and_body(s)
 
@@ -169,7 +170,7 @@ def generate_for_each_sample_column_names(s: str, vcf: VariantFile) -> List[str]
     for sample in samples:
         __globals[var] = sample
         column_name = eval(inner, __globals, {})
-        if not isinstance(column_name, (str, bytes)):
+        if not isinstance(column_name, str | bytes):
             if hasattr(column_name, "__str__"):
                 column_name = str(column_name)
             else:
@@ -214,13 +215,13 @@ def preprocess_expression(
     Then, if one of these parts starts with 'for_each_sample',
     that part is expanded for each sample in vcf.header.samples
     """
-    parts: List[str] = get_toplevel(header)
+    parts: list[str] = get_toplevel(header)
     to_expand = list(
         filter(lambda x: x[1].startswith("for_each_sample"), enumerate(parts))
     )
     if len(to_expand) > 0 and vcf is None:
         raise ValueError("If FORMAT is to be expanded, the VCF kwarg must not be none.")
-    parts_expanded: List[List[str]] = [[p] for p in parts]
+    parts_expanded: list[list[str]] = [[p] for p in parts]
     func = (
         generate_for_each_sample_expressions
         if make_expression
@@ -233,7 +234,7 @@ def preprocess_expression(
     return ", ".join(parts_flattened)
 
 
-def get_header(args, vcf: VariantFile) -> List[str]:
+def get_header(args, vcf: VariantFile) -> list[str]:
     if args.header == "auto":
         header = args.expression
     else:
@@ -243,7 +244,7 @@ def get_header(args, vcf: VariantFile) -> List[str]:
     return get_toplevel(preprocess_expression(header, vcf, args.header == "auto"))
 
 
-def get_toplevel(header: str) -> List[str]:
+def get_toplevel(header: str) -> list[str]:
     splitpos = [0]
     level = 0
     stack = []
@@ -332,4 +333,4 @@ def execute(args):
                 writer.writerows(get_row(row) for row in rows)
         except VembraneError as ve:
             print(ve, file=stderr)
-            exit(1)
+            sys.exit(1)

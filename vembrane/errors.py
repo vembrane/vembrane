@@ -12,7 +12,7 @@ class UnknownAnnotation(VembraneError):
     """Unknown annotation entry"""
 
     def __init__(self, record_idx: int, record: VariantRecord, key: str) -> None:
-        super(UnknownAnnotation, self).__init__(
+        super().__init__(
             f"No ANN entry for '{key}' in record {record_idx}:\n{str(record)}"
         )
         self.record_idx = record_idx
@@ -24,7 +24,7 @@ class UnknownSample(VembraneError, KeyError):
     """Unknown Sample"""
 
     def __init__(self, record_idx: int, record: VariantRecord, sample: str) -> None:
-        super(UnknownSample, self).__init__(
+        super().__init__(
             f"No sample with name '{sample}' in record {record_idx}:\n{str(record)}"
         )
         self.record_idx = record_idx
@@ -36,7 +36,7 @@ class UnknownFormatField(VembraneError, KeyError):
     """Unknown FORMAT key"""
 
     def __init__(self, record_idx: int, record: VariantRecord, field: str) -> None:
-        super(UnknownFormatField, self).__init__(
+        super().__init__(
             f"No FORMAT field '{field}' in record {record_idx}:\n{str(record)}"
         )
         self.record_idx = record_idx
@@ -48,7 +48,7 @@ class UnknownInfoField(VembraneError):
     """Unknown INFO key"""
 
     def __init__(self, record_idx: int, record: VariantRecord, field: str) -> None:
-        super(UnknownInfoField, self).__init__(
+        super().__init__(
             f"No INFO field '{field}' in record {record_idx}:\n{str(record)}"
         )
         self.record = record_idx
@@ -59,7 +59,7 @@ class InvalidExpression(VembraneError):
     """Filter expression is invalid"""
 
     def __init__(self, expression: str, reason: str) -> None:
-        super(InvalidExpression, self).__init__(
+        super().__init__(
             f"The provided expression '{expression}' is invalid. Reason: {reason}"
         )
         self.expression = expression
@@ -76,7 +76,7 @@ class MoreThanOneAltAllele(VembraneError):
             "`gatk LeftAlignAndTrimVariants […] --split-multi-allelics` or "
             "`vcfmulti2oneallele […]`"
         )
-        super(MoreThanOneAltAllele, self).__init__(msg)
+        super().__init__(msg)
 
 
 class NotExactlyOneValue(VembraneError):
@@ -99,7 +99,7 @@ class NotExactlyOneValue(VembraneError):
             "- G (FORMAT only): the field has one value for each possible genotype\n"
             "- {number}: the field has exactly {NUMBER} values\n"
         )
-        super(NotExactlyOneValue, self).__init__(msg)
+        super().__init__(msg)
 
 
 class HeaderWrongColumnNumber(VembraneError):
@@ -114,19 +114,19 @@ class HeaderWrongColumnNumber(VembraneError):
             f"{n_expr_cols} main expression columns: {expr_cols}\n"
             f"{n_header_cols} --header expression columns: {header_cols}\n"
         )
-        super(HeaderWrongColumnNumber, self).__init__(msg)
+        super().__init__(msg)
 
 
 class FilterAlreadyDefined(VembraneError):
     def __init__(self, tag: str) -> None:
-        super(FilterAlreadyDefined, self).__init__(
+        super().__init__(
             f"Filter {tag} already defined in the header. Choose a different name."
         )
 
 
 class FilterTagNameInvalid(VembraneError):
     def __init__(self, tag: str) -> None:
-        super(FilterTagNameInvalid, self).__init__(
+        super().__init__(
             f"Filter '{tag}' contains invalid characters (whitespace or semicolon) "
             f"or is '0'."
         )

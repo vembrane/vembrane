@@ -126,7 +126,7 @@ def test_filter(testcase):
                 t_out = "".join(
                     line for line in tmp_out if not line.startswith("##vembrane")
                 )
-                with open(expected, mode="r") as e:
+                with open(expected) as e:
                     e_out = e.read()
                 assert t_out == e_out
             else:

@@ -1,7 +1,7 @@
 import ast
 from itertools import chain
 from types import CodeType, MappingProxyType
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
@@ -56,7 +56,7 @@ class Format(NoValueDict, DefaultGet):
         self._name = name
         self._number = number
         self._record_samples = record_samples
-        self._sample_values: Dict[str, NvIntFloatStr] = {}
+        self._sample_values: dict[str, NvIntFloatStr] = {}
 
     def __getitem__(self, sample):
         try:
@@ -78,14 +78,14 @@ class Formats(NoValueDict):
         self,
         record_idx: int,
         record: VariantRecord,
-        header_format_fields: Dict[str, str],
+        header_format_fields: dict[str, str],
     ) -> None:
         self._record = record
         self._record_idx = record_idx
         self._header_format_fields = header_format_fields
         self._record_format = record.format
         self._record_samples = record.samples
-        self._formats: Dict[str, Format] = {}
+        self._formats: dict[str, Format] = {}
 
     def __getitem__(self, item):
         try:
@@ -108,7 +108,7 @@ class Info(NoValueDict, DefaultGet):
         self,
         record_idx: int,
         record: VariantRecord,
-        header_info_fields: Dict[str, str],
+        header_info_fields: dict[str, str],
         ann_key: str,
     ) -> None:
         self._record_idx = record_idx
@@ -116,7 +116,7 @@ class Info(NoValueDict, DefaultGet):
         self._record_info = record.info
         self._header_info_fields = header_info_fields
         self._ann_key = ann_key
-        self._info_dict: Dict[str, NvIntFloatStr] = {}
+        self._info_dict: dict[str, NvIntFloatStr] = {}
 
     def __getitem__(self, item):
         try:
@@ -153,9 +153,9 @@ class Info(NoValueDict, DefaultGet):
 class Annotation(NoValueDict, DefaultGet):
     def __init__(self, ann_key: str, header: VariantHeader) -> None:
         self._record_idx = -1
-        self._record: Optional[VariantRecord] = None
-        self._annotation_data: List[str] = []
-        self._data: Dict[str, Any] = {}
+        self._record: VariantRecord | None = None
+        self._annotation_data: list[str] = []
+        self._data: dict[str, Any] = {}
         annotation_keys = get_annotation_keys(header, ann_key)
         self._ann_conv = {
             entry.name: (ann_idx, entry.convert)
@@ -200,8 +200,8 @@ class Environment(dict):
         expression: str,
         ann_key: str,
         header: VariantHeader,
-        auxiliary: Dict[str, Set[str]] = MappingProxyType({}),
-        overwrite_number: Dict[str, Dict[str, str]] = MappingProxyType({}),
+        auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        overwrite_number: dict[str, dict[str, str]] = MappingProxyType({}),
         evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
         self._ann_key: str = ann_key
@@ -210,7 +210,7 @@ class Environment(dict):
             for node in ast.walk(ast.parse(expression))
         )
         self._annotation: Annotation = Annotation(ann_key, header)
-        self._globals: Dict[str, Any] = {}
+        self._globals: dict[str, Any] = {}
         # We use self + self.func as a closure.
         self._globals = dict(allowed_globals)
         self._globals.update(custom_functions(self))
@@ -316,12 +316,12 @@ class Environment(dict):
         self._globals["END"] = value
         return value
 
-    def _get_id(self) -> Optional[str]:
+    def _get_id(self) -> str | None:
         value = self.record.id
         self._globals["ID"] = value
         return value
 
-    def _get_alleles(self) -> Tuple[str, ...]:
+    def _get_alleles(self) -> tuple[str, ...]:
         alleles = self._alleles
         if not alleles:
             alleles = self._alleles = tuple(chain(self.record.alleles))
@@ -346,7 +346,7 @@ class Environment(dict):
         self._globals["QUAL"] = value
         return value
 
-    def _get_filter(self) -> List[str]:
+    def _get_filter(self) -> list[str]:
         value = list(self.record.filter)
         self._globals["FILTER"] = value
         return value
@@ -382,7 +382,7 @@ class Environment(dict):
         self._globals["INDEX"] = self.idx
         return self.idx
 
-    def _get_aux(self) -> Dict[str, Set[str]]:
+    def _get_aux(self) -> dict[str, set[str]]:
         self._globals["AUX"] = self.aux
         return self.aux
 
