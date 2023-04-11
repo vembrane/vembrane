@@ -19,22 +19,22 @@ def float32(val: str) -> float:
 class NoValue(str):
     warnings: Set[str] = set()
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         return False
 
-    def __gt__(self, other):
+    def __gt__(self, other) -> bool:
         return False
 
-    def __le__(self, other):
+    def __le__(self, other) -> bool:
         return False
 
-    def __ge__(self, other):
+    def __ge__(self, other) -> bool:
         return False
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return False
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return True
 
     def __bool__(self) -> bool:
