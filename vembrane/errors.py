@@ -8,7 +8,7 @@ class VembraneError(Exception):
         return self.args[0]
 
 
-class UnknownAnnotation(VembraneError):
+class UnknownAnnotationError(VembraneError):
     """Unknown annotation entry"""
 
     def __init__(self, record_idx: int, record: VariantRecord, key: str) -> None:
@@ -20,7 +20,7 @@ class UnknownAnnotation(VembraneError):
         self.key = key
 
 
-class UnknownSample(VembraneError, KeyError):
+class UnknownSampleError(VembraneError, KeyError):
     """Unknown Sample"""
 
     def __init__(self, record_idx: int, record: VariantRecord, sample: str) -> None:
@@ -32,7 +32,7 @@ class UnknownSample(VembraneError, KeyError):
         self.field = sample
 
 
-class UnknownFormatField(VembraneError, KeyError):
+class UnknownFormatFieldError(VembraneError, KeyError):
     """Unknown FORMAT key"""
 
     def __init__(self, record_idx: int, record: VariantRecord, field: str) -> None:
@@ -44,7 +44,7 @@ class UnknownFormatField(VembraneError, KeyError):
         self.field = field
 
 
-class UnknownInfoField(VembraneError):
+class UnknownInfoFieldError(VembraneError):
     """Unknown INFO key"""
 
     def __init__(self, record_idx: int, record: VariantRecord, field: str) -> None:
@@ -55,7 +55,7 @@ class UnknownInfoField(VembraneError):
         self.field = field
 
 
-class InvalidExpression(VembraneError):
+class InvalidExpressionError(VembraneError):
     """Filter expression is invalid"""
 
     def __init__(self, expression: str, reason: str) -> None:
@@ -65,7 +65,7 @@ class InvalidExpression(VembraneError):
         self.expression = expression
 
 
-class MoreThanOneAltAllele(VembraneError):
+class MoreThanOneAltAlleleError(VembraneError):
     """vembrane only supports one ALT allele per record"""
 
     def __init__(self) -> None:
@@ -79,7 +79,7 @@ class MoreThanOneAltAllele(VembraneError):
         super().__init__(msg)
 
 
-class NotExactlyOneValue(VembraneError):
+class NotExactlyOneValueError(VembraneError):
     """There may only be one value in VCF fields with `Number=1`"""
 
     def __init__(self, field, nvalues, record_idx) -> None:
@@ -102,7 +102,7 @@ class NotExactlyOneValue(VembraneError):
         super().__init__(msg)
 
 
-class HeaderWrongColumnNumber(VembraneError):
+class HeaderWrongColumnNumberError(VembraneError):
     """
     table --header expression generates different number of columns than main expression
     """
@@ -117,14 +117,14 @@ class HeaderWrongColumnNumber(VembraneError):
         super().__init__(msg)
 
 
-class FilterAlreadyDefined(VembraneError):
+class FilterAlreadyDefinedError(VembraneError):
     def __init__(self, tag: str) -> None:
         super().__init__(
             f"Filter {tag} already defined in the header. Choose a different name.",
         )
 
 
-class FilterTagNameInvalid(VembraneError):
+class FilterTagNameInvalidError(VembraneError):
     def __init__(self, tag: str) -> None:
         super().__init__(
             f"Filter '{tag}' contains invalid characters (whitespace or semicolon) "
