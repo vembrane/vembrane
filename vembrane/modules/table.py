@@ -1,10 +1,10 @@
 import contextlib
 import csv
 import sys
+from collections.abc import Iterator
 from sys import stderr
 from types import MappingProxyType
 from typing import Any
-from collections.abc import Iterator
 
 import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
