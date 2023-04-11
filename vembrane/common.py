@@ -18,10 +18,10 @@ def check_expression(expression: str) -> str:
         else:
             # TODO possibly check for ast.Call, func return type
             return expression
-    except SyntaxError:
+    except SyntaxError as se:
         raise InvalidExpression(
             expression, "The expression has to be syntactically correct."
-        )
+        ) from se
 
 
 def swap_quotes(s: str) -> str:

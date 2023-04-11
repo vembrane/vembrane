@@ -1,6 +1,6 @@
 import ast
 from itertools import chain
-from types import CodeType
+from types import CodeType, MappingProxyType
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
@@ -64,8 +64,8 @@ class Format(NoValueDict, DefaultGet):
         except KeyError:
             try:
                 record_sample = self._record_samples[sample]
-            except KeyError:
-                raise UnknownSample(self._record_idx, self._record, sample)
+            except KeyError as ke:
+                raise UnknownSample(self._record_idx, self._record, sample) from ke
             value = type_info(
                 record_sample[self._name], self._number, self._name, self._record_idx
             )
@@ -93,8 +93,8 @@ class Formats(NoValueDict):
         except KeyError:
             try:
                 self._record_format[item]
-            except KeyError:
-                raise UnknownFormatField(self._record_idx, self._record, item)
+            except KeyError as ke:
+                raise UnknownFormatField(self._record_idx, self._record, item) from ke
             number = self._header_format_fields[item]
             format_field = Format(
                 self._record_idx, self._record, item, number, self._record_samples
@@ -121,7 +121,7 @@ class Info(NoValueDict, DefaultGet):
     def __getitem__(self, item):
         try:
             return self._info_dict[item]
-        except KeyError:
+        except KeyError as ke:
             if item == "END":
                 # pysam removes END from info. In order to fit with user expectations,
                 # (they will expect INFO["END"] to work) we emulate it being present by
@@ -130,13 +130,15 @@ class Info(NoValueDict, DefaultGet):
             else:
                 try:
                     if item == self._ann_key:
-                        raise KeyError(item)
+                        raise KeyError(item) from ke
                     untyped_value = self._record_info[item]
-                except KeyError:
+                except KeyError as ke2:
                     if item in self._header_info_fields:
                         value = NA
                     else:
-                        raise UnknownInfoField(self._record_idx, self._record, item)
+                        raise UnknownInfoField(
+                            self._record_idx, self._record, item
+                        ) from ke2
                 else:
                     value = type_info(
                         untyped_value,
@@ -172,8 +174,8 @@ class Annotation(NoValueDict, DefaultGet):
         except KeyError:
             try:
                 ann_idx, convert = self._ann_conv[item]
-            except KeyError:
-                raise UnknownAnnotation(self._record_idx, self._record, item)
+            except KeyError as ke2:
+                raise UnknownAnnotation(self._record_idx, self._record, item) from ke2
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
@@ -198,8 +200,8 @@ class Environment(dict):
         expression: str,
         ann_key: str,
         header: VariantHeader,
-        auxiliary: Dict[str, Set[str]] = {},
-        overwrite_number: Dict[str, Dict[str, str]] = {},
+        auxiliary: Dict[str, Set[str]] = MappingProxyType({}),
+        overwrite_number: Dict[str, Dict[str, str]] = MappingProxyType({}),
         evaluation_function_template: str = "lambda: {expression}",
     ):
         self._ann_key: str = ann_key
