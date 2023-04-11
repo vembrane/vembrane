@@ -130,11 +130,11 @@ def type_info(
         return NA if value is None else value
     if number == "A":
         if len(value) != 1:
-            raise MoreThanOneAltAllele()
+            raise MoreThanOneAltAllele
         return value[0] if value[0] is not None else NA
     if number == "R":
         if len(value) != 2:
-            raise MoreThanOneAltAllele()
+            raise MoreThanOneAltAllele
         return InfoTuple(value)
     if number == "1":
         if isinstance(value, tuple):
