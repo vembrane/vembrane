@@ -44,7 +44,10 @@ def add_subcommmand(subparsers):
         "the variant is removed as well.",
     )
     parser.add_argument(
-        "vcf", help="The file containing the variants.", nargs="?", default="-"
+        "vcf",
+        help="The file containing the variants.",
+        nargs="?",
+        default="-",
     )
     parser.add_argument(
         "--output",
@@ -174,7 +177,7 @@ def filter_vcf(
         if len(mate_ids) > 1 and not event_name:
             raise ValueError(
                 f"Filtering of BND records with multiple mates is unsupported "
-                f"(see VCF 4.3, section 5.4.3 'Multiple mates'):\n{str(record)}"
+                f"(see VCF 4.3, section 5.4.3 'Multiple mates'):\n{str(record)}",
             )
 
         mate_id = mate_ids[0] if len(mate_ids) == 1 else None
@@ -191,7 +194,11 @@ def filter_vcf(
         event_dict: dict[str, BreakendEvent] = {}
         for idx, record in enumerate(vcf):
             record, keep = test_and_update_record(
-                env, idx, record, ann_key, keep_unmatched
+                env,
+                idx,
+                record,
+                ann_key,
+                keep_unmatched,
             )
 
             # Breakend records *may* have the "EVENT" specified, but don't have to.
@@ -265,7 +272,11 @@ def filter_vcf(
         for idx, record in enumerate(vcf):
             if is_bnd_record(record):
                 record, keep = test_and_update_record(
-                    env, idx, record, ann_key, keep_unmatched
+                    env,
+                    idx,
+                    record,
+                    ann_key,
+                    keep_unmatched,
                 )
                 if keep:
                     event_name = fallback_name(record)
@@ -280,14 +291,21 @@ def filter_vcf(
                     yield record
             else:
                 record, keep = test_and_update_record(
-                    env, idx, record, ann_key, keep_unmatched
+                    env,
+                    idx,
+                    record,
+                    ann_key,
+                    keep_unmatched,
                 )
                 if keep:
                     yield record
 
 
 def statistics(
-    records: Iterator[VariantRecord], vcf: VariantFile, filename: str, ann_key: str
+    records: Iterator[VariantRecord],
+    vcf: VariantFile,
+    filename: str,
+    ann_key: str,
 ) -> Iterator[VariantRecord]:
     annotation_keys = get_annotation_keys(vcf.header, ann_key)
     counter = defaultdict(lambda: defaultdict(lambda: 0))

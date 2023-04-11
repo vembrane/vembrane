@@ -8,10 +8,14 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {__version__}"
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
     subparsers = parser.add_subparsers(
-        dest="command", description="valid subcommands", required=True
+        dest="command",
+        description="valid subcommands",
+        required=True,
     )
     filter.add_subcommmand(subparsers)
     table.add_subcommmand(subparsers)

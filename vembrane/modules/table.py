@@ -25,7 +25,10 @@ def add_subcommmand(subparsers):
         help="The expression for the output.",
     )
     parser.add_argument(
-        "vcf", help="The file containing the variants.", nargs="?", default="-"
+        "vcf",
+        help="The file containing the variants.",
+        nargs="?",
+        default="-",
     )
     parser.add_argument(
         "--annotation-key",
@@ -176,7 +179,7 @@ def generate_for_each_sample_column_names(s: str, vcf: VariantFile) -> list[str]
             else:
                 raise ValueError(
                     "The specified header expression does not evaluate to a string."
-                    "Consider using `str(expression)` instead."
+                    "Consider using `str(expression)` instead.",
                 )
         column_names.append(column_name)
     return column_names
@@ -208,7 +211,9 @@ def _var_and_body(s):
 
 
 def preprocess_expression(
-    header: str, vcf: VariantFile, make_expression: bool = True
+    header: str,
+    vcf: VariantFile,
+    make_expression: bool = True,
 ) -> str:
     """
     Split the header expression at toplevel commas into parts.
@@ -217,7 +222,7 @@ def preprocess_expression(
     """
     parts: list[str] = get_toplevel(header)
     to_expand = list(
-        filter(lambda x: x[1].startswith("for_each_sample"), enumerate(parts))
+        filter(lambda x: x[1].startswith("for_each_sample"), enumerate(parts)),
     )
     if len(to_expand) > 0 and vcf is None:
         raise ValueError("If FORMAT is to be expanded, the VCF kwarg must not be none.")
@@ -318,7 +323,9 @@ def execute(args):
         try:
             with smart_open(args.output, "wt", newline="") as csvfile:
                 writer = csv.writer(
-                    csvfile, delimiter=args.separator, quoting=csv.QUOTE_MINIMAL
+                    csvfile,
+                    delimiter=args.separator,
+                    quoting=csv.QUOTE_MINIMAL,
                 )
                 if args.header != "none":
                     header = get_header(args, vcf)
@@ -327,7 +334,10 @@ def execute(args):
                     n_expr_cols = len(expr_cols)
                     if n_header_cols != n_expr_cols:
                         raise HeaderWrongColumnNumber(
-                            n_expr_cols, expr_cols, n_header_cols, header
+                            n_expr_cols,
+                            expr_cols,
+                            n_header_cols,
+                            header,
                         )
                     writer.writerow(header)
                 writer.writerows(get_row(row) for row in rows)
