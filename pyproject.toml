@@ -44,7 +44,8 @@ exclude = '''
 '''
 
 [tool.ruff]
-select = ["E", "F", "B"]
+select = ["E", "F", "B", "COM", "I"]
+exclude = ["D"]
 
 [build-system]
 requires = ["poetry-core>=1.5.1"]
