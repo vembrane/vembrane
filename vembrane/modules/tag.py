@@ -1,9 +1,9 @@
 import re
 import sys
+from collections.abc import Iterator
 from itertools import chain, islice
 from sys import stderr
 from types import MappingProxyType
-from collections.abc import Iterator
 
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 

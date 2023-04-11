@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from collections.abc import Callable, Iterable
 from ctypes import c_float
 from sys import stderr
 from typing import Any, Union
-from collections.abc import Callable, Iterable
 
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 

@@ -1,7 +1,6 @@
-from collections.abc import Iterable
-from sys import stderr, exit
+from collections.abc import Callable, Iterable, Iterator
+from sys import exit, stderr
 from typing import Any
-from collections.abc import Callable, Iterator
 
 import numpy as np
 import yaml
