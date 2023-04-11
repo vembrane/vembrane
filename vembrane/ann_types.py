@@ -72,7 +72,7 @@ NA = NoValue()
 class InfoTuple:
     """A container that lazily evaluates None to NA in case of access."""
 
-    def __init__(self, values):
+    def __init__(self, values) -> None:
         self.values = values
 
     def __getitem__(self, spec):
@@ -148,7 +148,7 @@ def type_info(
 
 
 class PosRange:
-    def __init__(self, start: NvInt, end: NvInt, raw: str):
+    def __init__(self, start: NvInt, end: NvInt, raw: str) -> None:
         self.start = start
         self.end = end
         self._raw = raw
@@ -201,7 +201,7 @@ class AnnotationEntry:
         typefunc: Callable[[str], Any] = str,
         nafunc: Callable[[], Any] = na_func,
         description: Optional[str] = None,
-    ):
+    ) -> None:
         self._name = name
         self._typefunc = typefunc
         self._nafunc = nafunc
@@ -239,7 +239,7 @@ class AnnotationListEntry(AnnotationEntry):
         typefunc: Optional[Callable[[str], Any]] = None,
         inner_typefunc: Callable[[str], Any] = lambda x: x,
         **kwargs,
-    ):
+    ) -> None:
         typefunc = (
             typefunc
             if typefunc
@@ -249,7 +249,7 @@ class AnnotationListEntry(AnnotationEntry):
 
 
 class AnnotationListDictEntry(AnnotationEntry):
-    def __init__(self, name: str, nafunc=lambda: None, **kwargs):
+    def __init__(self, name: str, nafunc=lambda: None, **kwargs) -> None:
         def typefunc(x):
             key_value_tuples = (v.split(":", maxsplit=1) for v in x.split("&"))
             mapping = defaultdict(list)
@@ -265,7 +265,7 @@ class AnnotationListDictEntry(AnnotationEntry):
 
 
 class RangeTotal(object):
-    def __init__(self, r: range, total: int, raw: str):
+    def __init__(self, r: range, total: int, raw: str) -> None:
         self.range = r
         self.total = total
         self._raw = raw
@@ -304,12 +304,12 @@ class RangeTotal(object):
 
 
 class AnnotationRangeTotalEntry(AnnotationEntry):
-    def __init__(self, name: str, **kwargs):
+    def __init__(self, name: str, **kwargs) -> None:
         super().__init__(name, typefunc=RangeTotal.from_vep_string, **kwargs)
 
 
 class NumberTotal(object):
-    def __init__(self, number: int, total: int, raw: str):
+    def __init__(self, number: int, total: int, raw: str) -> None:
         self.number = number
         self.total = total
         self._raw = raw
@@ -321,17 +321,17 @@ class NumberTotal(object):
         v = value.split("/")
         return cls(int(v[0]), int(v[1]), value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"number / total: {self.number} / {self.total}"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}(number={self.number!r}, total={self.total!r})"
         )
 
 
 class AnnotationNumberTotalEntry(AnnotationEntry):
-    def __init__(self, name: str, **kwargs):
+    def __init__(self, name: str, **kwargs) -> None:
         super().__init__(name, typefunc=NumberTotal.from_vep_string, **kwargs)
 
 
@@ -339,21 +339,21 @@ PREDICTION_SCORE_REGEXP: re.Pattern = re.compile(r"(.*)\((.*)\)")
 
 
 class AnnotationPredictionScoreEntry(AnnotationEntry):
-    def __init__(self, name: str, **kwargs):
+    def __init__(self, name: str, **kwargs) -> None:
         def typefunc(x: str) -> Dict[str, float]:
             match = PREDICTION_SCORE_REGEXP.findall(x)[0]
             return {match[0]: float32(match[1])}
 
-        super().__init__(name, typefunc=typefunc, nafunc=lambda: dict(), **kwargs)
+        super().__init__(name, typefunc=typefunc, nafunc=lambda: {}, **kwargs)
 
 
 class DefaultAnnotationEntry(AnnotationEntry):
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         super().__init__(name)
 
 
 class AnnotationTyper:
-    def __init__(self, mapping: Dict[str, AnnotationEntry]):
+    def __init__(self, mapping: Dict[str, AnnotationEntry]) -> None:
         self._mapping = mapping
 
     def get_entry(self, key: str) -> AnnotationEntry:
