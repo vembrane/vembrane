@@ -8,7 +8,7 @@ from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 from .ann_types import (
     ANN_TYPER,
     NA,
-    MoreThanOneAltAllele,
+    MoreThanOneAltAlleleError,
     NvFloat,
     NvInt,
     NvIntFloatStr,
@@ -16,10 +16,10 @@ from .ann_types import (
 )
 from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
 from .errors import (
-    UnknownAnnotation,
-    UnknownFormatField,
-    UnknownInfoField,
-    UnknownSample,
+    UnknownAnnotationError,
+    UnknownFormatFieldError,
+    UnknownInfoFieldError,
+    UnknownSampleError,
 )
 from .globals import _explicit_clear, allowed_globals, custom_functions
 
@@ -65,7 +65,7 @@ class Format(NoValueDict, DefaultGet):
             try:
                 record_sample = self._record_samples[sample]
             except KeyError as ke:
-                raise UnknownSample(self._record_idx, self._record, sample) from ke
+                raise UnknownSampleError(self._record_idx, self._record, sample) from ke
             value = type_info(
                 record_sample[self._name],
                 self._number,
@@ -97,7 +97,9 @@ class Formats(NoValueDict):
             try:
                 self._record_format[item]
             except KeyError as ke:
-                raise UnknownFormatField(self._record_idx, self._record, item) from ke
+                raise UnknownFormatFieldError(
+                    self._record_idx, self._record, item
+                ) from ke
             number = self._header_format_fields[item]
             format_field = Format(
                 self._record_idx,
@@ -143,7 +145,7 @@ class Info(NoValueDict, DefaultGet):
                     if item in self._header_info_fields:
                         value = NA
                     else:
-                        raise UnknownInfoField(
+                        raise UnknownInfoFieldError(
                             self._record_idx,
                             self._record,
                             item,
@@ -184,7 +186,9 @@ class Annotation(NoValueDict, DefaultGet):
             try:
                 ann_idx, convert = self._ann_conv[item]
             except KeyError as ke2:
-                raise UnknownAnnotation(self._record_idx, self._record, item) from ke2
+                raise UnknownAnnotationError(
+                    self._record_idx, self._record, item
+                ) from ke2
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
@@ -345,7 +349,7 @@ class Environment(dict):
     def _get_alt(self) -> str:
         alleles = self._get_alleles()
         if len(alleles) > 2:
-            raise MoreThanOneAltAllele
+            raise MoreThanOneAltAlleleError
         value = alleles[1] if len(alleles) == 2 else NA
         self._globals["ALT"] = value
         return value

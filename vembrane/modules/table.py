@@ -10,7 +10,7 @@ import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
 
 from ..common import AppendKeyValuePair, check_expression, read_auxiliary
-from ..errors import HeaderWrongColumnNumber, VembraneError
+from ..errors import HeaderWrongColumnNumberError, VembraneError
 from ..globals import allowed_globals
 from ..representations import Environment
 from .filter import DeprecatedAction
@@ -340,7 +340,7 @@ def execute(args):
                     expr_cols = get_toplevel(expression)
                     n_expr_cols = len(expr_cols)
                     if n_header_cols != n_expr_cols:
-                        raise HeaderWrongColumnNumber(
+                        raise HeaderWrongColumnNumberError(
                             n_expr_cols,
                             expr_cols,
                             n_header_cols,

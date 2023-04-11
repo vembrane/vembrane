@@ -7,7 +7,7 @@ from ctypes import c_float
 from sys import stderr
 from typing import Any, Union
 
-from .errors import MoreThanOneAltAllele, NotExactlyOneValue
+from .errors import MoreThanOneAltAlleleError, NotExactlyOneValueError
 
 
 def float32(val: str) -> float:
@@ -133,16 +133,16 @@ def type_info(
         return NA if value is None else value
     if number == "A":
         if len(value) != 1:
-            raise MoreThanOneAltAllele
+            raise MoreThanOneAltAlleleError
         return value[0] if value[0] is not None else NA
     if number == "R":
         if len(value) != 2:
-            raise MoreThanOneAltAllele
+            raise MoreThanOneAltAlleleError
         return InfoTuple(value)
     if number == "1":
         if isinstance(value, tuple):
             if len(value) != 1:
-                raise NotExactlyOneValue(field, len(value), record_idx)
+                raise NotExactlyOneValueError(field, len(value), record_idx)
             return value[0] if value[0] is not None else NA
         return value if value is not None else NA
     if isinstance(value, tuple):

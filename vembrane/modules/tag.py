@@ -17,7 +17,7 @@ from ..common import (
     single_outer,
     swap_quotes,
 )
-from ..errors import FilterAlreadyDefined, FilterTagNameInvalid, VembraneError
+from ..errors import FilterAlreadyDefinedError, FilterTagNameInvalidError, VembraneError
 from ..representations import Environment
 from .filter import DeprecatedAction
 
@@ -158,7 +158,7 @@ def tag_vcf(
 
 def check_tag(tag: str):
     if re.search(r"^0$|[\s;]", tag):
-        raise FilterTagNameInvalid(tag)
+        raise FilterTagNameInvalidError(tag)
 
 
 def execute(args) -> None:
@@ -175,7 +175,7 @@ def execute(args) -> None:
         for tag, expr in expressions.items():
             for t, _rec in vcf.header.filters.items():
                 if t == tag:
-                    e = FilterAlreadyDefined(tag)
+                    e = FilterAlreadyDefinedError(tag)
                     print(e, file=stderr)
                     sys.exit(1)
             try:
