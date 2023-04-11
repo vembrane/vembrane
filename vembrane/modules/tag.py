@@ -183,11 +183,11 @@ def execute(args) -> None:
             except VembraneError as ve:
                 print(ve, file=stderr)
                 sys.exit(1)
-            expr = swap_quotes(expr) if single_outer(expr) else expr
-            check_expression(expr)
+            expression = swap_quotes(expr) if single_outer(expr) else expr
+            check_expression(expression)
             vcf.header.add_meta(
                 key="FILTER",
-                items=[("ID", tag), ("Description", expr)],
+                items=[("ID", tag), ("Description", expression)],
             )
 
         header.add_meta("vembraneVersion", __version__)

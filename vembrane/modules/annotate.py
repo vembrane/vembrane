@@ -120,18 +120,18 @@ def annotate_vcf(
 
                     parse = typeparser[v["type"]]
                     if number == -1:
-                        expression_value = list(map(parse, expression_value))
+                        ev = list(map(parse, expression_value))
                     elif number > 1:
-                        expression_value = list(map(parse, expression_value))
-                        assert len(expression_value) == number
+                        ev = list(map(parse, expression_value))
+                        assert len(ev) == number
                     else:
                         # number == 1
                         assert isinstance(expression_value, str) or not isinstance(
                             expression_value,
                             Iterable,
                         )
-                        expression_value = parse(expression_value)
-                    record.info[v["vcf_name"]] = expression_value
+                        ev = parse(expression_value)
+                    record.info[v["vcf_name"]] = ev
 
         yield record
 
@@ -165,14 +165,14 @@ def execute(args):
     with VariantFile(args.vcf) as vcf:
         # add new info
         for value in config["annotation"]["values"]:
-            value = value["value"]
+            v = value["value"]
             vcf.header.add_meta(
                 "INFO",
                 items=[
-                    ("ID", value["vcf_name"]),
-                    ("Number", value["number"]),
-                    ("Type", value["type"]),
-                    ("Description", value["description"]),
+                    ("ID", v["vcf_name"]),
+                    ("Number", v["number"]),
+                    ("Type", v["type"]),
+                    ("Description", v["description"]),
                 ],
             )
 
