@@ -4,14 +4,14 @@ from pysam import VariantRecord
 class VembraneError(Exception):
     """Basic exception for errors raised by vembrane"""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.args[0]
 
 
 class UnknownAnnotation(VembraneError):
     """Unknown annotation entry"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, key: str):
+    def __init__(self, record_idx: int, record: VariantRecord, key: str) -> None:
         super(UnknownAnnotation, self).__init__(
             f"No ANN entry for '{key}' in record {record_idx}:\n{str(record)}"
         )
@@ -23,7 +23,7 @@ class UnknownAnnotation(VembraneError):
 class UnknownSample(VembraneError, KeyError):
     """Unknown Sample"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, sample: str):
+    def __init__(self, record_idx: int, record: VariantRecord, sample: str) -> None:
         super(UnknownSample, self).__init__(
             f"No sample with name '{sample}' in record {record_idx}:\n{str(record)}"
         )
@@ -35,7 +35,7 @@ class UnknownSample(VembraneError, KeyError):
 class UnknownFormatField(VembraneError, KeyError):
     """Unknown FORMAT key"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, field: str):
+    def __init__(self, record_idx: int, record: VariantRecord, field: str) -> None:
         super(UnknownFormatField, self).__init__(
             f"No FORMAT field '{field}' in record {record_idx}:\n{str(record)}"
         )
@@ -47,7 +47,7 @@ class UnknownFormatField(VembraneError, KeyError):
 class UnknownInfoField(VembraneError):
     """Unknown INFO key"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, field: str):
+    def __init__(self, record_idx: int, record: VariantRecord, field: str) -> None:
         super(UnknownInfoField, self).__init__(
             f"No INFO field '{field}' in record {record_idx}:\n{str(record)}"
         )
@@ -58,7 +58,7 @@ class UnknownInfoField(VembraneError):
 class InvalidExpression(VembraneError):
     """Filter expression is invalid"""
 
-    def __init__(self, expression: str, reason: str):
+    def __init__(self, expression: str, reason: str) -> None:
         super(InvalidExpression, self).__init__(
             f"The provided expression '{expression}' is invalid. Reason: {reason}"
         )
@@ -68,7 +68,7 @@ class InvalidExpression(VembraneError):
 class MoreThanOneAltAllele(VembraneError):
     """vembrane only supports one ALT allele per record"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         msg = (
             "vembrane only supports records with one alternative allele.\n"
             "Please split multi-allelic records first, for example with "
@@ -82,7 +82,7 @@ class MoreThanOneAltAllele(VembraneError):
 class NotExactlyOneValue(VembraneError):
     """There may only be one value in VCF fields with `Number=1`"""
 
-    def __init__(self, field, nvalues, record_idx):
+    def __init__(self, field, nvalues, record_idx) -> None:
         msg = (
             f"record {record_idx} has {nvalues} values in {field}, "
             f"but defined `Number=1`.\n"
@@ -107,7 +107,7 @@ class HeaderWrongColumnNumber(VembraneError):
     table --header expression generates different number of columns than main expression
     """
 
-    def __init__(self, n_expr_cols, expr_cols, n_header_cols, header_cols):
+    def __init__(self, n_expr_cols, expr_cols, n_header_cols, header_cols) -> None:
         msg = (
             "The provided --header expression generates a different\n"
             "number of columns than the main expression:\n"
@@ -118,14 +118,14 @@ class HeaderWrongColumnNumber(VembraneError):
 
 
 class FilterAlreadyDefined(VembraneError):
-    def __init__(self, tag: str):
+    def __init__(self, tag: str) -> None:
         super(FilterAlreadyDefined, self).__init__(
             f"Filter {tag} already defined in the header. Choose a different name."
         )
 
 
 class FilterTagNameInvalid(VembraneError):
-    def __init__(self, tag: str):
+    def __init__(self, tag: str) -> None:
         super(FilterTagNameInvalid, self).__init__(
             f"Filter '{tag}' contains invalid characters (whitespace or semicolon) "
             f"or is '0'."

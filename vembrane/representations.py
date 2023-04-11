@@ -50,7 +50,7 @@ class Format(NoValueDict, DefaultGet):
         name: str,
         number: str,
         record_samples: VariantRecordSamples,
-    ):
+    ) -> None:
         self._record_idx = record_idx
         self._record = record
         self._name = name
@@ -79,7 +79,7 @@ class Formats(NoValueDict):
         record_idx: int,
         record: VariantRecord,
         header_format_fields: Dict[str, str],
-    ):
+    ) -> None:
         self._record = record
         self._record_idx = record_idx
         self._header_format_fields = header_format_fields
@@ -110,7 +110,7 @@ class Info(NoValueDict, DefaultGet):
         record: VariantRecord,
         header_info_fields: Dict[str, str],
         ann_key: str,
-    ):
+    ) -> None:
         self._record_idx = record_idx
         self._record = record
         self._record_info = record.info
@@ -151,7 +151,7 @@ class Info(NoValueDict, DefaultGet):
 
 
 class Annotation(NoValueDict, DefaultGet):
-    def __init__(self, ann_key: str, header: VariantHeader):
+    def __init__(self, ann_key: str, header: VariantHeader) -> None:
         self._record_idx = -1
         self._record: Optional[VariantRecord] = None
         self._annotation_data: List[str] = []
@@ -203,7 +203,7 @@ class Environment(dict):
         auxiliary: Dict[str, Set[str]] = MappingProxyType({}),
         overwrite_number: Dict[str, Dict[str, str]] = MappingProxyType({}),
         evaluation_function_template: str = "lambda: {expression}",
-    ):
+    ) -> None:
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key

@@ -69,7 +69,7 @@ def is_bnd_record(record: VariantRecord) -> bool:
 class BreakendEvent(object):
     __slots__ = ["name", "keep", "records", "keep_records", "mate_pair"]
 
-    def __init__(self, name: str, mate_pair: bool = False):
+    def __init__(self, name: str, mate_pair: bool = False) -> None:
         self.name = name
         self.records: List[VariantRecord] = []
         self.keep_records: List[bool] = []
