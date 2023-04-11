@@ -98,7 +98,9 @@ class Formats(NoValueDict):
                 self._record_format[item]
             except KeyError as ke:
                 raise UnknownFormatFieldError(
-                    self._record_idx, self._record, item
+                    self._record_idx,
+                    self._record,
+                    item,
                 ) from ke
             number = self._header_format_fields[item]
             format_field = Format(
@@ -187,7 +189,9 @@ class Annotation(NoValueDict, DefaultGet):
                 ann_idx, convert = self._ann_conv[item]
             except KeyError as ke2:
                 raise UnknownAnnotationError(
-                    self._record_idx, self._record, item
+                    self._record_idx,
+                    self._record,
+                    item,
                 ) from ke2
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
