@@ -101,9 +101,10 @@ def tableize_vcf(
     long: bool = False,
     auxiliary: Dict[str, Set[str]] = MappingProxyType({}),
 ) -> Iterator[tuple]:
-    kwargs: Dict[str, Any] = dict(
-        overwrite_number=overwrite_number, auxiliary=auxiliary
-    )
+    kwargs: Dict[str, Any] = {
+        "overwrite_number": overwrite_number,
+        "auxiliary": auxiliary,
+    }
     if long:
         kwargs[
             "evaluation_function_template"

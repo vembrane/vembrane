@@ -37,15 +37,15 @@ class NoValue(str):
     def __ne__(self, other):
         return True
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         # nonexistent fields will result in an empty string
         # should be configurable in upcoming versions
         return ""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
 
     def __hash__(self) -> int:
@@ -83,13 +83,13 @@ class InfoTuple:
             return NA
         return values
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.values.__str__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(values={self.values!r})"
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.values)
 
     def __eq__(self, other):
@@ -180,10 +180,10 @@ class PosRange:
         else:
             return NA
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"(start: {self.start}, end: {self.end}, length: {self.length})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(start={self.start!r}, end={self.end!r})"
 
 
@@ -220,7 +220,7 @@ class AnnotationEntry:
     def description(self):
         return self._description
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}("
             f"name={self._name!r}, "
@@ -251,7 +251,7 @@ class AnnotationListEntry(AnnotationEntry):
 class AnnotationListDictEntry(AnnotationEntry):
     def __init__(self, name: str, nafunc=lambda: None, **kwargs):
         def typefunc(x):
-            key_value_tuples = map(lambda v: v.split(":", maxsplit=1), x.split("&"))
+            key_value_tuples = (v.split(":", maxsplit=1) for v in x.split("&"))
             mapping = defaultdict(list)
             for key, value in key_value_tuples:
                 mapping[key].append(value)
@@ -286,7 +286,7 @@ class RangeTotal(object):
                 "expected only a single int, or two ints separated by '-'."
             )
 
-    def __str__(self):
+    def __str__(self) -> str:
         if len(self.range) == 1:
             return f"number / total: {self.range.start} / {self.total}"
         else:
@@ -295,7 +295,7 @@ class RangeTotal(object):
                 f"{self.range.start} - {self.range.stop - 1} / {self.total}"
             )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}"
             f"(range=range({self.range.start!r}, {self.range.stop!r}), "

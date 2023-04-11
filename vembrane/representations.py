@@ -25,7 +25,7 @@ from .globals import _explicit_clear, allowed_globals, custom_functions
 
 
 class NoValueDict:
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         try:
             value = self[item]
         except KeyError:
@@ -273,7 +273,7 @@ class Environment(dict):
                 for record in header.records
                 if record.type == kind
             }
-            for kind in set(r.type for r in header.records)
+            for kind in {r.type for r in header.records}
         }
 
         # always explicitly set "Number" for certain fields
@@ -282,8 +282,8 @@ class Environment(dict):
         self._numbers.get("FORMAT", {})["GT"] = "."
 
         # At the moment, only INFO and FORMAT records are checked
-        self._header_info_fields = self._numbers.get("INFO", dict())
-        self._header_format_fields = self._numbers.get("FORMAT", dict())
+        self._header_info_fields = self._numbers.get("INFO", {})
+        self._header_format_fields = self._numbers.get("FORMAT", {})
         self._empty_globals = {name: UNSET for name in self._getters}
         self.record: VariantRecord = None
         self.idx: int = -1
