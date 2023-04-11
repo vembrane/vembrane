@@ -859,12 +859,12 @@ for key, typer in KNOWN_ANN_TYPE_MAP_VEP.items():
             description = typer.description()
             if t == "g":
                 description = description.replace("gnomAD exomes", "gnomAD genomes")
-            typer = AnnotationEntry(
+            entry = AnnotationEntry(
                 name=name,
                 typefunc=typer._typefunc,
                 description=description,
             )
-            NEW_GNOMAD_ENTRIES[name] = typer
+            NEW_GNOMAD_ENTRIES[name] = entry
 KNOWN_ANN_TYPE_MAP_VEP.update(NEW_GNOMAD_ENTRIES)
 KNOWN_ANN_TYPE_MAP = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}
 

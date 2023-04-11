@@ -199,11 +199,11 @@ def filter_vcf(
         # However, breakends have to be considered jointly, so keep track of the
         # respective events.
         event_dict: dict[str, BreakendEvent] = {}
-        for idx, record in enumerate(vcf):
+        for idx, rec in enumerate(vcf):
             record, keep = test_and_update_record(
                 env,
                 idx,
-                record,
+                rec,
                 ann_key,
                 keep_unmatched,
             )
@@ -276,12 +276,12 @@ def filter_vcf(
             # which we construct from the record's index in the file.
             return event_name or mate_pair_name or record.id or f"DUMMY: {idx}"
 
-        for idx, record in enumerate(vcf):
-            if is_bnd_record(record):
+        for idx, rec in enumerate(vcf):
+            if is_bnd_record(rec):
                 record, keep = test_and_update_record(
                     env,
                     idx,
-                    record,
+                    rec,
                     ann_key,
                     keep_unmatched,
                 )
@@ -291,16 +291,16 @@ def filter_vcf(
 
         # The second pass can now yield records in the correct order
         vcf.reset()
-        for idx, record in enumerate(vcf):
-            if is_bnd_record(record):
-                event_name = fallback_name(record)
+        for idx, rec in enumerate(vcf):
+            if is_bnd_record(rec):
+                event_name = fallback_name(rec)
                 if event_name in event_set:
-                    yield record
+                    yield rec
             else:
                 record, keep = test_and_update_record(
                     env,
                     idx,
-                    record,
+                    rec,
                     ann_key,
                     keep_unmatched,
                 )
