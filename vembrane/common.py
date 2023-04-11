@@ -11,7 +11,8 @@ from .errors import InvalidExpressionError
 def check_expression(expression: str) -> str:
     if ".__" in expression:
         raise InvalidExpressionError(
-            expression, "The expression must not contain '.__'"
+            expression,
+            "The expression must not contain '.__'",
         )
     try:
         tree = ast.parse(expression, mode="eval")
