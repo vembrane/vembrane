@@ -397,7 +397,7 @@ class Environment(dict):
         return self._func()
 
 
-def get_end(record: VariantRecord):
+def get_end(record: VariantRecord) -> NvInt:
     if is_bnd_record(record):
         return NA
     else:
