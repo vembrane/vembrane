@@ -3,6 +3,7 @@ import sys
 from collections import defaultdict
 from itertools import chain, islice
 from sys import stderr
+from types import MappingProxyType
 from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import yaml
@@ -168,8 +169,8 @@ def filter_vcf(
     ann_key: str,
     keep_unmatched: bool = False,
     preserve_order: bool = False,
-    auxiliary: Dict[str, Set[str]] = {},
-    overwrite_number: Dict[str, Dict[str, str]] = {},
+    auxiliary: Dict[str, Set[str]] = MappingProxyType({}),
+    overwrite_number: Dict[str, Dict[str, str]] = MappingProxyType({}),
 ) -> Iterator[VariantRecord]:
     env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
 
@@ -300,7 +301,9 @@ def statistics(
     for record in records:
         for annotation in record.info[ann_key]:
             for key, raw_value in zip(
-                annotation_keys, split_annotation_entry(annotation)
+                annotation_keys,
+                split_annotation_entry(annotation),
+                strict=True,
             ):
                 value = raw_value.strip()
                 if value:

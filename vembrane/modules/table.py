@@ -2,6 +2,7 @@ import contextlib
 import csv
 import sys
 from sys import stderr
+from types import MappingProxyType
 from typing import Any, Dict, Iterator, List, Set
 
 import asttokens
@@ -96,9 +97,9 @@ def tableize_vcf(
     vcf: VariantFile,
     expression: str,
     ann_key: str,
-    overwrite_number: Dict[str, Dict[str, str]] = {},
+    overwrite_number: Dict[str, Dict[str, str]] = MappingProxyType({}),
     long: bool = False,
-    auxiliary: Dict[str, Set[str]] = {},
+    auxiliary: Dict[str, Set[str]] = MappingProxyType({}),
 ) -> Iterator[tuple]:
     kwargs: Dict[str, Any] = dict(
         overwrite_number=overwrite_number, auxiliary=auxiliary
@@ -270,7 +271,11 @@ def get_toplevel(header: str) -> List[str]:
         raise SyntaxError("Imbalanced number of brackets.")
     splitpos.append(len(header) + 1)
     parts = []
-    for start, end in zip(splitpos, splitpos[1:]):
+    for start, end in zip(
+        splitpos,
+        splitpos[1:],
+        strict=False,
+    ):
         # remove leading + trailing whitespace
         parts.append(header[start : end - 1].strip())
     return parts

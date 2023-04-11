@@ -108,6 +108,7 @@ def annotate_vcf(
                 for v, expression_value in zip(
                     map(lambda x: x["value"], config["annotation"]["values"]),
                     ann_values,
+                    strict=True,
                 ):
                     if not v["number"] == ".":
                         number = int(v["number"])

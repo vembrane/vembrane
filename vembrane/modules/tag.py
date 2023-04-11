@@ -2,6 +2,7 @@ import re
 import sys
 from itertools import chain, islice
 from sys import stderr
+from types import MappingProxyType
 from typing import Dict, Iterator, Set, Tuple
 
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
@@ -131,8 +132,8 @@ def tag_vcf(
     vcf: VariantFile,
     expressions: Dict[str, str],
     ann_key: str,
-    auxiliary: Dict[str, Set[str]] = {},
-    overwrite_number: Dict[str, Dict[str, str]] = {},
+    auxiliary: Dict[str, Set[str]] = MappingProxyType({}),
+    overwrite_number: Dict[str, Dict[str, str]] = MappingProxyType({}),
     invert: bool = False,
 ) -> Iterator[VariantRecord]:
     # For each tag-expression pair, a different Environment must be used.
@@ -169,7 +170,7 @@ def execute(args) -> None:
 
         expressions = dict(args.tag)
         for tag, expr in expressions.items():
-            for t, rec in vcf.header.filters.items():
+            for t, _rec in vcf.header.filters.items():
                 if t == tag:
                     e = FilterAlreadyDefined(tag)
                     print(e, file=stderr)

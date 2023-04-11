@@ -15,18 +15,18 @@ python = ">=3.8"
 pysam = "^0.20"
 pyyaml = "^6.0"
 asttokens = "^2.0"
-numpy = { version = "^1.23", python = ">=3.8" }
+numpy = { version = "^1.23", python = ">=3.10" }
 intervaltree = "^3.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
 pre-commit = "^3.1"
-black = { version = "^23.1", python = "^3.8" }
-isort = "^5.12"
+black = { version = "^23.1", python = "^3.10" }
+ruff = "^0.0.261"
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311']
+target-version = ['py310', 'py311']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -43,8 +43,8 @@ exclude = '''
 )/
 '''
 
-[tool.isort]
-profile = "black"
+[tool.ruff]
+select = ["E", "F", "B"]
 
 [build-system]
 requires = ["poetry-core>=1.5.1"]

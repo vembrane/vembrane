@@ -85,7 +85,7 @@ def test_filter(testcase):
                     elif args.command == "tag":
                         tag.execute(args)
                     else:
-                        assert False
+                        raise AssertionError() from None
         except AttributeError:
             exception = getattr(builtins, exception)
             with pytest.raises(exception):
@@ -96,7 +96,7 @@ def test_filter(testcase):
                 elif args.command == "tag":
                     tag.execute(args)
                 else:
-                    assert False
+                    raise AssertionError() from None
     else:
         with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
             args.output = tmp_out.name
