@@ -67,8 +67,8 @@ def annotate_vcf(
 
     available_chromsomes = set(np.unique(ann_data[config_chrom_column]))
 
-    tree = dict()
-    chrom_ann_data = dict()
+    tree = {}
+    chrom_ann_data = {}
     for chrom in available_chromsomes:
         d = ann_data[ann_data[config_chrom_column] == chrom]
         chrom_ann_data[chrom] = d
@@ -106,7 +106,7 @@ def annotate_vcf(
                 ann_values = env.table()
 
                 for v, expression_value in zip(
-                    map(lambda x: x["value"], config["annotation"]["values"]),
+                    (x["value"] for x in config["annotation"]["values"]),
                     ann_values,
                     strict=True,
                 ):
@@ -154,7 +154,7 @@ def execute(args):
     # build expression
     expression = ",".join(
         f'{value["expression"]}'
-        for value in map(lambda x: x["value"], config["annotation"]["values"])
+        for value in (x["value"] for x in config["annotation"]["values"])
     )
     expression = f"({expression})"
 

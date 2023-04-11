@@ -195,7 +195,7 @@ def filter_vcf(
         # as we encounter them
         # However, breakends have to be considered jointly, so keep track of the
         # respective events.
-        event_dict: Dict[str, BreakendEvent] = dict()
+        event_dict: Dict[str, BreakendEvent] = {}
         for idx, record in enumerate(vcf):
             record, keep = test_and_update_record(
                 env, idx, record, ann_key, keep_unmatched

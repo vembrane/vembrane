@@ -91,7 +91,7 @@ class BreakendEvent(object):
     def is_mate_pair(self) -> bool:
         return self.mate_pair
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     def __hash__(self):
@@ -109,7 +109,7 @@ class AppendTagExpression(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         assert len(values) == 1
         if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, dict())
+            setattr(namespace, self.dest, {})
         value = values[0].strip()
         key, value = value.strip().split("=", 1)
         expr = check_expression(value)
@@ -120,7 +120,7 @@ class AppendKeyValuePair(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         assert len(values) == 1
         if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, dict())
+            setattr(namespace, self.dest, {})
         value = values[0].strip()
         key, value = value.strip().split("=", 1)
         getattr(namespace, self.dest)[key.strip()] = value
@@ -130,6 +130,6 @@ def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
     # read auxiliary files, split at any whitespace and store contents in a set
     def read_set(path: str) -> Set[str]:
         with open(path, "rt") as f:
-            return set(line.rstrip() for line in f)
+            return {line.rstrip() for line in f}
 
     return {name: read_set(contents) for name, contents in aux.items()}
