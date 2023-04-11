@@ -4,7 +4,7 @@ from collections import defaultdict
 from itertools import chain, islice
 from sys import stderr
 from types import MappingProxyType
-from typing import Dict, Iterator, List, Optional, Set, Tuple
+from collections.abc import Iterator
 
 import yaml
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
@@ -31,7 +31,7 @@ class DeprecatedAction(argparse.Action):
             f"{'/'.join(self.option_strings)} is deprecated.\n{self.help}",
             file=sys.stderr,
         )
-        exit(1)
+        sys.exit(1)
 
 
 def add_subcommmand(subparsers):
@@ -125,7 +125,7 @@ def test_and_update_record(
     record: VariantRecord,
     ann_key: str,
     keep_unmatched: bool,
-) -> Tuple[VariantRecord, bool]:
+) -> tuple[VariantRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
@@ -169,14 +169,14 @@ def filter_vcf(
     ann_key: str,
     keep_unmatched: bool = False,
     preserve_order: bool = False,
-    auxiliary: Dict[str, Set[str]] = MappingProxyType({}),
-    overwrite_number: Dict[str, Dict[str, str]] = MappingProxyType({}),
+    auxiliary: dict[str, set[str]] = MappingProxyType({}),
+    overwrite_number: dict[str, dict[str, str]] = MappingProxyType({}),
 ) -> Iterator[VariantRecord]:
     env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
 
-    def get_event_name(record: VariantRecord) -> Tuple[Optional[str], Optional[str]]:
-        mate_ids: List[str] = record.info.get("MATEID", [])
-        event_name: Optional[str] = record.info.get("EVENT", None)
+    def get_event_name(record: VariantRecord) -> tuple[str | None, str | None]:
+        mate_ids: list[str] = record.info.get("MATEID", [])
+        event_name: str | None = record.info.get("EVENT", None)
 
         if len(mate_ids) > 1 and not event_name:
             raise ValueError(
@@ -195,7 +195,7 @@ def filter_vcf(
         # as we encounter them
         # However, breakends have to be considered jointly, so keep track of the
         # respective events.
-        event_dict: Dict[str, BreakendEvent] = {}
+        event_dict: dict[str, BreakendEvent] = {}
         for idx, record in enumerate(vcf):
             record, keep = test_and_update_record(
                 env, idx, record, ann_key, keep_unmatched
@@ -258,7 +258,7 @@ def filter_vcf(
         # If order *is* important, the first pass cannot emit any records but only
         # keep track of breakend events. The records will only be emitted during the
         # second pass.
-        event_set: Set[str] = set()
+        event_set: set[str] = set()
 
         def fallback_name(record: VariantRecord) -> str:
             event_name, mate_pair_name = get_event_name(record)
@@ -355,7 +355,7 @@ def execute(args) -> None:
             first_record = list(islice(records, 1))
         except VembraneError as ve:
             print(ve, file=stderr)
-            exit(1)
+            sys.exit(1)
 
         records = chain(first_record, records)
 
@@ -374,4 +374,4 @@ def execute(args) -> None:
 
             except VembraneError as ve:
                 print(ve, file=stderr)
-                exit(1)
+                sys.exit(1)

@@ -1,6 +1,7 @@
 from collections.abc import Iterable
-from sys import stderr
-from typing import Any, Callable, Dict, Iterator
+from sys import stderr, exit
+from typing import Any
+from collections.abc import Callable, Iterator
 
 import numpy as np
 import yaml
@@ -43,7 +44,7 @@ def add_subcommmand(subparsers):
     )
 
 
-typeparser: Dict[str, Callable[[str], Any]] = {
+typeparser: dict[str, Callable[[str], Any]] = {
     "Float": float,
     "Integer": int,
     "Character": lambda x: str(x)[0],
@@ -133,7 +134,7 @@ def annotate_vcf(
 
 
 def execute(args):
-    with open(args.config, "r") as stream:
+    with open(args.config) as stream:
         try:
             config = yaml.safe_load(stream)
         except yaml.YAMLError as e:

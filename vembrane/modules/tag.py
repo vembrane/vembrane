@@ -3,7 +3,7 @@ import sys
 from itertools import chain, islice
 from sys import stderr
 from types import MappingProxyType
-from typing import Dict, Iterator, Set, Tuple
+from collections.abc import Iterator
 
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
@@ -108,7 +108,7 @@ def test_record(
     idx: int,
     record: VariantRecord,
     ann_key: str,
-) -> Tuple[VariantRecord, bool]:
+) -> tuple[VariantRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
@@ -130,10 +130,10 @@ def test_record(
 
 def tag_vcf(
     vcf: VariantFile,
-    expressions: Dict[str, str],
+    expressions: dict[str, str],
     ann_key: str,
-    auxiliary: Dict[str, Set[str]] = MappingProxyType({}),
-    overwrite_number: Dict[str, Dict[str, str]] = MappingProxyType({}),
+    auxiliary: dict[str, set[str]] = MappingProxyType({}),
+    overwrite_number: dict[str, dict[str, str]] = MappingProxyType({}),
     invert: bool = False,
 ) -> Iterator[VariantRecord]:
     # For each tag-expression pair, a different Environment must be used.
@@ -174,12 +174,12 @@ def execute(args) -> None:
                 if t == tag:
                     e = FilterAlreadyDefined(tag)
                     print(e, file=stderr)
-                    exit(1)
+                    sys.exit(1)
             try:
                 check_tag(tag)
             except VembraneError as ve:
                 print(ve, file=stderr)
-                exit(1)
+                sys.exit(1)
             expr = swap_quotes(expr) if single_outer(expr) else expr
             check_expression(expr)
             vcf.header.add_meta(
@@ -206,7 +206,7 @@ def execute(args) -> None:
             first_record = list(islice(records, 1))
         except VembraneError as ve:
             print(ve, file=stderr)
-            exit(1)
+            sys.exit(1)
 
         records = chain(first_record, records)
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
@@ -221,4 +221,4 @@ def execute(args) -> None:
 
             except VembraneError as ve:
                 print(ve, file=stderr)
-                exit(1)
+                sys.exit(1)
