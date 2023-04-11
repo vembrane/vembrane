@@ -79,16 +79,15 @@ def test_filter(testcase):
         exception = config["raises"]
         try:
             exception = getattr(errors, exception)
-            with pytest.raises(SystemExit):
-                with pytest.raises(exception):
-                    if args.command == "filter":
-                        filter.execute(args)
-                    elif args.command == "table":
-                        table.execute(args)
-                    elif args.command == "tag":
-                        tag.execute(args)
-                    else:
-                        raise AssertionError from None
+            with pytest.raises(SystemExit), pytest.raises(exception):
+                if args.command == "filter":
+                    filter.execute(args)
+                elif args.command == "table":
+                    table.execute(args)
+                elif args.command == "tag":
+                    tag.execute(args)
+                else:
+                    raise AssertionError from None
         except AttributeError:
             exception = getattr(builtins, exception)
             with pytest.raises(exception):

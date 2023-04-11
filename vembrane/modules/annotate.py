@@ -113,10 +113,7 @@ def annotate_vcf(
                     ann_values,
                     strict=True,
                 ):
-                    if not v["number"] == ".":
-                        number = int(v["number"])
-                    else:
-                        number = -1
+                    number = int(v["number"]) if v["number"] != "." else -1
 
                     parse = typeparser[v["type"]]
                     if number == -1:
