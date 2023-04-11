@@ -20,7 +20,10 @@ def add_subcommmand(subparsers):
         help="The configuration file.",
     )
     parser.add_argument(
-        "vcf", help="The file containing the variants.", nargs="?", default="-"
+        "vcf",
+        help="The file containing the variants.",
+        nargs="?",
+        default="-",
     )
     parser.add_argument(
         "--annotation-key",
@@ -125,7 +128,8 @@ def annotate_vcf(
                     else:
                         # number == 1
                         assert isinstance(expression_value, str) or not isinstance(
-                            expression_value, Iterable
+                            expression_value,
+                            Iterable,
                         )
                         expression_value = parse(expression_value)
                     record.info[v["vcf_name"]] = expression_value

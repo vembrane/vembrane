@@ -108,7 +108,7 @@ class InfoTuple:
                     f" (value type: {type(other.values)})"
                     if isinstance(other, InfoTuple)
                     else ""
-                )
+                ),
             )
 
     def __hash__(self):
@@ -122,7 +122,10 @@ NvFloat = Union[float, NoValue]
 
 
 def type_info(
-    value, number=".", field=None, record_idx=None
+    value,
+    number=".",
+    field=None,
+    record_idx=None,
 ) -> NvIntFloatStr | InfoTuple:
     if value is None:
         return NA
@@ -284,7 +287,7 @@ class RangeTotal:
         else:
             raise ValueError(
                 "Found more than two values separated by '-', "
-                "expected only a single int, or two ints separated by '-'."
+                "expected only a single int, or two ints separated by '-'.",
             )
 
     def __str__(self) -> str:
@@ -389,13 +392,16 @@ KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "HGVS.c": AnnotationEntry("HGVS.c"),
     "HGVS.p": AnnotationEntry("HGVS.p"),
     "cDNA.pos / cDNA.length": AnnotationEntry(
-        "cDNA.pos / cDNA.length", PosRange.from_snpeff_str
+        "cDNA.pos / cDNA.length",
+        PosRange.from_snpeff_str,
     ),
     "CDS.pos / CDS.length": AnnotationEntry(
-        "CDS.pos / CDS.length", PosRange.from_snpeff_str
+        "CDS.pos / CDS.length",
+        PosRange.from_snpeff_str,
     ),
     "AA.pos / AA.length": AnnotationEntry(
-        "AA.pos / AA.length", PosRange.from_snpeff_str
+        "AA.pos / AA.length",
+        PosRange.from_snpeff_str,
     ),
     "Distance": AnnotationEntry("Distance", str),
     "ERRORS / WARNINGS / INFO": AnnotationListEntry(
@@ -412,7 +418,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="In standard coordinate format (chr:start or chr:start-end)",
     ),
     "Allele": AnnotationEntry(
-        "Allele", description="The variant allele used to calculate the consequence"
+        "Allele",
+        description="The variant allele used to calculate the consequence",
     ),
     "Gene": AnnotationEntry("Gene", description="Ensembl stable ID of affected gene"),
     "Feature": AnnotationEntry("Feature", description="Ensembl stable ID of feature"),
@@ -422,7 +429,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "Currently one of Transcript, RegulatoryFeature, MotifFeature.",
     ),
     "Consequence": AnnotationEntry(
-        "Consequence", description="Consequence type of this variant"
+        "Consequence",
+        description="Consequence type of this variant",
     ),
     "cDNA_position": AnnotationEntry("cDNA_position", PosRange.from_vep_str),
     "CDS_position": AnnotationEntry("CDS_position", PosRange.from_vep_str),
@@ -431,14 +439,17 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "HGSVp": AnnotationEntry("HGSVp"),
     "REF_ALLELE": AnnotationEntry("REF_ALLELE", description="The reference allele"),
     "IMPACT": AnnotationEntry(
-        "IMPACT", description="The impact modifier for the consequence type"
+        "IMPACT",
+        description="The impact modifier for the consequence type",
     ),
     "SYMBOL": AnnotationEntry("SYMBOL", description="The gene symbol"),
     "VARIANT_CLASS": AnnotationEntry(
-        "VARIANT_CLASS", description="Sequence Ontology variant class"
+        "VARIANT_CLASS",
+        description="Sequence Ontology variant class",
     ),
     "SYMBOL_SOURCE": AnnotationEntry(
-        "SYMBOL_SOURCE", description="The source of the gene symbol"
+        "SYMBOL_SOURCE",
+        description="The source of the gene symbol",
     ),
     "STRAND": AnnotationEntry(
         "STRAND",
@@ -446,7 +457,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="The DNA strand (1 or -1) on which the transcript/feature lies",
     ),
     "ENSP": AnnotationEntry(
-        "ENSP", description="The Ensembl protein identifier of the affected transcript"
+        "ENSP",
+        description="The Ensembl protein identifier of the affected transcript",
     ),
     "FLAGS": AnnotationListEntry(
         "FLAGS",
@@ -459,10 +471,12 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="Best match UniProtKB/Swiss-Prot accession of protein product",
     ),
     "TREMBL": AnnotationEntry(
-        "TREMBL", description="Best match UniProtKB/TrEMBL accession of protein product"
+        "TREMBL",
+        description="Best match UniProtKB/TrEMBL accession of protein product",
     ),
     "UNIPARC": AnnotationEntry(
-        "UNIPARC", description="Best match UniParc accession of protein product"
+        "UNIPARC",
+        description="Best match UniParc accession of protein product",
     ),
     "HGVSc": AnnotationEntry("HGVSc", description="The HGVS coding sequence name"),
     "HGVSp": AnnotationEntry("HGVSp", description="The HGVS protein sequence name"),
@@ -481,7 +495,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         " with both given as prediction(score)",
     ),
     "PolyPhen": AnnotationPredictionScoreEntry(
-        "PolyPhen", description="The PolyPhen prediction and/or score"
+        "PolyPhen",
+        description="The PolyPhen prediction and/or score",
     ),
     "MOTIF_NAME": AnnotationEntry(
         "MOTIF_NAME",
@@ -517,20 +532,25 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "transcript for this gene",
     ),
     "CCDS": AnnotationEntry(
-        "CCDS", description="The CCDS identifer for this transcript, where applicable"
+        "CCDS",
+        description="The CCDS identifer for this transcript, where applicable",
     ),
     "INTRON": AnnotationNumberTotalEntry(
-        "INTRON", description="The intron number (out of total number)"
+        "INTRON",
+        description="The intron number (out of total number)",
     ),
     "EXON": AnnotationRangeTotalEntry(
-        "EXON", description="The exon index range (out of total number of exons)"
+        "EXON",
+        description="The exon index range (out of total number of exons)",
     ),
     "DOMAINS": AnnotationListDictEntry(
         "DOMAINS",
         description="The source and identifer of any overlapping protein domains",
     ),
     "DISTANCE": AnnotationEntry(
-        "DISTANCE", int, description="Shortest distance from variant to transcript"
+        "DISTANCE",
+        int,
+        description="Shortest distance from variant to transcript",
     ),
     "IND": AnnotationEntry("IND", description="Individual name"),
     # "ZYG": AnnotationEntry(
@@ -541,7 +561,9 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     #     "FREQS", description="Frequencies of overlapping variants used in filtering"
     # ),
     "AF": AnnotationEntry(
-        "AF", float32, description="Frequency of existing variant in 1000 Genomes"
+        "AF",
+        float32,
+        description="Frequency of existing variant in 1000 Genomes",
     ),
     "AFR_AF": AnnotationEntry(
         "AFR_AF",
@@ -662,7 +684,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="ClinVar clinical significance of the dbSNP variant",
     ),
     "BIOTYPE": AnnotationEntry(
-        "BIOTYPE", description="Biotype of transcript or regulatory feature"
+        "BIOTYPE",
+        description="Biotype of transcript or regulatory feature",
     ),
     "APPRIS": AnnotationEntry(
         "APPRIS",
@@ -671,7 +694,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "NB: not available for GRCh37",
     ),
     "TSL": AnnotationEntry(
-        "TSL", description="Transcript support level. NB: not available for GRCh37"
+        "TSL",
+        description="Transcript support level. NB: not available for GRCh37",
     ),
     "PUBMED": AnnotationListEntry(
         "PUBMED",
@@ -723,10 +747,12 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     #     "BAM_EDIT", description="Indicates success or failure of edit using BAM file"
     # ),
     "GIVEN_REF": AnnotationEntry(
-        "GIVEN_REF", description="Reference allele from input"
+        "GIVEN_REF",
+        description="Reference allele from input",
     ),
     "USED_REF": AnnotationEntry(
-        "USED_REF", description="Reference allele as used to get consequences"
+        "USED_REF",
+        description="Reference allele as used to get consequences",
     ),
     # TODO parse flag:
     #  see https://www.ensembl.org/info/docs/tools/vep/vep_formats.html#other_fields
@@ -754,18 +780,24 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     #                 "the expected reference",
     # ),
     "AMBIGUITY": AnnotationEntry(
-        "AMBIGUITY", description="IUPAC allele ambiguity code"
+        "AMBIGUITY",
+        description="IUPAC allele ambiguity code",
     ),
     "Amino_acids": AnnotationListEntry(
-        "Amino_acids", description="Reference and variant amino acids", sep="/"
+        "Amino_acids",
+        description="Reference and variant amino acids",
+        sep="/",
     ),
     "Codons": AnnotationListEntry(
-        "Codons", description="Reference and variant codon sequence", sep="/"
+        "Codons",
+        description="Reference and variant codon sequence",
+        sep="/",
     ),
     # TODO HGNC_ID description
     "HGNC_ID": AnnotationEntry("HGNC_ID"),
     "MANE": AnnotationEntry(
-        "MANE", description="Matched Annotation from NCBI and EMBL-EBI (MANE)."
+        "MANE",
+        description="Matched Annotation from NCBI and EMBL-EBI (MANE).",
     ),
     "MANE_SELECT": AnnotationEntry(
         "MANE_SELECT",

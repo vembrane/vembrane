@@ -67,7 +67,10 @@ class Format(NoValueDict, DefaultGet):
             except KeyError as ke:
                 raise UnknownSample(self._record_idx, self._record, sample) from ke
             value = type_info(
-                record_sample[self._name], self._number, self._name, self._record_idx
+                record_sample[self._name],
+                self._number,
+                self._name,
+                self._record_idx,
             )
             self._sample_values[sample] = value
             return value
@@ -97,7 +100,11 @@ class Formats(NoValueDict):
                 raise UnknownFormatField(self._record_idx, self._record, item) from ke
             number = self._header_format_fields[item]
             format_field = Format(
-                self._record_idx, self._record, item, number, self._record_samples
+                self._record_idx,
+                self._record,
+                item,
+                number,
+                self._record_samples,
             )
             self._formats[item] = format_field
             return format_field
@@ -137,7 +144,9 @@ class Info(NoValueDict, DefaultGet):
                         value = NA
                     else:
                         raise UnknownInfoField(
-                            self._record_idx, self._record, item
+                            self._record_idx,
+                            self._record,
+                            item,
                         ) from ke2
                 else:
                     value = type_info(

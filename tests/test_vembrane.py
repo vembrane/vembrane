@@ -20,7 +20,8 @@ def test_version():
 
 
 @pytest.mark.parametrize(
-    "testcase", [d for d in os.listdir(CASES) if not d.startswith(".")]
+    "testcase",
+    [d for d in os.listdir(CASES) if not d.startswith(".")],
 )
 def test_filter(testcase):
     path = CASES.joinpath(testcase)
@@ -59,7 +60,9 @@ def test_filter(testcase):
 
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(
-        dest="command", description="valid subcommands", required=True
+        dest="command",
+        description="valid subcommands",
+        required=True,
     )
     filter.add_subcommmand(subparsers)
     table.add_subcommmand(subparsers)
@@ -110,7 +113,8 @@ def test_filter(testcase):
                             assert r1 == r2
 
                         for r1, r2 in zip_longest(
-                            vcf_actual.header.records, vcf_expected.header.records
+                            vcf_actual.header.records,
+                            vcf_expected.header.records,
                         ):
                             if r1.key == "vembraneVersion":
                                 assert r1.value == __version__

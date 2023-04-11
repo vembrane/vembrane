@@ -37,7 +37,10 @@ def add_subcommand(subparsers):
         required=True,
     )
     parser.add_argument(
-        "vcf", help="The file containing the variants.", nargs="?", default="-"
+        "vcf",
+        help="The file containing the variants.",
+        nargs="?",
+        default="-",
     )
     parser.add_argument(
         "--output",
@@ -183,7 +186,8 @@ def execute(args) -> None:
             expr = swap_quotes(expr) if single_outer(expr) else expr
             check_expression(expr)
             vcf.header.add_meta(
-                key="FILTER", items=[("ID", tag), ("Description", expr)]
+                key="FILTER",
+                items=[("ID", tag), ("Description", expr)],
             )
 
         header.add_meta("vembraneVersion", __version__)

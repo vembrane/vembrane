@@ -20,7 +20,8 @@ def check_expression(expression: str) -> str:
             return expression
     except SyntaxError as se:
         raise InvalidExpression(
-            expression, "The expression has to be syntactically correct."
+            expression,
+            "The expression has to be syntactically correct.",
         ) from se
 
 
@@ -53,7 +54,7 @@ def get_annotation_keys(header: VariantHeader, ann_key: str) -> list[str]:
                 map(
                     str.strip,
                     rec.get("Description").strip('"').split(separator)[1].split("|"),
-                )
+                ),
             )
     return []
 

@@ -13,7 +13,7 @@ class UnknownAnnotation(VembraneError):
 
     def __init__(self, record_idx: int, record: VariantRecord, key: str) -> None:
         super().__init__(
-            f"No ANN entry for '{key}' in record {record_idx}:\n{str(record)}"
+            f"No ANN entry for '{key}' in record {record_idx}:\n{str(record)}",
         )
         self.record_idx = record_idx
         self.record = record
@@ -25,7 +25,7 @@ class UnknownSample(VembraneError, KeyError):
 
     def __init__(self, record_idx: int, record: VariantRecord, sample: str) -> None:
         super().__init__(
-            f"No sample with name '{sample}' in record {record_idx}:\n{str(record)}"
+            f"No sample with name '{sample}' in record {record_idx}:\n{str(record)}",
         )
         self.record_idx = record_idx
         self.record = record
@@ -37,7 +37,7 @@ class UnknownFormatField(VembraneError, KeyError):
 
     def __init__(self, record_idx: int, record: VariantRecord, field: str) -> None:
         super().__init__(
-            f"No FORMAT field '{field}' in record {record_idx}:\n{str(record)}"
+            f"No FORMAT field '{field}' in record {record_idx}:\n{str(record)}",
         )
         self.record_idx = record_idx
         self.record = record_idx
@@ -49,7 +49,7 @@ class UnknownInfoField(VembraneError):
 
     def __init__(self, record_idx: int, record: VariantRecord, field: str) -> None:
         super().__init__(
-            f"No INFO field '{field}' in record {record_idx}:\n{str(record)}"
+            f"No INFO field '{field}' in record {record_idx}:\n{str(record)}",
         )
         self.record = record_idx
         self.field = field
@@ -60,7 +60,7 @@ class InvalidExpression(VembraneError):
 
     def __init__(self, expression: str, reason: str) -> None:
         super().__init__(
-            f"The provided expression '{expression}' is invalid. Reason: {reason}"
+            f"The provided expression '{expression}' is invalid. Reason: {reason}",
         )
         self.expression = expression
 
@@ -120,7 +120,7 @@ class HeaderWrongColumnNumber(VembraneError):
 class FilterAlreadyDefined(VembraneError):
     def __init__(self, tag: str) -> None:
         super().__init__(
-            f"Filter {tag} already defined in the header. Choose a different name."
+            f"Filter {tag} already defined in the header. Choose a different name.",
         )
 
 
@@ -128,5 +128,5 @@ class FilterTagNameInvalid(VembraneError):
     def __init__(self, tag: str) -> None:
         super().__init__(
             f"Filter '{tag}' contains invalid characters (whitespace or semicolon) "
-            f"or is '0'."
+            f"or is '0'.",
         )
