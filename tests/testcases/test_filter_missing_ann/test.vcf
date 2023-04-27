@@ -1,0 +1,14 @@
+##fileformat=VCFv4.4
+##FILTER=<ID=PASS,Description="All filters passed">
+##fileDate=20191217
+##contig=<ID=chr18,length=80373285>
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##SnpEffVersion="4.3t (build 2017-11-24 10:18), by Pablo Cingolani"
+##SnpEffCmd="SnpEff  hg38 - "
+##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name'">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TUMOR
+chr18	27963698	.	T	C	30	PASS	ANN=C|intron_variant|MODIFIER|CDH2	GT	0/1
+chr18	28036487	.	A	T	162	PASS	ANN=T|stop_gained|HIGH|CDH2	GT	0/1
+chr18	28045161	.	G	A	37	PASS	ANN=A|intron_variant|MODIFIER|CDH2	GT	0/1
+chr18	36126053	.	T	C	40	PASS		GT	0/1
+chr18	46546946	.	T	C	2045	PASS	ANN=C|missense_variant|MODERATE|LOXHD1	GT	1/1
