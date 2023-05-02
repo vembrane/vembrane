@@ -17,6 +17,7 @@ pyyaml = "^6.0"
 asttokens = "^2.0"
 numpy = { version = "^1.23", python = ">=3.8" }
 intervaltree = "^3.1"
+sqlalchemy = "^1.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
