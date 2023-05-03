@@ -221,6 +221,15 @@ def execute(args):
         samples = [str(s) for s in vcf.header.samples]
         objects = []
         annotation_id = 0
+
+        def detuple(x):
+            if isinstance(x, tuple):
+                if len(x) == 1:
+                    return x[0]
+                else:
+                    assert False
+            return x
+
         for variant_id, variant in enumerate(vcf):
             # if variant_id == 25000:
             #     break
@@ -307,6 +316,8 @@ def execute(args):
                 )
                 annotation_id += 1
 
+            infos = {k:detuple(v) for k,v in info.items() if k not in ["CSQ"]}
+
             # add variant
             objects.append(
                 Variant(
@@ -316,13 +327,7 @@ def execute(args):
                     ref=variant.alts[0],
                     alt=variant.ref,
                     qual=variant.qual,
-                    # consequences=all_consequences,
-                    # impacts=all_impacts,
-                    MQ=info.get("MQ", None),
-                    AC=info.get("AC", (None,))[0],
-                    AF=info.get("AF", (None,))[0],
-                    AN=info.get("AN", None),
-                    nhomalt=info.get("nhomalt", (None,))[0],
+                    **infos,
                 ),
             )
         db_session.bulk_save_objects(objects)
