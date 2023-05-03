@@ -27,6 +27,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 
+
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("database")
     parser.register("action", "deprecated", DeprecatedAction)
@@ -40,17 +41,24 @@ def add_subcommmand(subparsers):
         help="Output file, if not specified, output is written to STDOUT.",
     )
 
-consequences = {key.strip():value for value, key in enumerate(open("consequences.txt", "r").readlines())}
+
+consequences = {
+    key.strip(): value
+    for value, key in enumerate(open("consequences.txt", "r").readlines())
+}
+
 
 def consequence_bitvector(consequence):
-    return sum(2**consequences[c] for c in consequence.split("&"))
+    return sum(2 ** consequences[c] for c in consequence.split("&"))
+
 
 impacts = {
-    "MODIFIER":0,
-    "LOW":1,
-    "MODERATE":2,
-    "HIGH":3,
+    "MODIFIER": 0,
+    "LOW": 1,
+    "MODERATE": 2,
+    "HIGH": 3,
 }
+
 
 def execute(args):
     if os.path.exists("test.sqlite"):
@@ -60,76 +68,147 @@ def execute(args):
     db_session = scoped_session(sessionmaker(bind=engine, autoflush=True))
 
     Base = declarative_base()
-
-    class Sample_Has_Variant(Base):
-        __tablename__ = "sample_has_variant"
-        variant_id = Column(Integer, ForeignKey("variants.id"), primary_key=True)
-        sample_id = Column(Integer, ForeignKey("samples.id"), primary_key=True)
-        genotype = Column(Integer, index=True)
-        dp = Column(Integer, index=True)
-        sample = relationship("Sample", back_populates="variants")
-        variant = relationship("Variant", back_populates="samples")
-
-
-    class Variant(Base):
-        __tablename__ = "variants"
-        id = Column(Integer, primary_key=True)
-        chr = Column(String, index=True)
-        pos = Column(Integer, index=True)
-        ref = Column(String, index=True)
-        alt = Column(String, index=True)
-        qual = Column(Float, index=True)
-        samples = relationship("Sample_Has_Variant", back_populates="variant")
-        ann = relationship("Annotation", backref="variant")
-        mq = Column(Integer, index=True)
-        ac = Column(Integer, index=True)
-        af = Column(Float, index=True)
-        an = Column(Integer, index=True)
-        nhomalt = Column(Integer, index=True)
-        consequences = Column(Integer)
-        impacts = Column(Integer)
-
-
-    class Annotation(Base):
-        __tablename__ = "annotations"
-        id = Column(Integer, primary_key=True)
-        variant_id = Column(Integer, ForeignKey("variants.id"))
-        transcript = Column(Integer, index=True)
-        consequence = Column(String, index=True)
-        impact = Column(String, index=True)
-        symbol = Column(String, index=True)
-        gene = Column(Integer, index=True)
-        feature_type = Column(String, index=True)
-        biotype = Column(String, index=True)
-        exon = Column(Integer, index=True)
-        intron = Column(Integer, index=True)
-        hgvsc = Column(String, index=True)
-        hgvsp = Column(String, index=True)
-        cdna_position = Column(Integer, index=True)
-        cds_position = Column(Integer, index=True)
-        protein_position = Column(Integer, index=True)
-        amino_acids = Column(String, index=True)
-        codons = Column(String, index=True)
-        existing_variation = Column(String, index=True)
-        distance = Column(Integer, index=True)
-        strand = Column(Integer, index=True)
-        flags = Column(String, index=True)
-        symbol_source = Column(String, index=True)
-        hgnc_id = Column(Integer, index=True)
-
-
-    class Sample(Base):
-        __tablename__ = "samples"
-        id = Column(Integer, primary_key=True)
-        name = Column(String, index=True)
-        variants = relationship("Sample_Has_Variant", back_populates="sample")
-
-    Base.metadata.create_all(bind=engine)
-
     with VariantFile(args.vcf) as vcf:
-        ann_format = list(
-            map(str.lower, vcf.header.info["CSQ"].description.rsplit(" ", 1)[-1].split("|"))
+
+        class Field(Base):
+            __tablename__ = "fields"
+            name = Column(String, primary_key=True)
+            table = Column(String, primary_key=True)
+            type = Column(String)
+            description = Column(String)
+
+        class Sample_Has_Variant(Base):
+            __tablename__ = "sample_has_variant"
+            variant_id = Column(Integer, ForeignKey("variants.id"), primary_key=True)
+            sample_id = Column(Integer, ForeignKey("samples.id"), primary_key=True)
+            genotype = Column(Integer, index=True)
+            dp = Column(Integer, index=True)
+            sample = relationship("Sample", back_populates="variants")
+            variant = relationship("Variant", back_populates="samples")
+
+        for format in vcf.header.formats.values():
+            if format.name in ["DP", "Genotype"]:
+                continue
+            setattr(
+                Sample_Has_Variant, format.name, Column(getattr(sys.modules[__name__], format.type))
+            )
+
+
+        class Variant(Base):
+            __tablename__ = "variants"
+            id = Column(Integer, primary_key=True)
+            chr = Column(String, index=True)
+            pos = Column(Integer, index=True)
+            ref = Column(String, index=True)
+            alt = Column(String, index=True)
+            qual = Column(Float, index=True)
+            samples = relationship("Sample_Has_Variant", back_populates="variant")
+            ann = relationship("Annotation", backref="variant")
+            # for info in vcf.header.info.values():
+            # mq = Column(Integer, index=True)
+            # ac = Column(Integer, index=True)
+            # af = Column(Float, index=True)
+            # an = Column(Integer, index=True)
+            # nhomalt = Column(Integer, index=True)
+            # consequences = Column(Integer)
+            # impacts = Column(Integer)
+
+        # add variables (info fields) dynamically to the variant class
+        for info in vcf.header.info.values():
+            setattr(
+                Variant, info.name, Column(getattr(sys.modules[__name__], info.type))
+            )
+
+        class Annotation(Base):
+            __tablename__ = "annotations"
+            id = Column(Integer, primary_key=True)
+            variant_id = Column(Integer, ForeignKey("variants.id"))
+            transcript = Column(Integer, index=True)
+            gene = Column(Integer, index=True)
+            consequence = Column(String, index=True)
+
+        # this is the vep annotation TODO: support SNPEff annotation
+
+        vep = (
+            ("impact", "String"),
+            ("symbol", "String"),
+            ("feature_type", "String"),
+            ("biotype", "String"),
+            ("exon", "Integer"),
+            ("intron", "Integer"),
+            ("hgvsc", "String"),
+            ("hgvsp", "String"),
+            ("cdna_position", "Integer"),
+            ("cds_position", "Integer"),
+            ("protein_position", "Integer"),
+            ("amino_acids", "String"),
+            ("codons", "String"),
+            ("existing_variation", "String"),
+            ("distance", "Integer"),
+            ("strand", "Integer"),
+            ("flags", "String"),
+            ("symbol_source", "String"),
+            ("hgnc_id", "Integer"),
         )
+
+        for annotation_name, annotation_type in vep:
+            setattr(
+                Annotation, annotation_name, Column(getattr(sys.modules[__name__], annotation_type))
+            )
+
+        class Sample(Base):
+            __tablename__ = "samples"
+            id = Column(Integer, primary_key=True)
+            name = Column(String, index=True)
+            variants = relationship("Sample_Has_Variant", back_populates="sample")
+
+        Base.metadata.create_all(bind=engine)
+
+        ann_format = list(
+            map(
+                str.lower,
+                vcf.header.info["CSQ"].description.rsplit(" ", 1)[-1].split("|"),
+            )
+        )
+
+        print("insert info fields", file=sys.stderr)
+        objects = [
+            Field(
+                name=info.name,
+                table="variants",
+                type=info.type,
+                description=info.description,
+            )
+            for info in vcf.header.info.values()
+        ]
+        db_session.bulk_save_objects(objects)
+
+        print("insert annotation fields", file=sys.stderr)
+        objects = [
+            Field(
+                name=annotation_name,
+                table="annotations",
+                type=annotation_type,
+                description="",
+            )
+            for annotation_name, annotation_type in vep
+        ]
+        db_session.bulk_save_objects(objects)
+
+
+        print("insert format fields", file=sys.stderr)
+        objects = [
+            Field(
+                name=format.name,
+                table="sample_has_variant",
+                type=format.type,
+                description=format.description,
+            )
+            for format in vcf.header.formats.values() if format.name not in ["DP", "Genotype"]
+        ]
+        db_session.bulk_save_objects(objects)
+
+
 
         print("insert samples", file=sys.stderr)
         objects = [
@@ -143,6 +222,7 @@ def execute(args):
         objects = []
         annotation_id = 0
         for variant_id, variant in enumerate(vcf):
+            break
             # if variant_id == 25000:
             #     break
 
@@ -179,15 +259,18 @@ def execute(args):
                 ann = {key: value for key, value in zip(ann_format, a.split("|"))}
                 consequence_bits = consequence_bitvector(ann["consequence"])
                 all_consequences |= consequence_bits
-                impact_bit = 2**impacts[ann["impact"]]
+                impact_bit = 2 ** impacts[ann["impact"]]
                 all_impacts |= impact_bit
-                hgnc_id = int(ann["hgnc_id"].removeprefix("HGNC:")) if ann["hgnc_id"] else None
-                
+                hgnc_id = (
+                    int(ann["hgnc_id"].removeprefix("HGNC:"))
+                    if ann["hgnc_id"]
+                    else None
+                )
+
                 if ann["feature"]:
                     transcript = int(ann["feature"].removeprefix("ENST"))
                 else:
                     transcript = None
-
 
                 if ann["gene"]:
                     gene = int(ann["gene"].removeprefix("ENSG"))
