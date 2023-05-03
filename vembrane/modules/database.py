@@ -90,9 +90,10 @@ def execute(args):
             if format.name in ["DP", "Genotype"]:
                 continue
             setattr(
-                Sample_Has_Variant, format.name, Column(getattr(sys.modules[__name__], format.type))
+                Sample_Has_Variant,
+                format.name,
+                Column(getattr(sys.modules[__name__], format.type)),
             )
-
 
         class Variant(Base):
             __tablename__ = "variants"
@@ -128,7 +129,6 @@ def execute(args):
             consequence = Column(String, index=True)
 
         # this is the vep annotation TODO: support SNPEff annotation
-
         vep = (
             ("impact", "String"),
             ("symbol", "String"),
@@ -153,7 +153,9 @@ def execute(args):
 
         for annotation_name, annotation_type in vep:
             setattr(
-                Annotation, annotation_name, Column(getattr(sys.modules[__name__], annotation_type))
+                Annotation,
+                annotation_name,
+                Column(getattr(sys.modules[__name__], annotation_type)),
             )
 
         class Sample(Base):
@@ -195,7 +197,6 @@ def execute(args):
         ]
         db_session.bulk_save_objects(objects)
 
-
         print("insert format fields", file=sys.stderr)
         objects = [
             Field(
@@ -204,11 +205,10 @@ def execute(args):
                 type=format.type,
                 description=format.description,
             )
-            for format in vcf.header.formats.values() if format.name not in ["DP", "Genotype"]
+            for format in vcf.header.formats.values()
+            if format.name not in ["DP", "Genotype"]
         ]
         db_session.bulk_save_objects(objects)
-
-
 
         print("insert samples", file=sys.stderr)
         objects = [
@@ -222,7 +222,6 @@ def execute(args):
         objects = []
         annotation_id = 0
         for variant_id, variant in enumerate(vcf):
-            break
             # if variant_id == 25000:
             #     break
 
@@ -317,12 +316,12 @@ def execute(args):
                     ref=variant.alts[0],
                     alt=variant.ref,
                     qual=variant.qual,
-                    consequences=all_consequences,
-                    impacts=all_impacts,
-                    mq=info.get("MQ", None),
-                    ac=info.get("AC", (None,))[0],
-                    af=info.get("AF", (None,))[0],
-                    an=info.get("AN", None),
+                    # consequences=all_consequences,
+                    # impacts=all_impacts,
+                    MQ=info.get("MQ", None),
+                    AC=info.get("AC", (None,))[0],
+                    AF=info.get("AF", (None,))[0],
+                    AN=info.get("AN", None),
                     nhomalt=info.get("nhomalt", (None,))[0],
                 ),
             )
