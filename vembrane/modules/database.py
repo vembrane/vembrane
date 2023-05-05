@@ -35,10 +35,8 @@ def add_subcommmand(subparsers):
         "vcf", help="The file containing the variants.", nargs="?", default="-"
     )
     parser.add_argument(
-        "--output",
-        "-o",
-        default="-",
-        help="Output file, if not specified, output is written to STDOUT.",
+        "output",
+        help="Output database file.",
     )
     parser.add_argument(
         "--annotation-key",
@@ -68,9 +66,9 @@ impacts = {
 
 
 def execute(args):
-    if os.path.exists("test.sqlite"):
-        os.remove("test.sqlite")
-    engine = create_engine("sqlite:///test.sqlite")
+    if os.path.exists(args.output):
+        os.remove(args.output)
+    engine = create_engine(f"sqlite:///{args.output}")
 
     db_session = scoped_session(sessionmaker(bind=engine, autoflush=True))
 
