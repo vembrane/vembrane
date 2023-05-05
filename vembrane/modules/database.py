@@ -40,6 +40,13 @@ def add_subcommmand(subparsers):
         default="-",
         help="Output file, if not specified, output is written to STDOUT.",
     )
+    parser.add_argument(
+        "--annotation-key",
+        "-k",
+        metavar="FIELDNAME",
+        default="ANN",
+        help="The INFO key for the annotation field.",
+    )
 
 
 consequences = {
@@ -169,7 +176,9 @@ def execute(args):
         ann_format = list(
             map(
                 str.lower,
-                vcf.header.info["CSQ"].description.rsplit(" ", 1)[-1].split("|"),
+                vcf.header.info[args.annotation_key]
+                .description.rsplit(" ", 1)[-1]
+                .split("|"),
             )
         )
 
@@ -273,29 +282,23 @@ def execute(args):
             all_impacts = 0
 
             # add annotations
-            for a in info["CSQ"]:
+            for a in info[args.annotation_key]:
                 ann = {key: value for key, value in zip(ann_format, a.split("|"))}
                 consequence_bits = consequence_bitvector(ann["consequence"])
                 all_consequences |= consequence_bits
                 impact_bit = 2 ** impacts[ann["impact"]]
                 all_impacts |= impact_bit
-                hgnc_id = (
-                    int(ann["hgnc_id"].removeprefix("HGNC:"))
-                    if ann["hgnc_id"]
-                    else None
-                )
+                # hgnc_id = (
+                #     int(ann["hgnc_id"].removeprefix("HGNC:"))
+                #     if ann["hgnc_id"]
+                #     else None
+                # )
 
                 if ann["feature"]:
                     transcript = int(ann["feature"].removeprefix("ENST"))
                 else:
                     transcript = None
 
-                # if ann["gene"]:
-                #     gene = int(ann["gene"].removeprefix("ENSG"))
-                # else:
-                #     gene = None
-                # assert ann["feature_type"]=="Transcript"
-                # print(ann["biotype"])
                 del ann["allele"]
                 del ann["feature"]
                 objects.append(
@@ -303,33 +306,15 @@ def execute(args):
                         id=annotation_id,
                         variant_id=variant_id,
                         transcript=transcript,
-                        **ann
-                        # consequence=consequence_bits,
-                        # impact=ann["impact"],
-                        # symbol=ann["symbol"],
-                        # gene=gene,
-                        # # feature_type=ann["feature_type"],
-                        # biotype=ann["biotype"],
-                        # exon=ann["exon"],
-                        # intron=ann["intron"],
-                        # hgvsc=ann["hgvsc"],
-                        # hgvsp=ann["hgvsp"],
-                        # cdna_position=ann["cdna_position"],
-                        # cds_position=ann["cds_position"],
-                        # protein_position=ann["protein_position"],
-                        # amino_acids=ann["amino_acids"],
-                        # codons=ann["codons"],
-                        # existing_variation=ann["existing_variation"],
-                        # distance=ann["distance"],
-                        # strand=ann["strand"],
-                        # flags=ann["flags"],
-                        # symbol_source=ann["symbol_source"],
-                        # hgnc_id=hgnc_id,
+                        **ann,
                     ),
                 )
                 annotation_id += 1
 
-            infos = {k: detuple(v) for k, v in info.items() if k not in ["CSQ"]}
+            # get infos but exclude the annotations
+            infos = {
+                k: detuple(v) for k, v in info.items() if k not in [args.annotation_key]
+            }
 
             # add variant
             objects.append(
