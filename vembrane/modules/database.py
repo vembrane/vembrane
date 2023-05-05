@@ -222,12 +222,15 @@ def execute(args):
         objects = []
         annotation_id = 0
 
-        def detuple(x):
+        def detuple(x, k=None):
             if isinstance(x, tuple):
                 if len(x) == 1:
                     return x[0]
+                if len(x) == 2:
+                    return x[1]
                 else:
-                    assert False
+                    # print("unexpected tuple size:", x, k)
+                    return str(x)
             return x
 
         for variant_id, variant in enumerate(vcf):
@@ -250,12 +253,19 @@ def execute(args):
                 genotype = sum(2**i * x for i, x in enumerate(gt))
                 if genotype == 0:  # dont write sample, if it doesn't own the variant
                     continue
+
+                formats = {
+                    k: detuple(v, k)
+                    for k, v in format.items()
+                    if k not in ["GT", "DP", "DPI"]
+                }
                 objects.append(
                     Sample_Has_Variant(
                         sample_id=sample_id,
                         variant_id=variant_id,
                         genotype=genotype,
                         dp=format.get("DP", None) or format.get("DPI", None),
+                        **formats,
                     ),
                 )
 
@@ -280,43 +290,46 @@ def execute(args):
                 else:
                     transcript = None
 
-                if ann["gene"]:
-                    gene = int(ann["gene"].removeprefix("ENSG"))
-                else:
-                    gene = None
+                # if ann["gene"]:
+                #     gene = int(ann["gene"].removeprefix("ENSG"))
+                # else:
+                #     gene = None
                 # assert ann["feature_type"]=="Transcript"
                 # print(ann["biotype"])
+                del ann["allele"]
+                del ann["feature"]
                 objects.append(
                     Annotation(
                         id=annotation_id,
                         variant_id=variant_id,
                         transcript=transcript,
-                        consequence=consequence_bits,
-                        impact=ann["impact"],
-                        symbol=ann["symbol"],
-                        gene=gene,
-                        # feature_type=ann["feature_type"],
-                        biotype=ann["biotype"],
-                        exon=ann["exon"],
-                        intron=ann["intron"],
-                        hgvsc=ann["hgvsc"],
-                        hgvsp=ann["hgvsp"],
-                        cdna_position=ann["cdna_position"],
-                        cds_position=ann["cds_position"],
-                        protein_position=ann["protein_position"],
-                        amino_acids=ann["amino_acids"],
-                        codons=ann["codons"],
-                        existing_variation=ann["existing_variation"],
-                        distance=ann["distance"],
-                        strand=ann["strand"],
-                        flags=ann["flags"],
-                        symbol_source=ann["symbol_source"],
-                        hgnc_id=hgnc_id,
+                        **ann
+                        # consequence=consequence_bits,
+                        # impact=ann["impact"],
+                        # symbol=ann["symbol"],
+                        # gene=gene,
+                        # # feature_type=ann["feature_type"],
+                        # biotype=ann["biotype"],
+                        # exon=ann["exon"],
+                        # intron=ann["intron"],
+                        # hgvsc=ann["hgvsc"],
+                        # hgvsp=ann["hgvsp"],
+                        # cdna_position=ann["cdna_position"],
+                        # cds_position=ann["cds_position"],
+                        # protein_position=ann["protein_position"],
+                        # amino_acids=ann["amino_acids"],
+                        # codons=ann["codons"],
+                        # existing_variation=ann["existing_variation"],
+                        # distance=ann["distance"],
+                        # strand=ann["strand"],
+                        # flags=ann["flags"],
+                        # symbol_source=ann["symbol_source"],
+                        # hgnc_id=hgnc_id,
                     ),
                 )
                 annotation_id += 1
 
-            infos = {k:detuple(v) for k,v in info.items() if k not in ["CSQ"]}
+            infos = {k: detuple(v) for k, v in info.items() if k not in ["CSQ"]}
 
             # add variant
             objects.append(
