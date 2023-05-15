@@ -5,7 +5,6 @@ import sys
 from sys import stderr
 from typing import Any, Dict, Iterator, List, Set
 
-import asttokens
 from pysam.libcbcf import VariantFile, VariantRecord
 
 from ..common import AppendKeyValuePair, check_expression, read_auxiliary
@@ -27,6 +26,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 
+from vembrane.ann_types import KNOWN_ANN_TYPE_MAP_VEP
+from vembrane.common import get_annotation_keys
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser("database")
@@ -155,6 +156,9 @@ def execute(args):
             ("symbol_source", "String"),
             ("hgnc_id", "Integer"),
         )
+
+        for key in get_annotation_keys(vcf.header, args.annotation_key):
+            print(key, KNOWN_ANN_TYPE_MAP_VEP[key].database_type, KNOWN_ANN_TYPE_MAP_VEP[key].database_name)
 
         for annotation_name, annotation_type in vep:
             setattr(
