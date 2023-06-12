@@ -121,7 +121,14 @@ def tableize_vcf(
             try:
                 annotations = record.info[ann_key]
             except KeyError:
-                annotations = [""]
+                num_ann_entries = len(env._annotation._ann_conv.keys())
+                empty = "|" * num_ann_entries
+                print(
+                    f"No ANN field found in record {idx}, "
+                    f"replacing with NAs (i.e. 'ANN={empty}')",
+                    file=sys.stderr,
+                )
+                annotations = [empty]
             for annotation in annotations:
                 if long:
                     yield from env.table(annotation)
