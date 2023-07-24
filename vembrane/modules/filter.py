@@ -176,10 +176,18 @@ def filter_vcf(
     overwrite_number: dict[str, dict[str, str]] = MappingProxyType({}),
 ) -> Iterator[VariantRecord]:
     env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
+    has_mateid_key = vcf.header.info.get("MATEID", None) is not None
+    has_event_key = vcf.header.info.get("EVENT", None) is not None
 
-    def get_event_name(record: VariantRecord) -> tuple[str | None, str | None]:
-        mate_ids: list[str] = record.info.get("MATEID", [])
-        event_name: str | None = record.info.get("EVENT", None)
+    def get_event_name(
+        record: VariantRecord,
+        has_mateid_key: bool = has_mateid_key,
+        has_event_key: bool = has_event_key,
+    ) -> tuple[str | None, str | None]:
+        mate_ids: list[str] = record.info.get("MATEID", []) if has_mateid_key else []
+        event_name: str | None = (
+            record.info.get("EVENT", None) if has_event_key else None
+        )
 
         if len(mate_ids) > 1 and not event_name:
             raise ValueError(
@@ -209,7 +217,7 @@ def filter_vcf(
             )
 
             # Breakend records *may* have the "EVENT" specified, but don't have to.
-            # In that case only the MATEID *may* bee available
+            # In that case only the MATEID *may* be available
             # (which may contain more than one ID)
             if is_bnd_record(record):
                 event_name, mate_pair_name = get_event_name(record)
