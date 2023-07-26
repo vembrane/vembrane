@@ -64,14 +64,14 @@ def annotate_vcf(
 ) -> Iterator[VariantRecord]:
     env = Environment(expression, ann_key, vcf.header)
 
-    config_chrom_column = config["annotation"]["columns"]["chrom"]
-    config_start_column = config["annotation"]["columns"]["start"]
-    config_stop_column = config["annotation"]["columns"]["stop"]
+    config_chrom_column: str = config["annotation"]["columns"]["chrom"]
+    config_start_column: str = config["annotation"]["columns"]["start"]
+    config_stop_column: str = config["annotation"]["columns"]["stop"]
 
-    available_chromsomes = set(np.unique(ann_data[config_chrom_column]))
+    available_chromsomes: set[str] = set(np.unique(ann_data[config_chrom_column]))
 
-    tree = {}
-    chrom_ann_data = {}
+    tree: dict[str, IntervalTree] = {}
+    chrom_ann_data: dict[str, Any] = {}
     for chrom in available_chromsomes:
         d = ann_data[ann_data[config_chrom_column] == chrom]
         chrom_ann_data[chrom] = d
@@ -79,8 +79,6 @@ def annotate_vcf(
             Interval(d[config_start_column], d[config_stop_column], i)
             for i, d in enumerate(d)
         )
-
-        # tree = IntervalTree.from_tuples(interval_tuples))
 
     current_chrom = None
     current_ann_data = None
@@ -142,15 +140,13 @@ def execute(args):
             exit(1)
 
     # load annotation data
-    ann_data = np.genfromtxt(
+    ann_data: np.ndarray = np.genfromtxt(
         config["annotation"]["file"],
         delimiter=config["annotation"].get("delimiter", "\t"),
         names=True,
         dtype=None,
         encoding=None,
     )
-    # ann_data = pd.read_csv(config["annotation"]["file"], sep="\t", header=0)
-    # ann_data = dict(tuple(ann_data.groupby("chrom")))
 
     # build expression
     expression = ",".join(
