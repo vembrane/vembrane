@@ -1,3 +1,5 @@
+from typing import Any
+
 from pysam import VariantRecord
 
 
@@ -129,4 +131,15 @@ class FilterTagNameInvalid(VembraneError):
         super(FilterTagNameInvalid, self).__init__(
             f"Filter '{tag}' contains invalid characters (whitespace or semicolon) "
             f"or is '0'."
+        )
+
+
+class NonBoolTypeError(VembraneError):
+    def __init__(self, value: Any):
+        super(NonBoolTypeError, self).__init__(
+            "The expression does not evaluate to bool, "
+            f"but to {type(value)} ({value}).\n"
+            "If you wish to use truthy values, "
+            "explicitly wrap the expression in `bool(…)`, "
+            "or aggregate multiple values via `any(…)` or `all(…)`."
         )

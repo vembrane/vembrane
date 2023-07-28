@@ -1,7 +1,6 @@
 import ast
 from enum import Enum
 from itertools import chain
-from sys import stderr
 from types import CodeType
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -18,6 +17,7 @@ from .ann_types import (
 )
 from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
 from .errors import (
+    NonBoolTypeError,
     UnknownAnnotation,
     UnknownFormatField,
     UnknownInfoField,
@@ -397,15 +397,7 @@ class Environment(dict):
             self._annotation.update(self.idx, self.record, annotation)
         keep = self._func()
         if not isinstance(keep, bool):
-            if Warnings.NonBoolType not in self._warnings:
-                print(
-                    f"Warning: Expression did not evaluate to bool, "
-                    f"but to {type(keep)}: {keep}. "
-                    f"This might indicate a missing aggregation, "
-                    f"e.g. `any(…)` or `all(…)`.",
-                    file=stderr,
-                )
-                self._warnings.add(Warnings.NonBoolType)
+            raise NonBoolTypeError(keep)
         return keep
 
     def table(self, annotation: str = "") -> tuple:
