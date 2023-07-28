@@ -42,7 +42,9 @@ options:
 
 
 ### Filter expression
-The filter expression can be any valid python expression that evaluates to `bool`. However, functions and symbols available have been restricted to the following:
+The filter expression can be any valid python expression that evaluates to a value of *type* `bool`.
+
+However, functions and symbols available have been restricted to the following:
 
  * `all`, `any`
  * `abs`, `len`, `max`, `min`, `round`, `sum`
