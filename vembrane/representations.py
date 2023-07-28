@@ -1,5 +1,7 @@
 import ast
+from enum import Enum
 from itertools import chain
+from sys import stderr
 from types import CodeType
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -22,6 +24,10 @@ from .errors import (
     UnknownSample,
 )
 from .globals import _explicit_clear, allowed_globals, custom_functions
+
+
+class Warnings(Enum):
+    NonBoolType = 1
 
 
 class NoValueDict:
@@ -193,6 +199,8 @@ class WrapFloat32Visitor(ast.NodeTransformer):
 
 
 class Environment(dict):
+    _warnings: Set[str] = set()
+
     def __init__(
         self,
         expression: str,
@@ -387,7 +395,18 @@ class Environment(dict):
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
             self._annotation.update(self.idx, self.record, annotation)
-        return self._func()
+        keep = self._func()
+        if not isinstance(keep, bool):
+            if Warnings.NonBoolType not in self._warnings:
+                print(
+                    f"Warning: Expression did not evaluate to bool, "
+                    f"but to {type(keep)}: {keep}. "
+                    f"This might indicate a missing aggregation, "
+                    f"e.g. `any(…)` or `all(…)`.",
+                    file=stderr,
+                )
+                self._warnings.add(Warnings.NonBoolType)
+        return keep
 
     def table(self, annotation: str = "") -> tuple:
         if self._has_ann:
