@@ -1,5 +1,4 @@
 import ast
-from enum import Enum
 from itertools import chain
 from types import CodeType
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -24,10 +23,6 @@ from .errors import (
     UnknownSample,
 )
 from .globals import _explicit_clear, allowed_globals, custom_functions
-
-
-class Warnings(Enum):
-    NonBoolType = 1
 
 
 class NoValueDict:
@@ -199,8 +194,6 @@ class WrapFloat32Visitor(ast.NodeTransformer):
 
 
 class Environment(dict):
-    _warnings: Set[str] = set()
-
     def __init__(
         self,
         expression: str,
