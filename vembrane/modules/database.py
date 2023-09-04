@@ -2,6 +2,7 @@ import os
 import contextlib
 import csv
 import sys
+import yaml
 from sys import stderr
 from typing import Any, Dict, Iterator, List, Set
 
@@ -47,15 +48,32 @@ def add_subcommmand(subparsers):
         help="The INFO key for the annotation field.",
     )
 
+    parser.add_argument(
+        "--genotype-key",
+        "-g",
+        metavar="FIELDNAME",
+        default="GT",
+        help="The FORMAT key for the genotype field.",
+    )
 
-consequences = {
-    key.strip(): value
-    for value, key in enumerate(open("consequences.txt", "r").readlines())
-}
+
+# enumerations = dict()
+
+# with open("enumerations.yaml", 'r') as stream:
+#     enumeration_data = yaml.safe_load(stream)
+
+# for key, value in enumeration_data.items():
+#     if "vector_enumeration" in value:
+#         enumerations[key] = {term: n for term, n in enumerate(value)}
+
+# consequences = {
+#     key.strip(): value
+#     for value, key in enumerate(open("consequences.txt", "r").readlines())
+# }
 
 
-def consequence_bitvector(consequence):
-    return sum(2 ** consequences[c] for c in consequence.split("&"))
+# def consequence_bitvector(consequence):
+#     return sum(2 ** consequences[c] for c in consequence.split("&"))
 
 
 impacts = {
@@ -67,6 +85,8 @@ impacts = {
 
 
 def execute(args):
+    GENOTYPE_KEY = args.genotype_key
+
     if os.path.exists(args.output):
         os.remove(args.output)
     engine = create_engine(f"sqlite:///{args.output}")
@@ -93,7 +113,7 @@ def execute(args):
             variant = relationship("Variant", back_populates="samples")
 
         for format in vcf.header.formats.values():
-            if format.name in ["DP", "Genotype"]:
+            if format.name in ["DP", GENOTYPE_KEY]:
                 continue
             setattr(
                 Sample_Has_Variant,
@@ -217,7 +237,7 @@ def execute(args):
                 description=format.description,
             )
             for format in vcf.header.formats.values()
-            if format.name not in ["DP", "Genotype"]
+            if format.name not in ["DP", "GT"]
         ]
         db_session.bulk_save_objects(objects)
 
@@ -257,18 +277,17 @@ def execute(args):
 
             # create relation of sample - variant
             for sample_id, s in enumerate(samples):
-                format = variant.samples[s]
-                gt = format["GT"]
-                if gt == (None,):  # dont write sample, if it doesn't own the variant
+                format = variant.samples[s] 
+                if (gt := format[GENOTYPE_KEY]) == (None,):  # TODO: dont write sample, if it doesn't cover the variant
                     continue
                 genotype = sum(2**i * x for i, x in enumerate(gt))
-                if genotype == 0:  # dont write sample, if it doesn't own the variant
+                if genotype == 0:  # TODO: dont write sample, if it doesn't own the variant? That should be configurable
                     continue
 
                 formats = {
                     k: detuple(v, k)
                     for k, v in format.items()
-                    if k not in ["GT", "DP", "DPI"]
+                    if k not in [format[GENOTYPE_KEY], "DP", "DPI"]
                 }
                 objects.append(
                     Sample_Has_Variant(
