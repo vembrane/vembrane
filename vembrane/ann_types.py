@@ -206,6 +206,32 @@ class AnnotationEntry:
         self._typefunc = typefunc
         self._nafunc = nafunc
         self._description = description
+        self._database_type = self._get_database_type()
+        self._database_name = self._get_database_name()
+
+    def _get_database_type(self):
+        if hasattr(self._typefunc, "__self__"):
+            if self._typefunc.__self__ in [RangeTotal, PosRange]:
+                return ("Integer", "Integer")
+        if self._typefunc == int:
+            return "Integer"
+        if self._typefunc == float32:
+            return "Float"
+        return "String"
+
+    def _get_database_name(self):
+        if hasattr(self._typefunc, "__self__"):
+            if self._typefunc.__self__ in [RangeTotal, PosRange]:
+                return (f"{self.name}_start", f"{self.name}_stop")
+        return self.name
+
+    @property
+    def database_type(self):
+        return self._database_type
+
+    @property
+    def database_name(self):
+        return self._database_name
 
     @property
     def name(self):
@@ -219,6 +245,7 @@ class AnnotationEntry:
 
     def description(self):
         return self._description
+
 
     def __repr__(self):
         return (
@@ -409,6 +436,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "Location": AnnotationEntry(
         "Location",
         description="In standard coordinate format (chr:start or chr:start-end)",
+        
     ),
     "Allele": AnnotationEntry(
         "Allele", description="The variant allele used to calculate the consequence"
