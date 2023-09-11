@@ -201,6 +201,7 @@ class Environment(dict):
         auxiliary: Dict[str, Set[str]] = {},
         overwrite_number: Dict[str, Dict[str, str]] = {},
         evaluation_function_template: str = "lambda: {expression}",
+        mode="eval",
     ):
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
@@ -228,7 +229,7 @@ class Environment(dict):
         # compilers should follow this standard (https://stackoverflow.com/a/17904539):
 
         # parse the expression, obtaining an AST
-        expression_ast = ast.parse(func_str, mode="eval")
+        expression_ast = ast.parse(func_str, mode=mode)
 
         # wrap each float constant in numpy.float32
         expression_ast = WrapFloat32Visitor().visit(expression_ast)
@@ -237,7 +238,7 @@ class Environment(dict):
         expression_ast = ast.fix_missing_locations(expression_ast)
 
         # compile the now-fixed code-tree
-        func: CodeType = compile(expression_ast, filename="<string>", mode="eval")
+        func: CodeType = compile(expression_ast, filename="<string>", mode=mode)
 
         self.update(**_explicit_clear)
         self._func = eval(func, self, {})
