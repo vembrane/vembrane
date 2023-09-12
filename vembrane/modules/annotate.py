@@ -8,7 +8,7 @@ import yaml
 from intervaltree import Interval, IntervalTree
 from pysam.libcbcf import VariantFile, VariantRecord
 
-from ..common import check_expression
+from ..common import check_expression, add_annotations
 from ..representations import Environment
 
 from functools import partial
@@ -73,63 +73,56 @@ def annotate_vcf(
     expression: str,
     ann_key: str,
 ) -> Iterator[VariantRecord]:
-    env = Environment(expression, ann_key, vcf.header)
+    env = Environment(expression, ann_key, vcf.header, target=target)
 
     def set_info(record, value, t):
         getattr(record, "info")[t] = value
 
+    def set_ann(record, value, t):
+        # print(env._annotation, file=stderr)
+        # getattr(record, "info")["ANN"] = str(env._annotation)
+        pass
+
     target_func = []
-    # print(target, file=stderr)
     for e in ast.parse(target).body[0].value.elts:
         if e.value.id == "INFO":
             target_func.append(partial(set_info, t=e.slice.value))
         elif e.value.id == "ANN":
-            pass
+            # add new annotations definitions
+            env._annotation.add(e.slice.value)
+            target_func.append(partial(set_ann, t=e.slice.value))
         else:
             pass  # throw error
 
     record: VariantRecord
     for idx, record in enumerate(vcf):
-        ann_values = env.table()
-        for t, v in zip(target_func, ann_values):
-            t(record, v)
-
-        # print(getattr(record, "info")["SNVHPOL"], file=stderr)
-        # print(ast.parse(target), file=stderr)
-
-        # print(dir(list(ast.iter_child_nodes(ast.parse(target, mode="eval")))[0]), file=stderr)
-        # print("ast", dir(ast.parse(target, mode="eval")), file=stderr)
-        # print("ann_values 2", target, ann_values, file=stderr)
-        # for t, v in zip(ann_values):
-        #     print(t, v)
-        # for v, expression_value in zip(
-        #     map(lambda x: x["info"], config["annotation"]["values"]),
-        #     ann_values,
-        # ):
-        #     if not v["number"] == ".":
-        #         number = int(v["number"])
-        #     else:
-        #         number = -1
-
-        #     parse = typeparser[v["type"]]
-        #     if number == -1:
-        #         expression_value = list(map(parse, expression_value))
-        #     elif number > 1:
-        #         expression_value = list(map(parse, expression_value))
-        #         assert len(expression_value) == number
-        #     else:
-        #         # number == 1
-        #         assert isinstance(expression_value, str) or not isinstance(
-        #             expression_value, Iterable
-        #         )
-        #         expression_value = parse(expression_value)
-        #     record.info[v["vcf_name"]] = expression_value
-
+        env.update_from_record(idx, record)
+        if env.expression_annotations():
+            try:
+                annotations = record.info[ann_key]
+            except KeyError:
+                num_ann_entries = len(env._annotation._ann_conv.keys())
+                empty = "|" * num_ann_entries
+                print(
+                    f"No ANN field found in record {idx}, "
+                    f"replacing with NAs (i.e. 'ANN={empty}')",
+                    file=sys.stderr,
+                )
+                annotations = [empty]
+            new_annotations = []
+            for annotation in annotations:
+                ann_values = env.table(annotation)
+                for t, v in zip(target_func, ann_values):
+                    t(record, v)
+                    new_annotations.append(env._annotation)
+            print(new_annotations, file=stderr)
+            # record.info["ANN"] = new_annotations
         yield record
 
 
 def execute(args):
     with VariantFile(args.vcf) as vcf:
+        header = vcf.header
         if args.definitions:
             # add or modify meta defitions
             with open(args.definitions, "r") as stream:
@@ -139,10 +132,10 @@ def execute(args):
                     print(e, file=stderr)
                     exit(1)
             for name in (infos := definitions.get("info", {})):
-                if name in vcf.header.info.keys():
+                if name in header.info.keys():
                     continue
                 values = infos[name]
-                vcf.header.add_meta(
+                header.add_meta(
                     "INFO",
                     items=[
                         ("ID", name),
@@ -152,56 +145,38 @@ def execute(args):
                     ],
                 )
 
+            if (annotations := definitions.get("info", {})):
+                header = add_annotations(vcf.header, args.annotation_key, annotations)
+                # h = vcf.header.copy()
+                # h.info.remove_header(args.annotation_key)
+                # h = h.copy()
+                # h.info.add(args.annotation_key,".","String",'whatever')
+                # print("foooo", h, file=sys.stderr)
+                # exit()
+                # header=copy(vcf.header)
+            # for name in (ann := definitions.get("ann", {})):
+            #     add_annotation_key(vcf.header, args.annotation_key, name)
+
         expression = f"({args.expression})"
         target = args.target
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
+
         with VariantFile(
             args.output,
             f"w{fmt}",
             header=vcf.header,
+
         ) as out:
-            pass
-            variants = annotate_vcf(
-                vcf,
-                target,
-                expression,
-                args.annotation_key,
-            )
-            for v in variants:
+            print(dir(out.header), file=stderr)
+            for v in vcf:
+                v.info["ANN"] = "test"
                 out.write(v)
-
-    # expression = []
-
-    # with VariantFile(args.vcf) as vcf:
-    #     # add new info
-    #     for value in config["annotation"]["values"]:
-    #         if (v := value.get("info", None)):
-    #             vcf.header.add_meta(
-    #                 "INFO",
-    #                 items=[
-    #                     ("ID", v["vcf_name"]),
-    #                     ("Number", v["number"]),
-    #                     ("Type", v["type"]),
-    #                     ("Description", v["description"]),
-    #                 ],
-    #             )
-    #             expression.append(v["expression"])
-
-    #     expression = ",".join(expression)
-    #     expression = f"({expression})"
-
-    #     fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
-    #     with VariantFile(
-    #         args.output,
-    #         f"w{fmt}",
-    #         header=vcf.header,
-    #     ) as out:
-    #         variants = annotate_vcf(
-    #             vcf,
-    #             expression,
-    #             args.annotation_key,
-    #             ann_data=ann_data,
-    #             config=config,
-    #         )
-    #         for v in variants:
-    #             out.write(v)
+                # print(v, file=stderr)
+            # variants = annotate_vcf(
+            #     vcf,
+            #     target,
+            #     expression,
+            #     args.annotation_key,
+            # )
+            # for v in variants:
+            #     out.write(v)

@@ -7,3 +7,6 @@ info:
         number: "1"
         description: "Score from genehancer anything."
         type: "Float"
+ann:
+    foo:
+        type: "Float"

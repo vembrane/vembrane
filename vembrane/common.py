@@ -42,20 +42,61 @@ def normalize(s: str) -> str:
     return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
 
 
-def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
+def get_annotation_keys_and_ann_string(
+    header: VariantHeader,
+    ann_key: str,
+) -> (List[str], str):
     separator = "'"
     for rec in header.records:
         if rec.key == "VEP":
             separator = ":"
             continue
         if rec.get("ID") == ann_key:
-            return list(
+            split = rec.get("Description").strip('"').split(separator)
+            fields = list(
                 map(
                     str.strip,
-                    rec.get("Description").strip('"').split(separator)[1].split("|"),
+                    split[1].split("|"),
                 )
             )
-    return []
+            split[1] = "{fields}"
+            return fields, separator.join(split)
+    return [], None
+
+
+def get_annotation_keys(
+    header: VariantHeader,
+    ann_key: str,
+) -> List[str]:
+    return get_annotation_keys_and_ann_string(header, ann_key)[0]
+
+
+def add_annotations(header: VariantHeader, ann_key: str, annotations: dict):
+    # we wont change the argument itself, but return a modified copy
+    # this is important due to weird pysam behaviour
+    import sys
+    print(header.info["ANN"].id, file=sys.stderr)
+    fields, ann_string = get_annotation_keys_and_ann_string(header, ann_key)
+    header = header.copy()
+    header.info.remove_header(ann_key)
+    header = header.copy() # necessary to create ann again with different description
+    for key, value in annotations.items():
+        if key in fields:
+            continue
+        fields.append(key)
+    header.add_meta(
+        "INFO",
+        items=[
+            ("ID", ann_key),
+            ("Number", "."),
+            ("Type", "String"),
+            ("Description", ann_string.format(fields=" | ".join(fields))),
+        ],
+    )
+    # header.info["ANN"].id = 71
+    # print(header.info["ANN"].id, file=sys.stderr)
+
+    return header
 
 
 def split_annotation_entry(entry: str) -> List[str]:

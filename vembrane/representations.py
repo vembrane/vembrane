@@ -1,5 +1,6 @@
 import ast
 from itertools import chain
+from sys import stderr
 from types import CodeType
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -166,6 +167,12 @@ class Annotation(NoValueDict, DefaultGet):
         self._data.clear()
         self._annotation_data = split_annotation_entry(annotation)
 
+    def add(self, entry_name):
+        self._ann_conv[entry_name] = (
+            len(self._ann_conv),
+            str,
+        )  # TODO: determine correct parsing function
+
     def __getitem__(self, item):
         try:
             return self._data[item]
@@ -177,6 +184,13 @@ class Annotation(NoValueDict, DefaultGet):
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
+
+    def __setitem__(self, item, value):
+        ann_idx, convert = self._ann_conv[item]
+        self._annotation_data[ann_idx] = value
+
+    def __str__(self):
+        return "|".join(self._annotation_data)
 
 
 UNSET = object()
@@ -202,11 +216,14 @@ class Environment(dict):
         overwrite_number: Dict[str, Dict[str, str]] = {},
         evaluation_function_template: str = "lambda: {expression}",
         mode="eval",
+        target="",
     ):
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
-            for node in ast.walk(ast.parse(expression))
+            for node in chain(
+                ast.walk(ast.parse(expression)), ast.walk(ast.parse(target))
+            )
         )
         self._annotation: Annotation = Annotation(ann_key, header)
         self._globals: Dict[str, Any] = {}
