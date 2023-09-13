@@ -125,6 +125,23 @@ def test_and_update_record(
     ann_key: str,
     keep_unmatched: bool,
 ) -> Tuple[VariantRecord, bool]:
+    try:
+        return _test_and_update_record(env, idx, record, ann_key, keep_unmatched)
+    except VembraneError as e:
+        raise e
+    except Exception as e:
+        print(f"Encountered an error while processing record {idx}", file=stderr)
+        print(str(record), file=stderr)
+        raise e
+
+
+def _test_and_update_record(
+    env: Environment,
+    idx: int,
+    record: VariantRecord,
+    ann_key: str,
+    keep_unmatched: bool,
+) -> Tuple[VariantRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
