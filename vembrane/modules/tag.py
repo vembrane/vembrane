@@ -4,7 +4,8 @@ from itertools import chain, islice
 from sys import stderr
 from typing import Dict, Iterator, Set, Tuple
 
-from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
+from cyvcf2 import VCF
+from cyvcf2.cyvcf2 import Variant
 
 from .. import __version__
 from ..common import (
@@ -105,16 +106,16 @@ def add_subcommand(subparsers):
 def test_record(
     env: Environment,
     idx: int,
-    record: VariantRecord,
+    record: Variant,
     ann_key: str,
-) -> Tuple[VariantRecord, bool]:
+) -> Tuple[Variant, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
         # get all annotations from the record.info field
         # (or supply an empty ANN value if the record has no ANN field)
         try:
-            annotations = record.info[ann_key]
+            annotations = record.info[ann_key].split(",")
         except KeyError:
             annotations = [""]
 
@@ -128,20 +129,20 @@ def test_record(
 
 
 def tag_vcf(
-    vcf: VariantFile,
+    vcf: VCF,
     expressions: Dict[str, str],
     ann_key: str,
     auxiliary: Dict[str, Set[str]] = {},
     overwrite_number: Dict[str, Dict[str, str]] = {},
     invert: bool = False,
-) -> Iterator[VariantRecord]:
+) -> Iterator[Variant]:
     # For each tag-expression pair, a different Environment must be used.
     envs = {
         tag: Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
         for tag, expression in expressions.items()
     }
 
-    record: VariantRecord
+    record: Variant
     for idx, record in enumerate(vcf):
         for tag, env in envs.items():
             record, keep = test_record(env, idx, record, ann_key)
@@ -159,7 +160,7 @@ def check_tag(tag: str):
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with VariantFile(args.vcf) as vcf:
+    with VCF(args.vcf) as vcf:
         header: VariantHeader = vcf.header
 
         overwrite_number = {
@@ -209,7 +210,7 @@ def execute(args) -> None:
 
         records = chain(first_record, records)
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
-        with VariantFile(
+        with VCF(
             args.output,
             f"w{fmt}",
             header=header,

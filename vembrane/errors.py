@@ -1,4 +1,4 @@
-from pysam import VariantRecord
+from cyvcf2.cyvcf2 import Variant
 
 
 class VembraneError(Exception):
@@ -11,7 +11,7 @@ class VembraneError(Exception):
 class UnknownAnnotation(VembraneError):
     """Unknown annotation entry"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, key: str):
+    def __init__(self, record_idx: int, record: Variant, key: str):
         super(UnknownAnnotation, self).__init__(
             f"No ANN entry for '{key}' in record {record_idx}:\n{str(record)}"
         )
@@ -23,7 +23,7 @@ class UnknownAnnotation(VembraneError):
 class UnknownSample(VembraneError, KeyError):
     """Unknown Sample"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, sample: str):
+    def __init__(self, record_idx: int, record: Variant, sample: str):
         super(UnknownSample, self).__init__(
             f"No sample with name '{sample}' in record {record_idx}:\n{str(record)}"
         )
@@ -35,7 +35,7 @@ class UnknownSample(VembraneError, KeyError):
 class UnknownFormatField(VembraneError, KeyError):
     """Unknown FORMAT key"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, field: str):
+    def __init__(self, record_idx: int, record: Variant, field: str):
         super(UnknownFormatField, self).__init__(
             f"No FORMAT field '{field}' in record {record_idx}:\n{str(record)}"
         )
@@ -47,7 +47,7 @@ class UnknownFormatField(VembraneError, KeyError):
 class UnknownInfoField(VembraneError):
     """Unknown INFO key"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, field: str):
+    def __init__(self, record_idx: int, record: Variant, field: str):
         super(UnknownInfoField, self).__init__(
             f"No INFO field '{field}' in record {record_idx}:\n{str(record)}"
         )

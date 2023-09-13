@@ -6,7 +6,8 @@ from sys import stderr
 from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import yaml
-from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
+from cyvcf2 import VCF, Writer
+from cyvcf2.cyvcf2 import Variant
 
 from .. import __version__
 from ..common import (
@@ -19,6 +20,7 @@ from ..common import (
     normalize,
     read_auxiliary,
     split_annotation_entry,
+    header_keys,
 )
 from ..errors import VembraneError
 from ..representations import Environment
@@ -121,17 +123,17 @@ def add_subcommmand(subparsers):
 def test_and_update_record(
     env: Environment,
     idx: int,
-    record: VariantRecord,
+    record: Variant,
     ann_key: str,
     keep_unmatched: bool,
-) -> Tuple[VariantRecord, bool]:
+) -> Tuple[Variant, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
         # get all annotations from the record.info field
         # (or supply an empty ANN value if the record has no ANN field)
         try:
-            annotations = record.info[ann_key]
+            annotations = record.info[ann_key].split(",")
         except KeyError:
             num_ann_entries = len(env._annotation._ann_conv.keys())
             empty = "|" * num_ann_entries
@@ -153,7 +155,7 @@ def test_and_update_record(
 
             if len(annotations) != len(filtered_annotations):
                 # update annotations if they have actually been filtered
-                record.info[ann_key] = filtered_annotations
+                record.info[ann_key] = ",".join(filtered_annotations)
 
             return record, len(filtered_annotations) > 0
     else:
@@ -163,20 +165,22 @@ def test_and_update_record(
 
 
 def filter_vcf(
-    vcf: VariantFile,
+    vcf: VCF,
     expression: str,
     ann_key: str,
     keep_unmatched: bool = False,
     preserve_order: bool = False,
     auxiliary: Dict[str, Set[str]] = {},
     overwrite_number: Dict[str, Dict[str, str]] = {},
-) -> Iterator[VariantRecord]:
-    env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
-    has_mateid_key = vcf.header.info.get("MATEID", None) is not None
-    has_event_key = vcf.header.info.get("EVENT", None) is not None
+) -> Iterator[Variant]:
+    env = Environment(expression, ann_key, vcf, auxiliary, overwrite_number)
+
+    info_keys = header_keys(vcf, "INFO")
+    has_mateid_key = "MATEID" in info_keys
+    has_event_key = "EVENT" in info_keys
 
     def get_event_name(
-        record: VariantRecord,
+        record: Variant,
         has_mateid_key=has_mateid_key,
         has_event_key=has_event_key,
     ) -> Tuple[Optional[str], Optional[str]]:
@@ -196,7 +200,7 @@ def filter_vcf(
 
         return event_name, mate_pair
 
-    record: VariantRecord
+    record: Variant
     if not preserve_order:
         # If the order is not important, emit records that pass the filter expression
         # as we encounter them
@@ -267,7 +271,7 @@ def filter_vcf(
         # second pass.
         event_set: Set[str] = set()
 
-        def fallback_name(record: VariantRecord) -> str:
+        def fallback_name(record: Variant) -> str:
             event_name, mate_pair_name = get_event_name(record)
 
             # There may be BND record which have neither of
@@ -301,8 +305,8 @@ def filter_vcf(
 
 
 def statistics(
-    records: Iterator[VariantRecord], vcf: VariantFile, filename: str, ann_key: str
-) -> Iterator[VariantRecord]:
+    records: Iterator[Variant], vcf: VCF, filename: str, ann_key: str
+) -> Iterator[Variant]:
     annotation_keys = get_annotation_keys(vcf.header, ann_key)
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
@@ -327,56 +331,52 @@ def statistics(
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with VariantFile(args.vcf) as vcf:
-        header: VariantHeader = vcf.header
-        header.add_meta("vembraneVersion", __version__)
-        # NOTE: If .modules.filter.execute might be used as a library function
-        #       in the future, we should not record sys.argv directly below.
-        cmd_parts = [normalize(arg) if " " in arg else arg for arg in sys.argv[3:]]
-        expr = " ".join(a.strip() for a in args.expression.split("\n"))
-        expr = normalize(expr)
+    vcf = VCF(args.vcf)
+    vcf.add_to_header(f"##vembraneVersion={ __version__}")
+    # NOTE: If .modules.filter.execute might be used as a library function
+    #       in the future, we should not record sys.argv directly below.
+    cmd_parts = [normalize(arg) if " " in arg else arg for arg in sys.argv[3:]]
+    expr = " ".join(a.strip() for a in args.expression.split("\n"))
+    expr = normalize(expr)
 
-        header.add_meta(
-            "vembraneCmd",
-            "vembrane " + expr + " " + " ".join(cmd_parts),
-        )
+    vcf.add_to_header(
+        f"##vembraneCmd=vembrane '{expr}' {' '.join(cmd_parts)}",
+    )
 
-        overwrite_number = {
-            "INFO": dict(args.overwrite_number_info),
-            "FORMAT": dict(args.overwrite_number_format),
-        }
+    overwrite_number = {
+        "INFO": dict(args.overwrite_number_info),
+        "FORMAT": dict(args.overwrite_number_format),
+    }
 
-        records = filter_vcf(
-            vcf,
-            args.expression,
-            args.annotation_key,
-            keep_unmatched=args.keep_unmatched,
-            preserve_order=args.preserve_order,
-            auxiliary=aux,
-            overwrite_number=overwrite_number,
-        )
+    records = filter_vcf(
+        vcf,
+        args.expression,
+        args.annotation_key,
+        keep_unmatched=args.keep_unmatched,
+        preserve_order=args.preserve_order,
+        auxiliary=aux,
+        overwrite_number=overwrite_number,
+    )
 
-        try:
-            first_record = list(islice(records, 1))
-        except VembraneError as ve:
-            print(ve, file=stderr)
-            exit(1)
+    try:
+        first_record = list(islice(records, 1))
+    except VembraneError as ve:
+        print(ve, file=stderr)
+        exit(1)
 
-        records = chain(first_record, records)
+    records = chain(first_record, records)
 
-        if args.statistics is not None:
-            records = statistics(records, vcf, args.statistics, args.annotation_key)
+    if args.statistics is not None:
+        records = statistics(records, vcf, args.statistics, args.annotation_key)
 
-        fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
-        with VariantFile(
-            args.output,
-            f"w{fmt}",
-            header=header,
-        ) as out:
-            try:
-                for record in records:
-                    out.write(record)
+    fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
+    out = Writer(args.output, vcf, f"w{fmt}")
+    try:
+        for record in records:
+            out.write_record(record)
 
-            except VembraneError as ve:
-                print(ve, file=stderr)
-                exit(1)
+    except VembraneError as ve:
+        print(ve, file=stderr)
+        exit(1)
+    out.close()
+    vcf.close()
