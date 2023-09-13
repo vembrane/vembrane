@@ -134,7 +134,7 @@ def test_and_update_record(
     except Exception as e:
         print(f"Encountered an error while processing record {idx}", file=stderr)
         print(str(record), file=stderr)
-    raise e
+        raise e
 
 
 def _test_and_update_record(
