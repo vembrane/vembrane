@@ -140,7 +140,7 @@ def test_and_update_record(
 def _test_and_update_record(
     env: Environment,
     idx: int,
-    record: VariantRecord,
+    record: Variant,
     ann_key: str,
     keep_unmatched: bool,
 ) -> Tuple[Variant, bool]:
