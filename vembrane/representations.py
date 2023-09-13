@@ -176,7 +176,9 @@ class Annotation(NoValueDict, DefaultGet):
             except KeyError:
                 raise UnknownAnnotation(self._record_idx, self._record, item)
             if ann_idx >= len(self._annotation_data):
-                raise MalformedAnnotationError(self._record_idx, self._record, item, ann_idx)
+                raise MalformedAnnotationError(
+                    self._record_idx, self._record, item, ann_idx
+                )
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
