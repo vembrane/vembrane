@@ -43,6 +43,7 @@ options:
 
 ### Filter expression
 The filter expression can be any valid python expression that evaluates to a value of *type* `bool`.
+If you want to use truthy values, you need to wrap the expression in `bool()`, or aggregate multiple values via `any()` or `all()`.
 
 However, functions and symbols available have been restricted to the following:
 
