@@ -19,6 +19,8 @@ from .ann_types import (
 )
 from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
 from .errors import (
+    MalformedAnnotationError,
+    NonBoolTypeError,
     UnknownAnnotation,
     UnknownFormatField,
     UnknownInfoField,
@@ -185,6 +187,10 @@ class Annotation(NoValueDict, DefaultGet):
                 ann_idx, convert = self._ann_conv[item]
             except KeyError:
                 raise UnknownAnnotation(self._record_idx, self._record, item)
+            if ann_idx >= len(self._annotation_data):
+                raise MalformedAnnotationError(
+                    self._record_idx, self._record, item, ann_idx
+                )
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
@@ -402,7 +408,10 @@ class Environment(dict):
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
             self._annotation.update(self.idx, self.record, annotation)
-        return self._func()
+        keep = self._func()
+        if not isinstance(keep, bool):
+            raise NonBoolTypeError(keep)
+        return keep
 
     def table(self, annotation: str = "") -> tuple:
         if self._has_ann:

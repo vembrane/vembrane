@@ -1,4 +1,5 @@
 from cyvcf2.cyvcf2 import Variant
+from typing import Any
 
 
 class VembraneError(Exception):
@@ -18,6 +19,20 @@ class UnknownAnnotation(VembraneError):
         self.record_idx = record_idx
         self.record = record
         self.key = key
+
+
+class MalformedAnnotationError(VembraneError):
+    """Unknown annotation entry"""
+
+    def __init__(self, record_idx: int, record: Variant, key: str, ann_idx: int):
+        super(MalformedAnnotationError, self).__init__(
+            f"The annotation index {ann_idx} ('{key}') in record {record_idx} is out of bounds. "
+            f"The ANN field might be malformed for this record:\n{str(record)}"
+        )
+        self.record_idx = record_idx
+        self.record = record
+        self.key = key
+        self.ann_idx = ann_idx
 
 
 class UnknownSample(VembraneError, KeyError):
@@ -129,4 +144,15 @@ class FilterTagNameInvalid(VembraneError):
         super(FilterTagNameInvalid, self).__init__(
             f"Filter '{tag}' contains invalid characters (whitespace or semicolon) "
             f"or is '0'."
+        )
+
+
+class NonBoolTypeError(VembraneError):
+    def __init__(self, value: Any):
+        super(NonBoolTypeError, self).__init__(
+            "The expression does not evaluate to bool, "
+            f"but to {type(value)} ({value}).\n"
+            "If you wish to use truthy values, "
+            "explicitly wrap the expression in `bool(…)`, "
+            "or aggregate multiple values via `any(…)` or `all(…)`."
         )
