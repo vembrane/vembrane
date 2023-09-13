@@ -17,6 +17,7 @@ from .ann_types import (
 from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
 from .errors import (
     MalformedAnnotationError,
+    NonBoolTypeError,
     UnknownAnnotation,
     UnknownFormatField,
     UnknownInfoField,
@@ -392,7 +393,10 @@ class Environment(dict):
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
             self._annotation.update(self.idx, self.record, annotation)
-        return self._func()
+        keep = self._func()
+        if not isinstance(keep, bool):
+            raise NonBoolTypeError(keep)
+        return keep
 
     def table(self, annotation: str = "") -> tuple:
         if self._has_ann:
