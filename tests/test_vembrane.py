@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from pysam import VariantFile
+from cyvcf2 import VCF
 
 from vembrane import __version__, errors
 from vembrane.modules import filter, table, tag
@@ -104,22 +104,22 @@ def test_filter(testcase):
                 module = filter if args.command == "filter" else tag
                 expected = str(path.joinpath("expected.vcf"))
                 module.execute(args)
-                with VariantFile(tmp_out.name) as vcf_actual:
-                    with VariantFile(expected) as vcf_expected:
-                        for r1, r2 in zip_longest(vcf_actual, vcf_expected):
-                            assert r1 == r2
+                vcf_actual = VCF(tmp_out.name)
+                vcf_expected = VCF(expected)
+                for r1, r2 in zip_longest(vcf_actual, vcf_expected):
+                    assert r1 == r2
 
-                        for r1, r2 in zip_longest(
-                            vcf_actual.header.records, vcf_expected.header.records
-                        ):
-                            if r1.key == "vembraneVersion":
-                                assert r1.value == __version__
-                            elif r1.key == "vembraneCmd":
-                                assert r1.value.startswith("vembrane ")
-                            else:
-                                assert r1.key == r2.key
-                                assert r1.value == r2.value
-                                assert r1.items() == r2.items()
+                for r1, r2 in zip_longest(
+                    vcf_actual.header.records, vcf_expected.header.records
+                ):
+                    if r1.key == "vembraneVersion":
+                        assert r1.value == __version__
+                    elif r1.key == "vembraneCmd":
+                        assert r1.value.startswith("vembrane ")
+                    else:
+                        assert r1.key == r2.key
+                        assert r1.value == r2.value
+                        assert r1.items() == r2.items()
             elif args.command == "table":
                 expected = str(path.joinpath("expected.tsv"))
                 table.execute(args)
@@ -131,3 +131,6 @@ def test_filter(testcase):
                 assert t_out == e_out
             else:
                 assert args.command in {"filter", "table"}, "Unknown subcommand"
+
+            vcf_actual.close()
+            vcf_expected.close()
