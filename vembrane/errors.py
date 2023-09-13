@@ -22,6 +22,20 @@ class UnknownAnnotation(VembraneError):
         self.key = key
 
 
+class MalformedAnnotationError(VembraneError):
+    """Unknown annotation entry"""
+
+    def __init__(self, record_idx: int, record: VariantRecord, key: str, ann_idx: int):
+        super(MalformedAnnotationError, self).__init__(
+            f"The annotation index {ann_idx} ('{key}') in record {record_idx} is out of bounds. "
+            f"The ANN field might be malformed for this record:\n{str(record)}"
+        )
+        self.record_idx = record_idx
+        self.record = record
+        self.key = key
+        self.ann_idx = ann_idx
+
+
 class UnknownSample(VembraneError, KeyError):
     """Unknown Sample"""
 
