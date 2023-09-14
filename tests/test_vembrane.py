@@ -2,14 +2,15 @@ import argparse
 import builtins
 import os
 import tempfile
-from itertools import zip_longest
+from itertools import product, zip_longest
 from pathlib import Path
 
 import pytest
 import yaml
-from pysam import VariantFile
 
 from vembrane import __version__, errors
+from vembrane.backend.base import Backend
+from vembrane.common import create_reader
 from vembrane.modules import filter, table, tag
 
 CASES = Path(__file__).parent.joinpath("testcases")
@@ -20,9 +21,13 @@ def test_version():
 
 
 @pytest.mark.parametrize(
-    "testcase", [d for d in os.listdir(CASES) if not d.startswith(".")]
+    "testcase,backend",
+    product(
+        (d for d in os.listdir(CASES) if not d.startswith(".")),
+        (Backend.pysam,),  # TODO: include Backend.cyvcf2
+    ),
 )
-def test_filter(testcase):
+def test_filter(testcase: os.PathLike, backend: Backend):
     path = CASES.joinpath(testcase)
 
     vcf_path = path.joinpath("test.vcf")
@@ -104,8 +109,8 @@ def test_filter(testcase):
                 module = filter if args.command == "filter" else tag
                 expected = str(path.joinpath("expected.vcf"))
                 module.execute(args)
-                with VariantFile(tmp_out.name) as vcf_actual:
-                    with VariantFile(expected) as vcf_expected:
+                with create_reader(tmp_out.name, backend=backend) as vcf_actual:
+                    with create_reader(expected, backend=backend) as vcf_expected:
                         for r1, r2 in zip_longest(vcf_actual, vcf_expected):
                             assert r1 == r2
 
