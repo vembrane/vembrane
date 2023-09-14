@@ -1,5 +1,5 @@
 from abc import abstractmethod, abstractproperty
-from sys import stderr
+from typing import Any, Dict, List
 
 
 class VCFRecord:
@@ -8,13 +8,39 @@ class VCFRecord:
         raise NotImplementedError
 
     @abstractproperty
-    def info(self):
+    def contig(self) -> str:
         raise NotImplementedError
 
+    @abstractproperty
+    def position(self) -> int:
+        raise NotImplementedError
 
-class VCFHeader:
-    @abstractmethod
-    def __init__(self, filename: str):
+    @abstractproperty
+    def id(self) -> str:
+        raise NotImplementedError
+
+    @abstractproperty
+    def reference_allele(self) -> str:
+        raise NotImplementedError
+
+    @abstractproperty
+    def alt_alleles(self) -> List[str]:
+        raise NotImplementedError
+
+    @abstractproperty
+    def quality(self) -> float:
+        raise NotImplementedError
+
+    @abstractproperty
+    def filter(self) -> List[str]:
+        raise NotImplementedError
+
+    @abstractproperty
+    def info(self) -> Dict[str, Any]:
+        raise NotImplementedError
+
+    @abstractproperty
+    def format(self) -> Dict[str, Dict[str, Any]]:
         raise NotImplementedError
 
 
