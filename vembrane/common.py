@@ -6,7 +6,7 @@ from typing import Dict, Iterable, Iterator, List, Optional, Set
 from pysam.libcbcf import VariantRecord
 
 from .backend.backend_pysam import PysamVCFReader, PysamVCFWriter
-from .backend.base import VCFHeader, VCFReader
+from .backend.base import Backend, VCFHeader, VCFReader
 from .errors import InvalidExpression
 
 
@@ -139,19 +139,21 @@ def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
     return {name: read_set(contents) for name, contents in aux.items()}
 
 
-def create_reader(filename: str, backend: str = "pysam"):
-    if backend == "pysam":
+def create_reader(filename: str, backend: Backend = Backend.pysam):
+    if backend == Backend.pysam:
         return PysamVCFReader(filename)
-    elif backend == "cyvcf":
+    elif backend == Backend.cyvcf2:
         pass  # TODO: cyvcf backend
     else:
-        pass  # TODO: Throw error
+        raise ValueError(f"{backend} is not a known backend.")
 
 
-def create_writer(filename: str, fmt: str, reader: VCFReader, backend="pysam"):
-    if backend == "pysam":
+def create_writer(
+    filename: str, fmt: str, reader: VCFReader, backend: Backend = Backend.pysam
+):
+    if backend == Backend.pysam:
         return PysamVCFWriter(filename, fmt, reader)
-    elif backend == "cyvcf":
+    elif backend == Backend.cyvcf2:
         pass  # TODO: cyvcf backend
     else:
-        pass  # TODO: Throw error
+        raise ValueError(f"{backend} is not a known backend.")

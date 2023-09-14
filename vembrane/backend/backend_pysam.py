@@ -93,6 +93,9 @@ class PysamVCFReader(VCFReader):
     def __next__(self):
         return PysamVCFRecord(self._iter_file.__next__())
 
+    def reset(self):
+        self._file.reset()
+
 
 class PysamVCFHeader(VCFHeader):
     def __init__(self, reader: VCFReader):

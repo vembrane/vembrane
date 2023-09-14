@@ -1,5 +1,11 @@
 from abc import abstractmethod, abstractproperty
+from enum import Enum
 from typing import List, Tuple
+
+
+class Backend(Enum):
+    pysam = 0
+    cyvcf2 = 1
 
 
 class VCFRecordInfo:
@@ -98,6 +104,10 @@ class VCFReader:
     @property
     def header(self):
         return self._header
+
+    @abstractmethod
+    def reset(self):
+        pass
 
 
 class VCFHeader:

@@ -1,27 +1,28 @@
 import argparse
 import sys
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 from itertools import chain, islice
 from sys import stderr
 from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import yaml
-from vembrane.backend.base import VCFReader
-from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
+from pysam.libcbcf import VariantFile, VariantRecord
+
+from vembrane.backend.base import Backend, VCFReader
 
 from .. import __version__
 from ..common import (
     AppendKeyValuePair,
     BreakendEvent,
     check_expression,
+    create_reader,
+    create_writer,
     get_annotation_keys,
     is_bnd_record,
     mate_key,
     normalize,
     read_auxiliary,
     split_annotation_entry,
-    create_reader,
-    create_writer,
 )
 from ..errors import VembraneError
 from ..representations import Environment
@@ -296,7 +297,7 @@ def filter_vcf(
             # which we construct from the record's index in the file.
             return event_name or mate_pair_name or record.id or f"DUMMY: {idx}"
 
-        for idx, record in enumerate(vcf):
+        for idx, record in enumerate(reader):
             if is_bnd_record(record):
                 record, keep = test_and_update_record(
                     env, idx, record, ann_key, keep_unmatched
@@ -306,8 +307,8 @@ def filter_vcf(
                     event_set.add(event_name)
 
         # The second pass can now yield records in the correct order
-        vcf.reset()
-        for idx, record in enumerate(vcf):
+        reader.reset()
+        for idx, record in enumerate(reader):
             if is_bnd_record(record):
                 event_name = fallback_name(record)
                 if event_name in event_set:
@@ -347,7 +348,7 @@ def statistics(
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with create_reader(args.vcf, backend="pysam") as reader:
+    with create_reader(args.vcf, backend=Backend.pysam) as reader:
         # header: dict = vcf.header
         reader.add_meta("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
@@ -389,7 +390,7 @@ def execute(args) -> None:
 
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
 
-        with create_writer(args.output, fmt, reader, backend="pysam") as writer:
+        with create_writer(args.output, fmt, reader, backend=Backend.pysam) as writer:
             try:
                 for record in records:
                     writer.write(record)
