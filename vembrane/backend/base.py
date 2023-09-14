@@ -1,5 +1,5 @@
 from abc import abstractmethod, abstractproperty
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 
 class VCFRecord:
@@ -19,12 +19,16 @@ class VCFRecord:
     def id(self) -> str:
         raise NotImplementedError
 
+    @property
+    def alleles(self) -> Tuple[str]:
+        return (self.reference_allele, *self.alt_alleles)
+
     @abstractproperty
     def reference_allele(self) -> str:
         raise NotImplementedError
 
     @abstractproperty
-    def alt_alleles(self) -> List[str]:
+    def alt_alleles(self) -> Tuple[str]:
         raise NotImplementedError
 
     @abstractproperty

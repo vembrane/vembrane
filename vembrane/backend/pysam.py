@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import pysam
 
@@ -24,11 +24,11 @@ class PysamVCFRecord(VCFRecord):
 
     @property
     def reference_allele(self) -> str:
-        pass
+        return self._record.ref
 
     @property
-    def alt_alleles(self) -> List[str]:
-        pass
+    def alt_alleles(self) -> Tuple[str]:
+        return tuple(self._record.alts)
 
     @property
     def quality(self) -> float:

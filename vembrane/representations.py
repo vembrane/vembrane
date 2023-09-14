@@ -1,5 +1,4 @@
 import ast
-from itertools import chain
 from types import CodeType
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -329,7 +328,7 @@ class Environment(dict):
     def _get_alleles(self) -> Tuple[str, ...]:
         alleles = self._alleles
         if not alleles:
-            alleles = self._alleles = tuple(chain(self.record.alleles))
+            alleles = self._alleles = self.record.alleles
         return alleles
 
     def _get_ref(self) -> str:
