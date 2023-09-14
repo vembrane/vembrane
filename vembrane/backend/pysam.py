@@ -1,8 +1,9 @@
-import pysam
-from vembrane.backend.base import VCFReader, VCFWriter, VCFHeader, VCFRecord
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
+from typing import Any, Dict, List
 
-from sys import stderr
+import pysam
+
+from vembrane.backend.base import VCFHeader, VCFReader, VCFRecord, VCFWriter
 
 
 class PysamVCFRecord(VCFRecord):
@@ -10,8 +11,40 @@ class PysamVCFRecord(VCFRecord):
         self._record = record
 
     @property
-    def info(self):
-        return self._record.info
+    def contig(self) -> str:
+        return self._record.chrom
+
+    @property
+    def position(self) -> int:
+        return self._record.pos
+
+    @property
+    def id(self) -> str:
+        return self._record.id
+
+    @property
+    def reference_allele(self) -> str:
+        pass
+
+    @property
+    def alt_alleles(self) -> List[str]:
+        pass
+
+    @property
+    def quality(self) -> float:
+        pass
+
+    @property
+    def filter(self) -> List[str]:
+        pass
+
+    @property
+    def info(self) -> Dict[str, Any]:
+        return dict(self._record.info)
+
+    @property
+    def format(self) -> Dict[str, Dict[str, Any]]:
+        pass
 
 
 class PysamVCFReader(VCFReader):
@@ -43,7 +76,7 @@ class PysamVCFHeader(VCFHeader):
             d["value"] = r.value
             d["type"] = r.type
             self._data.append(d)
-            if not r.type in self._data_category:
+            if r.type not in self._data_category:
                 self._data_category[r.type] = dict()
             if "ID" in d:
                 self._data_category[r.type][d["ID"]] = d

@@ -5,8 +5,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
-from .backend.base import VCFReader, VCFHeader
-
 from .ann_types import (
     ANN_TYPER,
     NA,
@@ -16,6 +14,7 @@ from .ann_types import (
     NvIntFloatStr,
     type_info,
 )
+from .backend.base import VCFHeader
 from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
 from .errors import (
     MalformedAnnotationError,
@@ -308,12 +307,12 @@ class Environment(dict):
         self._globals["DATA"] = data
 
     def _get_chrom(self) -> str:
-        value = self.record.chrom
+        value = self.record.contig
         self._globals["CHROM"] = value
         return value
 
     def _get_pos(self) -> int:
-        value = self.record.pos
+        value = self.record.position
         self._globals["POS"] = value
         return value
 
