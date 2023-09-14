@@ -30,6 +30,10 @@ class VCFRecordFormat:
     pass
 
 
+class VCFRecordFilter:
+    pass
+
+
 class VCFRecord:
     @abstractmethod
     def __init__(self, filename: str):
@@ -41,6 +45,10 @@ class VCFRecord:
 
     @abstractproperty
     def position(self) -> int:
+        raise NotImplementedError
+
+    @abstractproperty
+    def stop(self) -> int:
         raise NotImplementedError
 
     @abstractproperty
@@ -64,7 +72,7 @@ class VCFRecord:
         raise NotImplementedError
 
     @abstractproperty
-    def filter(self) -> List[str]:
+    def filter(self) -> VCFRecordFilter:
         raise NotImplementedError
 
     @abstractproperty

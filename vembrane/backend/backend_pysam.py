@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from typing import List, Tuple
+from typing import Tuple
 
 import pysam
 from pysam import VariantRecord
@@ -8,12 +8,11 @@ from vembrane.backend.base import (
     VCFHeader,
     VCFReader,
     VCFRecord,
+    VCFRecordFilter,
     VCFRecordFormat,
     VCFRecordInfo,
     VCFWriter,
 )
-
-# from vembrane.representations import NoValueDict, DefaultGet
 
 
 class PysamVCFRecord(VCFRecord):
@@ -27,6 +26,10 @@ class PysamVCFRecord(VCFRecord):
     @property
     def position(self) -> int:
         return self._record.pos
+
+    @property
+    def stop(self) -> int:
+        return self._record.stop
 
     @property
     def id(self) -> str:
@@ -45,7 +48,7 @@ class PysamVCFRecord(VCFRecord):
         return self._record.qual
 
     @property
-    def filter(self) -> List[str]:
+    def filter(self) -> VCFRecordFilter:
         return self._record.filter
 
     @property
@@ -75,6 +78,14 @@ class PysamRecordInfo(VCFRecordInfo):
 
     def get(self, item, default=None):
         return self._record.info.get(item, default)
+
+
+class PysamRecordFormat(VCFRecordFormat):
+    pass
+
+
+class PysamRecordFilter(VCFRecordFilter):
+    pass
 
 
 class PysamVCFReader(VCFReader):
