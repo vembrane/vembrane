@@ -87,6 +87,18 @@ class VCFRecord:
     def format(self) -> VCFRecordFormat:
         raise NotImplementedError
 
+    @abstractmethod
+    def __repr__(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __str__(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __eq__(self, other):
+        raise NotImplementedError
+
 
 class VCFReader:
     @abstractmethod
@@ -141,6 +153,10 @@ class VCFHeader:
 
     @abstractproperty
     def filters(self) -> List[str]:
+        raise NotImplementedError
+
+    @abstractproperty
+    def records(self):
         raise NotImplementedError
 
 
