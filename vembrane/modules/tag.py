@@ -4,15 +4,14 @@ from itertools import chain, islice
 from sys import stderr
 from typing import Dict, Iterator, Set, Tuple
 
-from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
-
 from .. import __version__
-from ..backend.base import Backend, VCFReader
+from ..backend.base import Backend, VCFHeader, VCFReader, VCFRecord
 from ..common import (
     AppendKeyValuePair,
     AppendTagExpression,
     check_expression,
     create_reader,
+    create_writer,
     normalize,
     read_auxiliary,
     single_outer,
@@ -107,9 +106,9 @@ def add_subcommand(subparsers):
 def test_record(
     env: Environment,
     idx: int,
-    record: VariantRecord,
+    record: VCFRecord,
     ann_key: str,
-) -> Tuple[VariantRecord, bool]:
+) -> Tuple[VCFRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
@@ -136,14 +135,14 @@ def tag_vcf(
     auxiliary: Dict[str, Set[str]] = {},
     overwrite_number: Dict[str, Dict[str, str]] = {},
     invert: bool = False,
-) -> Iterator[VariantRecord]:
+) -> Iterator[VCFRecord]:
     # For each tag-expression pair, a different Environment must be used.
     envs = {
         tag: Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
         for tag, expression in expressions.items()
     }
 
-    record: VariantRecord
+    record: VCFRecord
     for idx, record in enumerate(vcf):
         for tag, env in envs.items():
             record, keep = test_record(env, idx, record, ann_key)
@@ -162,7 +161,7 @@ def check_tag(tag: str):
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
     with create_reader(args.vcf, backend=Backend.pysam) as vcf:
-        header: VariantHeader = vcf.header
+        header: VCFHeader = vcf.header
 
         overwrite_number = {
             "INFO": dict(args.overwrite_number_info),
@@ -211,7 +210,7 @@ def execute(args) -> None:
 
         records = chain(first_record, records)
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
-        with VariantFile(
+        with create_writer(
             args.output,
             f"w{fmt}",
             header=header,

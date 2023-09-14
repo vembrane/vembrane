@@ -1,6 +1,6 @@
 from typing import Any
 
-from pysam import VariantRecord
+from vembrane.backend.base import VCFRecord
 
 
 class VembraneError(Exception):
@@ -13,7 +13,7 @@ class VembraneError(Exception):
 class UnknownAnnotation(VembraneError):
     """Unknown annotation entry"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, key: str):
+    def __init__(self, record_idx: int, record: VCFRecord, key: str):
         super(UnknownAnnotation, self).__init__(
             f"No ANN entry for '{key}' in record {record_idx}:\n{str(record)}"
         )
@@ -25,9 +25,10 @@ class UnknownAnnotation(VembraneError):
 class MalformedAnnotationError(VembraneError):
     """Unknown annotation entry"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, key: str, ann_idx: int):
+    def __init__(self, record_idx: int, record: VCFRecord, key: str, ann_idx: int):
         super(MalformedAnnotationError, self).__init__(
-            f"The annotation index {ann_idx} ('{key}') in record {record_idx} is out of bounds. "
+            f"The annotation index {ann_idx} ('{key}') "
+            f"in record {record_idx} is out of bounds. "
             f"The ANN field might be malformed for this record:\n{str(record)}"
         )
         self.record_idx = record_idx
@@ -39,7 +40,7 @@ class MalformedAnnotationError(VembraneError):
 class UnknownSample(VembraneError, KeyError):
     """Unknown Sample"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, sample: str):
+    def __init__(self, record_idx: int, record: VCFRecord, sample: str):
         super(UnknownSample, self).__init__(
             f"No sample with name '{sample}' in record {record_idx}:\n{str(record)}"
         )
@@ -51,7 +52,7 @@ class UnknownSample(VembraneError, KeyError):
 class UnknownFormatField(VembraneError, KeyError):
     """Unknown FORMAT key"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, field: str):
+    def __init__(self, record_idx: int, record: VCFRecord, field: str):
         super(UnknownFormatField, self).__init__(
             f"No FORMAT field '{field}' in record {record_idx}:\n{str(record)}"
         )
@@ -63,7 +64,7 @@ class UnknownFormatField(VembraneError, KeyError):
 class UnknownInfoField(VembraneError):
     """Unknown INFO key"""
 
-    def __init__(self, record_idx: int, record: VariantRecord, field: str):
+    def __init__(self, record_idx: int, record: VCFRecord, field: str):
         super(UnknownInfoField, self).__init__(
             f"No INFO field '{field}' in record {record_idx}:\n{str(record)}"
         )

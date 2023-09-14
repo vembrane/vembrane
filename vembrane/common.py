@@ -3,10 +3,8 @@ import ast
 import shlex
 from typing import Dict, Iterable, Iterator, List, Optional, Set
 
-from pysam.libcbcf import VariantRecord
-
 from .backend.backend_pysam import PysamVCFReader, PysamVCFWriter
-from .backend.base import Backend, VCFHeader, VCFReader
+from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
 from .errors import InvalidExpression
 
 
@@ -64,7 +62,7 @@ def split_annotation_entry(entry: str) -> List[str]:
     return entry.split("|")
 
 
-def is_bnd_record(record: VariantRecord) -> bool:
+def is_bnd_record(record: VCFRecord) -> bool:
     return "SVTYPE" in record.info and record.info.get("SVTYPE", None) == "BND"
 
 
@@ -73,17 +71,17 @@ class BreakendEvent(object):
 
     def __init__(self, name: str, mate_pair: bool = False):
         self.name = name
-        self.records: List[VariantRecord] = []
+        self.records: List[VCFRecord] = []
         self.keep_records: List[bool] = []
         self.keep = False
         self.mate_pair = mate_pair
 
-    def add(self, record: VariantRecord, keep_record: bool):
+    def add(self, record: VCFRecord, keep_record: bool):
         self.records.append(record)
         self.keep_records.append(keep_record)
         self.keep |= keep_record
 
-    def emit(self) -> Iterator[VariantRecord]:
+    def emit(self) -> Iterator[VCFRecord]:
         assert self.keep
         yield from self.records
         self.records = []

@@ -5,10 +5,9 @@ from typing import Any, Callable, Dict, Iterator
 import numpy as np
 import yaml
 from intervaltree import Interval, IntervalTree
-from pysam.libcbcf import VariantFile, VariantRecord
 
-from ..backend.base import VCFReader
-from ..common import check_expression
+from ..backend.base import VCFReader, VCFRecord
+from ..common import check_expression, create_reader, create_writer
 from ..representations import Environment
 
 
@@ -59,7 +58,7 @@ def annotate_vcf(
     ann_key: str,
     ann_data,
     config: dict,
-) -> Iterator[VariantRecord]:
+) -> Iterator[VCFRecord]:
     env = Environment(expression, ann_key, vcf.header)
 
     config_chrom_column = config["annotation"]["columns"]["chrom"]
@@ -83,7 +82,7 @@ def annotate_vcf(
     current_chrom = None
     current_ann_data = None
 
-    record: VariantRecord
+    record: VCFRecord
     for idx, record in enumerate(vcf):
         chrom = None
         if current_chrom != record.chrom:
@@ -158,7 +157,7 @@ def execute(args):
     )
     expression = f"({expression})"
 
-    with VariantFile(args.vcf) as vcf:
+    with create_reader(args.vcf) as vcf:
         # add new info
         for value in config["annotation"]["values"]:
             value = value["value"]
@@ -173,7 +172,7 @@ def execute(args):
             )
 
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
-        with VariantFile(
+        with create_writer(
             args.output,
             f"w{fmt}",
             header=vcf.header,

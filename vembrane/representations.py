@@ -1,9 +1,6 @@
 import ast
 from types import CodeType
 from typing import Any, Dict, List, Optional, Set, Tuple
-from sys import stderr
-
-from pysam.libcbcf import VariantRecord, VariantRecordSamples
 
 from .ann_types import (
     ANN_TYPER,
@@ -14,7 +11,7 @@ from .ann_types import (
     NvIntFloatStr,
     type_info,
 )
-from .backend.base import VCFHeader
+from .backend.base import VCFHeader, VCFRecord, VCFRecordSamples
 from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
 from .errors import (
     MalformedAnnotationError,
@@ -49,10 +46,10 @@ class Format(NoValueDict, DefaultGet):
     def __init__(
         self,
         record_idx: int,
-        record: VariantRecord,
+        record: VCFRecord,
         name: str,
         number: str,
-        record_samples: VariantRecordSamples,
+        record_samples: VCFRecordSamples,
     ):
         self._record_idx = record_idx
         self._record = record
@@ -80,7 +77,7 @@ class Formats(NoValueDict):
     def __init__(
         self,
         record_idx: int,
-        record: VariantRecord,
+        record: VCFRecord,
         header_format_fields: Dict[str, str],
     ):
         self._record = record
@@ -110,7 +107,7 @@ class Info(NoValueDict, DefaultGet):
     def __init__(
         self,
         record_idx: int,
-        record: VariantRecord,
+        record: VCFRecord,
         header_info_fields: Dict[str, str],
         ann_key: str,
     ):
@@ -154,7 +151,7 @@ class Info(NoValueDict, DefaultGet):
 class Annotation(NoValueDict, DefaultGet):
     def __init__(self, ann_key: str, header: VCFHeader):
         self._record_idx = -1
-        self._record: Optional[VariantRecord] = None
+        self._record: Optional[VCFRecord] = None
         self._annotation_data: List[str] = []
         self._data: Dict[str, Any] = {}
         annotation_keys = get_annotation_keys(header, ann_key)
@@ -163,7 +160,7 @@ class Annotation(NoValueDict, DefaultGet):
             for ann_idx, entry in enumerate(map(ANN_TYPER.get_entry, annotation_keys))
         }
 
-    def update(self, record_idx: int, record: VariantRecord, annotation: str):
+    def update(self, record_idx: int, record: VCFRecord, annotation: str):
         self._record_idx = record_idx
         self._record = record
         self._data.clear()
@@ -290,14 +287,14 @@ class Environment(dict):
         self._header_info_fields = self._numbers.get("INFO", dict())
         self._header_format_fields = self._numbers.get("FORMAT", dict())
         self._empty_globals = {name: UNSET for name in self._getters}
-        self.record: VariantRecord = None
+        self.record: VCFRecord = None
         self.idx: int = -1
         self.aux = auxiliary
 
     def expression_annotations(self):
         return self._has_ann
 
-    def update_from_record(self, idx: int, record: VariantRecord):
+    def update_from_record(self, idx: int, record: VCFRecord):
         self.idx = idx
         self.record = record
         self._globals.update(self._empty_globals)
@@ -405,7 +402,7 @@ class Environment(dict):
         return self._func()
 
 
-def get_end(record: VariantRecord):
+def get_end(record: VCFRecord):
     if is_bnd_record(record):
         return NA
     else:

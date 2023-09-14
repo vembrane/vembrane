@@ -26,6 +26,10 @@ class VCFRecordInfo:
         raise NotImplementedError
 
 
+class VCFRecordSamples:
+    pass
+
+
 class VCFRecordFormat:
     pass
 

@@ -216,7 +216,7 @@ def filter_vcf(
 
         return event_name, mate_pair
 
-    record: VariantRecord
+    record: VCFRecord
     if not preserve_order:
         # If the order is not important, emit records that pass the filter expression
         # as we encounter them
@@ -287,7 +287,7 @@ def filter_vcf(
         # second pass.
         event_set: Set[str] = set()
 
-        def fallback_name(record: VariantRecord) -> str:
+        def fallback_name(record: VCFRecord) -> str:
             event_name, mate_pair_name = get_event_name(record)
 
             # There may be BND record which have neither of
