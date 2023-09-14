@@ -2,12 +2,21 @@ from collections import OrderedDict, defaultdict
 from typing import Any, Dict, List, Tuple
 
 import pysam
+from pysam import VariantRecord
 
-from vembrane.backend.base import VCFHeader, VCFReader, VCFRecord, VCFWriter
+from vembrane.backend.base import (
+    VCFHeader,
+    VCFReader,
+    VCFRecord,
+    VCFRecordInfo,
+    VCFWriter,
+)
+
+# from vembrane.representations import NoValueDict, DefaultGet
 
 
 class PysamVCFRecord(VCFRecord):
-    def __init__(self, record):
+    def __init__(self, record: VariantRecord):
         self._record = record
 
     @property
@@ -39,12 +48,29 @@ class PysamVCFRecord(VCFRecord):
         return self._record.filter
 
     @property
-    def info(self) -> Dict[str, Any]:
-        return dict(self._record.info)
+    def info(self) -> VCFRecordInfo:
+        return PysamRecordInfo(self._record)
 
     @property
     def format(self) -> Dict[str, Dict[str, Any]]:
         pass
+
+
+class PysamRecordInfo(VCFRecordInfo):
+    def __init__(
+        self,
+        record: VariantRecord,
+    ):
+        self._record = record
+
+    def __getitem__(self, item):
+        return self._record.info[item]
+
+    def __setitem__(self, key, value):
+        self._record.info[key] = value
+
+    def __contains__(self, item):
+        return item in self._record.info
 
 
 class PysamVCFReader(VCFReader):

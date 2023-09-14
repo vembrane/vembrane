@@ -2,6 +2,20 @@ from abc import abstractmethod, abstractproperty
 from typing import Any, Dict, List, Tuple
 
 
+class VCFRecordInfo:
+    @abstractmethod
+    def __contains__(self, item):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __getitem__(self, item):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __setitem__(self, key, value):
+        raise NotImplementedError
+
+
 class VCFRecord:
     @abstractmethod
     def __init__(self, filename: str):
@@ -40,7 +54,7 @@ class VCFRecord:
         raise NotImplementedError
 
     @abstractproperty
-    def info(self) -> Dict[str, Any]:
+    def info(self) -> VCFRecordInfo:
         raise NotImplementedError
 
     @abstractproperty

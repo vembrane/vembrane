@@ -2,14 +2,12 @@ import argparse
 import ast
 import shlex
 from typing import Dict, Iterable, Iterator, List, Optional, Set
-from sys import stderr
 
-from pysam.libcbcf import VariantHeader, VariantRecord
+from pysam.libcbcf import VariantRecord
 
-from .errors import InvalidExpression
-
-from .backend.pysam import PysamVCFReader, PysamVCFWriter
+from .backend.backend_pysam import PysamVCFReader, PysamVCFWriter
 from .backend.base import VCFHeader, VCFReader
+from .errors import InvalidExpression
 
 
 def check_expression(expression: str) -> str:
