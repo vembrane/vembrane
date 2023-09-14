@@ -36,7 +36,7 @@ class PysamVCFRecord(VCFRecord):
 
     @property
     def filter(self) -> List[str]:
-        pass
+        return self._record.filter
 
     @property
     def info(self) -> Dict[str, Any]:
