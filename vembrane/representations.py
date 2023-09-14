@@ -1,6 +1,7 @@
 import ast
 from types import CodeType
 from typing import Any, Dict, List, Optional, Set, Tuple
+from sys import stderr
 
 from pysam.libcbcf import VariantRecord, VariantRecordSamples
 

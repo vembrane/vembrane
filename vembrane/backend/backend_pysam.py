@@ -1,8 +1,9 @@
 from collections import OrderedDict, defaultdict
 from typing import Tuple
+from sys import stderr
 
 import pysam
-from pysam import VariantRecord
+from pysam import VariantRecord, VariantRecordFormat
 
 from vembrane.backend.base import (
     VCFHeader,
@@ -57,7 +58,17 @@ class PysamVCFRecord(VCFRecord):
 
     @property
     def format(self) -> VCFRecordFormat:
-        raise NotImplementedError
+        return PysamRecordFormat(self._record)
+
+    @property
+    def samples(self):
+        return self._record.samples
+
+    def __repr__(self):
+        return self._record.__repr__()
+
+    def __str__(self):
+        return self._record.__str__()
 
 
 class PysamRecordInfo(VCFRecordInfo):
@@ -81,7 +92,23 @@ class PysamRecordInfo(VCFRecordInfo):
 
 
 class PysamRecordFormat(VCFRecordFormat):
-    pass
+    def __init__(
+        self,
+        record: VariantRecord,
+    ):
+        self._record = record
+
+    def __getitem__(self, item):
+        return self._record.format[item]
+
+    def __setitem__(self, key, value):
+        self._record.format[key] = value
+
+    def __contains__(self, item):
+        return item in self._record.format
+
+    def get(self, item, default=None):
+        return self._record.format.get(item, default)
 
 
 class PysamRecordFilter(VCFRecordFilter):

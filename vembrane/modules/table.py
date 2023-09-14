@@ -5,9 +5,8 @@ from sys import stderr
 from typing import Any, Dict, Iterator, List, Set
 
 import asttokens
-from pysam.libcbcf import VariantRecord
 
-from ..backend.base import Backend, VCFReader
+from ..backend.base import Backend, VCFReader, VCFRecord
 from ..common import AppendKeyValuePair, check_expression, create_reader, read_auxiliary
 from ..errors import HeaderWrongColumnNumber, VembraneError
 from ..globals import allowed_globals
@@ -112,7 +111,7 @@ def tableize_vcf(
         expression = f"({expression})"
     env = Environment(expression, ann_key, vcf.header, **kwargs)
 
-    record: VariantRecord
+    record: VCFRecord
     for idx, record in enumerate(vcf):
         env.update_from_record(idx, record)
         if env.expression_annotations():
