@@ -135,6 +135,10 @@ class VCFHeader:
     def samples(self) -> List[str]:
         raise NotImplementedError
 
+    @abstractproperty
+    def filters(self) -> List[str]:
+        raise NotImplementedError
+
 
 class VCFWriter:
     @abstractmethod

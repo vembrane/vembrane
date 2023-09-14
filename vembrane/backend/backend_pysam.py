@@ -144,6 +144,10 @@ class PysamVCFHeader(VCFHeader):
     def samples(self):
         return self._header.samples
 
+    @property
+    def filters(self):
+        return self._header.filters
+
 
 class PysamVCFWriter(VCFWriter):
     def __init__(self, filename: str, fmt: str, reader: VCFReader):
