@@ -6,9 +6,8 @@ from sys import stderr
 from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import yaml
-from pysam.libcbcf import VariantRecord
 
-from vembrane.backend.base import Backend, VCFReader
+from vembrane.backend.base import Backend, VCFReader, VCFRecord
 
 from .. import __version__
 from ..common import (
@@ -125,10 +124,10 @@ def add_subcommmand(subparsers):
 def test_and_update_record(
     env: Environment,
     idx: int,
-    record: VariantRecord,
+    record: VCFRecord,
     ann_key: str,
     keep_unmatched: bool,
-) -> Tuple[VariantRecord, bool]:
+) -> Tuple[VCFRecord, bool]:
     try:
         return _test_and_update_record(env, idx, record, ann_key, keep_unmatched)
     except VembraneError as e:
@@ -142,10 +141,10 @@ def test_and_update_record(
 def _test_and_update_record(
     env: Environment,
     idx: int,
-    record: VariantRecord,
+    record: VCFRecord,
     ann_key: str,
     keep_unmatched: bool,
-) -> Tuple[VariantRecord, bool]:
+) -> Tuple[VCFRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
@@ -191,13 +190,13 @@ def filter_vcf(
     preserve_order: bool = False,
     auxiliary: Dict[str, Set[str]] = {},
     overwrite_number: Dict[str, Dict[str, str]] = {},
-) -> Iterator[VariantRecord]:
+) -> Iterator[VCFRecord]:
     env = Environment(expression, ann_key, reader.header, auxiliary, overwrite_number)
     has_mateid_key = reader.header.info.get("MATEID", None) is not None
     has_event_key = reader.header.info.get("EVENT", None) is not None
 
     def get_event_name(
-        record: VariantRecord,
+        record: VCFRecord,
         has_mateid_key=has_mateid_key,
         has_event_key=has_event_key,
     ) -> Tuple[Optional[str], Optional[str]]:
@@ -322,8 +321,8 @@ def filter_vcf(
 
 
 def statistics(
-    records: Iterator[VariantRecord], vcf: VCFReader, filename: str, ann_key: str
-) -> Iterator[VariantRecord]:
+    records: Iterator[VCFRecord], vcf: VCFReader, filename: str, ann_key: str
+) -> Iterator[VCFRecord]:
     annotation_keys = get_annotation_keys(vcf.header, ann_key)
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
