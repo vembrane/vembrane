@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
 
+from .backend.base import VCFReader, VCFHeader
+
 from .ann_types import (
     ANN_TYPER,
     NA,
@@ -203,7 +205,7 @@ class Environment(dict):
         self,
         expression: str,
         ann_key: str,
-        header: VariantHeader,
+        header: VCFHeader,
         auxiliary: Dict[str, Set[str]] = {},
         overwrite_number: Dict[str, Dict[str, str]] = {},
         evaluation_function_template: str = "lambda: {expression}",
@@ -274,10 +276,10 @@ class Environment(dict):
             kind: {
                 record.get("ID"): overwrite_number.get(kind, {}).get(record.get("ID"))
                 or record.get("Number")
-                for record in header.records
-                if record.type == kind
+                for record in header
+                if record["type"] == kind
             }
-            for kind in set(r.type for r in header.records)
+            for kind in set(r["type"] for r in header)
         }
 
         # always explicitly set "Number" for certain fields

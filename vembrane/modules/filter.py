@@ -1,11 +1,12 @@
 import argparse
 import sys
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from itertools import chain, islice
 from sys import stderr
 from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import yaml
+from vembrane.backend.base import VCFReader
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
@@ -19,6 +20,8 @@ from ..common import (
     normalize,
     read_auxiliary,
     split_annotation_entry,
+    create_reader,
+    create_writer,
 )
 from ..errors import VembraneError
 from ..representations import Environment
@@ -180,7 +183,7 @@ def _test_and_update_record(
 
 
 def filter_vcf(
-    vcf: VariantFile,
+    reader: VCFReader,
     expression: str,
     ann_key: str,
     keep_unmatched: bool = False,
@@ -188,9 +191,9 @@ def filter_vcf(
     auxiliary: Dict[str, Set[str]] = {},
     overwrite_number: Dict[str, Dict[str, str]] = {},
 ) -> Iterator[VariantRecord]:
-    env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
-    has_mateid_key = vcf.header.info.get("MATEID", None) is not None
-    has_event_key = vcf.header.info.get("EVENT", None) is not None
+    env = Environment(expression, ann_key, reader.header, auxiliary, overwrite_number)
+    has_mateid_key = reader.header.info.get("MATEID", None) is not None
+    has_event_key = reader.header.info.get("EVENT", None) is not None
 
     def get_event_name(
         record: VariantRecord,
@@ -220,7 +223,7 @@ def filter_vcf(
         # However, breakends have to be considered jointly, so keep track of the
         # respective events.
         event_dict: Dict[str, BreakendEvent] = dict()
-        for idx, record in enumerate(vcf):
+        for idx, record in enumerate(reader):
             record, keep = test_and_update_record(
                 env, idx, record, ann_key, keep_unmatched
             )
@@ -344,16 +347,16 @@ def statistics(
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with VariantFile(args.vcf) as vcf:
-        header: VariantHeader = vcf.header
-        header.add_meta("vembraneVersion", __version__)
+    with create_reader(args.vcf, backend="pysam") as reader:
+        # header: dict = vcf.header
+        reader.add_meta("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
         #       in the future, we should not record sys.argv directly below.
         cmd_parts = [normalize(arg) if " " in arg else arg for arg in sys.argv[3:]]
         expr = " ".join(a.strip() for a in args.expression.split("\n"))
         expr = normalize(expr)
 
-        header.add_meta(
+        reader.add_meta(
             "vembraneCmd",
             "vembrane " + expr + " " + " ".join(cmd_parts),
         )
@@ -364,7 +367,7 @@ def execute(args) -> None:
         }
 
         records = filter_vcf(
-            vcf,
+            reader,
             args.expression,
             args.annotation_key,
             keep_unmatched=args.keep_unmatched,
@@ -382,17 +385,14 @@ def execute(args) -> None:
         records = chain(first_record, records)
 
         if args.statistics is not None:
-            records = statistics(records, vcf, args.statistics, args.annotation_key)
+            records = statistics(records, reader, args.statistics, args.annotation_key)
 
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
-        with VariantFile(
-            args.output,
-            f"w{fmt}",
-            header=header,
-        ) as out:
+
+        with create_writer(args.output, fmt, reader, backend="pysam") as writer:
             try:
                 for record in records:
-                    out.write(record)
+                    writer.write(record)
 
             except VembraneError as ve:
                 print(ve, file=stderr)

@@ -2,10 +2,14 @@ import argparse
 import ast
 import shlex
 from typing import Dict, Iterable, Iterator, List, Optional, Set
+from sys import stderr
 
 from pysam.libcbcf import VariantHeader, VariantRecord
 
 from .errors import InvalidExpression
+
+from .backend.pysam import PysamVCFReader, PysamVCFWriter
+from .backend.base import VCFHeader, VCFReader
 
 
 def check_expression(expression: str) -> str:
@@ -42,17 +46,19 @@ def normalize(s: str) -> str:
     return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
 
 
-def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
+def get_annotation_keys(header: VCFHeader, ann_key: str) -> List[str]:
     separator = "'"
-    for rec in header.records:
-        if rec.key == "VEP":
+    for h in header:
+        pass
+    for h in header:
+        if h["key"] == "VEP":
             separator = ":"
             continue
-        if rec.get("ID") == ann_key:
+        if h.get("ID") == ann_key:
             return list(
                 map(
                     str.strip,
-                    rec.get("Description").strip('"').split(separator)[1].split("|"),
+                    h.get("Description").strip('"').split(separator)[1].split("|"),
                 )
             )
     return []
@@ -133,3 +139,21 @@ def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
             return set(line.rstrip() for line in f)
 
     return {name: read_set(contents) for name, contents in aux.items()}
+
+
+def create_reader(filename: str, backend: str = "pysam"):
+    if backend == "pysam":
+        return PysamVCFReader(filename)
+    elif backend == "cyvcf":
+        pass  # TODO: cyvcf backend
+    else:
+        pass  # TODO: Throw error
+
+
+def create_writer(filename: str, fmt: str, reader: VCFReader, backend="pysam"):
+    if backend == "pysam":
+        return PysamVCFWriter(filename, fmt, reader)
+    elif backend == "cyvcf":
+        pass  # TODO: cyvcf backend
+    else:
+        pass  # TODO: Throw error
