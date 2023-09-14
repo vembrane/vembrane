@@ -72,6 +72,9 @@ class PysamRecordInfo(VCFRecordInfo):
     def __contains__(self, item):
         return item in self._record.info
 
+    def get(self, item, default=None):
+        return self._record.info.get(item, default)
+
 
 class PysamVCFReader(VCFReader):
     def __init__(self, filename: str):

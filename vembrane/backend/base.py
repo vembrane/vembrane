@@ -15,6 +15,10 @@ class VCFRecordInfo:
     def __setitem__(self, key, value):
         raise NotImplementedError
 
+    @abstractmethod
+    def get(self, item, default=None):
+        raise NotImplementedError
+
 
 class VCFRecord:
     @abstractmethod
@@ -103,6 +107,10 @@ class VCFHeader:
 
     @abstractmethod
     def __next__(self):
+        raise NotImplementedError
+
+    @abstractproperty
+    def samples(self) -> List[str]:
         raise NotImplementedError
 
 
