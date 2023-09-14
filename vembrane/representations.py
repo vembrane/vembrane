@@ -346,7 +346,7 @@ class Environment(dict):
         return value
 
     def _get_qual(self) -> NvFloat:
-        value: NvFloat = NA if self.record.qual is None else self.record.qual
+        value: NvFloat = NA if self.record.quality is None else self.record.quality
         self._globals["QUAL"] = value
         return value
 

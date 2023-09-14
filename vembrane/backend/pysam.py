@@ -32,7 +32,7 @@ class PysamVCFRecord(VCFRecord):
 
     @property
     def quality(self) -> float:
-        pass
+        return self._record.qual
 
     @property
     def filter(self) -> List[str]:
