@@ -1,5 +1,5 @@
 from abc import abstractmethod, abstractproperty
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
 
 class VCFRecordInfo:
@@ -18,6 +18,10 @@ class VCFRecordInfo:
     @abstractmethod
     def get(self, item, default=None):
         raise NotImplementedError
+
+
+class VCFRecordFormat:
+    pass
 
 
 class VCFRecord:
@@ -62,7 +66,7 @@ class VCFRecord:
         raise NotImplementedError
 
     @abstractproperty
-    def format(self) -> Dict[str, Dict[str, Any]]:
+    def format(self) -> VCFRecordFormat:
         raise NotImplementedError
 
 

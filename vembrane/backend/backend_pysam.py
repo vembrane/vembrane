@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
 import pysam
 from pysam import VariantRecord
@@ -8,6 +8,7 @@ from vembrane.backend.base import (
     VCFHeader,
     VCFReader,
     VCFRecord,
+    VCFRecordFormat,
     VCFRecordInfo,
     VCFWriter,
 )
@@ -52,8 +53,8 @@ class PysamVCFRecord(VCFRecord):
         return PysamRecordInfo(self._record)
 
     @property
-    def format(self) -> Dict[str, Dict[str, Any]]:
-        pass
+    def format(self) -> VCFRecordFormat:
+        raise NotImplementedError
 
 
 class PysamRecordInfo(VCFRecordInfo):
