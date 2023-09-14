@@ -5,9 +5,10 @@ from sys import stderr
 from typing import Any, Dict, Iterator, List, Set
 
 import asttokens
-from pysam.libcbcf import VariantFile, VariantRecord
+from pysam.libcbcf import VariantRecord
 
-from ..common import AppendKeyValuePair, check_expression, read_auxiliary
+from ..backend.base import Backend, VCFReader
+from ..common import AppendKeyValuePair, check_expression, create_reader, read_auxiliary
 from ..errors import HeaderWrongColumnNumber, VembraneError
 from ..globals import allowed_globals
 from ..representations import Environment
@@ -93,7 +94,7 @@ def add_subcommmand(subparsers):
 
 
 def tableize_vcf(
-    vcf: VariantFile,
+    vcf: VCFReader,
     expression: str,
     ann_key: str,
     overwrite_number: Dict[str, Dict[str, str]] = {},
@@ -141,7 +142,7 @@ def tableize_vcf(
                 yield env.table()
 
 
-def generate_for_each_sample_expressions(s: str, vcf: VariantFile) -> List[str]:
+def generate_for_each_sample_expressions(s: str, vcf: VCFReader) -> List[str]:
     from asttokens.util import replace
 
     # parse the `for_each_sample(lambda var: inner) expression
@@ -163,7 +164,7 @@ def generate_for_each_sample_expressions(s: str, vcf: VariantFile) -> List[str]:
     return expanded
 
 
-def generate_for_each_sample_column_names(s: str, vcf: VariantFile) -> List[str]:
+def generate_for_each_sample_column_names(s: str, vcf: VCFReader) -> List[str]:
     # parse the `for_each_sample(lambda var: inner) expression
     var, inner = _var_and_body(s)
 
@@ -212,7 +213,7 @@ def _var_and_body(s):
 
 
 def preprocess_expression(
-    header: str, vcf: VariantFile, make_expression: bool = True
+    header: str, vcf: VCFReader, make_expression: bool = True
 ) -> str:
     """
     Split the header expression at toplevel commas into parts.
@@ -238,7 +239,7 @@ def preprocess_expression(
     return ", ".join(parts_flattened)
 
 
-def get_header(args, vcf: VariantFile) -> List[str]:
+def get_header(args, vcf: VCFReader) -> List[str]:
     if args.header == "auto":
         header = args.expression
     else:
@@ -298,7 +299,7 @@ def smart_open(filename=None, *args, **kwargs):
 
 def execute(args):
     aux = read_auxiliary(args.aux)
-    with VariantFile(args.vcf) as vcf:
+    with create_reader(args.vcf, backend=Backend.pysam) as vcf:
         expression = preprocess_expression(args.expression, vcf, True)
         if args.long:
             expression = f"SAMPLE, {expression}"

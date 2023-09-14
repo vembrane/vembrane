@@ -7,10 +7,12 @@ from typing import Dict, Iterator, Set, Tuple
 from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
+from ..backend.base import Backend, VCFReader
 from ..common import (
     AppendKeyValuePair,
     AppendTagExpression,
     check_expression,
+    create_reader,
     normalize,
     read_auxiliary,
     single_outer,
@@ -128,7 +130,7 @@ def test_record(
 
 
 def tag_vcf(
-    vcf: VariantFile,
+    vcf: VCFReader,
     expressions: Dict[str, str],
     ann_key: str,
     auxiliary: Dict[str, Set[str]] = {},
@@ -159,7 +161,7 @@ def check_tag(tag: str):
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with VariantFile(args.vcf) as vcf:
+    with create_reader(args.vcf, backend=Backend.pysam) as vcf:
         header: VariantHeader = vcf.header
 
         overwrite_number = {

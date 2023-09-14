@@ -47,8 +47,6 @@ def normalize(s: str) -> str:
 def get_annotation_keys(header: VCFHeader, ann_key: str) -> List[str]:
     separator = "'"
     for h in header:
-        pass
-    for h in header:
         if h["key"] == "VEP":
             separator = ":"
             continue

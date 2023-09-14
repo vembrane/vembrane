@@ -6,7 +6,7 @@ from sys import stderr
 from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import yaml
-from pysam.libcbcf import VariantFile, VariantRecord
+from pysam.libcbcf import VariantRecord
 
 from vembrane.backend.base import Backend, VCFReader
 
@@ -322,7 +322,7 @@ def filter_vcf(
 
 
 def statistics(
-    records: Iterator[VariantRecord], vcf: VariantFile, filename: str, ann_key: str
+    records: Iterator[VariantRecord], vcf: VCFReader, filename: str, ann_key: str
 ) -> Iterator[VariantRecord]:
     annotation_keys = get_annotation_keys(vcf.header, ann_key)
     counter = defaultdict(lambda: defaultdict(lambda: 0))

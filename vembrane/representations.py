@@ -2,7 +2,7 @@ import ast
 from types import CodeType
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
+from pysam.libcbcf import VariantRecord, VariantRecordSamples
 
 from .ann_types import (
     ANN_TYPER,
@@ -151,7 +151,7 @@ class Info(NoValueDict, DefaultGet):
 
 
 class Annotation(NoValueDict, DefaultGet):
-    def __init__(self, ann_key: str, header: VariantHeader):
+    def __init__(self, ann_key: str, header: VCFHeader):
         self._record_idx = -1
         self._record: Optional[VariantRecord] = None
         self._annotation_data: List[str] = []

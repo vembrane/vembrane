@@ -7,6 +7,7 @@ import yaml
 from intervaltree import Interval, IntervalTree
 from pysam.libcbcf import VariantFile, VariantRecord
 
+from ..backend.base import VCFReader
 from ..common import check_expression
 from ..representations import Environment
 
@@ -53,7 +54,7 @@ typeparser: Dict[str, Callable[[str], Any]] = {
 
 
 def annotate_vcf(
-    vcf: VariantFile,
+    vcf: VCFReader,
     expression: str,
     ann_key: str,
     ann_data,
