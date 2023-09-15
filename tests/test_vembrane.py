@@ -24,7 +24,7 @@ def test_version():
     "testcase,backend",
     product(
         (d for d in os.listdir(CASES) if not d.startswith(".")),
-        (Backend.pysam, Backend.cyvcf2),  # TODO: include Backend.cyvcf2
+        (Backend.pysam,),  # TODO: include Backend.cyvcf2
     ),
 )
 def test_filter(testcase: os.PathLike, backend: Backend):

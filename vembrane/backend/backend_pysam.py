@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from typing import List, Optional, Tuple
+from typing import Tuple
 
 import pysam
 from pysam import VariantRecord
@@ -127,14 +127,6 @@ class PysamVCFReader(VCFReader):
         self._file = pysam.VariantFile(self.filename)
         self._header = PysamVCFHeader(self)
 
-    def add_meta(
-        self,
-        key: str,
-        value: Optional[str] = None,
-        items: Optional[List[Tuple[str, str]]] = None,
-    ):
-        self._file.header.add_meta(key, value, items)
-
     def __iter__(self):
         self._iter_file = self._file.__iter__()
         return self
@@ -191,6 +183,22 @@ class PysamVCFHeader(VCFHeader):
     @property
     def records(self):
         return self._data_category
+
+    # def add_meta(
+    #     self,
+    #     key: str,
+    #     value: Optional[str] = None,
+    #     items: Optional[List[Tuple[str, str]]] = None,
+    # ):
+    #     self._file.header.add_meta(key, value, items)
+
+    def add_generic(self, key: str, value: str):
+        self._header.add_meta(key, value)
+
+    def add_filter(self, id: str, description: str):
+        self._header.add_meta(
+            key="FILTER", items=[("ID", id), ("Description", description)]
+        )
 
 
 class PysamVCFWriter(VCFWriter):

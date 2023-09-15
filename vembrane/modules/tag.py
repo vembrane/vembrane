@@ -182,12 +182,10 @@ def execute(args) -> None:
                 exit(1)
             expr = swap_quotes(expr) if single_outer(expr) else expr
             check_expression(expr)
-            reader.header.add_meta(
-                key="FILTER", items=[("ID", tag), ("Description", expr)]
-            )
+            reader.header.add_filter(tag, expr)
 
-        header.add_meta("vembraneVersion", __version__)
-        header.add_meta(
+        header.add_generic("vembraneVersion", __version__)
+        header.add_generic(
             "vembraneCmd",
             "vembrane "
             + " ".join(normalize(arg) if " " in arg else arg for arg in sys.argv[1:]),

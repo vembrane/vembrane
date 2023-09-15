@@ -347,16 +347,16 @@ def statistics(
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with create_reader(args.vcf, backend=Backend.cyvcf2) as reader:
+    with create_reader(args.vcf, backend=Backend.pysam) as reader:
         # header: dict = vcf.header
-        reader.add_generic("vembraneVersion", __version__)
+        reader.header.add_generic("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
         #       in the future, we should not record sys.argv directly below.
         cmd_parts = [normalize(arg) if " " in arg else arg for arg in sys.argv[3:]]
         expr = " ".join(a.strip() for a in args.expression.split("\n"))
         expr = normalize(expr)
 
-        reader.add_generic(
+        reader.header.add_generic(
             "vembraneCmd",
             "vembrane " + expr + " " + " ".join(cmd_parts),
         )
@@ -389,7 +389,7 @@ def execute(args) -> None:
 
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
 
-        with create_writer(args.output, fmt, reader, backend=Backend.cyvcf2) as writer:
+        with create_writer(args.output, fmt, reader, backend=Backend.pysam) as writer:
             try:
                 for record in records:
                     writer.write(record)

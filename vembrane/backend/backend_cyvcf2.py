@@ -1,6 +1,5 @@
 from collections import OrderedDict, defaultdict
-from sys import stderr
-from typing import List, Optional, Tuple
+from typing import Tuple
 
 from cyvcf2.cyvcf2 import VCF, Variant, Writer
 
@@ -23,10 +22,10 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         self._record = record
 
     def __getitem__(self, item):
-        return self._record.info[item]
+        return self._record.INFO[item]
 
     def __setitem__(self, key, value):
-        self._record.info[key] = value
+        self._record.INFO[key] = value
 
     def __contains__(self, item):
         return item in self._record.INFO
@@ -97,13 +96,6 @@ class Cyvcf2VCFReader(VCFReader):
         self._file = VCF(self.filename)
         self._header = Cyvcf2VCFHeader(self)
 
-    def add_generic(
-        self,
-        key: str,
-        value: str,
-    ):
-        self._file.add_to_header(f"##{key}={value}")
-
     def __iter__(self):
         self._iter_file = self._file.__iter__()
         return self
@@ -148,6 +140,13 @@ class Cyvcf2VCFHeader(VCFHeader):
     @property
     def samples(self):
         return self._reader._file.samples
+
+    def add_generic(
+        self,
+        key: str,
+        value: str,
+    ):
+        self.reader._file.add_to_header(f"##{key}={value}")
 
 
 class Cyvcf2VCFWriter(VCFWriter):

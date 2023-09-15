@@ -130,19 +130,6 @@ class VCFReader:
     def close(self):
         self._file.close()
 
-    @abstractmethod
-    def add_meta(
-        self,
-        key: str,
-        value: Optional[str] = None,
-        items: Optional[List[Tuple[str, str]]] = None,
-    ):
-        raise NotImplementedError
-
-    @abstractmethod
-    def add_generic(key: str, value: str):
-        raise NotImplementedError
-
     def __iter__(self):
         return self
 
@@ -182,6 +169,23 @@ class VCFHeader:
 
     @abstractproperty
     def filters(self) -> List[str]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def add_meta(
+        self,
+        key: str,
+        value: Optional[str] = None,
+        items: Optional[List[Tuple[str, str]]] = None,
+    ):
+        raise NotImplementedError
+
+    @abstractmethod
+    def add_generic(self, key: str, value: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def add_filter(self, id: str, description: str):
         raise NotImplementedError
 
 
