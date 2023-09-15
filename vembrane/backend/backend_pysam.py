@@ -165,7 +165,6 @@ class PysamVCFHeader(VCFHeader):
     def contains_generic(self, key: str):
         return key in self._data_generic
 
-
     @property
     def info(self):
         return self._data_category["INFO"]

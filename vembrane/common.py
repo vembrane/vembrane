@@ -3,8 +3,8 @@ import ast
 import shlex
 from typing import Dict, Iterable, Iterator, List, Optional, Set
 
-from .backend.backend_pysam import PysamVCFReader, PysamVCFWriter
 from .backend.backend_cyvcf2 import Cyvcf2VCFReader, Cyvcf2VCFWriter
+from .backend.backend_pysam import PysamVCFReader, PysamVCFWriter
 from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
 from .errors import InvalidExpression
 
@@ -47,7 +47,7 @@ def get_annotation_keys(header: VCFHeader, ann_key: str) -> List[str]:
     separator = "'"
     if header.contains_generic("VEP"):
         separator = ":"
-    if (h := header.info.get(ann_key)):
+    if h := header.info.get(ann_key):
         return list(
             map(
                 str.strip,

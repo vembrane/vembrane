@@ -1,9 +1,9 @@
+from collections import OrderedDict, defaultdict
+from sys import stderr
+from typing import Tuple
+
 import cyvcf2
 from cyvcf2.cyvcf2 import Variant
-from typing import Tuple
-from sys import stderr
-
-from collections import OrderedDict, defaultdict
 
 from vembrane.backend.base import (
     VCFHeader,
@@ -14,6 +14,7 @@ from vembrane.backend.base import (
     VCFRecordInfo,
     VCFWriter,
 )
+
 
 class Cyvcf2VCFRecord(VCFRecord):
     def __init__(self, record: Variant):
@@ -26,7 +27,10 @@ class Cyvcf2VCFRecord(VCFRecord):
         return self._record.__str__()
 
     def __eq__(self, other):
-        return self._record.__repr__() == other._record.__repr__() # TODO: implement real check for values
+        return (
+            self._record.__repr__() == other._record.__repr__()
+        )  # TODO: implement real check for values
+
 
 class Cyvcf2VCFReader(VCFReader):
     def __init__(self, filename: str):
@@ -51,20 +55,26 @@ class Cyvcf2VCFReader(VCFReader):
 
     # @abstractmethod
     # def reset(self):
-        # pass
+    # pass
+
 
 class Cyvcf2VCFHeader(VCFHeader):
     def __init__(self, reader: Cyvcf2VCFReader):
         self._reader = reader
         self._data = []
         self._data_category = defaultdict(OrderedDict)
-        
+
         # print(reader._file.get_header_type("vembraneVersion"))
         # print(dir(reader._file), file=stderr)
         # print(reader._file.hdr, file=stderr)
 
         for r in reader._file.header_iter():
-            print(reader._file.get_header_type("fileformat", order=""), r.type, r.__dir__(), file=stderr)
+            print(
+                reader._file.get_header_type("fileformat", order=""),
+                r.type,
+                r.__dir__(),
+                file=stderr,
+            )
             d = r.info()
             d["key"] = r.key
             d["value"] = r.value
@@ -79,7 +89,6 @@ class Cyvcf2VCFHeader(VCFHeader):
         def records(self):
             raise NotImplementedError
 
-    
 
 class Cyvcf2VCFWriter(VCFWriter):
     def __init__(self, filename: str, fmt: str, template: VCFReader):
