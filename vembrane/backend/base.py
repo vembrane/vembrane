@@ -1,6 +1,6 @@
 from abc import abstractmethod, abstractproperty
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 
 class Backend(Enum):
@@ -131,7 +131,12 @@ class VCFReader:
         self._file.close()
 
     @abstractmethod
-    def add_meta(self, key: str, value: str, items: List[Tuple[str, str]]):
+    def add_meta(
+        self,
+        key: str,
+        value: Optional[str] = None,
+        items: Optional[List[Tuple[str, str]]] = None,
+    ):
         raise NotImplementedError
 
     def __iter__(self):
