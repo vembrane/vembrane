@@ -180,6 +180,9 @@ class PysamVCFHeader(VCFHeader):
     @property
     def records(self):
         return self._header.records
+    
+    def add_meta(self, name: str, value: str):
+        self._header.add_meta(name, value)
 
 
 class PysamVCFWriter(VCFWriter):
