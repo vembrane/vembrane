@@ -160,8 +160,8 @@ def check_tag(tag: str):
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with create_reader(args.vcf, backend=Backend.pysam) as vcf:
-        header: VCFHeader = vcf.header
+    with create_reader(args.vcf, backend=Backend.pysam) as reader:
+        header: VCFHeader = reader.header
 
         overwrite_number = {
             "INFO": dict(args.overwrite_number_info),
@@ -170,7 +170,7 @@ def execute(args) -> None:
 
         expressions = dict(args.tag)
         for tag, expr in expressions.items():
-            for t, rec in vcf.header.filters.items():
+            for t, rec in reader.header.filters.items():
                 if t == tag:
                     e = FilterAlreadyDefined(tag)
                     print(e, file=stderr)
@@ -182,7 +182,7 @@ def execute(args) -> None:
                 exit(1)
             expr = swap_quotes(expr) if single_outer(expr) else expr
             check_expression(expr)
-            vcf.header.add_meta(
+            reader.header.add_meta(
                 key="FILTER", items=[("ID", tag), ("Description", expr)]
             )
 
@@ -194,7 +194,7 @@ def execute(args) -> None:
         )
 
         records = tag_vcf(
-            vcf,
+            reader,
             expressions,
             args.annotation_key,
             auxiliary=aux,
@@ -210,14 +210,11 @@ def execute(args) -> None:
 
         records = chain(first_record, records)
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
-        with create_writer(
-            args.output,
-            f"w{fmt}",
-            header=header,
-        ) as out:
+
+        with create_writer(args.output, fmt, reader, backend=Backend.pysam) as writer:
             try:
                 for record in records:
-                    out.write(record)
+                    writer.write(record)
 
             except VembraneError as ve:
                 print(ve, file=stderr)

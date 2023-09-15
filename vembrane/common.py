@@ -145,10 +145,10 @@ def create_reader(filename: str, backend: Backend = Backend.pysam):
 
 
 def create_writer(
-    filename: str, fmt: str, reader: VCFReader, backend: Backend = Backend.pysam
+    filename: str, fmt: str, template: VCFReader, backend: Backend = Backend.pysam
 ):
     if backend == Backend.pysam:
-        return PysamVCFWriter(filename, fmt, reader)
+        return PysamVCFWriter(filename, fmt, template)
     elif backend == Backend.cyvcf2:
         pass  # TODO: cyvcf backend
     else:

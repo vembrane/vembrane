@@ -115,7 +115,7 @@ class VCFReader:
         self._file.close()
 
     @abstractmethod
-    def add_meta(self, name: str, value: str):
+    def add_meta(self, key: str, value: str, items: Tuple[str, str]):
         raise NotImplementedError
 
     def __iter__(self):

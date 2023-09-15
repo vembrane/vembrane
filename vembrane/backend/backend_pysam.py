@@ -181,15 +181,15 @@ class PysamVCFHeader(VCFHeader):
     def records(self):
         return self._header.records
 
-    def add_meta(self, name: str, value: str):
-        self._header.add_meta(name, value)
+    def add_meta(self, key: str, value: str = None, items: Tuple[str, str] = None):
+        self._header.add_meta(key, value, items)
 
 
 class PysamVCFWriter(VCFWriter):
-    def __init__(self, filename: str, fmt: str, reader: VCFReader):
+    def __init__(self, filename: str, fmt: str, template: VCFReader):
         self.filename = filename
         self._file = pysam.VariantFile(
-            self.filename, f"w{fmt}", header=reader.header._header
+            self.filename, f"w{fmt}", header=template.header._header
         )
         self._header = PysamVCFHeader(self)
 
