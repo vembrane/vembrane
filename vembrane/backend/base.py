@@ -139,6 +139,10 @@ class VCFReader:
     ):
         raise NotImplementedError
 
+    @abstractmethod
+    def add_generic(key: str, value: str):
+        raise NotImplementedError
+
     def __iter__(self):
         return self
 

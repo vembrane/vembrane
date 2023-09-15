@@ -192,9 +192,6 @@ class PysamVCFHeader(VCFHeader):
     def records(self):
         return self._data_category
 
-    def add_meta(self, key: str, value: str = None, items: Tuple[str, str] = None):
-        self._header.add_meta(key, value, items)
-
 
 class PysamVCFWriter(VCFWriter):
     def __init__(self, filename: str, fmt: str, template: VCFReader):
