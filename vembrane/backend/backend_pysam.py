@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from typing import Tuple
+from typing import List, Optional, Tuple
 
 import pysam
 from pysam import VariantRecord
@@ -49,7 +49,7 @@ class PysamVCFRecord(VCFRecord):
 
     @property
     def filter(self) -> VCFRecordFilter:
-        return self._record.filter
+        return PysamRecordFilter(self._record)
 
     @property
     def info(self) -> VCFRecordInfo:
@@ -114,7 +114,11 @@ class PysamRecordFormat(VCFRecordFormat):
 
 
 class PysamRecordFilter(VCFRecordFilter):
-    pass
+    def __init__(self, record: VariantRecord):
+        self._record = record
+
+    def add(self, tag: str):
+        self._record.filter.add(tag)
 
 
 class PysamVCFReader(VCFReader):
@@ -123,8 +127,13 @@ class PysamVCFReader(VCFReader):
         self._file = pysam.VariantFile(self.filename)
         self._header = PysamVCFHeader(self)
 
-    def add_meta(self, name, value):
-        self._file.header.add_meta(name, value)
+    def add_meta(
+        self,
+        key: str,
+        value: Optional[str] = None,
+        items: Optional[List[Tuple[str, str]]] = None,
+    ):
+        self._file.header.add_meta(key, value, items)
 
     def __iter__(self):
         self._iter_file = self._file.__iter__()

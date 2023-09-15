@@ -1,6 +1,6 @@
 from abc import abstractmethod, abstractproperty
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 
 class Backend(Enum):
@@ -31,11 +31,27 @@ class VCFRecordSamples:
 
 
 class VCFRecordFormat:
-    pass
+    @abstractmethod
+    def __getitem__(self, item):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __setitem__(self, key, value):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __contains__(self, item):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get(self, item, default=None):
+        raise NotImplementedError
 
 
 class VCFRecordFilter:
-    pass
+    @abstractmethod
+    def add(self, tag: str):
+        raise NotImplementedError
 
 
 class VCFRecord:
@@ -115,7 +131,12 @@ class VCFReader:
         self._file.close()
 
     @abstractmethod
-    def add_meta(self, key: str, value: str, items: Tuple[str, str]):
+    def add_meta(
+        self,
+        key: str,
+        value: Optional[str] = None,
+        items: Optional[List[Tuple[str, str]]] = None,
+    ):
         raise NotImplementedError
 
     def __iter__(self):
