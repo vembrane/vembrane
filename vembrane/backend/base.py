@@ -35,7 +35,9 @@ class VCFRecordFormat:
 
 
 class VCFRecordFilter:
-    pass
+    @abstractmethod
+    def add(self, tag: str):
+        raise NotImplementedError
 
 
 class VCFRecord:

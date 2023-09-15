@@ -114,8 +114,11 @@ class PysamRecordFormat(VCFRecordFormat):
 
 
 class PysamRecordFilter(VCFRecordFilter):
-    def __int__(self, record: VariantRecord):
+    def __init__(self, record: VariantRecord):
         self._record = record
+
+    def add(self, tag: str):
+        self._record.filter.add(tag)
 
 
 class PysamVCFReader(VCFReader):
