@@ -31,7 +31,21 @@ class VCFRecordSamples:
 
 
 class VCFRecordFormat:
-    pass
+    @abstractmethod
+    def __getitem__(self, item):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __setitem__(self, key, value):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __contains__(self, item):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get(self, item, default=None):
+        raise NotImplementedError
 
 
 class VCFRecordFilter:
