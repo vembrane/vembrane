@@ -129,6 +129,10 @@ class VCFReader:
     def header(self):
         return self._header
 
+    @abstractproperty
+    def records(self):
+        raise NotImplementedError
+
     @abstractmethod
     def reset(self):
         pass
@@ -153,10 +157,6 @@ class VCFHeader:
 
     @abstractproperty
     def filters(self) -> List[str]:
-        raise NotImplementedError
-
-    @abstractproperty
-    def records(self):
         raise NotImplementedError
 
 

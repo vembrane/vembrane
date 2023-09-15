@@ -269,13 +269,12 @@ class Environment(dict):
         # so that the value can be accessed directly and need not be accessed via
         # an index operation.
         self._numbers = {
-            kind: {
-                record.get("ID"): overwrite_number.get(kind, {}).get(record.get("ID"))
+            category: {
+                record_name: overwrite_number.get(category, {}).get(record_name)
                 or record.get("Number")
-                for record in header
-                if record["type"] == kind
+                for record_name, record in category_records.items()
             }
-            for kind in set(r["type"] for r in header)
+            for category, category_records in header.records.items()
         }
 
         # always explicitly set "Number" for certain fields

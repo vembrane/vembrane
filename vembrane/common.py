@@ -4,6 +4,7 @@ import shlex
 from typing import Dict, Iterable, Iterator, List, Optional, Set
 
 from .backend.backend_pysam import PysamVCFReader, PysamVCFWriter
+from .backend.backend_cyvcf2 import Cyvcf2VCFReader, Cyvcf2VCFWriter
 from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
 from .errors import InvalidExpression
 
@@ -44,17 +45,15 @@ def normalize(s: str) -> str:
 
 def get_annotation_keys(header: VCFHeader, ann_key: str) -> List[str]:
     separator = "'"
-    for h in header:
-        if h["key"] == "VEP":
-            separator = ":"
-            continue
-        if h.get("ID") == ann_key:
-            return list(
-                map(
-                    str.strip,
-                    h.get("Description").strip('"').split(separator)[1].split("|"),
-                )
+    if header.contains_generic("VEP"):
+        separator = ":"
+    if (h := header.info.get(ann_key)):
+        return list(
+            map(
+                str.strip,
+                h.get("Description").strip('"').split(separator)[1].split("|"),
             )
+        )
     return []
 
 
@@ -139,7 +138,7 @@ def create_reader(filename: str, backend: Backend = Backend.pysam):
     if backend == Backend.pysam:
         return PysamVCFReader(filename)
     elif backend == Backend.cyvcf2:
-        pass  # TODO: cyvcf backend
+        return Cyvcf2VCFReader(filename)
     else:
         raise ValueError(f"{backend} is not a known backend.")
 
@@ -150,6 +149,6 @@ def create_writer(
     if backend == Backend.pysam:
         return PysamVCFWriter(filename, fmt, template)
     elif backend == Backend.cyvcf2:
-        pass  # TODO: cyvcf backend
+        return Cyvcf2VCFWriter(filename, fmt, template)
     else:
         raise ValueError(f"{backend} is not a known backend.")

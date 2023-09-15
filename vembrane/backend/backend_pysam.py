@@ -138,21 +138,24 @@ class PysamVCFReader(VCFReader):
 
 
 class PysamVCFHeader(VCFHeader):
-    def __init__(self, reader: VCFReader):
+    def __init__(self, reader: PysamVCFReader):
         self._reader = reader
         self._header = reader._file.header
         self._data = []
         self._data_category = defaultdict(OrderedDict)
+        self._data_generic = dict()
         for r in self._header.records:
+            if r.type == "GENERIC":
+                self._data_generic[r.key] = r.value
+                continue
             d = dict(r)
-            d["key"] = r.key
-            d["value"] = r.value
-            d["type"] = r.type
             self._data.append(d)
-            if r.type not in self._data_category:
-                self._data_category[r.type] = dict()
             if "ID" in d:
                 self._data_category[r.type][d["ID"]] = d
+
+    def contains_generic(self, key: str):
+        return key in self._data_generic
+
 
     @property
     def info(self):
@@ -179,7 +182,7 @@ class PysamVCFHeader(VCFHeader):
 
     @property
     def records(self):
-        return self._header.records
+        return self._data_category
 
     def add_meta(self, key: str, value: str = None, items: Tuple[str, str] = None):
         self._header.add_meta(key, value, items)
