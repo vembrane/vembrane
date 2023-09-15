@@ -158,7 +158,7 @@ class PysamVCFHeader(VCFHeader):
         return key in self._data_generic
 
     @property
-    def info(self):
+    def infos(self):
         return self._data_category["INFO"]
 
     def __iter__(self):

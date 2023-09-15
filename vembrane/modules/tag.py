@@ -102,6 +102,15 @@ def add_subcommand(subparsers):
         "filter expression is failed, so vembrane also offers the `fail` mode.",
     )
 
+    parser.add_argument(
+        "--backend",
+        "-b",
+        default="pysam",
+        type=Backend.from_string,
+        choices=[Backend.pysam, Backend.cyvcf2],
+        help="Set the backend library.",
+    )
+
 
 def test_record(
     env: Environment,
@@ -160,7 +169,7 @@ def check_tag(tag: str):
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with create_reader(args.vcf, backend=Backend.pysam) as reader:
+    with create_reader(args.vcf, backend=args.backend) as reader:
         header: VCFHeader = reader.header
 
         overwrite_number = {
@@ -209,7 +218,7 @@ def execute(args) -> None:
         records = chain(first_record, records)
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
 
-        with create_writer(args.output, fmt, reader, backend=Backend.pysam) as writer:
+        with create_writer(args.output, fmt, reader, backend=args.backend) as writer:
             try:
                 for record in records:
                     writer.write(record)

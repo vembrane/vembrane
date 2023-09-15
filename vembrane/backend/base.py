@@ -4,8 +4,21 @@ from typing import List, Optional, Tuple
 
 
 class Backend(Enum):
-    pysam = 0
+    pysam = (0,)
     cyvcf2 = 1
+
+    def __str__(self):
+        return self.name.lower()
+
+    def __repr__(self):
+        return str(self)
+
+    @staticmethod
+    def from_string(s):
+        try:
+            return Backend[s]
+        except KeyError:
+            return s
 
 
 class VCFRecordInfo:

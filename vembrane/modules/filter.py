@@ -192,8 +192,8 @@ def filter_vcf(
     overwrite_number: Dict[str, Dict[str, str]] = {},
 ) -> Iterator[VCFRecord]:
     env = Environment(expression, ann_key, reader.header, auxiliary, overwrite_number)
-    has_mateid_key = reader.header.info.get("MATEID", None) is not None
-    has_event_key = reader.header.info.get("EVENT", None) is not None
+    has_mateid_key = reader.header.infos.get("MATEID", None) is not None
+    has_event_key = reader.header.infos.get("EVENT", None) is not None
 
     def get_event_name(
         record: VCFRecord,

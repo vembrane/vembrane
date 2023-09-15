@@ -47,7 +47,7 @@ def get_annotation_keys(header: VCFHeader, ann_key: str) -> List[str]:
     separator = "'"
     if header.contains_generic("VEP"):
         separator = ":"
-    if h := header.info.get(ann_key):
+    if h := header.infos.get(ann_key):
         return list(
             map(
                 str.strip,

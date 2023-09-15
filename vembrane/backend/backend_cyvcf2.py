@@ -134,7 +134,7 @@ class Cyvcf2VCFHeader(VCFHeader):
         return self._reader._file.contains(key)
 
     @property
-    def info(self):
+    def infos(self):
         return self._data_category["INFO"]
 
     @property
@@ -146,7 +146,14 @@ class Cyvcf2VCFHeader(VCFHeader):
         key: str,
         value: str,
     ):
-        self.reader._file.add_to_header(f"##{key}={value}")
+        self._reader._file.add_to_header(f"##{key}={value}")
+
+    def add_filter(self, id: str, description: str):
+        self._reader._file.add_filter_to_header({"ID": id, "Description": description})
+
+    @property
+    def filters(self):
+        return self._data_category["FILTER"]
 
 
 class Cyvcf2VCFWriter(VCFWriter):

@@ -105,6 +105,7 @@ def test_filter(testcase: os.PathLike, backend: Backend):
     else:
         with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
             args.output = tmp_out.name
+            args.backend = backend
             if args.command == "filter" or args.command == "tag":
                 module = filter if args.command == "filter" else tag
                 expected = str(path.joinpath("expected.vcf"))
@@ -127,4 +128,4 @@ def test_filter(testcase: os.PathLike, backend: Backend):
                     e_out = e.read()
                 assert t_out == e_out
             else:
-                assert args.command in {"filter", "table"}, "Unknown subcommand"
+                assert args.command in {"filter", "table", "tag"}, "Unknown subcommand"
