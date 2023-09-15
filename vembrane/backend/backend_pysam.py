@@ -49,7 +49,7 @@ class PysamVCFRecord(VCFRecord):
 
     @property
     def filter(self) -> VCFRecordFilter:
-        return self._record.filter
+        return PysamRecordFilter(self._record)
 
     @property
     def info(self) -> VCFRecordInfo:
@@ -114,7 +114,8 @@ class PysamRecordFormat(VCFRecordFormat):
 
 
 class PysamRecordFilter(VCFRecordFilter):
-    pass
+    def __int__(self, record: VariantRecord):
+        self._record = record
 
 
 class PysamVCFReader(VCFReader):
