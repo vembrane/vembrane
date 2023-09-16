@@ -90,6 +90,14 @@ def add_subcommmand(subparsers):
         "given in the VCF header. "
         "Example: `--overwrite-number-format DP=2`",
     )
+    parser.add_argument(
+        "--backend",
+        "-b",
+        default="pysam",
+        type=Backend.from_string,
+        choices=[Backend.pysam, Backend.cyvcf2],
+        help="Set the backend library.",
+    )
 
 
 def tableize_vcf(
@@ -298,7 +306,7 @@ def smart_open(filename=None, *args, **kwargs):
 
 def execute(args):
     aux = read_auxiliary(args.aux)
-    with create_reader(args.vcf, backend=Backend.pysam) as vcf:
+    with create_reader(args.vcf, backend=args.backend) as vcf:
         expression = preprocess_expression(args.expression, vcf, True)
         if args.long:
             expression = f"SAMPLE, {expression}"

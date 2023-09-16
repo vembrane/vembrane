@@ -6,7 +6,7 @@ import numpy as np
 import yaml
 from intervaltree import Interval, IntervalTree
 
-from ..backend.base import VCFReader, VCFRecord
+from ..backend.base import Backend, VCFReader, VCFRecord
 from ..common import check_expression, create_reader, create_writer
 from ..representations import Environment
 
@@ -40,6 +40,14 @@ def add_subcommmand(subparsers):
         default="vcf",
         choices=["vcf", "bcf", "uncompressed-bcf"],
         help="Output format.",
+    )
+    parser.add_argument(
+        "--backend",
+        "-b",
+        default="pysam",
+        type=Backend.from_string,
+        choices=[Backend.pysam, Backend.cyvcf2],
+        help="Set the backend library.",
     )
 
 

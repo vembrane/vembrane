@@ -7,9 +7,8 @@ from typing import Dict, Iterator, List, Optional, Set, Tuple
 
 import yaml
 
-from vembrane.backend.base import Backend, VCFReader, VCFRecord
-
 from .. import __version__
+from ..backend.base import Backend, VCFReader, VCFRecord
 from ..common import (
     AppendKeyValuePair,
     BreakendEvent,
@@ -118,6 +117,14 @@ def add_subcommmand(subparsers):
         help="Overwrite the number specification for FORMAT fields "
         "given in the VCF header. "
         "Example: `--overwrite-number-format DP=2`",
+    )
+    parser.add_argument(
+        "--backend",
+        "-b",
+        default="pysam",
+        type=Backend.from_string,
+        choices=[Backend.pysam, Backend.cyvcf2],
+        help="Set the backend library.",
     )
 
 
@@ -347,7 +354,7 @@ def statistics(
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with create_reader(args.vcf, backend=Backend.pysam) as reader:
+    with create_reader(args.vcf, backend=args.backend) as reader:
         # header: dict = vcf.header
         reader.header.add_generic("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
@@ -389,7 +396,7 @@ def execute(args) -> None:
 
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
 
-        with create_writer(args.output, fmt, reader, backend=Backend.pysam) as writer:
+        with create_writer(args.output, fmt, reader, backend=args.backend) as writer:
             try:
                 for record in records:
                     writer.write(record)
