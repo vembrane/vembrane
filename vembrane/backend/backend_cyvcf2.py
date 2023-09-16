@@ -38,6 +38,9 @@ class Cyvcf2RecordFilter(VCFRecordFilter):
     def __init__(self, record: Variant):
         self._record = record
 
+    def __iter__(self):
+        yield from self._record.FILTERS
+
     def add(self, tag: str):
         self._record.FILTER.add(tag)
 
