@@ -157,16 +157,22 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         self._record = record
         self._header = header
 
-    def __getitem__(self, item):
-        value = self._record.INFO[item]
+    def __getitem__(self, key):
+        value = self._record.INFO[key]
         # for some reasons cyvcf2 doesn't split String lists, a known circumstance
-        meta = self._header.infos[item]
+        meta = self._header.infos[key]
         number, typ = meta["Number"], meta["Type"]
         if typ == "String" and number == ".":
             value = value.split(",")
         return value
 
     def __setitem__(self, key, value):
+        # for some reasons cyvcf2 doesn't split String lists, a known circumstance
+        meta = self._header.infos[key]
+        number, typ = meta["Number"], meta["Type"]
+        if typ == "String" and number == ".":
+            value = ",".join(value)
+
         self._record.INFO[key] = value
 
     def __contains__(self, item):
