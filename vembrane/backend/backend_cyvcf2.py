@@ -34,6 +34,14 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         return self._record.INFO.get(item, default)
 
 
+class Cyvcf2RecordFilter(VCFRecordFilter):
+    def __init__(self, record: Variant):
+        self._record = record
+
+    def add(self, tag: str):
+        self._record.FILTER.add(tag)
+
+
 class Cyvcf2VCFRecord(VCFRecord):
     def __init__(self, record: Variant):
         self._record = record
@@ -64,7 +72,7 @@ class Cyvcf2VCFRecord(VCFRecord):
 
     @property
     def filter(self) -> VCFRecordFilter:
-        return Cyvcf2RecordInfo(self._record)
+        return Cyvcf2RecordFilter(self._record)
 
     @property
     def info(self) -> VCFRecordInfo:
