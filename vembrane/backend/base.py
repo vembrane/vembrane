@@ -66,6 +66,10 @@ class VCFRecordFilter:
     def add(self, tag: str):
         raise NotImplementedError
 
+    @abstractmethod
+    def __iter__(self):
+        raise NotImplementedError
+
 
 class VCFRecord:
     @abstractmethod

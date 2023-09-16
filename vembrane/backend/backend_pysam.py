@@ -117,6 +117,9 @@ class PysamRecordFilter(VCFRecordFilter):
     def __init__(self, record: VariantRecord):
         self._record = record
 
+    def __iter__(self):
+        yield from self._record.filter
+
     def add(self, tag: str):
         self._record.filter.add(tag)
 
