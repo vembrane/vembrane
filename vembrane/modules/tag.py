@@ -126,7 +126,14 @@ def test_record(
         try:
             annotations = record.info[ann_key]
         except KeyError:
-            annotations = [""]
+            num_ann_entries = len(env._annotation._ann_conv.keys())
+            empty = "|" * num_ann_entries
+            print(
+                f"No ANN field found in record {idx}, "
+                f"replacing with NAs (i.e. 'ANN={empty}')",
+                file=sys.stderr,
+            )
+            annotations = [empty]
 
         #  … and check if the expression evaluates to true for any  of the annotations
         filtered = any(map(env.evaluate, annotations))
