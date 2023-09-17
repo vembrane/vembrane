@@ -15,6 +15,7 @@ from vembrane.backend.base import (
     VCFWriter,
 )
 
+from ..ann_types import NA
 from ..errors import UnknownSample
 
 
@@ -102,7 +103,13 @@ class PysamRecordFormat(VCFRecordFormat):
             self._record.samples.__contains__(sample)
         except KeyError:
             raise UnknownSample(self._record_idx, self._record, sample)
-        return self._record.samples[sample][self._format_key]
+
+        value = self._record.samples[sample][self._format_key]
+        if isinstance(value, tuple):
+            return tuple(NA if x is None else x for x in value)
+        if value is None:
+            return NA
+        return value
 
     def __setitem__(self, key, value):
         self._record.format[key] = value
