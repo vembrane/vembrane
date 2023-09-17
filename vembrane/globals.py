@@ -16,6 +16,7 @@ _builtins = {
         abs,
         all,
         any,
+        type,
         # # ascii,
         # bin,
         bool,
