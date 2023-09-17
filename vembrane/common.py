@@ -3,7 +3,7 @@ import ast
 import shlex
 from typing import Dict, Iterable, Iterator, List, Optional, Set
 
-from .backend.backend_cyvcf2 import Cyvcf2VCFReader, Cyvcf2VCFWriter
+from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamVCFReader, PysamVCFWriter
 from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
 from .errors import InvalidExpression
@@ -138,7 +138,7 @@ def create_reader(filename: str, backend: Backend = Backend.pysam):
     if backend == Backend.pysam:
         return PysamVCFReader(filename)
     elif backend == Backend.cyvcf2:
-        return Cyvcf2VCFReader(filename)
+        return Cyvcf2Reader(filename)
     else:
         raise ValueError(f"{backend} is not a known backend.")
 
@@ -149,6 +149,6 @@ def create_writer(
     if backend == Backend.pysam:
         return PysamVCFWriter(filename, fmt, template)
     elif backend == Backend.cyvcf2:
-        return Cyvcf2VCFWriter(filename, fmt, template)
+        return Cyvcf2Writer(filename, fmt, template)
     else:
         raise ValueError(f"{backend} is not a known backend.")

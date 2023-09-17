@@ -9,23 +9,26 @@ from vembrane.backend.base import (
     VCFRecord,
     VCFRecordFilter,
     VCFRecordFormat,
+    VCFRecordFormats,
     VCFRecordInfo,
     VCFWriter,
 )
 
+from ..errors import UnknownSample
 
-class Cyvcf2VCFReader(VCFReader):
+
+class Cyvcf2Reader(VCFReader):
     def __init__(self, filename: str):
         self.filename = filename
         self._file = VCF(self.filename)
-        self._header = Cyvcf2VCFHeader(self)
+        self._header = Cyvcf2Header(self)
 
     def __iter__(self):
         self._iter_file = self._file.__iter__()
         return self
 
     def __next__(self):
-        return Cyvcf2VCFRecord(self._iter_file.__next__(), self._header, self._file)
+        return Cyvcf2Record(self._iter_file.__next__(), self._header, self._file)
 
     # @property
     # def header(self):
@@ -36,8 +39,8 @@ class Cyvcf2VCFReader(VCFReader):
     # pass
 
 
-class Cyvcf2VCFHeader(VCFHeader):
-    def __init__(self, reader: Cyvcf2VCFReader):
+class Cyvcf2Header(VCFHeader):
+    def __init__(self, reader: Cyvcf2Reader):
         self._reader = reader
         self._data = []
         self._data_category = defaultdict(OrderedDict)
@@ -84,8 +87,8 @@ class Cyvcf2VCFHeader(VCFHeader):
         self._reader._file.add_filter_to_header({"ID": id, "Description": description})
 
 
-class Cyvcf2VCFRecord(VCFRecord):
-    def __init__(self, record: Variant, header: Cyvcf2VCFHeader, file: VCF):
+class Cyvcf2Record(VCFRecord):
+    def __init__(self, record: Variant, header: Cyvcf2Header, file: VCF):
         self._record = record
         self._header = header
         self._file = file
@@ -131,6 +134,10 @@ class Cyvcf2VCFRecord(VCFRecord):
         return Cyvcf2RecordFormat(self._record, self._file, self._header)
 
     @property
+    def formats(self) -> VCFRecordFormats:
+        return Cyvcf2RecordFormats(self._record, self._header)
+
+    @property
     def samples(self):
         return self._file.samples
 
@@ -146,30 +153,51 @@ class Cyvcf2VCFRecord(VCFRecord):
         )  # TODO: implement real check for values
 
 
-class Cyvcf2RecordFormat(VCFRecordFormat):
-    def __init__(self, record: Variant, file: VCF, header: Cyvcf2VCFHeader):
+class Cyvcf2RecordFormats(VCFRecordFormats):
+    def __init__(self, record: Variant, header: Cyvcf2Header):
         self._record = record
-        self._file = file
         self._header = header
 
-    def __getitem__(self, key):
-        value = self._record.format(key)
-        ret = dict()
-        for i, s in enumerate(self._file.samples):
-            if self._header.formats[key]["Number"] == "1":
-                ret[s] = value[i].tolist()[0]
-            else:
-                ret[s] = tuple(value[i].tolist())
-        return ret
+    def __getitem__(self, item):
+        return Cyvcf2RecordFormat(item, self._record, self._header)
 
-    def __repr__(self):
-        ret = dict()
-        for key in self._record.FORMAT:
-            ret[key] = {
-                sample: self._record.format(key)[i].tolist()
-                for i, sample in enumerate(self._file.samples)
-            }
-        return str(ret)
+    def __setitem__(self, key, value):
+        raise NotImplementedError
+
+    def __contains__(self, item):
+        raise NotImplementedError
+
+    def get(self, item, default=None):
+        raise NotImplementedError
+
+
+class Cyvcf2RecordFormat(VCFRecordFormat):
+    def __init__(self, format_key: str, record, header: Cyvcf2Header):
+        self._header = header
+        self._record = record
+        self._format_key = format_key
+
+    def __getitem__(self, sample):
+        # # for some reasons cyvcf2 doesn't split String lists, a known circumstance
+        # meta = self._header.infos[key]
+        # number, typ = meta["Number"], meta["Type"]
+        # if typ == "String" and number == ".":
+        #     value = value.split(",")
+        #     if len(value) == 1:
+        #         value = value[0].split("/")
+        # return value
+
+        value = self._record.format(self._format_key)
+        i = self._header.samples.index(sample)
+        if i == -1:
+            raise UnknownSample(self._record_idx, self._record, sample)
+        if self._format_key == "GT":  # genotype
+            return tuple(
+                None if gt == -1 else gt for gt in self._record.genotypes[i][:-1]
+            )
+        if self._header.formats[self._format_key]["Number"] == "1":
+            return value[i].tolist()[0]
+        return tuple(value[i].tolist())
 
 
 class Cyvcf2RecordFilter(VCFRecordFilter):
@@ -187,7 +215,7 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
     def __init__(
         self,
         record: Variant,
-        header: Cyvcf2VCFHeader,
+        header: Cyvcf2Header,
     ):
         self._record = record
         self._header = header
@@ -199,6 +227,8 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         number, typ = meta["Number"], meta["Type"]
         if typ == "String" and number == ".":
             value = value.split(",")
+            if len(value) == 1:
+                value = value[0].split("/")
         return value
 
     def __setitem__(self, key, value):
@@ -217,9 +247,9 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         return self._record.INFO.get(item, default)
 
 
-class Cyvcf2VCFWriter(VCFWriter):
+class Cyvcf2Writer(VCFWriter):
     def __init__(self, filename: str, fmt: str, template: VCFReader):
         self._file = Writer(filename, template._file, mode=f"w{fmt}")
 
-    def write(self, record: Cyvcf2VCFRecord):
+    def write(self, record: Cyvcf2Record):
         self._file.write_record(record._record)

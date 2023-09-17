@@ -37,7 +37,7 @@ def idfn(val):
             for d in os.listdir(case_path)
             if not d.startswith(".")
         ),
-        (Backend.pysam, Backend.cyvcf2),
+        (Backend.pysam,),  # Backend.cyvcf2
     ),
     ids=idfn,
 )

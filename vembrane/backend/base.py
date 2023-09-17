@@ -2,6 +2,8 @@ from abc import abstractmethod, abstractproperty
 from enum import Enum
 from typing import List, Optional, Tuple
 
+from ..ann_types import NA
+
 
 class Backend(Enum):
     pysam = (0,)
@@ -43,22 +45,36 @@ class VCFRecordSamples:
     pass
 
 
-class VCFRecordFormat:
-    @abstractmethod
-    def __getitem__(self, item):
-        raise NotImplementedError
+class NoValueDict:
+    def __contains__(self, item):
+        try:
+            value = self[item]
+        except KeyError:
+            return False
+        return value is not NA
 
+
+class DefaultGet:
+    def get(self, item, default=NA):
+        v = self[item]
+        if v is not NA:
+            return v
+        else:
+            return default
+
+
+class VCFRecordFormat(NoValueDict, DefaultGet):
     @abstractmethod
     def __setitem__(self, key, value):
         raise NotImplementedError
 
-    @abstractmethod
-    def __contains__(self, item):
-        raise NotImplementedError
-
-    @abstractmethod
-    def get(self, item, default=None):
-        raise NotImplementedError
+    def __repr__(self):
+        return str(
+            {
+                sample: self.__getitem__(sample)
+                for i, sample in enumerate(self._header.samples)
+            }
+        )
 
 
 class VCFRecordFilter:
@@ -120,6 +136,10 @@ class VCFRecord:
     def format(self) -> VCFRecordFormat:
         raise NotImplementedError
 
+    @abstractproperty
+    def formats(self) -> VCFRecordFormat:
+        raise NotImplementedError
+
     @abstractmethod
     def __repr__(self):
         raise NotImplementedError
@@ -130,6 +150,15 @@ class VCFRecord:
 
     @abstractmethod
     def __eq__(self, other):
+        raise NotImplementedError
+
+
+class VCFRecordFormats(NoValueDict):
+    @abstractmethod
+    def __init__(
+        self,
+        record: VCFRecord,
+    ):
         raise NotImplementedError
 
 
