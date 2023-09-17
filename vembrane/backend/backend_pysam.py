@@ -10,12 +10,15 @@ from vembrane.backend.base import (
     VCFRecord,
     VCFRecordFilter,
     VCFRecordFormat,
+    VCFRecordFormats,
     VCFRecordInfo,
     VCFWriter,
 )
 
+from ..errors import UnknownSample
 
-class PysamVCFRecord(VCFRecord):
+
+class PysamRecord(VCFRecord):
     def __init__(self, record: VariantRecord):
         self._record = record
 
@@ -60,6 +63,10 @@ class PysamVCFRecord(VCFRecord):
         return PysamRecordFormat(self._record)
 
     @property
+    def formats(self) -> VCFRecordFormats:
+        return PysamRecordFormats(self._record)
+
+    @property
     def samples(self):
         return self._record.samples
 
@@ -71,6 +78,40 @@ class PysamVCFRecord(VCFRecord):
 
     def __eq__(self, other):
         return self._record == other._record
+
+
+class PysamRecordFormats(VCFRecordFormats):
+    def __init__(self, record: VariantRecord):
+        self._record = record
+
+    def __getitem__(self, key):
+        return PysamRecordFormat(key, self._record)
+
+
+class PysamRecordFormat(VCFRecordFormat):
+    def __init__(
+        self,
+        format_key: str,
+        record: VariantRecord,
+    ):
+        self._format_key = format_key
+        self._record = record
+
+    def __getitem__(self, sample):
+        try:
+            self._record.samples.__contains__(sample)
+        except KeyError:
+            raise UnknownSample(self._record_idx, self._record, sample)
+        return self._record.samples[sample][self._format_key]
+
+    def __setitem__(self, key, value):
+        self._record.format[key] = value
+
+    def __contains__(self, item):
+        return item in self._record.format
+
+    def get(self, item, default=None):
+        return self._record.format.get(item, default)
 
 
 class PysamRecordInfo(VCFRecordInfo):
@@ -93,28 +134,6 @@ class PysamRecordInfo(VCFRecordInfo):
         return self._record.info.get(item, default)
 
 
-class PysamRecordFormat(VCFRecordFormat):
-    def __init__(
-        self,
-        record: VariantRecord,
-    ):
-        self._record = record
-
-    def __getitem__(self, item):
-        return {
-            s: self._record.samples[0][item] for i, s in enumerate(self._record.samples)
-        }
-
-    def __setitem__(self, key, value):
-        self._record.format[key] = value
-
-    def __contains__(self, item):
-        return item in self._record.format
-
-    def get(self, item, default=None):
-        return self._record.format.get(item, default)
-
-
 class PysamRecordFilter(VCFRecordFilter):
     def __init__(self, record: VariantRecord):
         self._record = record
@@ -126,25 +145,25 @@ class PysamRecordFilter(VCFRecordFilter):
         self._record.filter.add(tag)
 
 
-class PysamVCFReader(VCFReader):
+class PysamReader(VCFReader):
     def __init__(self, filename: str):
         self.filename = filename
         self._file = pysam.VariantFile(self.filename)
-        self._header = PysamVCFHeader(self)
+        self._header = PysamHeader(self)
 
     def __iter__(self):
         self._iter_file = self._file.__iter__()
         return self
 
     def __next__(self):
-        return PysamVCFRecord(self._iter_file.__next__())
+        return PysamRecord(self._iter_file.__next__())
 
     def reset(self):
         self._file.reset()
 
 
-class PysamVCFHeader(VCFHeader):
-    def __init__(self, reader: PysamVCFReader):
+class PysamHeader(VCFHeader):
+    def __init__(self, reader: PysamReader):
         self._reader = reader
         self._header = reader._file.header
         self._data = []
@@ -206,13 +225,13 @@ class PysamVCFHeader(VCFHeader):
         )
 
 
-class PysamVCFWriter(VCFWriter):
+class PysamWriter(VCFWriter):
     def __init__(self, filename: str, fmt: str, template: VCFReader):
         self.filename = filename
         self._file = pysam.VariantFile(
             self.filename, f"w{fmt}", header=template.header._header
         )
-        self._header = PysamVCFHeader(self)
+        self._header = PysamHeader(self)
 
-    def write(self, record: PysamVCFRecord):
+    def write(self, record: PysamRecord):
         self._file.write(record._record)

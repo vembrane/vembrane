@@ -161,15 +161,6 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
     def __getitem__(self, item):
         return Cyvcf2RecordFormat(item, self._record, self._header)
 
-    def __setitem__(self, key, value):
-        raise NotImplementedError
-
-    def __contains__(self, item):
-        raise NotImplementedError
-
-    def get(self, item, default=None):
-        raise NotImplementedError
-
 
 class Cyvcf2RecordFormat(VCFRecordFormat):
     def __init__(self, format_key: str, record, header: Cyvcf2Header):
@@ -178,15 +169,6 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
         self._format_key = format_key
 
     def __getitem__(self, sample):
-        # # for some reasons cyvcf2 doesn't split String lists, a known circumstance
-        # meta = self._header.infos[key]
-        # number, typ = meta["Number"], meta["Type"]
-        # if typ == "String" and number == ".":
-        #     value = value.split(",")
-        #     if len(value) == 1:
-        #         value = value[0].split("/")
-        # return value
-
         value = self._record.format(self._format_key)
         i = self._header.samples.index(sample)
         if i == -1:

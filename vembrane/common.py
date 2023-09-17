@@ -4,7 +4,7 @@ import shlex
 from typing import Dict, Iterable, Iterator, List, Optional, Set
 
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
-from .backend.backend_pysam import PysamVCFReader, PysamVCFWriter
+from .backend.backend_pysam import PysamReader, PysamWriter
 from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
 from .errors import InvalidExpression
 
@@ -136,7 +136,7 @@ def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
 
 def create_reader(filename: str, backend: Backend = Backend.pysam):
     if backend == Backend.pysam:
-        return PysamVCFReader(filename)
+        return PysamReader(filename)
     elif backend == Backend.cyvcf2:
         return Cyvcf2Reader(filename)
     else:
@@ -147,7 +147,7 @@ def create_writer(
     filename: str, fmt: str, template: VCFReader, backend: Backend = Backend.pysam
 ):
     if backend == Backend.pysam:
-        return PysamVCFWriter(filename, fmt, template)
+        return PysamWriter(filename, fmt, template)
     elif backend == Backend.cyvcf2:
         return Cyvcf2Writer(filename, fmt, template)
     else:
