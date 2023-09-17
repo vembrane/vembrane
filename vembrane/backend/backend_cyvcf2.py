@@ -14,7 +14,7 @@ from vembrane.backend.base import (
     VCFWriter,
 )
 
-from ..ann_types import NA
+from ..ann_types import NA, InfoTuple
 from ..errors import UnknownSample
 
 
@@ -175,12 +175,12 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
         if i == -1:
             raise UnknownSample(self._record_idx, self._record, sample)
         if self._format_key == "GT":  # genotype
-            return tuple(
-                NA if gt == -1 else gt for gt in self._record.genotypes[i][:-1]
+            value = tuple(
+                None if gt == -1 else gt for gt in self._record.genotypes[i][:-1]
             )
         if self._header.formats[self._format_key]["Number"] == "1":
-            return value[i].tolist()[0]
-        return tuple(value[i].tolist())
+            return value[i].tolist()[0] or NA
+        return InfoTuple(value[i].tolist())
 
 
 class Cyvcf2RecordFilter(VCFRecordFilter):
