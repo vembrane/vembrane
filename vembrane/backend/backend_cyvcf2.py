@@ -25,7 +25,7 @@ class Cyvcf2VCFReader(VCFReader):
         return self
 
     def __next__(self):
-        return Cyvcf2VCFRecord(self._iter_file.__next__(), self._header)
+        return Cyvcf2VCFRecord(self._iter_file.__next__(), self._header, self._file)
 
     # @property
     # def header(self):
@@ -62,6 +62,14 @@ class Cyvcf2VCFHeader(VCFHeader):
         return self._data_category["INFO"]
 
     @property
+    def formats(self):
+        return self._data_category["FORMAT"]
+
+    @property
+    def filters(self):
+        return self._data_category["FILTER"]
+
+    @property
     def samples(self):
         return self._reader._file.samples
 
@@ -75,15 +83,12 @@ class Cyvcf2VCFHeader(VCFHeader):
     def add_filter(self, id: str, description: str):
         self._reader._file.add_filter_to_header({"ID": id, "Description": description})
 
-    @property
-    def filters(self):
-        return self._data_category["FILTER"]
-
 
 class Cyvcf2VCFRecord(VCFRecord):
-    def __init__(self, record: Variant, header: Cyvcf2VCFHeader):
+    def __init__(self, record: Variant, header: Cyvcf2VCFHeader, file: VCF):
         self._record = record
         self._header = header
+        self._file = file
 
     @property
     def contig(self) -> str:
@@ -92,6 +97,10 @@ class Cyvcf2VCFRecord(VCFRecord):
     @property
     def position(self) -> int:
         return self._record.POS
+
+    @property
+    def stop(self) -> int:
+        return self._record.POS + len(self._record.REF)
 
     @property
     def id(self) -> str:
@@ -119,11 +128,11 @@ class Cyvcf2VCFRecord(VCFRecord):
 
     @property
     def format(self) -> VCFRecordFormat:
-        return Cyvcf2RecordInfo(self._record)
+        return Cyvcf2RecordFormat(self._record, self._file, self._header)
 
-    # @property
-    # def samples(self):
-    #     return self._record.samples
+    @property
+    def samples(self):
+        return self._file.samples
 
     def __repr__(self):
         return self._record.__repr__()
@@ -135,6 +144,32 @@ class Cyvcf2VCFRecord(VCFRecord):
         return (
             self._record.__repr__() == other._record.__repr__()
         )  # TODO: implement real check for values
+
+
+class Cyvcf2RecordFormat(VCFRecordFormat):
+    def __init__(self, record: Variant, file: VCF, header: Cyvcf2VCFHeader):
+        self._record = record
+        self._file = file
+        self._header = header
+
+    def __getitem__(self, key):
+        value = self._record.format(key)
+        ret = dict()
+        for i, s in enumerate(self._file.samples):
+            if self._header.formats[key]["Number"] == "1":
+                ret[s] = value[i].tolist()[0]
+            else:
+                ret[s] = tuple(value[i].tolist())
+        return ret
+
+    def __repr__(self):
+        ret = dict()
+        for key in self._record.FORMAT:
+            ret[key] = {
+                sample: self._record.format(key)[i].tolist()
+                for i, sample in enumerate(self._file.samples)
+            }
+        return str(ret)
 
 
 class Cyvcf2RecordFilter(VCFRecordFilter):

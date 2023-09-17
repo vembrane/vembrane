@@ -11,7 +11,7 @@ from .ann_types import (
     NvIntFloatStr,
     type_info,
 )
-from .backend.base import VCFHeader, VCFRecord, VCFRecordSamples
+from .backend.base import VCFHeader, VCFRecord, VCFRecordFormat
 from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
 from .errors import (
     MalformedAnnotationError,
@@ -49,13 +49,15 @@ class Format(NoValueDict, DefaultGet):
         record: VCFRecord,
         name: str,
         number: str,
-        record_samples: VCFRecordSamples,
+        # record_samples: VCFRecordSamples,
+        record_format: VCFRecordFormat,
     ):
         self._record_idx = record_idx
         self._record = record
         self._name = name
         self._number = number
-        self._record_samples = record_samples
+        # self._record_samples = record_samples
+        self._record_format = record_format
         self._sample_values: Dict[str, NvIntFloatStr] = {}
 
     def __getitem__(self, sample):
@@ -63,12 +65,10 @@ class Format(NoValueDict, DefaultGet):
             return self._sample_values[sample]
         except KeyError:
             try:
-                record_sample = self._record_samples[sample]
+                record_sample = self._record_format[self._name][sample]
             except KeyError:
                 raise UnknownSample(self._record_idx, self._record, sample)
-            value = type_info(
-                record_sample[self._name], self._number, self._name, self._record_idx
-            )
+            value = type_info(record_sample, self._number, self._name, self._record_idx)
             self._sample_values[sample] = value
             return value
 
@@ -84,7 +84,6 @@ class Formats(NoValueDict):
         self._record_idx = record_idx
         self._header_format_fields = header_format_fields
         self._record_format = record.format
-        self._record_samples = record.samples
         self._formats: Dict[str, Format] = {}
 
     def __getitem__(self, item):
@@ -97,7 +96,7 @@ class Formats(NoValueDict):
                 raise UnknownFormatField(self._record_idx, self._record, item)
             number = self._header_format_fields[item]
             format_field = Format(
-                self._record_idx, self._record, item, number, self._record_samples
+                self._record_idx, self._record, item, number, self._record_format
             )
             self._formats[item] = format_field
             return format_field
