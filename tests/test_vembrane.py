@@ -13,23 +13,36 @@ from vembrane.backend.base import Backend
 from vembrane.common import create_reader
 from vembrane.modules import filter, table, tag
 
-CASES = Path(__file__).parent.joinpath("testcases")
+FILTER_CASES = Path(__file__).parent.joinpath("testcases/filter")
+TABLE_CASES = Path(__file__).parent.joinpath("testcases/table")
+TAG_CASES = Path(__file__).parent.joinpath("testcases/tag")
+ANNOTATE_CASES = Path(__file__).parent.joinpath("testcases/annotate")
 
 
 def test_version():
     assert __version__ != "unknown"
 
 
+def idfn(val):
+    if isinstance(val, os.PathLike):
+        return "-".join(os.path.normpath(val).split(os.sep)[-2:])
+
+
 @pytest.mark.parametrize(
     "testcase,backend",
     product(
-        (d for d in os.listdir(CASES) if not d.startswith(".")),
-        (Backend.pysam, Backend.cyvcf2),  # TODO: include Backend.cyvcf2
+        (
+            case_path.joinpath(d)
+            for case_path in [FILTER_CASES, TABLE_CASES, TAG_CASES, ANNOTATE_CASES]
+            for d in os.listdir(case_path)
+            if not d.startswith(".")
+        ),
+        (Backend.pysam, Backend.cyvcf2),
     ),
+    ids=idfn,
 )
-def test_filter(testcase: os.PathLike, backend: Backend):
-    path = CASES.joinpath(testcase)
-
+def test_command(testcase: os.PathLike, backend: Backend):
+    path = testcase
     vcf_path = path.joinpath("test.vcf")
 
     with open(path.joinpath("config.yaml")) as config_fp:
@@ -37,38 +50,9 @@ def test_filter(testcase: os.PathLike, backend: Backend):
 
     # emulate command-line command setup to use argparse afterwards
     cmd = config["function"]
-    if cmd in ("filter", "table"):
-        command = [cmd, config["expression"], str(vcf_path)]
-    elif cmd == "tag":
-        command = [cmd]
-        tags = config["tags"]
-        for name, expr in tags.items():
-            command += ["--tag", f"{name}={expr}"]
-        command.append(str(vcf_path))
-    else:
-        raise ValueError(f"Unknown subcommand {config['function']}")
+    command = parse_command_config(cmd, config, vcf_path)
+    parser = construct_parser()
 
-    for key in config:
-        if isinstance(config[key], str):
-            command.append(f"--{key.replace('_', '-')}")
-            command.append(config[key])
-        else:
-            if isinstance(config[key], dict):
-                for k, v in config[key].items():
-                    command.append(f"--{key.replace('_', '-')}")
-                    command.append(f"{k}={v}")
-            else:
-                command.append(f"--{key.replace('_', '-')}")
-                for argument in config[key]:
-                    command.append(argument)
-
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(
-        dest="command", description="valid subcommands", required=True
-    )
-    filter.add_subcommmand(subparsers)
-    table.add_subcommmand(subparsers)
-    tag.add_subcommand(subparsers)
     try:
         args, unknown = parser.parse_known_args(command)
     # we have to catch and compare such exceptions here, because they
@@ -129,3 +113,41 @@ def test_filter(testcase: os.PathLike, backend: Backend):
                 assert t_out == e_out
             else:
                 assert args.command in {"filter", "table", "tag"}, "Unknown subcommand"
+
+
+def construct_parser():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(
+        dest="command", description="valid subcommands", required=True
+    )
+    filter.add_subcommmand(subparsers)
+    table.add_subcommmand(subparsers)
+    tag.add_subcommand(subparsers)
+    return parser
+
+
+def parse_command_config(cmd, config, vcf_path):
+    if cmd in ("filter", "table"):
+        command = [cmd, config["expression"], str(vcf_path)]
+    elif cmd == "tag":
+        command = [cmd]
+        tags = config["tags"]
+        for name, expr in tags.items():
+            command += ["--tag", f"{name}={expr}"]
+        command.append(str(vcf_path))
+    else:
+        raise ValueError(f"Unknown subcommand {config['function']}")
+    for key in config:
+        if isinstance(config[key], str):
+            command.append(f"--{key.replace('_', '-')}")
+            command.append(config[key])
+        else:
+            if isinstance(config[key], dict):
+                for k, v in config[key].items():
+                    command.append(f"--{key.replace('_', '-')}")
+                    command.append(f"{k}={v}")
+            else:
+                command.append(f"--{key.replace('_', '-')}")
+                for argument in config[key]:
+                    command.append(argument)
+    return command
