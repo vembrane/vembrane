@@ -207,7 +207,6 @@ def filter_vcf(
         has_mateid_key=has_mateid_key,
         has_event_key=has_event_key,
     ) -> Tuple[Optional[str], Optional[str]]:
-        print("fooo1", file=sys.stderr)
         mate_ids: List[str] = record.info.get("MATEID", []) if has_mateid_key else []
         event_name: Optional[str] = (
             record.info.get("EVENT", None) if has_event_key else None
