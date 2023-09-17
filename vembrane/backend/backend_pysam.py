@@ -101,7 +101,9 @@ class PysamRecordFormat(VCFRecordFormat):
         self._record = record
 
     def __getitem__(self, item):
-        return self._record.format[item]
+        return {
+            s: self._record.samples[0][item] for i, s in enumerate(self._record.samples)
+        }
 
     def __setitem__(self, key, value):
         self._record.format[key] = value
