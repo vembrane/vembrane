@@ -212,7 +212,7 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
             value = value.split(",")
             if len(value) == 1:
                 value = value[0].split("/")
-        return value
+        return value or NA
 
     def __setitem__(self, key, value):
         # for some reasons cyvcf2 doesn't split String lists, a known circumstance
@@ -223,11 +223,13 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
 
         self._record.INFO[key] = value
 
-    def __contains__(self, item):
-        return item in self._record.INFO
+    def __contains__(self, key):
+        return self._record.INFO.get(key, None) is not None
 
-    def get(self, item, default=None):
-        return self._record.INFO.get(item, default)
+    def get(self, key, default=None):
+        if self.__contains__(key):
+            return self[key]
+        return default
 
 
 class Cyvcf2Writer(VCFWriter):
