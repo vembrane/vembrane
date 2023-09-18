@@ -1,6 +1,7 @@
 from collections import OrderedDict, defaultdict
 from typing import Tuple
 
+import numpy as np
 from cyvcf2.cyvcf2 import VCF, Variant, Writer
 
 from vembrane.backend.base import (
@@ -185,7 +186,12 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
             )
             return InfoTuple(value)
         if self._header.formats[self._format_key]["Number"] == "1":
-            return value[i].tolist()[0] or NA
+            value = value[i].tolist()[0]
+            meta = self._header.formats[self._format_key]
+            # cyvcf2 gives min int for unknown integer values
+            if meta["Type"] == "Integer" and value == np.iinfo(np.int32).min:
+                return NA
+            return value or NA
         return InfoTuple(value[i].tolist())
 
 
@@ -218,8 +224,8 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         number, typ = meta["Number"], meta["Type"]
         if typ == "String" and number == ".":
             value = value.split(",")
-            if len(value) == 1:
-                value = value[0].split("/")
+            # if len(value) == 1:
+            #     value = value[0].split("/")
         return value or NA
 
     def __setitem__(self, key, value):
