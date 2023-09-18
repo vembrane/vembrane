@@ -222,10 +222,13 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
             return key in self
         value = self._record.INFO[key]
         number, typ = meta["Number"], meta["Type"]
+
         if typ == "String" and number == ".":
-            value = value.split(",")
-            # if len(value) == 1:
-            #     value = value[0].split("/")
+            return tuple(value.split(","))
+
+        if number == "A" and not isinstance(value, list):
+            value = tuple([value])
+
         return value or NA
 
     def __setitem__(self, key, value):
@@ -241,6 +244,9 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         return self._record.INFO.get(key, None) is not None
 
     def get(self, key, default=None):
+        import sys
+
+        print("test test", file=sys.stderr)
         if self.__contains__(key):
             return self[key]
         return default

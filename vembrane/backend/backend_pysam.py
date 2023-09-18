@@ -127,9 +127,6 @@ class PysamRecordInfo(VCFRecordInfo):
         self._record = record
 
     def __getitem__(self, item):
-        import sys
-
-        print("fooo", self._record.info[item], file=sys.stderr)
         return self._record.info[item]
 
     def __setitem__(self, key, value):
