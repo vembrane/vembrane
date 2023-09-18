@@ -181,6 +181,7 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
             value = tuple(
                 None if gt == -1 else gt for gt in self._record.genotypes[i][:-1]
             )
+            return InfoTuple(value)
         if self._header.formats[self._format_key]["Number"] == "1":
             return value[i].tolist()[0] or NA
         return InfoTuple(value[i].tolist())
