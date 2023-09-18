@@ -210,9 +210,11 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         self._header = header
 
     def __getitem__(self, key):
-        value = self._record.INFO[key]
         # for some reasons cyvcf2 doesn't split String lists, a known circumstance
         meta = self._header.infos[key]
+        if meta["Type"] == "Flag":
+            return key in self
+        value = self._record.INFO[key]
         number, typ = meta["Number"], meta["Type"]
         if typ == "String" and number == ".":
             value = value.split(",")
