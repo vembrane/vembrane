@@ -107,7 +107,7 @@ class Cyvcf2Record(VCFRecord):
 
     @property
     def stop(self) -> int:
-        return self._record.POS + len(self._record.REF)
+        return self._record.POS + len(self._record.REF) - 1
 
     @property
     def id(self) -> str:
