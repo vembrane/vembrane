@@ -107,6 +107,8 @@ class Cyvcf2Record(VCFRecord):
 
     @property
     def stop(self) -> int:
+        if "END" in self.info:
+            return self.info["END"]
         return self._record.POS + len(self._record.REF) - 1
 
     @property
