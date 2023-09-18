@@ -193,7 +193,7 @@ class VCFReader:
 
     @abstractmethod
     def reset(self):
-        pass
+        raise NotImplementedError
 
 
 class VCFHeader:

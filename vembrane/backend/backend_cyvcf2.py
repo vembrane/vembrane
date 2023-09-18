@@ -35,9 +35,12 @@ class Cyvcf2Reader(VCFReader):
     # def header(self):
     #     return self._header
 
-    # @abstractmethod
-    # def reset(self):
-    # pass
+    def reset(self):
+        # cyvcv2 doesnt have a reset function
+        self._file.close()
+        self._file = VCF(self.filename)
+        self._header = Cyvcf2Header(self)
+        # TODO: may this workaround lead to problems?
 
 
 class Cyvcf2Header(VCFHeader):
