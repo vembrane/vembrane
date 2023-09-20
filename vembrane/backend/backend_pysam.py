@@ -125,6 +125,8 @@ class PysamRecordInfo(VCFRecordInfo):
         self._header = header
 
     def __getitem__(self, key):
+        if key == "END":
+            return get_end(self._record)
         if key not in self._header.infos.keys():
             raise UnknownInfoField(0, self._record, key)  # TODO: self._record_idx
         meta = self._header.infos[key]
@@ -244,3 +246,19 @@ class PysamWriter(VCFWriter):
 
     def write(self, record: PysamRecord):
         self._file.write(record._record)
+
+
+def get_end(record: VariantRecord):
+    if is_bnd_record(record):
+        return NA
+    else:
+        # record.stop is pysams unified approach to get the end position of a variant.
+        # It either considers the alt allele or the END field, depending on the record.
+        # Stop is 0-based, but for consistency with POS we convert into 1-based.
+        # Since for 1-based coordinates, the expectation is that END is inclusive
+        # instead of exclusive (as it is with 0-based), we do not need to add 1.
+        return record.stop
+
+
+def is_bnd_record(record: VariantRecord) -> bool:
+    return "SVTYPE" in record.info and record.info.get("SVTYPE", None) == "BND"
