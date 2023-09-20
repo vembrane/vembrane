@@ -29,7 +29,7 @@ expression: 'INFO["FLAG"] and
   FORMAT["FLOATX"]["Sample"] == (0.5, 0.75) and
   FORMAT["STRING"]["Sample"] == "String1" and
   FORMAT["STRING2"]["Sample"] == ("String1", "String2") and
-  FORMAT["STRINGA"]["Sample"] == "String1" and
+  FORMAT["STRINGA"]["Sample"] == "StringA" and
   FORMAT["STRINGR"]["Sample"] == ("StringR1", "StringR2") and
   FORMAT["STRINGG"]["Sample"] == ("String1", "String2", "String3") and
   FORMAT["STRINGX"]["Sample"] == ("String1", "String2", "String3")
