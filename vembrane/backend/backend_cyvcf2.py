@@ -16,7 +16,7 @@ from vembrane.backend.base import (
 )
 
 from ..ann_types import NA, InfoTuple
-from ..errors import UnknownSample
+from ..errors import UnknownInfoField, UnknownSample
 
 
 class Cyvcf2Reader(VCFReader):
@@ -217,19 +217,20 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
 
     def __getitem__(self, key):
         # for some reasons cyvcf2 doesn't split String lists, a known circumstance
-        meta = self._header.infos[key]
-        if meta["Type"] == "Flag":
-            return key in self
-        value = self._record.INFO[key]
-        number, typ = meta["Number"], meta["Type"]
-
+        try:
+            meta = self._header.infos[key]
+            if meta["Type"] == "Flag":
+                return key in self
+            value = self._record.INFO[key]
+            number, typ = meta["Number"], meta["Type"]
+        except KeyError:
+            raise UnknownInfoField(0, self._record, key)  # TODO: self._record_idx
         if typ == "String" and number == ".":
-            return tuple(value.split(","))
+            return InfoTuple(tuple(value.split(",")))
 
-        if number == "A" and not isinstance(value, list):
-            value = tuple([value])
-
-        return value or NA
+        return InfoTuple(value)
+        # if number == "A" and not isinstance(value, list):
+        #     value = tuple([value])
 
     def __setitem__(self, key, value):
         # for some reasons cyvcf2 doesn't split String lists, a known circumstance
@@ -242,14 +243,6 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
 
     def __contains__(self, key):
         return self._record.INFO.get(key, None) is not None
-
-    def get(self, key, default=None):
-        import sys
-
-        print("test test", file=sys.stderr)
-        if self.__contains__(key):
-            return self[key]
-        return default
 
 
 class Cyvcf2Writer(VCFWriter):

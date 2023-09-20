@@ -15,13 +15,14 @@ from vembrane.backend.base import (
     VCFWriter,
 )
 
-from ..ann_types import NA, InfoTuple
-from ..errors import UnknownSample
+from ..ann_types import type_info
+from ..errors import UnknownInfoField, UnknownSample
 
 
 class PysamRecord(VCFRecord):
-    def __init__(self, record: VariantRecord):
+    def __init__(self, record: VariantRecord, header: VCFHeader):
         self._record = record
+        self._header = header
 
     @property
     def contig(self) -> str:
@@ -57,7 +58,7 @@ class PysamRecord(VCFRecord):
 
     @property
     def info(self) -> VCFRecordInfo:
-        return PysamRecordInfo(self._record)
+        return PysamRecordInfo(self._record, self._header)
 
     @property
     def format(self) -> VCFRecordFormat:
@@ -65,7 +66,7 @@ class PysamRecord(VCFRecord):
 
     @property
     def formats(self) -> VCFRecordFormats:
-        return PysamRecordFormats(self._record)
+        return PysamRecordFormats(self._record, self._header)
 
     @property
     def samples(self):
@@ -82,11 +83,12 @@ class PysamRecord(VCFRecord):
 
 
 class PysamRecordFormats(VCFRecordFormats):
-    def __init__(self, record: VariantRecord):
+    def __init__(self, record: VariantRecord, header: VCFHeader):
+        self._header = header
         self._record = record
 
     def __getitem__(self, key):
-        return PysamRecordFormat(key, self._record)
+        return PysamRecordFormat(key, self._record, self._header)
 
 
 class PysamRecordFormat(VCFRecordFormat):
@@ -94,49 +96,54 @@ class PysamRecordFormat(VCFRecordFormat):
         self,
         format_key: str,
         record: VariantRecord,
+        header: VCFHeader,
     ):
         self._format_key = format_key
         self._record = record
+        self._header = header
 
     def __getitem__(self, sample):
-        try:
-            self._record.samples.__contains__(sample)
-        except KeyError:
+        meta = self._header.formats[self._format_key]
+        if not self.__contains__(sample):
             raise UnknownSample(self._record_idx, self._record, sample)
+        import sys
 
-        value = self._record.samples[sample][self._format_key]
-        if isinstance(value, tuple):
-            return InfoTuple(value)
-        return value or NA
+        print(
+            "fooo",
+            sample,
+            meta,
+            self._record.samples[sample][self._format_key],
+            file=sys.stderr,
+        )
+        return type_info(self._record.samples[sample][self._format_key], meta["Number"])
 
     def __setitem__(self, key, value):
         self._record.format[key] = value
 
-    def __contains__(self, item):
-        return item in self._record.format
-
-    def get(self, item, default=None):
-        return self._record.format.get(item, default)
+    def __contains__(self, sample):
+        return sample in self._record.samples.keys()
 
 
 class PysamRecordInfo(VCFRecordInfo):
     def __init__(
         self,
         record: VariantRecord,
+        header: VCFHeader,
     ):
         self._record = record
+        self._header = header
 
-    def __getitem__(self, item):
-        return self._record.info[item]
+    def __getitem__(self, key):
+        meta = self._header.infos[key]
+        if not self.__contains__(key):
+            raise UnknownInfoField(0, self._record, key)  # TODO: self._record_idx
+        return type_info(self._record.info[key], meta["Number"])
 
     def __setitem__(self, key, value):
         self._record.info[key] = value
 
-    def __contains__(self, item):
-        return item in self._record.info
-
-    def get(self, item, default=None):
-        return self._record.info.get(item, default)
+    def __contains__(self, key):
+        return key in self._record.info.keys()
 
 
 class PysamRecordFilter(VCFRecordFilter):
@@ -161,7 +168,7 @@ class PysamReader(VCFReader):
         return self
 
     def __next__(self):
-        return PysamRecord(self._iter_file.__next__())
+        return PysamRecord(self._iter_file.__next__(), self._header)
 
     def reset(self):
         self._file.reset()
@@ -189,6 +196,10 @@ class PysamHeader(VCFHeader):
     @property
     def infos(self):
         return self._data_category["INFO"]
+
+    @property
+    def formats(self):
+        return self._data_category["FORMAT"]
 
     def __iter__(self):
         self._iter_index = 0

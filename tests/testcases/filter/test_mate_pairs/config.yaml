@@ -1,2 +1,2 @@
 function: "filter"
-expression: 'any(v == 2 for v in INFO["ints"])'
+expression: 'any(v == 2 for v in INFO.get("ints", NA))'

@@ -3,6 +3,7 @@ from enum import Enum
 from typing import List, Optional, Tuple
 
 from ..ann_types import NA
+from ..errors import UnknownInfoField, UnknownSample
 
 
 class Backend(Enum):
@@ -36,9 +37,11 @@ class VCFRecordInfo:
     def __setitem__(self, key, value):
         raise NotImplementedError
 
-    @abstractmethod
-    def get(self, item, default=None):
-        raise NotImplementedError
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except UnknownInfoField:
+            return default
 
 
 class VCFRecordSamples:
@@ -67,6 +70,12 @@ class VCFRecordFormat(NoValueDict, DefaultGet):
     @abstractmethod
     def __setitem__(self, key, value):
         raise NotImplementedError
+
+    def get(self, sample, default=None):
+        try:
+            return self[sample]
+        except UnknownSample:
+            return default
 
     def __repr__(self):
         return str(

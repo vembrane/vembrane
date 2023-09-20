@@ -2,23 +2,10 @@ import ast
 from types import CodeType
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from .ann_types import (
-    ANN_TYPER,
-    NA,
-    MoreThanOneAltAllele,
-    NvFloat,
-    NvInt,
-    NvIntFloatStr,
-    type_info,
-)
-from .backend.base import VCFHeader, VCFRecord, VCFRecordFormats
+from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, NvFloat, NvInt
+from .backend.base import VCFHeader, VCFRecord, VCFRecordFormats, VCFRecordInfo
 from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
-from .errors import (
-    MalformedAnnotationError,
-    NonBoolTypeError,
-    UnknownAnnotation,
-    UnknownInfoField,
-)
+from .errors import MalformedAnnotationError, NonBoolTypeError, UnknownAnnotation
 from .globals import _explicit_clear, allowed_globals, custom_functions
 
 
@@ -101,49 +88,50 @@ class DefaultGet:
 #         return format_field
 
 
-class Info(NoValueDict, DefaultGet):
-    def __init__(
-        self,
-        record_idx: int,
-        record: VCFRecord,
-        header_info_fields: Dict[str, str],
-        ann_key: str,
-    ):
-        self._record_idx = record_idx
-        self._record = record
-        self._record_info = record.info
-        self._header_info_fields = header_info_fields
-        self._ann_key = ann_key
-        self._info_dict: Dict[str, NvIntFloatStr] = {}
+# class Info(NoValueDict, DefaultGet):
+#     def __init__(
+#         self,
+#         record_idx: int,
+#         record: VCFRecord,
+#         header_info_fields: Dict[str, str],
+#         ann_key: str,
+#     ):
+#         self._record_idx = record_idx
+#         self._record = record
+#         self._record_info = record.info
+#         self._header_info_fields = header_info_fields
+#         self._ann_key = ann_key
+#         self._info_dict: Dict[str, NvIntFloatStr] = {}
 
-    def __getitem__(self, item):
-        try:
-            return self._info_dict[item]
-        except KeyError:
-            if item == "END":
-                # pysam removes END from info. In order to fit with user expectations,
-                # (they will expect INFO["END"] to work) we emulate it being present by
-                # inferring it from pysams record representation.
-                value = get_end(self._record)
-            else:
-                try:
-                    if item == self._ann_key:
-                        raise KeyError(item)
-                    untyped_value = self._record_info[item]
-                except KeyError:
-                    if item in self._header_info_fields:
-                        value = NA
-                    else:
-                        raise UnknownInfoField(self._record_idx, self._record, item)
-                else:
-                    value = type_info(
-                        untyped_value,
-                        self._header_info_fields[item],
-                        item,
-                        self._record_idx,
-                    )
-            self._info_dict[item] = value
-            return value
+#     def __getitem__(self, item):
+#         try:
+#             return self._info_dict[item]
+#         except KeyError:
+#             if item == "END":
+#                 # pysam removes END from info. In order to fit with user expectations,
+#                 # (they will expect INFO["END"] to work) we emulate it
+#                 # being present by
+#                 # inferring it from pysams record representation.
+#                 value = get_end(self._record)
+#             else:
+#                 try:
+#                     if item == self._ann_key:
+#                         raise KeyError(item)
+#                     untyped_value = self._record_info[item]
+#                 except KeyError:
+#                     if item in self._header_info_fields:
+#                         value = NA
+#                     else:
+#                         raise UnknownInfoField(self._record_idx, self._record, item)
+#                 else:
+#                     value = type_info(
+#                         untyped_value,
+#                         self._header_info_fields[item],
+#                         item,
+#                         self._record_idx,
+#                     )
+#             self._info_dict[item] = value
+#             return value
 
 
 class Annotation(NoValueDict, DefaultGet):
@@ -350,13 +338,14 @@ class Environment(dict):
         self._globals["FILTER"] = value
         return value
 
-    def _get_info(self) -> Info:
-        value = Info(
-            self.idx,
-            self.record,
-            self._header_info_fields,
-            self._ann_key,
-        )
+    def _get_info(self) -> VCFRecordInfo:
+        # value = VCFRecordInfo(
+        #     self.idx,
+        #     self.record,
+        #     self._header_info_fields,
+        #     self._ann_key,
+        # )
+        value = self.record.info
         self._globals["INFO"] = value
         return value
 
