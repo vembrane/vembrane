@@ -123,10 +123,10 @@ NvFloat = Union[float, NoValue]
 def type_info(
     value, number=".", field=None, record_idx=None
 ) -> Union[NvIntFloatStr, InfoTuple]:
+    if number == "0":
+        return False if value is NA else value
     if value is None:
         return NA
-    if number == "0":
-        return NA if value is None else value
     if number == "A":
         if len(value) != 1:
             raise MoreThanOneAltAllele()

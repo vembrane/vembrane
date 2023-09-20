@@ -15,7 +15,7 @@ from vembrane.backend.base import (
     VCFWriter,
 )
 
-from ..ann_types import type_info
+from ..ann_types import NA, type_info
 from ..errors import UnknownInfoField, UnknownSample
 
 
@@ -106,15 +106,6 @@ class PysamRecordFormat(VCFRecordFormat):
         meta = self._header.formats[self._format_key]
         if not self.__contains__(sample):
             raise UnknownSample(self._record_idx, self._record, sample)
-        import sys
-
-        print(
-            "fooo",
-            sample,
-            meta,
-            self._record.samples[sample][self._format_key],
-            file=sys.stderr,
-        )
         return type_info(self._record.samples[sample][self._format_key], meta["Number"])
 
     def __setitem__(self, key, value):
@@ -134,9 +125,11 @@ class PysamRecordInfo(VCFRecordInfo):
         self._header = header
 
     def __getitem__(self, key):
+        if key not in self._header.infos.keys():
+            raise UnknownInfoField(0, self._record, key)  # TODO: self._record_idx
         meta = self._header.infos[key]
         if not self.__contains__(key):
-            raise UnknownInfoField(0, self._record, key)  # TODO: self._record_idx
+            return type_info(NA, meta["Number"])
         return type_info(self._record.info[key], meta["Number"])
 
     def __setitem__(self, key, value):
