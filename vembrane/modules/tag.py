@@ -5,6 +5,7 @@ from sys import stderr
 from typing import Dict, Iterator, Set, Tuple
 
 from .. import __version__
+from ..ann_types import NA
 from ..backend.base import Backend, VCFHeader, VCFReader, VCFRecord
 from ..common import (
     AppendKeyValuePair,
@@ -123,9 +124,8 @@ def test_record(
         # if the expression contains a reference to the ANN field
         # get all annotations from the record.info field
         # (or supply an empty ANN value if the record has no ANN field)
-        try:
-            annotations = record.info[ann_key]
-        except KeyError:
+        annotations = record.info[ann_key]
+        if annotations is NA:
             num_ann_entries = len(env._annotation._ann_conv.keys())
             empty = "|" * num_ann_entries
             print(
@@ -149,12 +149,11 @@ def tag_vcf(
     expressions: Dict[str, str],
     ann_key: str,
     auxiliary: Dict[str, Set[str]] = {},
-    overwrite_number: Dict[str, Dict[str, str]] = {},
     invert: bool = False,
 ) -> Iterator[VCFRecord]:
     # For each tag-expression pair, a different Environment must be used.
     envs = {
-        tag: Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
+        tag: Environment(expression, ann_key, vcf.header, auxiliary)
         for tag, expression in expressions.items()
     }
 
@@ -176,14 +175,15 @@ def check_tag(tag: str):
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with create_reader(args.vcf, backend=args.backend) as reader:
+    overwrite_number = {
+        "INFO": dict(args.overwrite_number_info),
+        "FORMAT": dict(args.overwrite_number_format),
+    }
+
+    with create_reader(
+        args.vcf, backend=args.backend, overwrite_number=overwrite_number
+    ) as reader:
         header: VCFHeader = reader.header
-
-        overwrite_number = {
-            "INFO": dict(args.overwrite_number_info),
-            "FORMAT": dict(args.overwrite_number_format),
-        }
-
         expressions = dict(args.tag)
         for tag, expr in expressions.items():
             for t, rec in reader.header.filters.items():
@@ -212,7 +212,6 @@ def execute(args) -> None:
             expressions,
             args.annotation_key,
             auxiliary=aux,
-            overwrite_number=overwrite_number,
             invert=(args.tag_mode == "fail"),
         )
 
