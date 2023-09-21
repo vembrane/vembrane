@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List, Optional, Tuple
 
 from ..ann_types import NA
-from ..errors import UnknownInfoField, UnknownSample
+from ..errors import UnknownSample
 
 
 class Backend(Enum):
@@ -38,10 +38,9 @@ class VCFRecordInfo:
         raise NotImplementedError
 
     def get(self, key, default=None):
-        try:
+        if key in self:
             return self[key]
-        except UnknownInfoField:
-            return default
+        return default
 
 
 class VCFRecordSamples:
