@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterator, List, Set
 
 import asttokens
 
+from ..ann_types import NA
 from ..backend.base import Backend, VCFReader, VCFRecord
 from ..common import AppendKeyValuePair, check_expression, create_reader, read_auxiliary
 from ..errors import HeaderWrongColumnNumber, VembraneError
@@ -124,9 +125,8 @@ def tableize_vcf(
             # if the expression contains a reference to the ANN field
             # get all annotations from the record.info field
             # (or supply an empty ANN value if the record has no ANN field)
-            try:
-                annotations = record.info[ann_key]
-            except KeyError:
+            annotations = record.info[ann_key]
+            if annotations is NA:
                 num_ann_entries = len(env._annotation._ann_conv.keys())
                 empty = "|" * num_ann_entries
                 print(
