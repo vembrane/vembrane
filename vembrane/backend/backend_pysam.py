@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from typing import Tuple
+from typing import Dict, Tuple
 
 import pysam
 from pysam import VariantRecord
@@ -153,10 +153,14 @@ class PysamRecordFilter(VCFRecordFilter):
 
 
 class PysamReader(VCFReader):
-    def __init__(self, filename: str):
+    def __init__(
+        self,
+        filename: str,
+        overwrite_number: Dict[str, Dict[str, str]] = {},
+    ):
         self.filename = filename
         self._file = pysam.VariantFile(self.filename)
-        self._header = PysamHeader(self)
+        self._header = PysamHeader(self, overwrite_number)
 
     def __iter__(self):
         self._iter_file = self._file.__iter__()
@@ -170,7 +174,7 @@ class PysamReader(VCFReader):
 
 
 class PysamHeader(VCFHeader):
-    def __init__(self, reader: PysamReader):
+    def __init__(self, reader: PysamReader, overwrite_number={}):
         self._reader = reader
         self._header = reader._file.header
         self._data = []
@@ -184,6 +188,11 @@ class PysamHeader(VCFHeader):
             self._data.append(d)
             if "ID" in d:
                 self._data_category[r.type][d["ID"]] = d
+
+        # override numbers
+        for categorie, items in overwrite_number.items():
+            for key, value in items.items():
+                self._data_category[categorie][key]["Number"] = value
 
     def contains_generic(self, key: str):
         return key in self._data_generic

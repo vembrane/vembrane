@@ -189,7 +189,6 @@ class Environment(dict):
         ann_key: str,
         header: VCFHeader,
         auxiliary: Dict[str, Set[str]] = {},
-        overwrite_number: Dict[str, Dict[str, str]] = {},
         evaluation_function_template: str = "lambda: {expression}",
     ):
         self._ann_key: str = ann_key
@@ -254,23 +253,21 @@ class Environment(dict):
         # Then, in the case of `number == "A"`, the value tuples only have one entry,
         # so that the value can be accessed directly and need not be accessed via
         # an index operation.
-        self._numbers = {
-            category: {
-                record_name: overwrite_number.get(category, {}).get(record_name)
-                or record.get("Number")
-                for record_name, record in category_records.items()
-            }
-            for category, category_records in header.records.items()
-        }
+        # self._numbers = {
+        #     category: {
+        #         record_name: overwrite_number.get(category, {}).get(record_name)
+        #         or record.get("Number")
+        #         for record_name, record in category_records.items()
+        #     }
+        #     for category, category_records in header.records.items()
+        # }
 
         # always explicitly set "Number" for certain fields
         # which get special pysam treatment:
         # - `FORMAT["GT"]` is always parsed as a list of integer values
-        self._numbers.get("FORMAT", {})["GT"] = "."
+        # self._numbers.get("FORMAT", {})["GT"] = "."
 
         # At the moment, only INFO and FORMAT records are checked
-        self._header_info_fields = self._numbers.get("INFO", dict())
-        self._header_format_fields = self._numbers.get("FORMAT", dict())
         self._empty_globals = {name: UNSET for name in self._getters}
         self.record: VCFRecord = None
         self.idx: int = -1

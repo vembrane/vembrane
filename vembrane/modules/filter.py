@@ -196,9 +196,8 @@ def filter_vcf(
     keep_unmatched: bool = False,
     preserve_order: bool = False,
     auxiliary: Dict[str, Set[str]] = {},
-    overwrite_number: Dict[str, Dict[str, str]] = {},
 ) -> Iterator[VCFRecord]:
-    env = Environment(expression, ann_key, reader.header, auxiliary, overwrite_number)
+    env = Environment(expression, ann_key, reader.header, auxiliary)
     has_mateid_key = reader.header.infos.get("MATEID", None) is not None
     has_event_key = reader.header.infos.get("EVENT", None) is not None
 
@@ -354,7 +353,13 @@ def statistics(
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with create_reader(args.vcf, backend=args.backend) as reader:
+    overwrite_number = {
+        "INFO": dict(args.overwrite_number_info),
+        "FORMAT": dict(args.overwrite_number_format),
+    }
+    with create_reader(
+        args.vcf, backend=args.backend, overwrite_number=overwrite_number
+    ) as reader:
         # header: dict = vcf.header
         reader.header.add_generic("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
@@ -368,11 +373,6 @@ def execute(args) -> None:
             "vembrane " + expr + " " + " ".join(cmd_parts),
         )
 
-        overwrite_number = {
-            "INFO": dict(args.overwrite_number_info),
-            "FORMAT": dict(args.overwrite_number_format),
-        }
-
         records = filter_vcf(
             reader,
             args.expression,
@@ -380,7 +380,6 @@ def execute(args) -> None:
             keep_unmatched=args.keep_unmatched,
             preserve_order=args.preserve_order,
             auxiliary=aux,
-            overwrite_number=overwrite_number,
         )
 
         try:

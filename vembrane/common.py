@@ -134,11 +134,11 @@ def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
     return {name: read_set(contents) for name, contents in aux.items()}
 
 
-def create_reader(filename: str, backend: Backend = Backend.pysam):
+def create_reader(filename: str, backend: Backend = Backend.pysam, overwrite_number={}):
     if backend == Backend.pysam:
-        return PysamReader(filename)
+        return PysamReader(filename, overwrite_number)
     elif backend == Backend.cyvcf2:
-        return Cyvcf2Reader(filename)
+        return Cyvcf2Reader(filename, overwrite_number)
     else:
         raise ValueError(f"{backend} is not a known backend.")
 

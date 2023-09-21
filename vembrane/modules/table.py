@@ -108,9 +108,7 @@ def tableize_vcf(
     long: bool = False,
     auxiliary: Dict[str, Set[str]] = {},
 ) -> Iterator[tuple]:
-    kwargs: Dict[str, Any] = dict(
-        overwrite_number=overwrite_number, auxiliary=auxiliary
-    )
+    kwargs: Dict[str, Any] = dict(auxiliary=auxiliary)
     if long:
         kwargs[
             "evaluation_function_template"
@@ -306,7 +304,13 @@ def smart_open(filename=None, *args, **kwargs):
 
 def execute(args):
     aux = read_auxiliary(args.aux)
-    with create_reader(args.vcf, backend=args.backend) as vcf:
+    overwrite_number = {
+        "INFO": dict(args.overwrite_number_info),
+        "FORMAT": dict(args.overwrite_number_format),
+    }
+    with create_reader(
+        args.vcf, backend=args.backend, overwrite_number=overwrite_number
+    ) as vcf:
         expression = preprocess_expression(args.expression, vcf, True)
         if args.long:
             expression = f"SAMPLE, {expression}"
