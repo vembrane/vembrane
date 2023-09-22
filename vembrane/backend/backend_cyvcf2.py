@@ -242,6 +242,8 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
             raise UnknownInfoField(0, self._record, key)  # TODO: self._record_idx
 
         meta = self._header.infos[key]
+        if not self.__contains__(key):
+            return type_info(NA, meta["Number"])
         if meta["Type"] == "Flag":
             return key in self
         value = self._record.INFO[key]
