@@ -28,6 +28,7 @@ class Cyvcf2Reader(VCFReader):
         self.filename = filename
         self._file = VCF(self.filename)
         self._header = Cyvcf2Header(self, overwrite_number)
+        self._overwrite_number = overwrite_number
 
     def __iter__(self):
         self._iter_file = self._file.__iter__()
@@ -44,7 +45,7 @@ class Cyvcf2Reader(VCFReader):
         # cyvcv2 doesnt have a reset function
         self._file.close()
         self._file = VCF(self.filename)
-        self._header = Cyvcf2Header(self)
+        self._header = Cyvcf2Header(self, self._overwrite_number)
         # TODO: may this workaround lead to problems?
 
 
