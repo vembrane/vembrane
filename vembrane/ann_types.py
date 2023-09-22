@@ -6,6 +6,8 @@ from ctypes import c_float
 from sys import stderr
 from typing import Any, Callable, Dict, Iterable, Optional, Set, Tuple, Union
 
+import numpy as np
+
 from .errors import MoreThanOneAltAllele, NotExactlyOneValue
 
 
@@ -131,21 +133,25 @@ def type_info(
         return NA
     if number == "0":
         return False if value is NA else value
+    if isinstance(value, list) or isinstance(value, np.ndarray):
+        value = tuple(value)
     if number == "A":
-        if len(value) != 1:
-            raise MoreThanOneAltAllele()
-        return value[0] if value[0] is not None else NA
+        if isinstance(value, tuple):
+            if len(value) != 1:
+                raise MoreThanOneAltAllele()
+            return value[0] if value[0] is not None else NA
+        return value
     if number == "R":
         if len(value) != 2:
             raise MoreThanOneAltAllele()
-        return InfoTuple(value)
+        return InfoTuple(tuple(value))
     if number == "1":
-        if isinstance(value, tuple) or isinstance(value, list):
+        if isinstance(value, tuple):
             if len(value) != 1:
                 raise NotExactlyOneValue(field, len(value), record_idx)
             return value[0] if value[0] is not None else NA
         return value if value is not None else NA
-    if isinstance(value, tuple) or isinstance(value, list):
+    if isinstance(value, tuple):
         return InfoTuple(value)
     else:
         return InfoTuple((value,))

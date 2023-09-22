@@ -187,7 +187,6 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
         self._format_key = format_key
 
     def __getitem__(self, sample):
-        value = self._record.format(self._format_key)
         i = self._header.samples.index(sample)
         if i == -1:
             raise UnknownSample(self._record_idx, self._record, sample)
@@ -196,14 +195,21 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
                 None if gt == -1 else gt for gt in self._record.genotypes[i][:-1]
             )
             return type_info(value)
-        if self._header.formats[self._format_key]["Number"] == "1":
-            value = value[i].tolist()[0]
-            meta = self._header.formats[self._format_key]
+
+        value = self._record.format(self._format_key)[i]
+        meta = self._header.formats[self._format_key]
+        number = meta["Number"]
+        if meta["Type"] == "String":
+            value.item()
+            if not number == "1":
+                value = value.split(",")
+        if number == "1":
+            if isinstance(value, np.ndarray):
+                value = value[0].item()
             # cyvcf2 gives min int for unknown integer values
             if meta["Type"] == "Integer" and value == np.iinfo(np.int32).min:
                 return NA
-            return value or NA
-        return type_info(value[i].tolist())
+        return type_info(value, number)
 
     def __contains__(self, sample):
         return sample in self._header.samples
@@ -230,19 +236,22 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         self._header = header
 
     def __getitem__(self, key):
-        # for some reasons cyvcf2 doesn't split String lists, a known circumstance
-        try:
-            meta = self._header.infos[key]
-            if meta["Type"] == "Flag":
-                return key in self
-            value = self._record.INFO[key]
-            number, typ = meta["Number"], meta["Type"]
-        except KeyError:
+        # if key == "END":
+        #     return get_end(self._record)
+        if key not in self._header.infos.keys():
             raise UnknownInfoField(0, self._record, key)  # TODO: self._record_idx
-        if typ == "String" and number == ".":
-            return type_info(tuple(value.split(",")), meta["Number"])
 
-        return type_info(value, meta["Number"])
+        meta = self._header.infos[key]
+        if meta["Type"] == "Flag":
+            return key in self
+        value = self._record.INFO[key]
+        number, typ = meta["Number"], meta["Type"]
+
+        # for some reasons cyvcf2 doesn't split String lists, a known circumstance
+        if typ == "String" and not number == "1":
+            value = value.split(",")
+
+        return type_info(value, number)
         # if number == "A" and not isinstance(value, list):
         #     value = tuple([value])
 

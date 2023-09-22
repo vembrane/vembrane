@@ -103,9 +103,9 @@ class PysamRecordFormat(VCFRecordFormat):
         self._header = header
 
     def __getitem__(self, sample):
-        meta = self._header.formats[self._format_key]
         if not self.__contains__(sample):
             raise UnknownSample(self._record_idx, self._record, sample)
+        meta = self._header.formats[self._format_key]
         return type_info(self._record.samples[sample][self._format_key], meta["Number"])
 
     def __setitem__(self, key, value):
