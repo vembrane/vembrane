@@ -133,7 +133,9 @@ def type_info(
         return NA
     if number == "0":
         return False if value is NA else value
-    if isinstance(value, list) or isinstance(value, np.ndarray):
+    if isinstance(value, np.ndarray):
+        value = tuple(value.tolist())
+    elif isinstance(value, list):
         value = tuple(value)
     if number == "A":
         if isinstance(value, tuple):
