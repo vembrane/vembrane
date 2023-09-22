@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from typing import Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 from cyvcf2.cyvcf2 import VCF, Variant, Writer
@@ -15,15 +15,19 @@ from vembrane.backend.base import (
     VCFWriter,
 )
 
-from ..ann_types import NA, InfoTuple
+from ..ann_types import NA, type_info
 from ..errors import UnknownInfoField, UnknownSample
 
 
 class Cyvcf2Reader(VCFReader):
-    def __init__(self, filename: str):
+    def __init__(
+        self,
+        filename: str,
+        overwrite_number: Dict[str, Dict[str, str]] = {},
+    ):
         self.filename = filename
         self._file = VCF(self.filename)
-        self._header = Cyvcf2Header(self)
+        self._header = Cyvcf2Header(self, overwrite_number)
 
     def __iter__(self):
         self._iter_file = self._file.__iter__()
@@ -45,7 +49,9 @@ class Cyvcf2Reader(VCFReader):
 
 
 class Cyvcf2Header(VCFHeader):
-    def __init__(self, reader: Cyvcf2Reader):
+    def __init__(
+        self, reader: Cyvcf2Reader, overwrite_number: Dict[str, Dict[str, str]]
+    ):
         self._reader = reader
         self._data = []
         self._data_category = defaultdict(OrderedDict)
@@ -57,6 +63,11 @@ class Cyvcf2Header(VCFHeader):
             self._data.append(d)
             if "ID" in d:
                 self._data_category[r.type][d["ID"]] = d
+
+        # override numbers
+        for categorie, items in overwrite_number.items():
+            for key, value in items.items():
+                self._data_category[categorie][key]["Number"] = value
 
     @property
     def records(self):
@@ -184,7 +195,7 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
             value = tuple(
                 None if gt == -1 else gt for gt in self._record.genotypes[i][:-1]
             )
-            return InfoTuple(value)
+            return type_info(value)
         if self._header.formats[self._format_key]["Number"] == "1":
             value = value[i].tolist()[0]
             meta = self._header.formats[self._format_key]
@@ -192,7 +203,10 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
             if meta["Type"] == "Integer" and value == np.iinfo(np.int32).min:
                 return NA
             return value or NA
-        return InfoTuple(value[i].tolist())
+        return type_info(value[i].tolist())
+
+    def __contains__(self, sample):
+        return sample in self._header.samples
 
 
 class Cyvcf2RecordFilter(VCFRecordFilter):
@@ -226,9 +240,9 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         except KeyError:
             raise UnknownInfoField(0, self._record, key)  # TODO: self._record_idx
         if typ == "String" and number == ".":
-            return InfoTuple(tuple(value.split(",")))
+            return type_info(tuple(value.split(",")), meta["Number"])
 
-        return InfoTuple(value)
+        return type_info(value, meta["Number"])
         # if number == "A" and not isinstance(value, list):
         #     value = tuple([value])
 
@@ -238,7 +252,6 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         number, typ = meta["Number"], meta["Type"]
         if typ == "String" and number == ".":
             value = ",".join(value)
-
         self._record.INFO[key] = value
 
     def __contains__(self, key):

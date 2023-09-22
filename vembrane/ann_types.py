@@ -140,12 +140,12 @@ def type_info(
             raise MoreThanOneAltAllele()
         return InfoTuple(value)
     if number == "1":
-        if isinstance(value, tuple):
+        if isinstance(value, tuple) or isinstance(value, list):
             if len(value) != 1:
                 raise NotExactlyOneValue(field, len(value), record_idx)
             return value[0] if value[0] is not None else NA
         return value if value is not None else NA
-    if isinstance(value, tuple):
+    if isinstance(value, tuple) or isinstance(value, list):
         return InfoTuple(value)
     else:
         return InfoTuple((value,))
