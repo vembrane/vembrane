@@ -20,6 +20,8 @@ from ..errors import UnknownInfoField, UnknownSample
 
 
 class Cyvcf2Reader(VCFReader):
+    __slots__ = ("filename", "_file", "_header", "_overwrite_number")
+
     def __init__(
         self,
         filename: str,
@@ -46,6 +48,8 @@ class Cyvcf2Reader(VCFReader):
 
 
 class Cyvcf2Header(VCFHeader):
+    __slots__ = ("_reader", "_data", "_data_category")
+
     def __init__(
         self, reader: Cyvcf2Reader, overwrite_number: Dict[str, Dict[str, str]]
     ):
@@ -101,6 +105,8 @@ class Cyvcf2Header(VCFHeader):
 
 
 class Cyvcf2Record(VCFRecord):
+    __slots__ = ("_record", "_header", "_file")
+
     def __init__(self, record: Variant, header: Cyvcf2Header, file: VCF):
         self._record = record
         self._header = header
@@ -169,6 +175,8 @@ class Cyvcf2Record(VCFRecord):
 
 
 class Cyvcf2RecordFormats(VCFRecordFormats):
+    __slots__ = ("_record", "_header")
+
     def __init__(self, record: Variant, header: Cyvcf2Header):
         self._record = record
         self._header = header
@@ -178,6 +186,8 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
 
 
 class Cyvcf2RecordFormat(VCFRecordFormat):
+    __slots__ = ("_header", "_record", "_format_key")
+
     def __init__(self, format_key: str, record, header: Cyvcf2Header):
         self._header = header
         self._record = record
@@ -213,6 +223,8 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
 
 
 class Cyvcf2RecordFilter(VCFRecordFilter):
+    __slots__ = "_record"
+
     def __init__(self, record: Variant):
         self._record = record
 
@@ -224,6 +236,8 @@ class Cyvcf2RecordFilter(VCFRecordFilter):
 
 
 class Cyvcf2RecordInfo(VCFRecordInfo):
+    __slots__ = ("_record", "_header")
+
     def __init__(
         self,
         record: Variant,
@@ -267,6 +281,8 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
 
 
 class Cyvcf2Writer(VCFWriter):
+    __slots__ = "_file"
+
     def __init__(self, filename: str, fmt: str, template: VCFReader):
         self._file = Writer(filename, template._file, mode=f"w{fmt}")
 

@@ -20,6 +20,8 @@ from ..errors import UnknownInfoField, UnknownSample
 
 
 class PysamRecord(VCFRecord):
+    __slots__ = ("_record", "_header")
+
     def __init__(self, record: VariantRecord, header: VCFHeader):
         self._record = record
         self._header = header
@@ -83,6 +85,8 @@ class PysamRecord(VCFRecord):
 
 
 class PysamRecordFormats(VCFRecordFormats):
+    __slots__ = ("_record", "_header")
+
     def __init__(self, record: VariantRecord, header: VCFHeader):
         self._header = header
         self._record = record
@@ -92,6 +96,8 @@ class PysamRecordFormats(VCFRecordFormats):
 
 
 class PysamRecordFormat(VCFRecordFormat):
+    __slots__ = ("_record", "_header")
+
     def __init__(
         self,
         format_key: str,
@@ -116,6 +122,8 @@ class PysamRecordFormat(VCFRecordFormat):
 
 
 class PysamRecordInfo(VCFRecordInfo):
+    __slots__ = ("_record", "_header")
+
     def __init__(
         self,
         record: VariantRecord,
@@ -142,6 +150,8 @@ class PysamRecordInfo(VCFRecordInfo):
 
 
 class PysamRecordFilter(VCFRecordFilter):
+    __slots__ = "_record"
+
     def __init__(self, record: VariantRecord):
         self._record = record
 
@@ -153,6 +163,8 @@ class PysamRecordFilter(VCFRecordFilter):
 
 
 class PysamReader(VCFReader):
+    __slots__ = ("filename", "_file", "_header")
+
     def __init__(
         self,
         filename: str,
@@ -174,6 +186,8 @@ class PysamReader(VCFReader):
 
 
 class PysamHeader(VCFHeader):
+    __slots__ = ("_record", "_header", "_data", "_data_category", "_data_generic")
+
     def __init__(self, reader: PysamReader, overwrite_number={}):
         self._reader = reader
         self._header = reader._file.header
@@ -246,6 +260,8 @@ class PysamHeader(VCFHeader):
 
 
 class PysamWriter(VCFWriter):
+    __slots__ = ("filename", "_header", "_file")
+
     def __init__(self, filename: str, fmt: str, template: VCFReader):
         self.filename = filename
         self._file = pysam.VariantFile(
