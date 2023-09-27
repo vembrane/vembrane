@@ -20,7 +20,13 @@ from ..errors import UnknownInfoField, UnknownSample
 
 
 class Cyvcf2Reader(VCFReader):
-    __slots__ = ("filename", "_file", "_header", "_overwrite_number")
+    __slots__ = (
+        "filename",
+        "_file",
+        "_header",
+        "_overwrite_number",
+        "_current_record_idx",
+    )
 
     def __init__(
         self,
@@ -31,19 +37,27 @@ class Cyvcf2Reader(VCFReader):
         self._file = VCF(self.filename)
         self._header = Cyvcf2Header(self, overwrite_number)
         self._overwrite_number = overwrite_number
+        self._current_record_idx = 0
 
     def __iter__(self):
         self._iter_file = self._file.__iter__()
         return self
 
     def __next__(self):
-        return Cyvcf2Record(self._iter_file.__next__(), self._header, self._file)
+        self._current_record_idx += 1
+        return Cyvcf2Record(
+            self._iter_file.__next__(),
+            self._header,
+            self._file,
+            self._current_record_idx,
+        )
 
     def reset(self):
         # cyvcv2 doesnt have a reset function
         self._file.close()
         self._file = VCF(self.filename)
         self._header = Cyvcf2Header(self, self._overwrite_number)
+        self._current_record_idx = 0
         # TODO: may this workaround lead to problems?
 
 
@@ -105,12 +119,15 @@ class Cyvcf2Header(VCFHeader):
 
 
 class Cyvcf2Record(VCFRecord):
-    __slots__ = ("_record", "_header", "_file")
+    __slots__ = ("_record", "_header", "_file", "_record_idx")
 
-    def __init__(self, record: Variant, header: Cyvcf2Header, file: VCF):
+    def __init__(
+        self, record: Variant, header: Cyvcf2Header, file: VCF, record_idx: int
+    ):
         self._record = record
         self._header = header
         self._file = file
+        self._record_idx = record_idx
 
     @property
     def contig(self) -> str:
@@ -272,19 +289,17 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
 
     def __init__(
         self,
-        record: Variant,
+        record: Cyvcf2Record,
         header: Cyvcf2Header,
-        record_idx: int,
     ):
         self._record = record
         self._header = header
-        self._record_idx = record_idx
 
     def __getitem__(self, key):
         # if key == "END":
         #     return get_end(self._record)
         if key not in self._header.infos.keys():
-            raise UnknownInfoField(self._record_idx, self._record, key)
+            raise UnknownInfoField(self.record.record_idx, self._record, key)
 
         meta = self._header.infos[key]
         if not self.__contains__(key):
