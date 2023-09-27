@@ -336,12 +336,6 @@ class Environment(dict):
         return value
 
     def _get_info(self) -> VCFRecordInfo:
-        # value = VCFRecordInfo(
-        #     self.idx,
-        #     self.record,
-        #     self._header_info_fields,
-        #     self._ann_key,
-        # )
         value = self.record.info
         self._globals["INFO"] = value
         return value
