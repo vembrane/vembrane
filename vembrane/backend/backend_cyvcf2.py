@@ -37,10 +37,6 @@ class Cyvcf2Reader(VCFReader):
     def __next__(self):
         return Cyvcf2Record(self._iter_file.__next__(), self._header, self._file)
 
-    # @property
-    # def header(self):
-    #     return self._header
-
     def reset(self):
         # cyvcv2 doesnt have a reset function
         self._file.close()
