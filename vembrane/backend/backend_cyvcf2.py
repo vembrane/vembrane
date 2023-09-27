@@ -228,7 +228,6 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
         meta = self._header.formats[self._format_key]
         number = meta["Number"]
         if meta["Type"] == "String":
-            value.item()
             if not number == "1":
                 value = value.split(",")
         if number == "1":
@@ -269,21 +268,23 @@ class Cyvcf2RecordFilter(VCFRecordFilter):
 
 
 class Cyvcf2RecordInfo(VCFRecordInfo):
-    __slots__ = ("_record", "_header")
+    __slots__ = ("_record", "_header", "_record_idx")
 
     def __init__(
         self,
         record: Variant,
         header: Cyvcf2Header,
+        record_idx: int,
     ):
         self._record = record
         self._header = header
+        self._record_idx = record_idx
 
     def __getitem__(self, key):
         # if key == "END":
         #     return get_end(self._record)
         if key not in self._header.infos.keys():
-            raise UnknownInfoField(0, self._record, key)  # TODO: self._record_idx
+            raise UnknownInfoField(self._record_idx, self._record, key)
 
         meta = self._header.infos[key]
         if not self.__contains__(key):
@@ -298,8 +299,6 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
             value = value.split(",")
 
         return type_info(value, number)
-        # if number == "A" and not isinstance(value, list):
-        #     value = tuple([value])
 
     def __setitem__(self, key, value):
         # for some reasons cyvcf2 doesn't split String lists, a known circumstance
