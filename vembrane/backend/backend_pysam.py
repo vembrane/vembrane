@@ -190,9 +190,9 @@ class PysamHeader(VCFHeader):
                 self._data_category[r.type][d["ID"]] = d
 
         # override numbers
-        for categorie, items in overwrite_number.items():
+        for category, items in overwrite_number.items():
             for key, value in items.items():
-                self._data_category[categorie][key]["Number"] = value
+                self._data_category[category][key]["Number"] = value
 
     def contains_generic(self, key: str):
         return key in self._data_generic
