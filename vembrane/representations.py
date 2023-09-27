@@ -341,11 +341,6 @@ class Environment(dict):
         return value
 
     def _get_format(self) -> VCFRecordFormats:
-        # value = Formats(
-        #     self.idx,
-        #     self.record,
-        #     self._header_format_fields,
-        # )
         value = self.record.formats
         self._globals["FORMAT"] = value
         return value
