@@ -141,10 +141,6 @@ class VCFRecord:
         raise NotImplementedError
 
     @abstractproperty
-    def format(self) -> VCFRecordFormat:
-        raise NotImplementedError
-
-    @abstractproperty
     def formats(self) -> VCFRecordFormat:
         raise NotImplementedError
 

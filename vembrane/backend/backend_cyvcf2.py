@@ -151,10 +151,6 @@ class Cyvcf2Record(VCFRecord):
         return Cyvcf2RecordInfo(self._record, self._header)
 
     @property
-    def format(self) -> VCFRecordFormat:
-        return Cyvcf2RecordFormat(self._record, self._file, self._header)
-
-    @property
     def formats(self) -> VCFRecordFormats:
         return Cyvcf2RecordFormats(self._record, self._header)
 
@@ -169,9 +165,27 @@ class Cyvcf2Record(VCFRecord):
         return self._record.__str__()
 
     def __eq__(self, other):
-        return (
-            self._record.__repr__() == other._record.__repr__()
-        )  # TODO: implement real check for values
+        print(
+            set(self.filter) == set(other.filter), set(self.filter), set(other.filter)
+        )
+        return all(
+            (
+                self._record.ID == other._record.ID,
+                self._record.ID == other._record.ID,
+                self._record.REF == other._record.REF,
+                self._record.POS == other._record.POS,
+                self._record.QUAL == other._record.QUAL,
+                set(self.filter) == set(other.filter),
+                all(
+                    self.info.get(key) == other.info.get(key)
+                    for key in self._header.infos
+                ),
+                all(
+                    self.formats.get(key) == other.formats.get(key)
+                    for key in self._header.formats
+                ),
+            )
+        )
 
 
 class Cyvcf2RecordFormats(VCFRecordFormats):
@@ -181,8 +195,15 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
         self._record = record
         self._header = header
 
-    def __getitem__(self, item):
-        return Cyvcf2RecordFormat(item, self._record, self._header)
+    def __getitem__(self, key: str):
+        return Cyvcf2RecordFormat(key, self._record, self._header)
+
+    def get(self, key: str, default=None):
+        if key not in self:
+            return default
+
+    def __contains__(self, key):
+        return key in self._record.FORMAT
 
 
 class Cyvcf2RecordFormat(VCFRecordFormat):
@@ -221,6 +242,9 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
     def __contains__(self, sample):
         return sample in self._header.samples
 
+    def __eq__(self, other):
+        return all(self[sample] == other[sample] for sample in self._header.samples)
+
 
 class Cyvcf2RecordFilter(VCFRecordFilter):
     __slots__ = "_record"
@@ -232,7 +256,16 @@ class Cyvcf2RecordFilter(VCFRecordFilter):
         yield from self._record.FILTERS
 
     def add(self, tag: str):
-        self._record.FILTERS.append(tag)
+        # cyvcf needs a semicolon separated string
+        filter = self._record.FILTER
+        if filter:
+            filter += f";{tag}"
+        else:
+            filter = tag
+        self._record.FILTER = filter
+
+    def __contains__(self, key):
+        return key in self._record.FILTERS
 
 
 class Cyvcf2RecordInfo(VCFRecordInfo):
