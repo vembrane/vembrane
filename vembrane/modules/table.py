@@ -94,7 +94,7 @@ def add_subcommmand(subparsers):
     parser.add_argument(
         "--backend",
         "-b",
-        default="pysam",
+        default="cyvcf2",
         type=Backend.from_string,
         choices=[Backend.pysam, Backend.cyvcf2],
         help="Set the backend library.",
