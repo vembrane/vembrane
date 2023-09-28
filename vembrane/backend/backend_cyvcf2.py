@@ -336,7 +336,7 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         # for some reasons cyvcf2 doesn't split String lists, a known circumstance
         meta = self._header.infos[key]
         number, typ = meta["Number"], meta["Type"]
-        if typ == "String" and number == ".":
+        if typ == "String" and number != "1":
             value = ",".join(value)
         self._raw_record.INFO[key] = value
 
