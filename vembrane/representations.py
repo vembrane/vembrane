@@ -144,14 +144,6 @@ class Environment(dict):
         # Then, in the case of `number == "A"`, the value tuples only have one entry,
         # so that the value can be accessed directly and need not be accessed via
         # an index operation.
-        # self._numbers = {
-        #     category: {
-        #         record_name: overwrite_number.get(category, {}).get(record_name)
-        #         or record.get("Number")
-        #         for record_name, record in category_records.items()
-        #     }
-        #     for category, category_records in header.records.items()
-        # }
 
         # At the moment, only INFO and FORMAT records are checked
         self._empty_globals = {name: UNSET for name in self._getters}

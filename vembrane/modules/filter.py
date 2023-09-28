@@ -124,7 +124,7 @@ def add_subcommmand(subparsers):
         "-b",
         default="cyvcf2",
         type=Backend.from_string,
-        choices=[Backend.pysam, Backend.cyvcf2],
+        choices=[Backend.cyvcf2, Backend.pysam],
         help="Set the backend library.",
     )
 
