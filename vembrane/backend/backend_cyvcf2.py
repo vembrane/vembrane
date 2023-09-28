@@ -135,7 +135,7 @@ class Cyvcf2Header(VCFHeader):
 
 
 class Cyvcf2Record(VCFRecord):
-    __slots__ = ("_record", "_header", "_file", "_record_idx")
+    __slots__ = ("_record", "_header", "_file", "record_idx")
 
     def __init__(
         self, record: Variant, header: Cyvcf2Header, file: VCF, record_idx: int
@@ -143,7 +143,7 @@ class Cyvcf2Record(VCFRecord):
         self._record = record
         self._header = header
         self._file = file
-        self._record_idx = record_idx
+        self.record_idx = record_idx
 
     @property
     def contig(self) -> str:

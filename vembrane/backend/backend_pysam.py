@@ -20,11 +20,12 @@ from ..errors import UnknownInfoField, UnknownSample
 
 
 class PysamRecord(VCFRecord):
-    __slots__ = ("_record", "_header")
+    __slots__ = ("_record", "_header", "record_idx")
 
-    def __init__(self, record: VariantRecord, header: VCFHeader):
+    def __init__(self, record: VariantRecord, header: VCFHeader, record_idx: int):
         self._record = record
         self._header = header
+        self.record_idx = record_idx
 
     @property
     def contig(self) -> str:
@@ -60,7 +61,7 @@ class PysamRecord(VCFRecord):
 
     @property
     def info(self) -> VCFRecordInfo:
-        return PysamRecordInfo(self._record, self._header)
+        return PysamRecordInfo(self)
 
     @property
     def format(self) -> VCFRecordFormat:
@@ -111,7 +112,7 @@ class PysamRecordFormat(VCFRecordFormat):
 
     def __getitem__(self, sample):
         if not self.__contains__(sample):
-            raise UnknownSample(self._record_idx, self._record, sample)
+            raise UnknownSample(0, self._record, sample)  # TODO record_idx
         meta = self._header.formats[self._format_key]
         return type_info(self._record.samples[sample][self._format_key], meta["Number"])
 
@@ -123,31 +124,33 @@ class PysamRecordFormat(VCFRecordFormat):
 
 
 class PysamRecordInfo(VCFRecordInfo):
-    __slots__ = ("_record", "_header")
+    __slots__ = ("_record", "_raw_record")
 
     def __init__(
         self,
-        record: VariantRecord,
-        header: VCFHeader,
+        record: PysamRecord,
     ):
         self._record = record
-        self._header = header
+        self._raw_record: VariantRecord = record._record
 
     def __getitem__(self, key):
         if key == "END":
-            return get_end(self._record)
-        if key not in self._header.infos.keys():
-            raise UnknownInfoField(0, self._record, key)  # TODO: self._record_idx
-        meta = self._header.infos[key]
+            return get_end(self._raw_record)
+        if key not in (header := self._record._header).infos.keys():
+            import sys
+
+            print("fooo", self._record.record_idx, file=sys.stderr)
+            raise UnknownInfoField(self._record.record_idx, self._raw_record, key)
+        meta = header.infos[key]
         if not self.__contains__(key):
             return type_info(NA, meta["Number"])
-        return type_info(self._record.info[key], meta["Number"])
+        return type_info(self._raw_record.info[key], meta["Number"])
 
     def __setitem__(self, key, value):
-        self._record.info[key] = value
+        self._raw_record.info[key] = value
 
     def __contains__(self, key):
-        return key in self._record.info.keys()
+        return key in self._raw_record.info.keys()
 
 
 class PysamRecordFilter(VCFRecordFilter):
@@ -168,6 +171,7 @@ class PysamReader(VCFReader):
         "filename",
         "_iter_file",
         "_header",
+        "_current_record_idx",
     )
 
     def __init__(
@@ -178,15 +182,20 @@ class PysamReader(VCFReader):
         self.filename = filename
         self._file = pysam.VariantFile(self.filename)
         self._header = PysamHeader(self, overwrite_number)
+        self._current_record_idx = 0
 
     def __iter__(self):
         self._iter_file = self._file.__iter__()
         return self
 
     def __next__(self):
-        return PysamRecord(self._iter_file.__next__(), self._header)
+        self._current_record_idx += 1
+        return PysamRecord(
+            self._iter_file.__next__(), self._header, self._current_record_idx
+        )
 
     def reset(self):
+        self._current_record_idx = 0
         self._file.reset()
 
 
