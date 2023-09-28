@@ -64,12 +64,8 @@ class PysamRecord(VCFRecord):
         return PysamRecordInfo(self)
 
     @property
-    def format(self) -> VCFRecordFormat:
-        return PysamRecordFormat(self._record)
-
-    @property
     def formats(self) -> VCFRecordFormats:
-        return PysamRecordFormats(self._record, self._header)
+        return PysamRecordFormats(self)
 
     @property
     def samples(self):
@@ -87,37 +83,38 @@ class PysamRecord(VCFRecord):
 
 
 class PysamRecordFormats(VCFRecordFormats):
-    __slots__ = ("_record", "_header")
+    __slots__ = "_record"
 
-    def __init__(self, record: VariantRecord, header: VCFHeader):
-        self._header = header
+    def __init__(self, record: PysamRecord):
         self._record = record
 
     def __getitem__(self, key):
-        return PysamRecordFormat(key, self._record, self._header)
+        return PysamRecordFormat(key, self._record)
 
 
 class PysamRecordFormat(VCFRecordFormat):
-    __slots__ = ("_record", "_header")
+    __slots__ = ("_record", "_header", "_raw_record")
 
     def __init__(
         self,
         format_key: str,
-        record: VariantRecord,
-        header: VCFHeader,
+        record: PysamRecord,
     ):
         self._format_key = format_key
         self._record = record
-        self._header = header
+        self._header = record._header
+        self._raw_record: VariantRecord = record._record
 
     def __getitem__(self, sample):
         if not self.__contains__(sample):
-            raise UnknownSample(0, self._record, sample)  # TODO record_idx
+            raise UnknownSample(0, self._raw_record, sample)  # TODO record_idx
         meta = self._header.formats[self._format_key]
-        return type_info(self._record.samples[sample][self._format_key], meta["Number"])
+        return type_info(
+            self._raw_record.samples[sample][self._format_key], meta["Number"]
+        )
 
     def __setitem__(self, key, value):
-        self._record.format[key] = value
+        self._raw_record.format[key] = value
 
     def __contains__(self, sample):
         return sample in self._header.samples
