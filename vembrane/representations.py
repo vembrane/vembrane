@@ -155,11 +155,6 @@ class Environment(dict):
         #     for category, category_records in header.records.items()
         # }
 
-        # always explicitly set "Number" for certain fields
-        # which get special pysam treatment:
-        # - `FORMAT["GT"]` is always parsed as a list of integer values
-        # self._numbers.get("FORMAT", {})["GT"] = "."
-
         # At the moment, only INFO and FORMAT records are checked
         self._empty_globals = {name: UNSET for name in self._getters}
         self.record: VCFRecord = None

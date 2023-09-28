@@ -72,7 +72,7 @@ class PysamRecord(VCFRecord):
 
     @property
     def samples(self):
-        return self._record.samples
+        return self._header.samples
 
     @property
     def header(self) -> VCFHeader:
@@ -119,7 +119,7 @@ class PysamRecordFormat(VCFRecordFormat):
         self._record.format[key] = value
 
     def __contains__(self, sample):
-        return sample in self._record.samples.keys()
+        return sample in self._header.samples
 
 
 class PysamRecordInfo(VCFRecordInfo):
@@ -191,7 +191,14 @@ class PysamReader(VCFReader):
 
 
 class PysamHeader(VCFHeader):
-    __slots__ = ("_record", "_header", "_data", "_data_category", "_data_generic")
+    __slots__ = (
+        "_record",
+        "_header",
+        "_data",
+        "_data_category",
+        "_data_generic",
+        "_samples",
+    )
 
     def __init__(self, reader: PysamReader, overwrite_number={}):
         self._reader = reader
@@ -199,6 +206,8 @@ class PysamHeader(VCFHeader):
         self._data = []
         self._data_category = defaultdict(OrderedDict)
         self._data_generic = dict()
+        self._samples = OrderedDict((s, None) for s in self._header.samples)
+
         for r in self._header.records:
             if r.type == "GENERIC":
                 self._data_generic[r.key] = r.value
@@ -238,7 +247,7 @@ class PysamHeader(VCFHeader):
 
     @property
     def samples(self):
-        return self._header.samples
+        return self._samples
 
     @property
     def filters(self):
