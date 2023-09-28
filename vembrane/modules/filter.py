@@ -17,7 +17,6 @@ from ..common import (
     create_reader,
     create_writer,
     get_annotation_keys,
-    is_bnd_record,
     mate_key,
     normalize,
     read_auxiliary,
@@ -237,7 +236,7 @@ def filter_vcf(
             # Breakend records *may* have the "EVENT" specified, but don't have to.
             # In that case only the MATEID *may* be available
             # (which may contain more than one ID)
-            if is_bnd_record(record):
+            if record.is_bnd_record:
                 event_name, mate_pair_name = get_event_name(record)
 
                 # if EVENT is set, it has priority over MATEID.
@@ -303,7 +302,7 @@ def filter_vcf(
             return event_name or mate_pair_name or record.id or f"DUMMY: {idx}"
 
         for idx, record in enumerate(reader):
-            if is_bnd_record(record):
+            if record.is_bnd_record:
                 record, keep = test_and_update_record(
                     env, idx, record, ann_key, keep_unmatched
                 )
@@ -314,7 +313,7 @@ def filter_vcf(
         # The second pass can now yield records in the correct order
         reader.reset()
         for idx, record in enumerate(reader):
-            if is_bnd_record(record):
+            if record.is_bnd_record:
                 event_name = fallback_name(record)
                 if event_name in event_set:
                     yield record
