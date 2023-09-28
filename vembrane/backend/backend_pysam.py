@@ -242,14 +242,6 @@ class PysamHeader(VCFHeader):
     def records(self):
         return self._data_category
 
-    # def add_meta(
-    #     self,
-    #     key: str,
-    #     value: Optional[str] = None,
-    #     items: Optional[List[Tuple[str, str]]] = None,
-    # ):
-    #     self._file.header.add_meta(key, value, items)
-
     def add_generic(self, key: str, value: str):
         self._header.add_meta(key, value)
 
