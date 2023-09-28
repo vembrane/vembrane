@@ -171,12 +171,15 @@ class VCFRecord:
                 self.position == other.position,
                 self.quality == other.quality,
                 set(self.filter) == set(other.filter),
+                # because we might end up comparing NA == NA which is False by design,
+                # we replace those with None here for the equality check,
+                # i.e. None == None is True
                 all(
-                    self.info.get(key) == other.info.get(key)
+                    (self.info.get(key) or None) == (other.info.get(key) or None)
                     for key in self.header.infos
                 ),
                 all(
-                    self.formats.get(key) == other.formats.get(key)
+                    (self.formats.get(key) or None) == (other.formats.get(key) or None)
                     for key in self.header.formats
                 ),
             )
