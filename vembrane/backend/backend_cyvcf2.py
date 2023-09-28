@@ -1,6 +1,6 @@
 from collections import OrderedDict, defaultdict
 from functools import cache
-from typing import Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from cyvcf2.cyvcf2 import VCF, Variant, Writer
@@ -23,7 +23,7 @@ from ..errors import UnknownInfoField, UnknownSample
 class Cyvcf2Reader(VCFReader):
     __slots__ = (
         "filename",
-        "_file",
+        "_iter_file",
         "_header",
         "_overwrite_number",
         "_current_record_idx",
@@ -119,6 +119,20 @@ class Cyvcf2Header(VCFHeader):
     def add_filter(self, id: str, description: str):
         self._reader._file.add_filter_to_header({"ID": id, "Description": description})
 
+    def __iter__(self):
+        raise NotImplementedError
+
+    def __next__(self):
+        raise NotImplementedError
+
+    def add_meta(
+        self,
+        key: str,
+        value: Optional[str] = None,
+        items: Optional[List[Tuple[str, str]]] = None,
+    ):
+        raise NotImplementedError
+
 
 class Cyvcf2Record(VCFRecord):
     __slots__ = ("_record", "_header", "_file", "_record_idx")
@@ -177,6 +191,10 @@ class Cyvcf2Record(VCFRecord):
     def samples(self):
         return self._file.samples
 
+    @property
+    def header(self) -> VCFHeader:
+        return self._header
+
     def __repr__(self):
         return self._record.__repr__()
 
@@ -215,10 +233,6 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
     def __getitem__(self, key: str):
         return Cyvcf2RecordFormat(key, self._record, self._header)
 
-    def get(self, key: str, default=None):
-        if key not in self:
-            return default
-
     def __contains__(self, key):
         return key in self._record.FORMAT
 
@@ -254,6 +268,9 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
             if meta["Type"] == "Integer" and value == np.iinfo(np.int32).min:
                 return NA
         return type_info(value, number)
+
+    def __setitem__(self, key, value):
+        raise NotImplementedError
 
     def __contains__(self, sample):
         return sample in self._header.samples
@@ -328,8 +345,6 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
 
 
 class Cyvcf2Writer(VCFWriter):
-    __slots__ = "_file"
-
     def __init__(self, filename: str, fmt: str, template: VCFReader):
         self._file = Writer(filename, template._file, mode=f"w{fmt}")
 

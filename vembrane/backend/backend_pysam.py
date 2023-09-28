@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from typing import Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pysam
 from pysam import VariantRecord
@@ -74,14 +74,15 @@ class PysamRecord(VCFRecord):
     def samples(self):
         return self._record.samples
 
+    @property
+    def header(self) -> VCFHeader:
+        return self._header
+
     def __repr__(self):
         return self._record.__repr__()
 
     def __str__(self):
         return self._record.__str__()
-
-    def __eq__(self, other):
-        return self._record == other._record
 
 
 class PysamRecordFormats(VCFRecordFormats):
@@ -163,7 +164,11 @@ class PysamRecordFilter(VCFRecordFilter):
 
 
 class PysamReader(VCFReader):
-    __slots__ = ("filename", "_file", "_header")
+    __slots__ = (
+        "filename",
+        "_iter_file",
+        "_header",
+    )
 
     def __init__(
         self,
@@ -243,14 +248,6 @@ class PysamHeader(VCFHeader):
     def records(self):
         return self._data_category
 
-    # def add_meta(
-    #     self,
-    #     key: str,
-    #     value: Optional[str] = None,
-    #     items: Optional[List[Tuple[str, str]]] = None,
-    # ):
-    #     self._file.header.add_meta(key, value, items)
-
     def add_generic(self, key: str, value: str):
         self._header.add_meta(key, value)
 
@@ -258,6 +255,14 @@ class PysamHeader(VCFHeader):
         self._header.add_meta(
             key="FILTER", items=[("ID", id), ("Description", description)]
         )
+
+    def add_meta(
+        self,
+        key: str,
+        value: Optional[str] = None,
+        items: Optional[List[Tuple[str, str]]] = None,
+    ):
+        raise NotImplementedError
 
 
 class PysamWriter(VCFWriter):

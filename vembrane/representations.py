@@ -27,113 +27,6 @@ class DefaultGet:
             return default
 
 
-# class Format(NoValueDict, DefaultGet):
-#     def __init__(
-#         self,
-#         record_idx: int,
-#         record: VCFRecord,
-#         name: str,
-#         number: str,
-#         # record_samples: VCFRecordSamples,
-#         record_format: VCFRecordFormat,
-#     ):
-#         self._record_idx = record_idx
-#         self._record = record
-#         self._name = name
-#         self._number = number
-#         # self._record_samples = record_samples
-#         self._record_format = record_format
-#         self._sample_values: Dict[str, NvIntFloatStr] = {}
-
-#     def __getitem__(self, sample):
-#         try:
-#             return self._sample_values[sample]
-#         except KeyError:
-#             try:
-#                 record_sample = self._record_format[self._name][sample]
-#             except KeyError:
-#                 raise UnknownSample(self._record_idx, self._record, sample)
-#             value = type_info(record_sample, self._number,
-# self._name, self._record_idx)
-#             self._sample_values[sample] = value
-#             return value
-
-
-# class Formats(NoValueDict):
-#     def __init__(
-#         self,
-#         record_idx: int,
-#         record: VCFRecord,
-#         header_format_fields: Dict[str, str],
-#     ):
-#         self._record = record
-#         self._record_idx = record_idx
-#         self._header_format_fields = header_format_fields
-#         self._record_format = record.format
-
-#     @cache
-#     def __getitem__(self, item):
-#         try:
-#             import sys
-#             print(self._record_format, file=sys.stderr)
-#             self._record_format[item]
-#             return format_field
-#         except KeyError:
-#             raise UnknownFormatField(self._record_idx, self._record, item)
-#         # number = self._header_format_fields[item]
-#         # format_field = VCFRecordFormat(
-#         #     self._record_idx, self._record, item, number, self._record_format
-#         # )
-#         # self._formats[item] = format_field
-#         return format_field
-
-
-# class Info(NoValueDict, DefaultGet):
-#     def __init__(
-#         self,
-#         record_idx: int,
-#         record: VCFRecord,
-#         header_info_fields: Dict[str, str],
-#         ann_key: str,
-#     ):
-#         self._record_idx = record_idx
-#         self._record = record
-#         self._record_info = record.info
-#         self._header_info_fields = header_info_fields
-#         self._ann_key = ann_key
-#         self._info_dict: Dict[str, NvIntFloatStr] = {}
-
-#     def __getitem__(self, item):
-#         try:
-#             return self._info_dict[item]
-#         except KeyError:
-#             if item == "END":
-#                 # pysam removes END from info. In order to fit with user expectations,
-#                 # (they will expect INFO["END"] to work) we emulate it
-#                 # being present by
-#                 # inferring it from pysams record representation.
-#                 value = get_end(self._record)
-#             else:
-#                 try:
-#                     if item == self._ann_key:
-#                         raise KeyError(item)
-#                     untyped_value = self._record_info[item]
-#                 except KeyError:
-#                     if item in self._header_info_fields:
-#                         value = NA
-#                     else:
-#                         raise UnknownInfoField(self._record_idx, self._record, item)
-#                 else:
-#                     value = type_info(
-#                         untyped_value,
-#                         self._header_info_fields[item],
-#                         item,
-#                         self._record_idx,
-#                     )
-#             self._info_dict[item] = value
-#             return value
-
-
 class Annotation(NoValueDict, DefaultGet):
     def __init__(self, ann_key: str, header: VCFHeader):
         self._record_idx = -1
@@ -336,22 +229,11 @@ class Environment(dict):
         return value
 
     def _get_info(self) -> VCFRecordInfo:
-        # value = VCFRecordInfo(
-        #     self.idx,
-        #     self.record,
-        #     self._header_info_fields,
-        #     self._ann_key,
-        # )
         value = self.record.info
         self._globals["INFO"] = value
         return value
 
     def _get_format(self) -> VCFRecordFormats:
-        # value = Formats(
-        #     self.idx,
-        #     self.record,
-        #     self._header_format_fields,
-        # )
         value = self.record.formats
         self._globals["FORMAT"] = value
         return value
