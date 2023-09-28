@@ -10,6 +10,37 @@ from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
 from .errors import InvalidExpression
 
 
+def add_common_arguments(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--overwrite-number-info",
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="FIELD=NUMBER",
+        default={},
+        help="Overwrite the number specification for INFO fields "
+        "given in the VCF header. "
+        "Example: `--overwrite-number cosmic_CNT=.`",
+    )
+    parser.add_argument(
+        "--overwrite-number-format",
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="FIELD=NUMBER",
+        default={},
+        help="Overwrite the number specification for FORMAT fields "
+        "given in the VCF header. "
+        "Example: `--overwrite-number-format DP=2`",
+    )
+    parser.add_argument(
+        "--backend",
+        "-b",
+        default="cyvcf2",
+        type=Backend.from_string,
+        choices=[Backend.cyvcf2, Backend.pysam],
+        help="Set the backend library.",
+    )
+
+
 def check_expression(expression: str) -> str:
     if ".__" in expression:
         raise InvalidExpression(expression, "The expression must not contain '.__'")

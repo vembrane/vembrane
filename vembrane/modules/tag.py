@@ -6,10 +6,11 @@ from typing import Dict, Iterator, Set, Tuple
 
 from .. import __version__
 from ..ann_types import NA
-from ..backend.base import Backend, VCFHeader, VCFReader, VCFRecord
+from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
     AppendKeyValuePair,
     AppendTagExpression,
+    add_common_arguments,
     check_expression,
     create_reader,
     create_writer,
@@ -70,26 +71,6 @@ def add_subcommand(subparsers):
         help="Path to an auxiliary file containing a set of symbols",
     )
     parser.add_argument(
-        "--overwrite-number-info",
-        nargs=2,
-        action="append",
-        metavar=("FIELD", "NUMBER"),
-        default=[],
-        help="Overwrite the number specification for INFO fields "
-        "given in the VCF header. "
-        "Example: `--overwrite-number cosmic_CNT=.`",
-    )
-    parser.add_argument(
-        "--overwrite-number-format",
-        nargs=2,
-        action="append",
-        metavar=("FIELD", "NUMBER"),
-        default=[],
-        help="Overwrite the number specification for FORMAT fields "
-        "given in the VCF header. "
-        "Example: `--overwrite-number-format DP=2`",
-    )
-    parser.add_argument(
         "--tag-mode",
         "-m",
         default="pass",
@@ -102,15 +83,7 @@ def add_subcommand(subparsers):
         "However, the VCF specification (`v4.4`) defines tags to be set when a "
         "filter expression is failed, so vembrane also offers the `fail` mode.",
     )
-
-    parser.add_argument(
-        "--backend",
-        "-b",
-        default="cyvcf2",
-        type=Backend.from_string,
-        choices=[Backend.cyvcf2, Backend.pysam],
-        help="Set the backend library.",
-    )
+    add_common_arguments(parser)
 
 
 def test_record(

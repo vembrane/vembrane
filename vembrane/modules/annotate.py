@@ -6,8 +6,13 @@ import numpy as np
 import yaml
 from intervaltree import Interval, IntervalTree
 
-from ..backend.base import Backend, VCFReader, VCFRecord
-from ..common import check_expression, create_reader, create_writer
+from ..backend.base import VCFReader, VCFRecord
+from ..common import (
+    add_common_arguments,
+    check_expression,
+    create_reader,
+    create_writer,
+)
 from ..representations import Environment
 
 
@@ -41,14 +46,7 @@ def add_subcommmand(subparsers):
         choices=["vcf", "bcf", "uncompressed-bcf"],
         help="Output format.",
     )
-    parser.add_argument(
-        "--backend",
-        "-b",
-        default="cyvcf2",
-        type=Backend.from_string,
-        choices=[Backend.cyvcf2, Backend.pysam],
-        help="Set the backend library.",
-    )
+    add_common_arguments(parser)
 
 
 typeparser: Dict[str, Callable[[str], Any]] = {

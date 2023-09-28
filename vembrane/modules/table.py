@@ -7,8 +7,14 @@ from typing import Any, Dict, Iterator, List, Set
 import asttokens
 
 from ..ann_types import NA
-from ..backend.base import Backend, VCFReader, VCFRecord
-from ..common import AppendKeyValuePair, check_expression, create_reader, read_auxiliary
+from ..backend.base import VCFReader, VCFRecord
+from ..common import (
+    AppendKeyValuePair,
+    add_common_arguments,
+    check_expression,
+    create_reader,
+    read_auxiliary,
+)
 from ..errors import HeaderWrongColumnNumber, VembraneError
 from ..globals import allowed_globals
 from ..representations import Environment
@@ -71,34 +77,7 @@ def add_subcommmand(subparsers):
         default={},
         help="Path to an auxiliary file containing a set of symbols",
     )
-    parser.add_argument(
-        "--overwrite-number-info",
-        nargs=1,
-        action=AppendKeyValuePair,
-        metavar="FIELD=NUMBER",
-        default={},
-        help="Overwrite the number specification for INFO fields "
-        "given in the VCF header. "
-        "Example: `--overwrite-number cosmic_CNT=.`",
-    )
-    parser.add_argument(
-        "--overwrite-number-format",
-        nargs=1,
-        action=AppendKeyValuePair,
-        metavar="FIELD=NUMBER",
-        default={},
-        help="Overwrite the number specification for FORMAT fields "
-        "given in the VCF header. "
-        "Example: `--overwrite-number-format DP=2`",
-    )
-    parser.add_argument(
-        "--backend",
-        "-b",
-        default="cyvcf2",
-        type=Backend.from_string,
-        choices=[Backend.cyvcf2, Backend.pysam],
-        help="Set the backend library.",
-    )
+    add_common_arguments(parser)
 
 
 def tableize_vcf(

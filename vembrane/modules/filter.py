@@ -9,10 +9,11 @@ import yaml
 
 from .. import __version__
 from ..ann_types import NA
-from ..backend.base import Backend, VCFReader, VCFRecord
+from ..backend.base import VCFReader, VCFRecord
 from ..common import (
     AppendKeyValuePair,
     BreakendEvent,
+    add_common_arguments,
     check_expression,
     create_reader,
     create_writer,
@@ -98,34 +99,7 @@ def add_subcommmand(subparsers):
               input. This is only useful if the input contains breakends (BNDs) \
               since the order of all other variants is preserved anyway.",
     )
-    parser.add_argument(
-        "--overwrite-number-info",
-        nargs=1,
-        action=AppendKeyValuePair,
-        metavar="FIELD=NUMBER",
-        default={},
-        help="Overwrite the number specification for INFO fields "
-        "given in the VCF header. "
-        "Example: `--overwrite-number cosmic_CNT=.`",
-    )
-    parser.add_argument(
-        "--overwrite-number-format",
-        nargs=1,
-        action=AppendKeyValuePair,
-        metavar="FIELD=NUMBER",
-        default={},
-        help="Overwrite the number specification for FORMAT fields "
-        "given in the VCF header. "
-        "Example: `--overwrite-number-format DP=2`",
-    )
-    parser.add_argument(
-        "--backend",
-        "-b",
-        default="cyvcf2",
-        type=Backend.from_string,
-        choices=[Backend.cyvcf2, Backend.pysam],
-        help="Set the backend library.",
-    )
+    add_common_arguments(parser)
 
 
 def test_and_update_record(
