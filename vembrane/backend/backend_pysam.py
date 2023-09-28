@@ -80,9 +80,6 @@ class PysamRecord(VCFRecord):
     def __str__(self):
         return self._record.__str__()
 
-    def __eq__(self, other):
-        return self._record == other._record
-
 
 class PysamRecordFormats(VCFRecordFormats):
     __slots__ = ("_record", "_header")

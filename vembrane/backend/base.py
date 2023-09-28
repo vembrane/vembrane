@@ -158,9 +158,25 @@ class VCFRecord:
     def __str__(self):
         raise NotImplementedError
 
-    @abstractmethod
-    def __eq__(self, other):
-        raise NotImplementedError
+    def __eq__(self, other: "VCFRecord"):
+        return all(
+            (
+                self.contig == other.contig,
+                self.id == other.id,
+                self.alleles == other.alleles,
+                self.position == other.position,
+                self.quality == other.quality,
+                set(self.filter) == set(other.filter),
+                all(
+                    self.info.get(key) == other.info.get(key)
+                    for key in self._header.infos
+                ),
+                all(
+                    self.formats.get(key) == other.formats.get(key)
+                    for key in self._header.formats
+                ),
+            )
+        )
 
 
 class VCFRecordFormats(NoValueDict):
@@ -170,6 +186,10 @@ class VCFRecordFormats(NoValueDict):
         record: VCFRecord,
     ):
         raise NotImplementedError
+
+    def get(self, key: str, default=None):
+        if key not in self:
+            return default
 
 
 class VCFReader:

@@ -195,29 +195,6 @@ class Cyvcf2Record(VCFRecord):
     def __str__(self):
         return self._record.__str__()
 
-    def __eq__(self, other):
-        print(
-            set(self.filter) == set(other.filter), set(self.filter), set(other.filter)
-        )
-        return all(
-            (
-                self._record.ID == other._record.ID,
-                self._record.ID == other._record.ID,
-                self._record.REF == other._record.REF,
-                self._record.POS == other._record.POS,
-                self._record.QUAL == other._record.QUAL,
-                set(self.filter) == set(other.filter),
-                all(
-                    self.info.get(key) == other.info.get(key)
-                    for key in self._header.infos
-                ),
-                all(
-                    self.formats.get(key) == other.formats.get(key)
-                    for key in self._header.formats
-                ),
-            )
-        )
-
 
 class Cyvcf2RecordFormats(VCFRecordFormats):
     __slots__ = ("_record", "_header")
@@ -228,10 +205,6 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
 
     def __getitem__(self, key: str):
         return Cyvcf2RecordFormat(key, self._record, self._header)
-
-    def get(self, key: str, default=None):
-        if key not in self:
-            return default
 
     def __contains__(self, key):
         return key in self._record.FORMAT
