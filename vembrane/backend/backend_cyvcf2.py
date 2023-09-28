@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from functools import cache
+from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -229,7 +229,7 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
         self._record = record
         self._header = header
 
-    @cache
+    @lru_cache
     def __getitem__(self, key: str):
         return Cyvcf2RecordFormat(key, self._record, self._header)
 
