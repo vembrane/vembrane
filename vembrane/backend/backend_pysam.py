@@ -136,12 +136,9 @@ class PysamRecordInfo(VCFRecordInfo):
     def __getitem__(self, key):
         if key == "END":
             return get_end(self._raw_record)
-        if key not in (header := self._record._header).infos.keys():
-            import sys
-
-            print("fooo", self._record.record_idx, file=sys.stderr)
+        if key not in (infos := self._record._header.infos).keys():
             raise UnknownInfoField(self._record.record_idx, self._raw_record, key)
-        meta = header.infos[key]
+        meta = infos[key]
         if not self.__contains__(key):
             return type_info(NA, meta["Number"])
         return type_info(self._raw_record.info[key], meta["Number"])
