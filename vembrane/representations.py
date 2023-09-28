@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, NvFloat, NvInt
 from .backend.base import VCFHeader, VCFRecord, VCFRecordFormats, VCFRecordInfo
-from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
+from .common import get_annotation_keys, split_annotation_entry
 from .errors import MalformedAnnotationError, NonBoolTypeError, UnknownAnnotation
 from .globals import _explicit_clear, allowed_globals, custom_functions
 
@@ -39,8 +39,8 @@ class Annotation(NoValueDict, DefaultGet):
             for ann_idx, entry in enumerate(map(ANN_TYPER.get_entry, annotation_keys))
         }
 
-    def update(self, record: VCFRecord, annotation: str):
-        self._record_idx = record.record_idx
+    def update(self, record_idx: int, record: VCFRecord, annotation: str):
+        self._record_idx = record_idx
         self._record = record
         self._data.clear()
         self._annotation_data = split_annotation_entry(annotation)
@@ -54,7 +54,9 @@ class Annotation(NoValueDict, DefaultGet):
             except KeyError:
                 raise UnknownAnnotation(self._record, item)
             if ann_idx >= len(self._annotation_data):
-                raise MalformedAnnotationError(self._record, item, ann_idx)
+                raise MalformedAnnotationError(
+                    self._record_idx, self._record, item, ann_idx
+                )
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
@@ -145,6 +147,11 @@ class Environment(dict):
         # so that the value can be accessed directly and need not be accessed via
         # an index operation.
 
+        # always explicitly set "Number" for certain fields
+        # which get special pysam treatment:
+        # - `FORMAT["GT"]` is always parsed as a list of integer values
+        # self._numbers.get("FORMAT", {})["GT"] = "."
+
         # At the moment, only INFO and FORMAT records are checked
         self._empty_globals = {name: UNSET for name in self._getters}
         self.record: VCFRecord = None
@@ -174,7 +181,7 @@ class Environment(dict):
         return value
 
     def _get_end(self) -> NvInt:
-        value = get_end(self.record)
+        value = self.record.end
         self._globals["END"] = value
         return value
 
@@ -214,11 +221,22 @@ class Environment(dict):
         return value
 
     def _get_info(self) -> VCFRecordInfo:
+        # value = VCFRecordInfo(
+        #     self.idx,
+        #     self.record,
+        #     self._header_info_fields,
+        #     self._ann_key,
+        # )
         value = self.record.info
         self._globals["INFO"] = value
         return value
 
     def _get_format(self) -> VCFRecordFormats:
+        # value = Formats(
+        #     self.idx,
+        #     self.record,
+        #     self._header_format_fields,
+        # )
         value = self.record.formats
         self._globals["FORMAT"] = value
         return value
@@ -241,7 +259,7 @@ class Environment(dict):
 
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
-            self._annotation.update(self.record, annotation)
+            self._annotation.update(self.idx, self.record, annotation)
         keep = self._func()
         if not isinstance(keep, bool):
             raise NonBoolTypeError(keep)
@@ -249,17 +267,5 @@ class Environment(dict):
 
     def table(self, annotation: str = "") -> tuple:
         if self._has_ann:
-            self._annotation.update(self.record, annotation)
+            self._annotation.update(self.idx, self.record, annotation)
         return self._func()
-
-
-def get_end(record: VCFRecord):
-    if is_bnd_record(record):
-        return NA
-    else:
-        # record.stop is pysams unified approach to get the end position of a variant.
-        # It either considers the alt allele or the END field, depending on the record.
-        # Stop is 0-based, but for consistency with POS we convert into 1-based.
-        # Since for 1-based coordinates, the expectation is that END is inclusive
-        # instead of exclusive (as it is with 0-based), we do not need to add 1.
-        return record.stop

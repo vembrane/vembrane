@@ -154,6 +154,23 @@ class VCFRecord:
     def header(self) -> "VCFHeader":
         raise NotImplementedError
 
+    @property
+    def is_bnd_record(self) -> bool:
+        return "SVTYPE" in self.info and self.info.get("SVTYPE", None) == "BND"
+
+    @property
+    def end(self):
+        if self.is_bnd_record:
+            return NA
+        else:
+            # record.stop is pysams unified approach to get the end position of
+            # a variant. It either considers the alt allele or the END field,
+            # depending on the record. Stop is 0-based, but for consistency
+            # with POS we convert into 1-based. Since for 1-based coordinates,
+            # the expectation is that END is inclusive instead of exclusive
+            # (as it is with 0-based), we do not need to add 1.
+            return self.stop
+
     @abstractmethod
     def __repr__(self):
         raise NotImplementedError
