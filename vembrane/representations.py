@@ -39,8 +39,8 @@ class Annotation(NoValueDict, DefaultGet):
             for ann_idx, entry in enumerate(map(ANN_TYPER.get_entry, annotation_keys))
         }
 
-    def update(self, record_idx: int, record: VCFRecord, annotation: str):
-        self._record_idx = record_idx
+    def update(self, record: VCFRecord, annotation: str):
+        self._record_idx = record.record_idx
         self._record = record
         self._data.clear()
         self._annotation_data = split_annotation_entry(annotation)
@@ -52,11 +52,9 @@ class Annotation(NoValueDict, DefaultGet):
             try:
                 ann_idx, convert = self._ann_conv[item]
             except KeyError:
-                raise UnknownAnnotation(self._record_idx, self._record, item)
+                raise UnknownAnnotation(self._record, item)
             if ann_idx >= len(self._annotation_data):
-                raise MalformedAnnotationError(
-                    self._record_idx, self._record, item, ann_idx
-                )
+                raise MalformedAnnotationError(self._record, item, ann_idx)
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
@@ -251,7 +249,7 @@ class Environment(dict):
 
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
-            self._annotation.update(self.idx, self.record, annotation)
+            self._annotation.update(self.record, annotation)
         keep = self._func()
         if not isinstance(keep, bool):
             raise NonBoolTypeError(keep)
@@ -259,7 +257,7 @@ class Environment(dict):
 
     def table(self, annotation: str = "") -> tuple:
         if self._has_ann:
-            self._annotation.update(self.idx, self.record, annotation)
+            self._annotation.update(self.record, annotation)
         return self._func()
 
 

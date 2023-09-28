@@ -107,7 +107,7 @@ class PysamRecordFormat(VCFRecordFormat):
 
     def __getitem__(self, sample):
         if not self.__contains__(sample):
-            raise UnknownSample(0, self._raw_record, sample)  # TODO record_idx
+            raise UnknownSample(self.record, sample)
         meta = self._header.formats[self._format_key]
         return type_info(
             self._raw_record.samples[sample][self._format_key], meta["Number"]
@@ -134,7 +134,7 @@ class PysamRecordInfo(VCFRecordInfo):
         if key == "END":
             return get_end(self._raw_record)
         if key not in (infos := self._record._header.infos).keys():
-            raise UnknownInfoField(self._record.record_idx, self._raw_record, key)
+            raise UnknownInfoField(self._record, key)
         meta = infos[key]
         if not self.__contains__(key):
             return type_info(NA, meta["Number"])

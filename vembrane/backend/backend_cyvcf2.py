@@ -177,11 +177,11 @@ class Cyvcf2Record(VCFRecord):
 
     @property
     def filter(self) -> VCFRecordFilter:
-        return Cyvcf2RecordFilter(self._record)
+        return Cyvcf2RecordFilter(self)
 
     @property
     def info(self) -> VCFRecordInfo:
-        return Cyvcf2RecordInfo(self._record, self._header)
+        return Cyvcf2RecordInfo(self)
 
     @property
     def formats(self) -> VCFRecordFormats:
@@ -240,7 +240,7 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
 class Cyvcf2RecordFormat(VCFRecordFormat):
     __slots__ = ("_header", "_record", "_format_key")
 
-    def __init__(self, format_key: str, record, header: Cyvcf2Header):
+    def __init__(self, format_key: str, record: Cyvcf2Record, header: Cyvcf2Header):
         self._header = header
         self._record = record
         self._format_key = format_key
@@ -248,7 +248,7 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
     def __getitem__(self, sample):
         i = self._header.samples.index(sample)
         if i == -1:
-            raise UnknownSample(self._record_idx, self._record, sample)
+            raise UnknownSample(self._record, sample)
         if self._format_key == "GT":  # genotype
             value = tuple(
                 None if gt == -1 else gt for gt in self._record.genotypes[i][:-1]
@@ -282,8 +282,8 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
 class Cyvcf2RecordFilter(VCFRecordFilter):
     __slots__ = "_record"
 
-    def __init__(self, record: Variant):
-        self._record = record
+    def __init__(self, record: Cyvcf2Record):
+        self._record = record._record
 
     def __iter__(self):
         yield from self._record.FILTERS
@@ -302,28 +302,28 @@ class Cyvcf2RecordFilter(VCFRecordFilter):
 
 
 class Cyvcf2RecordInfo(VCFRecordInfo):
-    __slots__ = ("_record", "_header", "_record_idx")
+    __slots__ = ("_record", "_raw_record", "_header", "_record_idx")
 
     def __init__(
         self,
         record: Cyvcf2Record,
-        header: Cyvcf2Header,
     ):
         self._record = record
-        self._header = header
+        self._raw_record = record._record
+        self._header = record._header
 
     def __getitem__(self, key):
         # if key == "END":
         #     return get_end(self._record)
         if key not in self._header.infos.keys():
-            raise UnknownInfoField(self.record.record_idx, self._record, key)
+            raise UnknownInfoField(self._record, key)
 
         meta = self._header.infos[key]
         if not self.__contains__(key):
             return type_info(NA, meta["Number"])
         if meta["Type"] == "Flag":
             return key in self
-        value = self._record.INFO[key]
+        value = self._raw_record.INFO[key]
         number, typ = meta["Number"], meta["Type"]
 
         # for some reasons cyvcf2 doesn't split String lists, a known circumstance
@@ -338,10 +338,10 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         number, typ = meta["Number"], meta["Type"]
         if typ == "String" and number == ".":
             value = ",".join(value)
-        self._record.INFO[key] = value
+        self._raw_record.INFO[key] = value
 
     def __contains__(self, key):
-        return self._record.INFO.get(key, None) is not None
+        return self._raw_record.INFO.get(key, None) is not None
 
 
 class Cyvcf2Writer(VCFWriter):

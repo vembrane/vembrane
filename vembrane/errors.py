@@ -11,11 +11,11 @@ class VembraneError(Exception):
 class UnknownAnnotation(VembraneError):
     """Unknown annotation entry"""
 
-    def __init__(self, record_idx: int, record, key: str):
+    def __init__(self, record, key: str):
         super(UnknownAnnotation, self).__init__(
-            f"No ANN entry for '{key}' in record {record_idx}:\n{str(record)}"
+            f"No ANN entry for '{key}' in record {record.record_idx}:\n{str(record)}"
         )
-        self.record_idx = record_idx
+        self.record_idx = record.record_idx
         self.record = record
         self.key = key
 
@@ -23,13 +23,13 @@ class UnknownAnnotation(VembraneError):
 class MalformedAnnotationError(VembraneError):
     """Unknown annotation entry"""
 
-    def __init__(self, record_idx: int, record, key: str, ann_idx: int):
+    def __init__(self, record, key: str, ann_idx: int):
         super(MalformedAnnotationError, self).__init__(
             f"The annotation index {ann_idx} ('{key}') "
-            f"in record {record_idx} is out of bounds. "
+            f"in record {record.record_idx} is out of bounds. "
             f"The ANN field might be malformed for this record:\n{str(record)}"
         )
-        self.record_idx = record_idx
+        self.record_idx = record.record_idx
         self.record = record
         self.key = key
         self.ann_idx = ann_idx
@@ -38,11 +38,12 @@ class MalformedAnnotationError(VembraneError):
 class UnknownSample(VembraneError, KeyError):
     """Unknown Sample"""
 
-    def __init__(self, record_idx: int, record, sample: str):
+    def __init__(self, record, sample: str):
         super(UnknownSample, self).__init__(
-            f"No sample with name '{sample}' in record {record_idx}:\n{str(record)}"
+            f"No sample with name '{sample}' in record \
+                {record.record_idx}:\n{str(record)}"
         )
-        self.record_idx = record_idx
+        self.record_idx = record.record_idx
         self.record = record
         self.field = sample
 
@@ -50,23 +51,25 @@ class UnknownSample(VembraneError, KeyError):
 class UnknownFormatField(VembraneError, KeyError):
     """Unknown FORMAT key"""
 
-    def __init__(self, record_idx: int, record, field: str):
+    def __init__(self, record, field: str):
         super(UnknownFormatField, self).__init__(
-            f"No FORMAT field '{field}' in record {record_idx}:\n{str(record)}"
+            f"No FORMAT field '{field}' in record \
+                {record.record_idx}:\n{str(record)}"
         )
-        self.record_idx = record_idx
-        self.record = record_idx
+        self.record_idx = record.record_idx
+        self.record = record
         self.field = field
 
 
 class UnknownInfoField(VembraneError):
     """Unknown INFO key"""
 
-    def __init__(self, record_idx: int, record, field: str):
+    def __init__(self, record, field: str):
         super(UnknownInfoField, self).__init__(
-            f"No INFO field '{field}' in record {record_idx}:\n{str(record)}"
+            f"No INFO field '{field}' in record {record.record_idx}:\n{str(record)}"
         )
-        self.record = record_idx
+        self.record_idx = record.record_idx
+        self.record = record
         self.field = field
 
 
