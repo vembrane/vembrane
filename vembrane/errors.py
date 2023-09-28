@@ -1,6 +1,4 @@
-from typing import Any
-
-# from vembrane.backend.base import VCFRecord
+from typing import Any, List
 
 
 class VembraneError(Exception):
@@ -99,7 +97,7 @@ class MoreThanOneAltAllele(VembraneError):
 class NotExactlyOneValue(VembraneError):
     """There may only be one value in VCF fields with `Number=1`"""
 
-    def __init__(self, field, nvalues, record_idx):
+    def __init__(self, field: str, nvalues: int, record_idx: int):
         msg = (
             f"record {record_idx} has {nvalues} values in {field}, "
             f"but defined `Number=1`.\n"
@@ -124,7 +122,13 @@ class HeaderWrongColumnNumber(VembraneError):
     table --header expression generates different number of columns than main expression
     """
 
-    def __init__(self, n_expr_cols, expr_cols, n_header_cols, header_cols):
+    def __init__(
+        self,
+        n_expr_cols: int,
+        expr_cols: List[str],
+        n_header_cols: int,
+        header_cols: List[str],
+    ):
         msg = (
             "The provided --header expression generates a different\n"
             "number of columns than the main expression:\n"
