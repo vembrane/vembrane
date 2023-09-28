@@ -197,45 +197,45 @@ class PysamHeader(VCFHeader):
     __slots__ = (
         "_record",
         "_header",
-        "_data",
-        "_data_category",
-        "_data_generic",
+        "_metadata",
+        "_metadata_category",
+        "_metadata_generic",
         "_samples",
     )
 
     def __init__(self, reader: PysamReader, overwrite_number={}):
         self._reader = reader
         self._header = reader._file.header
-        self._data = []
-        self._data_category = defaultdict(OrderedDict)
-        self._data_generic = dict()
+        self._metadata = []
+        self._metadata_category = defaultdict(OrderedDict)
+        self._metadata_generic = dict()
         self._samples = OrderedDict((s, None) for s in self._header.samples)
 
         for r in self._header.records:
             if r.type == "GENERIC":
-                self._data_generic[r.key] = r.value
+                self._metadata_generic[r.key] = r.value
                 continue
             d = dict(r)
-            self._data.append(d)
+            self._metadata.append(d)
             if "ID" in d:
-                self._data_category[r.type][d["ID"]] = d
+                self._metadata_category[r.type][d["ID"]] = d
 
         # override numbers
         for category, items in overwrite_number.items():
             for key, value in items.items():
-                if key in self._data_category[category]:
-                    self._data_category[category][key]["Number"] = value
+                if key in self._metadata_category[category]:
+                    self._metadata_category[category][key]["Number"] = value
 
     def contains_generic(self, key: str):
-        return key in self._data_generic
+        return key in self._metadata_generic
 
     @property
     def infos(self):
-        return self._data_category["INFO"]
+        return self._metadata_category["INFO"]
 
     @property
     def formats(self):
-        return self._data_category["FORMAT"]
+        return self._metadata_category["FORMAT"]
 
     def __iter__(self):
         self._iter_index = 0
@@ -258,7 +258,7 @@ class PysamHeader(VCFHeader):
 
     @property
     def records(self):
-        return self._data_category
+        return self._metadata_category
 
     def add_generic(self, key: str, value: str):
         self._header.add_meta(key, value)
