@@ -67,7 +67,7 @@ class DefaultGet:
             return default
 
 
-class VCFRecordFormat(NoValueDict, DefaultGet):
+class VCFRecordFormat(NoValueDict):
     @abstractmethod
     def __setitem__(self, key, value):
         raise NotImplementedError
