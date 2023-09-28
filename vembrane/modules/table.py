@@ -314,10 +314,6 @@ def execute(args):
         expression = preprocess_expression(args.expression, vcf, True)
         if args.long:
             expression = f"SAMPLE, {expression}"
-        overwrite_number = {
-            "INFO": dict(args.overwrite_number_info),
-            "FORMAT": dict(args.overwrite_number_format),
-        }
         rows = tableize_vcf(
             vcf,
             expression,

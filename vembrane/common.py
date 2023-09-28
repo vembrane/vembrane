@@ -1,6 +1,7 @@
 import argparse
 import ast
 import shlex
+from collections import defaultdict
 from typing import Dict, Iterable, Iterator, List, Optional, Set
 
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
@@ -134,7 +135,10 @@ def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
     return {name: read_set(contents) for name, contents in aux.items()}
 
 
-def create_reader(filename: str, backend: Backend = Backend.pysam, overwrite_number={}):
+def create_reader(
+    filename: str, backend: Backend = Backend.pysam, overwrite_number=defaultdict(dict)
+):
+    # GT should always be "."
     if backend == Backend.pysam:
         return PysamReader(filename, overwrite_number)
     elif backend == Backend.cyvcf2:

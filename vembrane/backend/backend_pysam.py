@@ -206,7 +206,8 @@ class PysamHeader(VCFHeader):
         # override numbers
         for category, items in overwrite_number.items():
             for key, value in items.items():
-                self._data_category[category][key]["Number"] = value
+                if key in self._data_category[category]:
+                    self._data_category[category][key]["Number"] = value
 
     def contains_generic(self, key: str):
         return key in self._data_generic

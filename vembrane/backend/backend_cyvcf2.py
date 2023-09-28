@@ -1,4 +1,5 @@
 from collections import OrderedDict, defaultdict
+from functools import cache
 from typing import Dict, Tuple
 
 import numpy as np
@@ -82,7 +83,8 @@ class Cyvcf2Header(VCFHeader):
         # override numbers
         for category, items in overwrite_number.items():
             for key, value in items.items():
-                self._data_category[category][key]["Number"] = value
+                if key in self._data_category[category]:
+                    self._data_category[category][key]["Number"] = value
 
     @property
     def records(self):
@@ -182,9 +184,6 @@ class Cyvcf2Record(VCFRecord):
         return self._record.__str__()
 
     def __eq__(self, other):
-        print(
-            set(self.filter) == set(other.filter), set(self.filter), set(other.filter)
-        )
         return all(
             (
                 self._record.ID == other._record.ID,
@@ -212,6 +211,7 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
         self._record = record
         self._header = header
 
+    @cache
     def __getitem__(self, key: str):
         return Cyvcf2RecordFormat(key, self._record, self._header)
 
@@ -239,7 +239,7 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
             value = tuple(
                 None if gt == -1 else gt for gt in self._record.genotypes[i][:-1]
             )
-            return type_info(value)
+            return type_info(value, ".")
 
         value = self._record.format(self._format_key)[i]
         meta = self._header.formats[self._format_key]
