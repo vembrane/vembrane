@@ -150,6 +150,10 @@ class VCFRecord:
     def formats(self) -> VCFRecordFormat:
         raise NotImplementedError
 
+    @abstractproperty
+    def header(self) -> "VCFHeader":
+        raise NotImplementedError
+
     @abstractmethod
     def __repr__(self):
         raise NotImplementedError
@@ -169,11 +173,11 @@ class VCFRecord:
                 set(self.filter) == set(other.filter),
                 all(
                     self.info.get(key) == other.info.get(key)
-                    for key in self._header.infos
+                    for key in self.header.infos
                 ),
                 all(
                     self.formats.get(key) == other.formats.get(key)
-                    for key in self._header.formats
+                    for key in self.header.formats
                 ),
             )
         )
