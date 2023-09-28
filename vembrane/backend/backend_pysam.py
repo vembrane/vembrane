@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from typing import Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pysam
 from pysam import VariantRecord
@@ -163,7 +163,11 @@ class PysamRecordFilter(VCFRecordFilter):
 
 
 class PysamReader(VCFReader):
-    __slots__ = ("filename", "_file", "_header")
+    __slots__ = (
+        "filename",
+        "_iter_file",
+        "_header",
+    )
 
     def __init__(
         self,
@@ -249,6 +253,14 @@ class PysamHeader(VCFHeader):
         self._header.add_meta(
             key="FILTER", items=[("ID", id), ("Description", description)]
         )
+
+    def add_meta(
+        self,
+        key: str,
+        value: Optional[str] = None,
+        items: Optional[List[Tuple[str, str]]] = None,
+    ):
+        raise NotImplementedError
 
 
 class PysamWriter(VCFWriter):

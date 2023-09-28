@@ -7,7 +7,7 @@ from ..errors import UnknownSample
 
 
 class Backend(Enum):
-    pysam = (0,)
+    pysam = 0
     cyvcf2 = 1
 
     def __str__(self):
@@ -25,6 +25,8 @@ class Backend(Enum):
 
 
 class VCFRecordInfo:
+    __slots__ = ()
+
     @abstractmethod
     def __contains__(self, item):
         raise NotImplementedError
@@ -86,6 +88,8 @@ class VCFRecordFormat(NoValueDict, DefaultGet):
 
 
 class VCFRecordFilter:
+    __slots__ = ()
+
     @abstractmethod
     def add(self, tag: str):
         raise NotImplementedError
@@ -96,6 +100,8 @@ class VCFRecordFilter:
 
 
 class VCFRecord:
+    __slots__ = ()
+
     @abstractmethod
     def __init__(self, filename: str):
         raise NotImplementedError
@@ -167,6 +173,8 @@ class VCFRecordFormats(NoValueDict):
 
 
 class VCFReader:
+    __slots__ = ("_file",)
+
     @abstractmethod
     def __init__(self, filename: str):
         raise NotImplementedError
@@ -190,10 +198,6 @@ class VCFReader:
     @property
     def header(self):
         return self._header
-
-    @abstractproperty
-    def records(self):
-        raise NotImplementedError
 
     @abstractmethod
     def reset(self):
@@ -240,6 +244,8 @@ class VCFHeader:
 
 
 class VCFWriter:
+    __slots__ = ("_file",)
+
     @abstractmethod
     def __init__(self, filename: str, fmt: str, template: VCFReader):
         raise NotImplementedError
@@ -256,13 +262,3 @@ class VCFWriter:
 
     def close(self):
         self._file.close()
-
-
-# class VCFWriter:
-#     @abstractmethod
-#     def __init__(self, filename: str):
-#         raise NotImplementedError
-
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         print("exit", file=stderr)
-#         self._file.close()

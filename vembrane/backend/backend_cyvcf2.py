@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from typing import Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from cyvcf2.cyvcf2 import VCF, Variant, Writer
@@ -22,7 +22,7 @@ from ..errors import UnknownInfoField, UnknownSample
 class Cyvcf2Reader(VCFReader):
     __slots__ = (
         "filename",
-        "_file",
+        "_iter_file",
         "_header",
         "_overwrite_number",
         "_current_record_idx",
@@ -116,6 +116,20 @@ class Cyvcf2Header(VCFHeader):
 
     def add_filter(self, id: str, description: str):
         self._reader._file.add_filter_to_header({"ID": id, "Description": description})
+
+    def __iter__(self):
+        raise NotImplementedError
+
+    def __next__(self):
+        raise NotImplementedError
+
+    def add_meta(
+        self,
+        key: str,
+        value: Optional[str] = None,
+        items: Optional[List[Tuple[str, str]]] = None,
+    ):
+        raise NotImplementedError
 
 
 class Cyvcf2Record(VCFRecord):
@@ -255,6 +269,9 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
                 return NA
         return type_info(value, number)
 
+    def __setitem__(self, key, value):
+        raise NotImplementedError
+
     def __contains__(self, sample):
         return sample in self._header.samples
 
@@ -328,8 +345,6 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
 
 
 class Cyvcf2Writer(VCFWriter):
-    __slots__ = "_file"
-
     def __init__(self, filename: str, fmt: str, template: VCFReader):
         self._file = Writer(filename, template._file, mode=f"w{fmt}")
 
