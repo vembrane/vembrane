@@ -303,7 +303,7 @@ class Cyvcf2RecordFilter(VCFRecordFilter):
 
 
 class Cyvcf2RecordInfo(VCFRecordInfo):
-    __slots__ = ("_record", "_raw_record", "_header", "_record_idx")
+    __slots__ = ("_record", "_raw_record", "_header")
 
     def __init__(
         self,
