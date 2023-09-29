@@ -93,7 +93,7 @@ class PysamRecordFormats(VCFRecordFormats):
 
 
 class PysamRecordFormat(VCFRecordFormat):
-    __slots__ = ("_record", "_header", "_raw_record")
+    __slots__ = ("_format_key", "_record", "_header", "_raw_record")
 
     def __init__(
         self,
