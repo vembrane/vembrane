@@ -315,14 +315,17 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
     def __getitem__(self, key):
         # if key == "END":
         #     return get_end(self._record)
-        if key not in self._header.infos.keys():
+        try:
+            meta = self._header.infos[key]
+        except KeyError:
             raise UnknownInfoField(self._record, key)
 
-        meta = self._header.infos[key]
-        if not self.__contains__(key):
-            return type_info(NA, meta["Number"])
         if meta["Type"] == "Flag":
             return key in self
+
+        if key not in self:
+            return type_info(NA, meta["Number"])
+
         value = self._raw_record.INFO[key]
         number, typ = meta["Number"], meta["Type"]
 

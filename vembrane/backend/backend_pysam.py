@@ -133,10 +133,11 @@ class PysamRecordInfo(VCFRecordInfo):
     def __getitem__(self, key):
         if key == "END":
             return self._record.end
-        if key not in (infos := self._record._header.infos).keys():
+        try:
+            meta = self._record._header.infos[key]
+        except KeyError:
             raise UnknownInfoField(self._record, key)
-        meta = infos[key]
-        if not self.__contains__(key):
+        if key not in self:
             return type_info(NA, meta["Number"])
         return type_info(self._raw_record.info[key], meta["Number"])
 
@@ -144,7 +145,7 @@ class PysamRecordInfo(VCFRecordInfo):
         self._raw_record.info[key] = value
 
     def __contains__(self, key):
-        return key in self._raw_record.info.keys()
+        return key in self._raw_record.info
 
 
 class PysamRecordFilter(VCFRecordFilter):
