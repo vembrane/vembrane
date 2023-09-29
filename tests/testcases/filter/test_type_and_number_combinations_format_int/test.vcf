@@ -1,0 +1,42 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##fileDate=20210218
+##contig=<ID=chr1,length=1>
+##INFO=<ID=FLAG,Number=0,Type=Flag,Description="A boolean flag">
+##INFO=<ID=INT,Number=1,Type=Integer,Description="One single integer">
+##INFO=<ID=FLOAT,Number=1,Type=Float,Description="One single float">
+##INFO=<ID=STRING,Number=1,Type=String,Description="One single string">
+##INFO=<ID=INT2,Number=2,Type=Integer,Description="Exactly two integers">
+##INFO=<ID=FLOAT2,Number=2,Type=Float,Description="Exactly two floats">
+##INFO=<ID=STRING2,Number=2,Type=String,Description="Exactly two strings">
+##INFO=<ID=INTA,Number=A,Type=Integer,Description="One integer per alt allele">
+##INFO=<ID=FLOATA,Number=A,Type=Float,Description="One float per alt allele">
+##INFO=<ID=STRINGA,Number=A,Type=String,Description="One string per alt allele">
+##INFO=<ID=INTR,Number=R,Type=Integer,Description="One integer per allele">
+##INFO=<ID=FLOATR,Number=R,Type=Float,Description="One float per allele">
+##INFO=<ID=STRINGR,Number=R,Type=String,Description="One string per allele">
+##INFO=<ID=INTX,Number=.,Type=Integer,Description="A variable number of integers">
+##INFO=<ID=FLOATX,Number=.,Type=Float,Description="A variable number of floats">
+##INFO=<ID=STRINGX,Number=.,Type=String,Description="A variable number of strings">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=FLAG,Number=0,Type=Flag,Description="A boolean flag">
+##FORMAT=<ID=INT,Number=1,Type=Integer,Description="One single integer">
+##FORMAT=<ID=FLOAT,Number=1,Type=Float,Description="One single float">
+##FORMAT=<ID=STRING,Number=1,Type=String,Description="One single string">
+##FORMAT=<ID=INT2,Number=2,Type=Integer,Description="Exactly two integers">
+##FORMAT=<ID=FLOAT2,Number=2,Type=Float,Description="Exactly two floats">
+##FORMAT=<ID=STRING2,Number=2,Type=String,Description="Exactly two strings">
+##FORMAT=<ID=INTA,Number=A,Type=Integer,Description="One integer per alt allele">
+##FORMAT=<ID=FLOATA,Number=A,Type=Float,Description="One float per alt allele">
+##FORMAT=<ID=STRINGA,Number=A,Type=String,Description="One string per alt allele">
+##FORMAT=<ID=INTR,Number=R,Type=Integer,Description="One integer per allele">
+##FORMAT=<ID=FLOATR,Number=R,Type=Float,Description="One float per allele">
+##FORMAT=<ID=STRINGR,Number=R,Type=String,Description="One string per allele">
+##FORMAT=<ID=INTG,Number=G,Type=Integer,Description="One integer per genotype">
+##FORMAT=<ID=FLOATG,Number=G,Type=Float,Description="One float per genotype">
+##FORMAT=<ID=STRINGG,Number=G,Type=String,Description="One string per genotype">
+##FORMAT=<ID=INTX,Number=.,Type=Integer,Description="A variable number of integers">
+##FORMAT=<ID=FLOATX,Number=.,Type=Float,Description="A variable number of floats">
+##FORMAT=<ID=STRINGX,Number=.,Type=String,Description="A variable number of strings">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Sample
+chr1	1	.	G	A	276	PASS	FLAG;INT=1;FLOAT=0.5;STRING=String;INT2=1,2;FLOAT2=0.5,1.0;STRING2=String1,String2;INTA=1;FLOATA=0.5;STRINGA=StringA;INTR=1,2;FLOATR=0.5,1.0;STRINGR=StringR1,StringR2;INTX=1,2,3,4;FLOATX=0.5,0.75;STRINGX=String1,String2,String3	GT:INT:INT2:INTA:INTR:INTG:INTX:FLOAT:FLOAT2:FLOATA:FLOATR:FLOATG:FLOATX:STRING:STRING2:STRINGA:STRINGR:STRINGG:STRINGX	0/1:1:1,2:1:1,2:1,2,3:1,2,3,4:0.5:0.5,1.0:0.5:0.5,1.0:0.5,1.0,1.5:0.5,0.75:String1:String1,String2:StringA:StringR1,StringR2:String1,String2,String3:String1,String2,String3

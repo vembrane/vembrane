@@ -1,0 +1,7 @@
+function: "filter"
+expression: 'INFO["FLOAT"] == 0.5 and 
+  INFO["FLOAT2"] == (0.5, 1.0) and
+  INFO["FLOATA"] == 0.5 and
+  INFO["FLOATR"] == (0.5, 1.0) and
+  INFO["FLOATX"] == (0.5, 0.75)
+'

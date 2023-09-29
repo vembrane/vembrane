@@ -1,0 +1,8 @@
+function: "filter"
+expression: 'FORMAT["INT"]["Sample"] == 1 and
+  FORMAT["INT2"]["Sample"] == (1, 2) and
+  FORMAT["INTA"]["Sample"] == 1 and
+  FORMAT["INTR"]["Sample"] == (1, 2) and
+  FORMAT["INTG"]["Sample"] == (1, 2, 3) and
+  FORMAT["INTX"]["Sample"] == (1, 2, 3, 4)
+'

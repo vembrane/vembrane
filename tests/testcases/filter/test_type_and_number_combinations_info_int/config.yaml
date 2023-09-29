@@ -1,0 +1,8 @@
+function: "filter"
+expression: 'INFO["FLAG"] and 
+  INFO["INT"] > 0 and 
+  INFO["INT2"] == (1, 2) and
+  INFO["INTA"] == 1 and
+  INFO["INTR"] == (1, 2) and
+  INFO["INTX"] == (1, 2, 3, 4)
+'
