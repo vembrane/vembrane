@@ -185,7 +185,7 @@ class Cyvcf2Record(VCFRecord):
 
     @property
     def formats(self) -> VCFRecordFormats:
-        return Cyvcf2RecordFormats(self._record, self._header)
+        return Cyvcf2RecordFormats(self)
 
     @property
     def samples(self):
@@ -223,26 +223,27 @@ class Cyvcf2Record(VCFRecord):
 
 
 class Cyvcf2RecordFormats(VCFRecordFormats):
-    __slots__ = ("_record", "_header")
+    __slots__ = ("_record", "_format")
 
-    def __init__(self, record: Variant, header: Cyvcf2Header):
+    def __init__(self, record: Cyvcf2Record):
         self._record = record
-        self._header = header
+        self._format = record._record.FORMAT
 
     @lru_cache
     def __getitem__(self, key: str):
-        return Cyvcf2RecordFormat(key, self._record, self._header)
+        return Cyvcf2RecordFormat(key, self._record)
 
     def __contains__(self, key):
-        return key in self._record.FORMAT
+        return key in self._format
 
 
 class Cyvcf2RecordFormat(VCFRecordFormat):
-    __slots__ = ("_header", "_record", "_format_key")
+    __slots__ = ("_header", "_record", "_raw_record", "_format_key")
 
-    def __init__(self, format_key: str, record: Cyvcf2Record, header: Cyvcf2Header):
-        self._header = header
+    def __init__(self, format_key: str, record: Cyvcf2Record):
         self._record = record
+        self._raw_record = record._record
+        self._header = record._header
         self._format_key = format_key
 
     def __getitem__(self, sample):
@@ -251,11 +252,11 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
             raise UnknownSample(self._record, sample)
         if self._format_key == "GT":  # genotype
             value = tuple(
-                None if gt == -1 else gt for gt in self._record.genotypes[i][:-1]
+                None if gt == -1 else gt for gt in self._raw_record.genotypes[i][:-1]
             )
             return type_info(value, ".")
 
-        value = self._record.format(self._format_key)[i]
+        value = self._raw_record.format(self._format_key)[i]
         meta = self._header.formats[self._format_key]
         number = meta["Number"]
         if meta["Type"] == "String":
