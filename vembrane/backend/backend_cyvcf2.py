@@ -313,30 +313,27 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         self._header = record._header
 
     def __getitem__(self, key):
-        # if key == "END":
-        #     return get_end(self._record)
         try:
             meta = self._header.infos[key]
         except KeyError:
             raise UnknownInfoField(self._record, key)
-
-        if meta["Type"] == "Flag":
+        number, typ = meta["Number"], meta["Type"]
+        if typ == "Flag":
             return key in self
 
-        if key not in self:
+        try:
+            value = self._raw_record.INFO[key]
+        except KeyError:
             return type_info(NA, meta["Number"])
 
-        value = self._raw_record.INFO[key]
-        number, typ = meta["Number"], meta["Type"]
-
-        # for some reasons cyvcf2 doesn't split String lists, a known circumstance
+        # for some reason cyvcf2 doesn't split String lists, a known circumstance
         if typ == "String" and not number == "1":
             value = value.split(",")
 
         return type_info(value, number)
 
     def __setitem__(self, key, value):
-        # for some reasons cyvcf2 doesn't split String lists, a known circumstance
+        # for some reason cyvcf2 doesn't split String lists, a known circumstance
         meta = self._header.infos[key]
         number, typ = meta["Number"], meta["Type"]
         if typ == "String" and number != "1":

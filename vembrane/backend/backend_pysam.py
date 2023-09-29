@@ -137,9 +137,11 @@ class PysamRecordInfo(VCFRecordInfo):
             meta = self._record._header.infos[key]
         except KeyError:
             raise UnknownInfoField(self._record, key)
-        if key not in self:
+        try:
+            value = self._raw_record.info[key]
+        except KeyError:
             return type_info(NA, meta["Number"])
-        return type_info(self._raw_record.info[key], meta["Number"])
+        return type_info(value, meta["Number"])
 
     def __setitem__(self, key, value):
         self._raw_record.info[key] = value
