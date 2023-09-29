@@ -75,12 +75,6 @@ class PysamRecord(VCFRecord):
     def header(self) -> VCFHeader:
         return self._header
 
-    def __repr__(self):
-        return self._record.__repr__()
-
-    def __str__(self):
-        return self._record.__str__()
-
 
 class PysamRecordFormats(VCFRecordFormats):
     __slots__ = "_record"

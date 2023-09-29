@@ -173,11 +173,11 @@ class VCFRecord:
 
     @abstractmethod
     def __repr__(self):
-        raise NotImplementedError
+        return self._record.__str__()
 
     @abstractmethod
     def __str__(self):
-        raise NotImplementedError
+        return self._record.__repr__()
 
     def __eq__(self, other: "VCFRecord"):
         return all(

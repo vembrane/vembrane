@@ -195,12 +195,6 @@ class Cyvcf2Record(VCFRecord):
     def header(self) -> VCFHeader:
         return self._header
 
-    def __repr__(self):
-        return self._record.__repr__()
-
-    def __str__(self):
-        return self._record.__str__()
-
     def __eq__(self, other):
         return all(
             (
