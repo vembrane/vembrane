@@ -16,48 +16,44 @@ from vembrane.backend.base import (
 )
 
 from ..ann_types import NA, type_info
-from ..errors import UnknownInfoField, UnknownSample
+from ..errors import UnknownInfoFieldError, UnknownSampleError
 
 
 class PysamRecord(VCFRecord):
-    __slots__ = ("_record", "_header", "record_idx")
-
-    def __init__(self, record: VariantRecord, header: VCFHeader, record_idx: int):
-        self._record = record
-        self._header = header
-        self.record_idx = record_idx
+    def __init__(self, record: VariantRecord, record_idx: int, header: VCFHeader):
+        super().__init__(record, record_idx, header)
 
     @property
     def contig(self) -> str:
-        return self._record.chrom
+        return self._raw_record.chrom
 
     @property
     def position(self) -> int:
-        return self._record.pos
+        return self._raw_record.pos
 
     @property
     def stop(self) -> int:
-        return self._record.stop
+        return self._raw_record.stop
 
     @property
     def id(self) -> str:
-        return self._record.id
+        return self._raw_record.id
 
     @property
     def reference_allele(self) -> str:
-        return self._record.ref
+        return self._raw_record.ref
 
     @property
     def alt_alleles(self) -> Tuple[str]:
-        return tuple(self._record.alts)
+        return tuple(self._raw_record.alts)
 
     @property
     def quality(self) -> float:
-        return self._record.qual
+        return self._raw_record.qual
 
     @property
     def filter(self) -> VCFRecordFilter:
-        return PysamRecordFilter(self._record)
+        return PysamRecordFilter(self._raw_record)
 
     @property
     def info(self) -> VCFRecordInfo:
@@ -97,14 +93,15 @@ class PysamRecordFormat(VCFRecordFormat):
         self._format_key = format_key
         self._record = record
         self._header = record._header
-        self._raw_record: VariantRecord = record._record
+        self._raw_record: VariantRecord = record._raw_record
 
     def __getitem__(self, sample):
         if not self.__contains__(sample):
-            raise UnknownSample(self.record, sample)
+            raise UnknownSampleError(self.record, sample)
         meta = self._header.formats[self._format_key]
         return type_info(
-            self._raw_record.samples[sample][self._format_key], meta["Number"]
+            self._raw_record.samples[sample][self._format_key],
+            meta["Number"],
         )
 
     def __setitem__(self, key, value):
@@ -122,15 +119,15 @@ class PysamRecordInfo(VCFRecordInfo):
         record: PysamRecord,
     ):
         self._record = record
-        self._raw_record: VariantRecord = record._record
+        self._raw_record: VariantRecord = record._raw_record
 
     def __getitem__(self, key):
         if key == "END":
             return self._record.end
         try:
             meta = self._record._header.infos[key]
-        except KeyError:
-            raise UnknownInfoField(self._record, key)
+        except KeyError as ke:
+            raise UnknownInfoFieldError(self._record, key) from ke
         try:
             value = self._raw_record.info[key]
         except KeyError:
@@ -138,7 +135,7 @@ class PysamRecordInfo(VCFRecordInfo):
                 f"Warning: "
                 f"record {self._record.record_idx} is missing a value for key {key}, "
                 f"returning NA instead."
-                f"\n{self._record}\n"
+                f"\n{self._record}\n",
             )
             return type_info(NA, meta["Number"])
         return type_info(value, meta["Number"])
@@ -174,8 +171,10 @@ class PysamReader(VCFReader):
     def __init__(
         self,
         filename: str,
-        overwrite_number: Dict[str, Dict[str, str]] = {},
+        overwrite_number: Dict[str, Dict[str, str]] = None,
     ):
+        if overwrite_number is None:
+            overwrite_number = {}
         self.filename = filename
         self._file = pysam.VariantFile(self.filename)
         self._header = PysamHeader(self, overwrite_number)
@@ -188,7 +187,9 @@ class PysamReader(VCFReader):
     def __next__(self):
         self._current_record_idx += 1
         return PysamRecord(
-            self._iter_file.__next__(), self._header, self._current_record_idx
+            self._iter_file.__next__(),
+            self._current_record_idx,
+            self._header,
         )
 
     def reset(self):
@@ -199,22 +200,24 @@ class PysamReader(VCFReader):
 class PysamHeader(VCFHeader):
     __slots__ = (
         "_record",
-        "_header",
+        "_raw_header",
         "_metadata",
         "_metadata_category",
         "_metadata_generic",
         "_samples",
     )
 
-    def __init__(self, reader: PysamReader, overwrite_number={}):
+    def __init__(self, reader: PysamReader, overwrite_number=None):
+        if overwrite_number is None:
+            overwrite_number = {}
         self._reader = reader
-        self._header = reader._file.header
+        self._raw_header = reader._file.header
         self._metadata = []
         self._metadata_category = defaultdict(OrderedDict)
         self._metadata_generic = dict()
-        self._samples = OrderedDict((s, None) for s in self._header.samples)
+        self._samples = OrderedDict((s, None) for s in self._raw_header.samples)
 
-        for r in self._header.records:
+        for r in self._raw_header.records:
             if r.type == "GENERIC":
                 self._metadata_generic[r.key] = r.value
                 continue
@@ -248,9 +251,9 @@ class PysamHeader(VCFHeader):
         return self
 
     def __next__(self):
-        if self._iter_index >= len(self._data):
+        if self._iter_index >= len(self._metadata):
             raise StopIteration
-        ret = self._data[self._iter_index]
+        ret = self._metadata[self._iter_index]
         self._iter_index += 1
         return ret
 
@@ -260,18 +263,19 @@ class PysamHeader(VCFHeader):
 
     @property
     def filters(self):
-        return self._header.filters
+        return self._raw_header.filters
 
     @property
     def records(self):
         return self._metadata_category
 
     def add_generic(self, key: str, value: str):
-        self._header.add_meta(key, value)
+        self._raw_header.add_meta(key, value)
 
     def add_filter(self, id: str, description: str):
-        self._header.add_meta(
-            key="FILTER", items=[("ID", id), ("Description", description)]
+        self._raw_header.add_meta(
+            key="FILTER",
+            items=[("ID", id), ("Description", description)],
         )
 
     def add_meta(
@@ -289,9 +293,11 @@ class PysamWriter(VCFWriter):
     def __init__(self, filename: str, fmt: str, template: VCFReader):
         self.filename = filename
         self._file = pysam.VariantFile(
-            self.filename, f"w{fmt}", header=template.header._header
+            self.filename,
+            f"w{fmt}",
+            header=template.header._raw_header,
         )
         self._header = PysamHeader(self)
 
     def write(self, record: PysamRecord):
-        self._file.write(record._record)
+        self._file.write(record._raw_record)

@@ -65,16 +65,15 @@ def test_command(testcase: os.PathLike, backend: Backend):
         exception = config["raises"]
         try:
             exception = getattr(errors, exception)
-            with pytest.raises(SystemExit):
-                with pytest.raises(exception):
-                    if args.command == "filter":
-                        filter.execute(args)
-                    elif args.command == "table":
-                        table.execute(args)
-                    elif args.command == "tag":
-                        tag.execute(args)
-                    else:
-                        assert False
+            with pytest.raises(SystemExit), pytest.raises(exception):
+                if args.command == "filter":
+                    filter.execute(args)
+                elif args.command == "table":
+                    table.execute(args)
+                elif args.command == "tag":
+                    tag.execute(args)
+                else:
+                    raise AssertionError from None
         except AttributeError:
             exception = getattr(builtins, exception)
             with pytest.raises(exception):
@@ -85,7 +84,7 @@ def test_command(testcase: os.PathLike, backend: Backend):
                 elif args.command == "tag":
                     tag.execute(args)
                 else:
-                    assert False
+                    raise AssertionError from None
     else:
         with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
             args.output = tmp_out.name
@@ -99,7 +98,6 @@ def test_command(testcase: os.PathLike, backend: Backend):
                         for r1, r2 in zip_longest(vcf_actual, vcf_expected):
                             assert r1 == r2
 
-                        vcf_actual.header.records == vcf_expected.header.records
                         assert (
                             vcf_actual.header.get_generic("vembraneVersion")
                             == __version__
@@ -110,7 +108,7 @@ def test_command(testcase: os.PathLike, backend: Backend):
                 t_out = "".join(
                     line for line in tmp_out if not line.startswith("##vembrane")
                 )
-                with open(expected, mode="r") as e:
+                with open(expected) as e:
                     e_out = e.read()
                 assert t_out == e_out
             else:
@@ -120,7 +118,9 @@ def test_command(testcase: os.PathLike, backend: Backend):
 def construct_parser():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(
-        dest="command", description="valid subcommands", required=True
+        dest="command",
+        description="valid subcommands",
+        required=True,
     )
     filter.add_subcommmand(subparsers)
     table.add_subcommmand(subparsers)

@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List, Optional, Tuple
 
 from ..ann_types import NA
-from ..errors import UnknownSample
+from ..errors import UnknownSampleError
 
 
 class Backend(Enum):
@@ -75,7 +75,7 @@ class VCFRecordFormat(NoValueDict):
     def get(self, sample, default=None):
         try:
             return self[sample]
-        except UnknownSample:
+        except UnknownSampleError:
             return default
 
     def __repr__(self):
@@ -83,7 +83,7 @@ class VCFRecordFormat(NoValueDict):
             {
                 sample: self.__getitem__(sample)
                 for i, sample in enumerate(self._header.samples)
-            }
+            },
         )
 
 
@@ -100,11 +100,13 @@ class VCFRecordFilter:
 
 
 class VCFRecord:
-    __slots__ = ()
+    __slots__ = ("_raw_record", "record_idx", "_header")
 
     @abstractmethod
-    def __init__(self, filename: str):
-        raise NotImplementedError
+    def __init__(self, record, record_idx: int, header):
+        self._raw_record = record
+        self.record_idx = record_idx
+        self._header = header
 
     @abstractproperty
     def contig(self) -> str:
@@ -173,11 +175,11 @@ class VCFRecord:
 
     @abstractmethod
     def __repr__(self):
-        return self._record.__str__()
+        return self._raw_record.__str__()
 
     @abstractmethod
     def __str__(self):
-        return self._record.__str__()
+        return self._raw_record.__str__()
 
     def __eq__(self, other: "VCFRecord"):
         return all(
@@ -199,7 +201,7 @@ class VCFRecord:
                     (self.formats.get(key) or None) == (other.formats.get(key) or None)
                     for key in self.header.formats
                 ),
-            )
+            ),
         )
 
 

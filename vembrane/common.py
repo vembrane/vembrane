@@ -2,12 +2,12 @@ import argparse
 import ast
 import shlex
 from collections import defaultdict
-from typing import Dict, Iterable, Iterator, List, Optional, Set
+from typing import Iterable, Iterator
 
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamReader, PysamWriter
 from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
-from .errors import InvalidExpression
+from .errors import InvalidExpressionError
 
 
 def add_common_arguments(parser: argparse.ArgumentParser):
@@ -43,18 +43,22 @@ def add_common_arguments(parser: argparse.ArgumentParser):
 
 def check_expression(expression: str) -> str:
     if ".__" in expression:
-        raise InvalidExpression(expression, "The expression must not contain '.__'")
+        raise InvalidExpressionError(
+            expression,
+            "The expression must not contain '.__'",
+        )
     try:
         tree = ast.parse(expression, mode="eval")
-        if isinstance(tree.body, (ast.BoolOp, ast.Compare)):
+        if isinstance(tree.body, ast.BoolOp | ast.Compare):
             return expression
         else:
             # TODO possibly check for ast.Call, func return type
             return expression
-    except SyntaxError:
-        raise InvalidExpression(
-            expression, "The expression has to be syntactically correct."
-        )
+    except SyntaxError as se:
+        raise InvalidExpressionError(
+            expression,
+            "The expression has to be syntactically correct.",
+        ) from se
 
 
 def swap_quotes(s: str) -> str:
@@ -75,7 +79,7 @@ def normalize(s: str) -> str:
     return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
 
 
-def get_annotation_keys(header: VCFHeader, ann_key: str) -> List[str]:
+def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
     separator = "'"
     if header.contains_generic("VEP"):
         separator = ":"
@@ -84,22 +88,22 @@ def get_annotation_keys(header: VCFHeader, ann_key: str) -> List[str]:
             map(
                 str.strip,
                 h.get("Description").strip('"').split(separator)[1].split("|"),
-            )
+            ),
         )
     return []
 
 
-def split_annotation_entry(entry: str) -> List[str]:
+def split_annotation_entry(entry: str) -> list[str]:
     return entry.split("|")
 
 
-class BreakendEvent(object):
+class BreakendEvent:
     __slots__ = ["name", "keep", "records", "keep_records", "mate_pair"]
 
-    def __init__(self, name: str, mate_pair: bool = False):
+    def __init__(self, name: str, mate_pair: bool = False) -> None:
         self.name = name
-        self.records: List[VCFRecord] = []
-        self.keep_records: List[bool] = []
+        self.records: list[VCFRecord] = []
+        self.keep_records: list[bool] = []
         self.keep = False
         self.mate_pair = mate_pair
 
@@ -118,7 +122,7 @@ class BreakendEvent(object):
     def is_mate_pair(self) -> bool:
         return self.mate_pair
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     def __hash__(self):
@@ -128,7 +132,7 @@ class BreakendEvent(object):
         return self.name == other.name
 
 
-def mate_key(mates: Iterable[Optional[str]]) -> str:
+def mate_key(mates: Iterable[str | None]) -> str:
     return "__MATES: " + ",".join(sorted(m for m in mates if m is not None))
 
 
@@ -136,7 +140,7 @@ class AppendTagExpression(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         assert len(values) == 1
         if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, dict())
+            setattr(namespace, self.dest, {})
         value = values[0].strip()
         key, value = value.strip().split("=", 1)
         expr = check_expression(value)
@@ -147,25 +151,29 @@ class AppendKeyValuePair(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         assert len(values) == 1
         if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, dict())
+            setattr(namespace, self.dest, {})
         value = values[0].strip()
         key, value = value.strip().split("=", 1)
         getattr(namespace, self.dest)[key.strip()] = value
 
 
-def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
+def read_auxiliary(aux: dict[str, str]) -> dict[str, set[str]]:
     # read auxiliary files, split at any whitespace and store contents in a set
-    def read_set(path: str) -> Set[str]:
-        with open(path, "rt") as f:
-            return set(line.rstrip() for line in f)
+    def read_set(path: str) -> set[str]:
+        with open(path) as f:
+            return {line.rstrip() for line in f}
 
     return {name: read_set(contents) for name, contents in aux.items()}
 
 
 def create_reader(
-    filename: str, backend: Backend = Backend.pysam, overwrite_number=defaultdict(dict)
+    filename: str,
+    backend: Backend = Backend.pysam,
+    overwrite_number=None,
 ):
     # GT should always be "."
+    if overwrite_number is None:
+        overwrite_number = defaultdict(dict)
     if backend == Backend.pysam:
         return PysamReader(filename, overwrite_number)
     elif backend == Backend.cyvcf2:
@@ -175,7 +183,10 @@ def create_reader(
 
 
 def create_writer(
-    filename: str, fmt: str, template: VCFReader, backend: Backend = Backend.pysam
+    filename: str,
+    fmt: str,
+    template: VCFReader,
+    backend: Backend = Backend.pysam,
 ):
     if backend == Backend.pysam:
         return PysamWriter(filename, fmt, template)

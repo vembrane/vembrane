@@ -1,16 +1,16 @@
 import ast
-from types import CodeType
-from typing import Any, Dict, List, Optional, Set, Tuple
+from types import CodeType, MappingProxyType
+from typing import Any
 
-from .ann_types import ANN_TYPER, NA, MoreThanOneAltAllele, NvFloat, NvInt
+from .ann_types import ANN_TYPER, NA, MoreThanOneAltAlleleError, NvFloat, NvInt
 from .backend.base import VCFHeader, VCFRecord, VCFRecordFormats, VCFRecordInfo
 from .common import get_annotation_keys, split_annotation_entry
-from .errors import MalformedAnnotationError, NonBoolTypeError, UnknownAnnotation
+from .errors import MalformedAnnotationError, NonBoolTypeError, UnknownAnnotationError
 from .globals import _explicit_clear, allowed_globals, custom_functions
 
 
 class NoValueDict:
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         try:
             value = self[item]
         except KeyError:
@@ -28,11 +28,11 @@ class DefaultGet:
 
 
 class Annotation(NoValueDict, DefaultGet):
-    def __init__(self, ann_key: str, header: VCFHeader):
+    def __init__(self, ann_key: str, header: VCFHeader) -> None:
         self._record_idx = -1
-        self._record: Optional[VCFRecord] = None
-        self._annotation_data: List[str] = []
-        self._data: Dict[str, Any] = {}
+        self._record: VCFRecord | None = None
+        self._annotation_data: list[str] = []
+        self._data: dict[str, Any] = {}
         annotation_keys = get_annotation_keys(header, ann_key)
         self._ann_conv = {
             entry.name: (ann_idx, entry.convert)
@@ -51,12 +51,18 @@ class Annotation(NoValueDict, DefaultGet):
         except KeyError:
             try:
                 ann_idx, convert = self._ann_conv[item]
-            except KeyError:
-                raise UnknownAnnotation(self._record, item)
+            except KeyError as ke2:
+                raise UnknownAnnotationError(
+                    self._record,
+                    item,
+                ) from ke2
             if ann_idx >= len(self._annotation_data):
                 raise MalformedAnnotationError(
-                    self._record_idx, self._record, item, ann_idx
-                )
+                    self._record_idx,
+                    self._record,
+                    item,
+                    ann_idx,
+                ) from None
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
@@ -81,16 +87,16 @@ class Environment(dict):
         expression: str,
         ann_key: str,
         header: VCFHeader,
-        auxiliary: Dict[str, Set[str]] = {},
+        auxiliary: dict[str, set[str]] = MappingProxyType({}),
         evaluation_function_template: str = "lambda: {expression}",
-    ):
+    ) -> None:
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
             for node in ast.walk(ast.parse(expression))
         )
         self._annotation: Annotation = Annotation(ann_key, header)
-        self._globals: Dict[str, Any] = {}
+        self._globals: dict[str, Any] = {}
         # We use self + self.func as a closure.
         self._globals = dict(allowed_globals)
         self._globals.update(custom_functions(self))
@@ -185,12 +191,12 @@ class Environment(dict):
         self._globals["END"] = value
         return value
 
-    def _get_id(self) -> Optional[str]:
+    def _get_id(self) -> str | None:
         value = self.record.id
         self._globals["ID"] = value
         return value
 
-    def _get_alleles(self) -> Tuple[str, ...]:
+    def _get_alleles(self) -> tuple[str, ...]:
         alleles = self._alleles
         if not alleles:
             alleles = self._alleles = self.record.alleles
@@ -205,7 +211,7 @@ class Environment(dict):
     def _get_alt(self) -> str:
         alleles = self._get_alleles()
         if len(alleles) > 2:
-            raise MoreThanOneAltAllele()
+            raise MoreThanOneAltAlleleError
         value = alleles[1] if len(alleles) == 2 else NA
         self._globals["ALT"] = value
         return value
@@ -215,28 +221,17 @@ class Environment(dict):
         self._globals["QUAL"] = value
         return value
 
-    def _get_filter(self) -> List[str]:
+    def _get_filter(self) -> list[str]:
         value = list(self.record.filter)
         self._globals["FILTER"] = value
         return value
 
     def _get_info(self) -> VCFRecordInfo:
-        # value = VCFRecordInfo(
-        #     self.idx,
-        #     self.record,
-        #     self._header_info_fields,
-        #     self._ann_key,
-        # )
         value = self.record.info
         self._globals["INFO"] = value
         return value
 
     def _get_format(self) -> VCFRecordFormats:
-        # value = Formats(
-        #     self.idx,
-        #     self.record,
-        #     self._header_format_fields,
-        # )
         value = self.record.formats
         self._globals["FORMAT"] = value
         return value
@@ -253,7 +248,7 @@ class Environment(dict):
         self._globals["INDEX"] = self.idx
         return self.idx
 
-    def _get_aux(self) -> Dict[str, Set[str]]:
+    def _get_aux(self) -> dict[str, set[str]]:
         self._globals["AUX"] = self.aux
         return self.aux
 

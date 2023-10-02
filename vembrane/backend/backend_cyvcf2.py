@@ -1,5 +1,4 @@
 from collections import OrderedDict, defaultdict
-from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -17,7 +16,7 @@ from vembrane.backend.base import (
 )
 
 from ..ann_types import NA, type_info
-from ..errors import UnknownInfoField, UnknownSample
+from ..errors import UnknownInfoFieldError, UnknownSampleError
 
 
 class Cyvcf2Reader(VCFReader):
@@ -32,8 +31,10 @@ class Cyvcf2Reader(VCFReader):
     def __init__(
         self,
         filename: str,
-        overwrite_number: Dict[str, Dict[str, str]] = {},
+        overwrite_number: Dict[str, Dict[str, str]] = None,
     ):
+        if overwrite_number is None:
+            overwrite_number = {}
         self.filename = filename
         self._file = VCF(self.filename)
         self._header = Cyvcf2Header(self, overwrite_number)
@@ -48,9 +49,9 @@ class Cyvcf2Reader(VCFReader):
         self._current_record_idx += 1
         return Cyvcf2Record(
             self._iter_file.__next__(),
+            self._current_record_idx,
             self._header,
             self._file,
-            self._current_record_idx,
         )
 
     def reset(self):
@@ -69,7 +70,9 @@ class Cyvcf2Header(VCFHeader):
     __slots__ = ("_reader", "_data", "_data_category", "_metadata_generic")
 
     def __init__(
-        self, reader: Cyvcf2Reader, overwrite_number: Dict[str, Dict[str, str]]
+        self,
+        reader: Cyvcf2Reader,
+        overwrite_number: Dict[str, Dict[str, str]],
     ):
         self._reader = reader
         self._data = []
@@ -153,45 +156,47 @@ class Cyvcf2Header(VCFHeader):
 
 
 class Cyvcf2Record(VCFRecord):
-    __slots__ = ("_record", "_header", "_file", "record_idx")
+    __slots__ = ("_file",)
 
     def __init__(
-        self, record: Variant, header: Cyvcf2Header, file: VCF, record_idx: int
+        self,
+        record: Variant,
+        record_idx: int,
+        header: Cyvcf2Header,
+        file: VCF,
     ):
-        self._record = record
-        self._header = header
+        super().__init__(record, record_idx, header)
         self._file = file
-        self.record_idx = record_idx
 
     @property
     def contig(self) -> str:
-        return self._record.CHROM
+        return self._raw_record.CHROM
 
     @property
     def position(self) -> int:
-        return self._record.POS
+        return self._raw_record.POS
 
     @property
     def stop(self) -> int:
         if "END" in self.info:
             return self.info["END"]
-        return self._record.POS + len(self._record.REF) - 1
+        return self._raw_record.POS + len(self._raw_record.REF) - 1
 
     @property
     def id(self) -> str:
-        return self._record.ID
+        return self._raw_record.ID
 
     @property
     def reference_allele(self) -> str:
-        return self._record.REF
+        return self._raw_record.REF
 
     @property
     def alt_alleles(self) -> Tuple[str]:
-        return tuple(self._record.ALT)
+        return tuple(self._raw_record.ALT)
 
     @property
     def quality(self) -> float:
-        return self._record.QUAL
+        return self._raw_record.QUAL
 
     @property
     def filter(self) -> VCFRecordFilter:
@@ -213,14 +218,14 @@ class Cyvcf2Record(VCFRecord):
     def header(self) -> VCFHeader:
         return self._header
 
-    def __eq__(self, other):
+    def __eq__(self, other: "Cyvcf2Record"):
         return all(
             (
-                self._record.ID == other._record.ID,
-                self._record.ID == other._record.ID,
-                self._record.REF == other._record.REF,
-                self._record.POS == other._record.POS,
-                self._record.QUAL == other._record.QUAL,
+                self._raw_record.ID == other._raw_record.ID,
+                self._raw_record.ID == other._raw_record.ID,
+                self._raw_record.REF == other._raw_record.REF,
+                self._raw_record.POS == other._raw_record.POS,
+                self._raw_record.QUAL == other._raw_record.QUAL,
                 set(self.filter) == set(other.filter),
                 all(
                     self.info.get(key) == other.info.get(key)
@@ -230,23 +235,25 @@ class Cyvcf2Record(VCFRecord):
                     self.formats.get(key) == other.formats.get(key)
                     for key in self._header.formats
                 ),
-            )
+            ),
         )
 
 
 class Cyvcf2RecordFormats(VCFRecordFormats):
-    __slots__ = ("_record", "_format")
+    __slots__ = ("_record", "_raw_format", "_format")
 
     def __init__(self, record: Cyvcf2Record):
         self._record = record
-        self._format = record._record.FORMAT
+        self._raw_format = record._raw_record.FORMAT
+        self._format = None
 
-    @lru_cache
     def __getitem__(self, key: str):
-        return Cyvcf2RecordFormat(key, self._record)
+        if self._format is None:
+            self._format = Cyvcf2RecordFormat(key, self._record)
+        return self._format
 
     def __contains__(self, key):
-        return key in self._format
+        return key in self._raw_format
 
 
 class Cyvcf2RecordFormat(VCFRecordFormat):
@@ -254,14 +261,14 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
 
     def __init__(self, format_key: str, record: Cyvcf2Record):
         self._record = record
-        self._raw_record = record._record
+        self._raw_record = record._raw_record
         self._header = record._header
         self._format_key = format_key
 
     def __getitem__(self, sample):
         i = self._header.samples.index(sample)
         if i == -1:
-            raise UnknownSample(self._record, sample)
+            raise UnknownSampleError(self._record, sample)
         if self._format_key == "GT":  # genotype
             value = tuple(
                 None if gt == -1 else gt for gt in self._raw_record.genotypes[i][:-1]
@@ -296,7 +303,7 @@ class Cyvcf2RecordFilter(VCFRecordFilter):
     __slots__ = "_record"
 
     def __init__(self, record: Cyvcf2Record):
-        self._record = record._record
+        self._record = record._raw_record
 
     def __iter__(self):
         yield from self._record.FILTERS
@@ -322,15 +329,15 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         record: Cyvcf2Record,
     ):
         self._record = record
-        self._raw_record = record._record
+        self._raw_record = record._raw_record
         self._header = record._header
 
     def __getitem__(self, key):
         try:
             meta = self._header.infos[key]
             number = meta["Number"]
-        except KeyError:
-            raise UnknownInfoField(self._record, key)
+        except KeyError as ke:
+            raise UnknownInfoFieldError(self._record, key) from ke
 
         try:
             value = self._raw_record.INFO[key]
@@ -340,7 +347,7 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
                 f"Warning: "
                 f"record {self._record.record_idx} is missing a value for key {key}, "
                 f"returning NA instead."
-                f"\n{self._record}\n"
+                f"\n{self._record}\n",
             )
             return type_info(NA, number)
 
@@ -367,4 +374,4 @@ class Cyvcf2Writer(VCFWriter):
         self._file = Writer(filename, template._file, mode=f"w{fmt}")
 
     def write(self, record: Cyvcf2Record):
-        self._file.write_record(record._record)
+        self._file.write_record(record._raw_record)

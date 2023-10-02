@@ -2,7 +2,8 @@ import re
 import sys
 from itertools import chain, islice
 from sys import stderr
-from typing import Dict, Iterator, Set, Tuple
+from types import MappingProxyType
+from typing import Iterator
 
 from .. import __version__
 from ..ann_types import NA
@@ -19,7 +20,7 @@ from ..common import (
     single_outer,
     swap_quotes,
 )
-from ..errors import FilterAlreadyDefined, FilterTagNameInvalid, VembraneError
+from ..errors import FilterAlreadyDefinedError, FilterTagNameInvalidError, VembraneError
 from ..representations import Environment
 from .filter import DeprecatedAction
 
@@ -39,7 +40,10 @@ def add_subcommand(subparsers):
         required=True,
     )
     parser.add_argument(
-        "vcf", help="The file containing the variants.", nargs="?", default="-"
+        "vcf",
+        help="The file containing the variants.",
+        nargs="?",
+        default="-",
     )
     parser.add_argument(
         "--output",
@@ -91,7 +95,7 @@ def test_record(
     idx: int,
     record: VCFRecord,
     ann_key: str,
-) -> Tuple[VCFRecord, bool]:
+) -> tuple[VCFRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
@@ -119,9 +123,9 @@ def test_record(
 
 def tag_vcf(
     vcf: VCFReader,
-    expressions: Dict[str, str],
+    expressions: dict[str, str],
     ann_key: str,
-    auxiliary: Dict[str, Set[str]] = {},
+    auxiliary: dict[str, set[str]] = MappingProxyType({}),
     invert: bool = False,
 ) -> Iterator[VCFRecord]:
     # For each tag-expression pair, a different Environment must be used.
@@ -143,7 +147,7 @@ def tag_vcf(
 
 def check_tag(tag: str):
     if re.search(r"^0$|[\s;]", tag):
-        raise FilterTagNameInvalid(tag)
+        raise FilterTagNameInvalidError(tag)
 
 
 def execute(args) -> None:
@@ -154,24 +158,26 @@ def execute(args) -> None:
     }
 
     with create_reader(
-        args.vcf, backend=args.backend, overwrite_number=overwrite_number
+        args.vcf,
+        backend=args.backend,
+        overwrite_number=overwrite_number,
     ) as reader:
         header: VCFHeader = reader.header
         expressions = dict(args.tag)
         for tag, expr in expressions.items():
-            for t, rec in reader.header.filters.items():
+            for t, _rec in reader.header.filters.items():
                 if t == tag:
-                    e = FilterAlreadyDefined(tag)
+                    e = FilterAlreadyDefinedError(tag)
                     print(e, file=stderr)
-                    exit(1)
+                    sys.exit(1)
             try:
                 check_tag(tag)
             except VembraneError as ve:
                 print(ve, file=stderr)
-                exit(1)
-            expr = swap_quotes(expr) if single_outer(expr) else expr
-            check_expression(expr)
-            reader.header.add_filter(tag, expr)
+                sys.exit(1)
+            expression = swap_quotes(expr) if single_outer(expr) else expr
+            check_expression(expression)
+            reader.header.add_filter(tag, expression)
 
         header.add_generic("vembraneVersion", __version__)
         header.add_generic(
@@ -192,7 +198,7 @@ def execute(args) -> None:
             first_record = list(islice(records, 1))
         except VembraneError as ve:
             print(ve, file=stderr)
-            exit(1)
+            sys.exit(1)
 
         records = chain(first_record, records)
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
@@ -204,4 +210,4 @@ def execute(args) -> None:
 
             except VembraneError as ve:
                 print(ve, file=stderr)
-                exit(1)
+                sys.exit(1)

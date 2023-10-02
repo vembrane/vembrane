@@ -1,9 +1,10 @@
 import argparse
 import sys
 from collections import defaultdict
+from collections.abc import Iterator
 from itertools import chain, islice
 from sys import stderr
-from typing import Dict, Iterator, List, Optional, Set, Tuple
+from types import MappingProxyType
 
 import yaml
 
@@ -33,7 +34,7 @@ class DeprecatedAction(argparse.Action):
             f"{'/'.join(self.option_strings)} is deprecated.\n{self.help}",
             file=sys.stderr,
         )
-        exit(1)
+        sys.exit(1)
 
 
 def add_subcommmand(subparsers):
@@ -46,7 +47,10 @@ def add_subcommmand(subparsers):
         "the variant is removed as well.",
     )
     parser.add_argument(
-        "vcf", help="The file containing the variants.", nargs="?", default="-"
+        "vcf",
+        help="The file containing the variants.",
+        nargs="?",
+        default="-",
     )
     parser.add_argument(
         "--output",
@@ -108,7 +112,7 @@ def test_and_update_record(
     record: VCFRecord,
     ann_key: str,
     keep_unmatched: bool,
-) -> Tuple[VCFRecord, bool]:
+) -> tuple[VCFRecord, bool]:
     try:
         return _test_and_update_record(env, idx, record, ann_key, keep_unmatched)
     except VembraneError as e:
@@ -125,7 +129,7 @@ def _test_and_update_record(
     record: VCFRecord,
     ann_key: str,
     keep_unmatched: bool,
-) -> Tuple[VCFRecord, bool]:
+) -> tuple[VCFRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
@@ -168,7 +172,7 @@ def filter_vcf(
     ann_key: str,
     keep_unmatched: bool = False,
     preserve_order: bool = False,
-    auxiliary: Dict[str, Set[str]] = {},
+    auxiliary: dict[str, set[str]] = MappingProxyType({}),
 ) -> Iterator[VCFRecord]:
     env = Environment(expression, ann_key, reader.header, auxiliary)
     has_mateid_key = reader.header.infos.get("MATEID", None) is not None
@@ -176,18 +180,18 @@ def filter_vcf(
 
     def get_event_name(
         record: VCFRecord,
-        has_mateid_key=has_mateid_key,
-        has_event_key=has_event_key,
-    ) -> Tuple[Optional[str], Optional[str]]:
-        mate_ids: List[str] = record.info.get("MATEID", []) if has_mateid_key else []
-        event_name: Optional[str] = (
+        has_mateid_key: bool = has_mateid_key,
+        has_event_key: bool = has_event_key,
+    ) -> tuple[str | None, str | None]:
+        mate_ids: list[str] = record.info.get("MATEID", []) if has_mateid_key else []
+        event_name: str | None = (
             record.info.get("EVENT", None) if has_event_key else None
         )
 
         if len(mate_ids) > 1 and not event_name:
             raise ValueError(
                 f"Filtering of BND records with multiple mates is unsupported "
-                f"(see VCF 4.3, section 5.4.3 'Multiple mates'):\n{str(record)}"
+                f"(see VCF 4.3, section 5.4.3 'Multiple mates'):\n{str(record)}",
             )
 
         mate_id = mate_ids[0] if len(mate_ids) == 1 else None
@@ -201,10 +205,14 @@ def filter_vcf(
         # as we encounter them
         # However, breakends have to be considered jointly, so keep track of the
         # respective events.
-        event_dict: Dict[str, BreakendEvent] = dict()
+        event_dict: dict[str, BreakendEvent] = {}
         for idx, record in enumerate(reader):
             record, keep = test_and_update_record(
-                env, idx, record, ann_key, keep_unmatched
+                env,
+                idx,
+                record,
+                ann_key,
+                keep_unmatched,
             )
 
             # Breakend records *may* have the "EVENT" specified, but don't have to.
@@ -264,7 +272,7 @@ def filter_vcf(
         # If order *is* important, the first pass cannot emit any records but only
         # keep track of breakend events. The records will only be emitted during the
         # second pass.
-        event_set: Set[str] = set()
+        event_set: set[str] = set()
 
         def fallback_name(record: VCFRecord) -> str:
             event_name, mate_pair_name = get_event_name(record)
@@ -278,7 +286,11 @@ def filter_vcf(
         for idx, record in enumerate(reader):
             if record.is_bnd_record:
                 record, keep = test_and_update_record(
-                    env, idx, record, ann_key, keep_unmatched
+                    env,
+                    idx,
+                    record,
+                    ann_key,
+                    keep_unmatched,
                 )
                 if keep:
                     event_name = fallback_name(record)
@@ -293,21 +305,30 @@ def filter_vcf(
                     yield record
             else:
                 record, keep = test_and_update_record(
-                    env, idx, record, ann_key, keep_unmatched
+                    env,
+                    idx,
+                    record,
+                    ann_key,
+                    keep_unmatched,
                 )
                 if keep:
                     yield record
 
 
 def statistics(
-    records: Iterator[VCFRecord], vcf: VCFReader, filename: str, ann_key: str
+    records: Iterator[VCFRecord],
+    vcf: VCFReader,
+    filename: str,
+    ann_key: str,
 ) -> Iterator[VCFRecord]:
     annotation_keys = get_annotation_keys(vcf.header, ann_key)
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
         for annotation in record.info[ann_key]:
             for key, raw_value in zip(
-                annotation_keys, split_annotation_entry(annotation)
+                annotation_keys,
+                split_annotation_entry(annotation),
+                strict=True,
             ):
                 value = raw_value.strip()
                 if value:
@@ -331,7 +352,9 @@ def execute(args) -> None:
         "FORMAT": dict(args.overwrite_number_format),
     }
     with create_reader(
-        args.vcf, backend=args.backend, overwrite_number=overwrite_number
+        args.vcf,
+        backend=args.backend,
+        overwrite_number=overwrite_number,
     ) as reader:
         reader.header.add_generic("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
@@ -358,7 +381,7 @@ def execute(args) -> None:
             first_record = list(islice(records, 1))
         except VembraneError as ve:
             print(ve, file=stderr)
-            exit(1)
+            sys.exit(1)
 
         records = chain(first_record, records)
 
@@ -374,4 +397,4 @@ def execute(args) -> None:
 
             except VembraneError as ve:
                 print(ve, file=stderr)
-                exit(1)
+                sys.exit(1)
