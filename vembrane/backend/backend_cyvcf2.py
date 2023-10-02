@@ -225,12 +225,12 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
     def __init__(self, record: Cyvcf2Record):
         self._record = record
         self._raw_format = record._raw_record.FORMAT
-        self._format = None
+        self._format = {}
 
     def __getitem__(self, key: str):
-        if self._format is None:
-            self._format = Cyvcf2RecordFormat(key, self._record)
-        return self._format
+        if key not in self._format:
+            self._format[key] = Cyvcf2RecordFormat(key, self._record)
+        return self._format[key]
 
     def __contains__(self, key):
         return key in self._raw_format
@@ -258,9 +258,8 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
         value = self._raw_record.format(self._format_key)[i]
         meta = self._header.formats[self._format_key]
         number = meta["Number"]
-        if meta["Type"] == "String":
-            if not number == "1":
-                value = value.split(",")
+        if meta["Type"] == "String" and not number == "1":
+            value = value.split(",")
         if number == "1":
             if isinstance(value, np.ndarray):
                 value = value[0].item()
