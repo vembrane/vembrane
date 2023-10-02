@@ -218,26 +218,6 @@ class Cyvcf2Record(VCFRecord):
     def header(self) -> VCFHeader:
         return self._header
 
-    def __eq__(self, other: "Cyvcf2Record"):
-        return all(
-            (
-                self._raw_record.ID == other._raw_record.ID,
-                self._raw_record.ID == other._raw_record.ID,
-                self._raw_record.REF == other._raw_record.REF,
-                self._raw_record.POS == other._raw_record.POS,
-                self._raw_record.QUAL == other._raw_record.QUAL,
-                set(self.filter) == set(other.filter),
-                all(
-                    self.info.get(key) == other.info.get(key)
-                    for key in self._header.infos
-                ),
-                all(
-                    self.formats.get(key) == other.formats.get(key)
-                    for key in self._header.formats
-                ),
-            ),
-        )
-
 
 class Cyvcf2RecordFormats(VCFRecordFormats):
     __slots__ = ("_record", "_raw_format", "_format")
