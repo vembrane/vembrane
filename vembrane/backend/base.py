@@ -177,7 +177,7 @@ class VCFRecord:
 
     @abstractmethod
     def __str__(self):
-        return self._record.__repr__()
+        return self._record.__str__()
 
     def __eq__(self, other: "VCFRecord"):
         return all(

@@ -318,6 +318,12 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
             value = self._raw_record.INFO[key]
             typ = meta["Type"]
         except KeyError:
+            print(
+                f"Warning: "
+                f"record {self._record.record_idx} is missing a value for key {key}, "
+                f"returning NA instead."
+                f"\n{self._record}\n"
+            )
             return type_info(NA, number)
 
         # for some reason cyvcf2 doesn't split String lists, a known circumstance

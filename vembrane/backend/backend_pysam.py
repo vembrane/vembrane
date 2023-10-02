@@ -134,6 +134,12 @@ class PysamRecordInfo(VCFRecordInfo):
         try:
             value = self._raw_record.info[key]
         except KeyError:
+            print(
+                f"Warning: "
+                f"record {self._record.record_idx} is missing a value for key {key}, "
+                f"returning NA instead."
+                f"\n{self._record}\n"
+            )
             return type_info(NA, meta["Number"])
         return type_info(value, meta["Number"])
 
