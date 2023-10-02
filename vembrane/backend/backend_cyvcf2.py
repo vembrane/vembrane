@@ -55,9 +55,12 @@ class Cyvcf2Reader(VCFReader):
 
     def reset(self):
         # cyvcv2 doesnt have a reset function
+        metadata_generic = self._header._metadata_generic.copy()
         self._file.close()
         self._file = VCF(self.filename)
         self._header = Cyvcf2Header(self, self._overwrite_number)
+        for k, v in metadata_generic.items():
+            self._header.add_generic(k, v)
         self._current_record_idx = 0
         # TODO: may this workaround lead to problems?
 
@@ -128,6 +131,7 @@ class Cyvcf2Header(VCFHeader):
         key: str,
         value: str,
     ):
+        self._metadata_generic[key] = value
         self._reader._file.add_to_header(f"##{key}={value}")
 
     def add_filter(self, id: str, description: str):

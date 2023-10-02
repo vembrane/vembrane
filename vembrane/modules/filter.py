@@ -333,7 +333,6 @@ def execute(args) -> None:
     with create_reader(
         args.vcf, backend=args.backend, overwrite_number=overwrite_number
     ) as reader:
-        # header: dict = vcf.header
         reader.header.add_generic("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
         #       in the future, we should not record sys.argv directly below.
