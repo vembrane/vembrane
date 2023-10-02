@@ -269,6 +269,10 @@ class VCFHeader:
     def filters(self) -> List[str]:
         raise NotImplementedError
 
+    @abstractproperty
+    def records(self):
+        raise NotImplementedError
+
     @abstractmethod
     def add_meta(
         self,

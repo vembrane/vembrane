@@ -100,8 +100,10 @@ def test_command(testcase: os.PathLike, backend: Backend):
                             assert r1 == r2
 
                         vcf_actual.header.records == vcf_expected.header.records
-                        # TODO: the records dont hold the generic entries anymore
-                        # implement the vembraneVersion check
+                        assert (
+                            vcf_actual.header.get_generic("vembraneVersion")
+                            == __version__
+                        )
             elif args.command == "table":
                 expected = str(path.joinpath("expected.tsv"))
                 table.execute(args)

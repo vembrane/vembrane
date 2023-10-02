@@ -232,6 +232,9 @@ class PysamHeader(VCFHeader):
     def contains_generic(self, key: str):
         return key in self._metadata_generic
 
+    def get_generic(self, key: str):
+        return self._metadata_generic[key]
+
     @property
     def infos(self):
         return self._metadata_category["INFO"]

@@ -63,7 +63,7 @@ class Cyvcf2Reader(VCFReader):
 
 
 class Cyvcf2Header(VCFHeader):
-    __slots__ = ("_reader", "_data", "_data_category")
+    __slots__ = ("_reader", "_data", "_data_category", "_metadata_generic")
 
     def __init__(
         self, reader: Cyvcf2Reader, overwrite_number: Dict[str, Dict[str, str]]
@@ -71,6 +71,7 @@ class Cyvcf2Header(VCFHeader):
         self._reader = reader
         self._data = []
         self._data_category = defaultdict(OrderedDict)
+        self._metadata_generic = dict()
 
         for r in reader._file.header_iter():
             if r.type == "GENERIC":
@@ -79,6 +80,16 @@ class Cyvcf2Header(VCFHeader):
             self._data.append(d)
             if "ID" in d:
                 self._data_category[r.type][d["ID"]] = d
+
+        specific_keys = {r.type for r in reader._file.header_iter()} | {"contig"}
+        generic_entries = [
+            r.lstrip("#").split("=", 1)
+            for r in reader._file.raw_header.split("\n")
+            if r.startswith("##")
+        ]
+        generic_entries = {k: v for (k, v) in generic_entries if k not in specific_keys}
+        for k, v in generic_entries.items():
+            self._metadata_generic[k] = v
 
         # override numbers
         for category, items in overwrite_number.items():
@@ -91,7 +102,10 @@ class Cyvcf2Header(VCFHeader):
         return self._data_category
 
     def contains_generic(self, key: str):
-        return self._reader._file.contains(key)
+        return key in self._metadata_generic
+
+    def get_generic(self, key: str):
+        return self._metadata_generic[key]
 
     @property
     def infos(self):
