@@ -1,0 +1,7 @@
+function: "filter"
+expression: 'INFO["STRING"] == "String" and
+  INFO["STRING2"] == ("String1", "String2") and
+  INFO["STRINGA"] == "StringA" and
+  INFO["STRINGR"] == ("StringR1", "StringR2") and
+  INFO["STRINGX"] == ("String1", "String2", "String3")
+'

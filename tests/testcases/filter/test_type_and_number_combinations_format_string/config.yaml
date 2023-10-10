@@ -1,0 +1,8 @@
+function: "filter"
+expression: 'FORMAT["STRING"]["Sample"] == "String1" and
+  FORMAT["STRING2"]["Sample"] == ("String1", "String2") and
+  FORMAT["STRINGA"]["Sample"] == "StringA" and
+  FORMAT["STRINGR"]["Sample"] == ("StringR1", "StringR2") and
+  FORMAT["STRINGG"]["Sample"] == ("String1", "String2", "String3") and
+  FORMAT["STRINGX"]["Sample"] == ("String1", "String2", "String3")
+'

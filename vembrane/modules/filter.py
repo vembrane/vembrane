@@ -1,20 +1,24 @@
 import argparse
 import sys
 from collections import defaultdict
+from collections.abc import Iterator
 from itertools import chain, islice
 from sys import stderr
-from typing import Dict, Iterator, List, Optional, Set, Tuple
+from types import MappingProxyType
 
 import yaml
-from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
 
 from .. import __version__
+from ..ann_types import NA
+from ..backend.base import VCFReader, VCFRecord
 from ..common import (
     AppendKeyValuePair,
     BreakendEvent,
+    add_common_arguments,
     check_expression,
+    create_reader,
+    create_writer,
     get_annotation_keys,
-    is_bnd_record,
     mate_key,
     normalize,
     read_auxiliary,
@@ -30,7 +34,7 @@ class DeprecatedAction(argparse.Action):
             f"{'/'.join(self.option_strings)} is deprecated.\n{self.help}",
             file=sys.stderr,
         )
-        exit(1)
+        sys.exit(1)
 
 
 def add_subcommmand(subparsers):
@@ -43,7 +47,10 @@ def add_subcommmand(subparsers):
         "the variant is removed as well.",
     )
     parser.add_argument(
-        "vcf", help="The file containing the variants.", nargs="?", default="-"
+        "vcf",
+        help="The file containing the variants.",
+        nargs="?",
+        default="-",
     )
     parser.add_argument(
         "--output",
@@ -96,35 +103,16 @@ def add_subcommmand(subparsers):
               input. This is only useful if the input contains breakends (BNDs) \
               since the order of all other variants is preserved anyway.",
     )
-    parser.add_argument(
-        "--overwrite-number-info",
-        nargs=1,
-        action=AppendKeyValuePair,
-        metavar="FIELD=NUMBER",
-        default={},
-        help="Overwrite the number specification for INFO fields "
-        "given in the VCF header. "
-        "Example: `--overwrite-number cosmic_CNT=.`",
-    )
-    parser.add_argument(
-        "--overwrite-number-format",
-        nargs=1,
-        action=AppendKeyValuePair,
-        metavar="FIELD=NUMBER",
-        default={},
-        help="Overwrite the number specification for FORMAT fields "
-        "given in the VCF header. "
-        "Example: `--overwrite-number-format DP=2`",
-    )
+    add_common_arguments(parser)
 
 
 def test_and_update_record(
     env: Environment,
     idx: int,
-    record: VariantRecord,
+    record: VCFRecord,
     ann_key: str,
     keep_unmatched: bool,
-) -> Tuple[VariantRecord, bool]:
+) -> tuple[VCFRecord, bool]:
     try:
         return _test_and_update_record(env, idx, record, ann_key, keep_unmatched)
     except VembraneError as e:
@@ -138,18 +126,17 @@ def test_and_update_record(
 def _test_and_update_record(
     env: Environment,
     idx: int,
-    record: VariantRecord,
+    record: VCFRecord,
     ann_key: str,
     keep_unmatched: bool,
-) -> Tuple[VariantRecord, bool]:
+) -> tuple[VCFRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
         # get all annotations from the record.info field
         # (or supply an empty ANN value if the record has no ANN field)
-        try:
-            annotations = record.info[ann_key]
-        except KeyError:
+        annotations = record.info[ann_key]
+        if annotations is NA:
             num_ann_entries = len(env._annotation._ann_conv.keys())
             empty = "|" * num_ann_entries
             print(
@@ -180,32 +167,31 @@ def _test_and_update_record(
 
 
 def filter_vcf(
-    vcf: VariantFile,
+    reader: VCFReader,
     expression: str,
     ann_key: str,
     keep_unmatched: bool = False,
     preserve_order: bool = False,
-    auxiliary: Dict[str, Set[str]] = {},
-    overwrite_number: Dict[str, Dict[str, str]] = {},
-) -> Iterator[VariantRecord]:
-    env = Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
-    has_mateid_key = vcf.header.info.get("MATEID", None) is not None
-    has_event_key = vcf.header.info.get("EVENT", None) is not None
+    auxiliary: dict[str, set[str]] = MappingProxyType({}),
+) -> Iterator[VCFRecord]:
+    env = Environment(expression, ann_key, reader.header, auxiliary)
+    has_mateid_key = reader.header.infos.get("MATEID", None) is not None
+    has_event_key = reader.header.infos.get("EVENT", None) is not None
 
     def get_event_name(
-        record: VariantRecord,
-        has_mateid_key=has_mateid_key,
-        has_event_key=has_event_key,
-    ) -> Tuple[Optional[str], Optional[str]]:
-        mate_ids: List[str] = record.info.get("MATEID", []) if has_mateid_key else []
-        event_name: Optional[str] = (
+        record: VCFRecord,
+        has_mateid_key: bool = has_mateid_key,
+        has_event_key: bool = has_event_key,
+    ) -> tuple[str | None, str | None]:
+        mate_ids: list[str] = record.info.get("MATEID", []) if has_mateid_key else []
+        event_name: str | None = (
             record.info.get("EVENT", None) if has_event_key else None
         )
 
         if len(mate_ids) > 1 and not event_name:
             raise ValueError(
                 f"Filtering of BND records with multiple mates is unsupported "
-                f"(see VCF 4.3, section 5.4.3 'Multiple mates'):\n{str(record)}"
+                f"(see VCF 4.3, section 5.4.3 'Multiple mates'):\n{str(record)}",
             )
 
         mate_id = mate_ids[0] if len(mate_ids) == 1 else None
@@ -213,22 +199,26 @@ def filter_vcf(
 
         return event_name, mate_pair
 
-    record: VariantRecord
+    record: VCFRecord
     if not preserve_order:
         # If the order is not important, emit records that pass the filter expression
         # as we encounter them
         # However, breakends have to be considered jointly, so keep track of the
         # respective events.
-        event_dict: Dict[str, BreakendEvent] = dict()
-        for idx, record in enumerate(vcf):
+        event_dict: dict[str, BreakendEvent] = {}
+        for idx, record in enumerate(reader):
             record, keep = test_and_update_record(
-                env, idx, record, ann_key, keep_unmatched
+                env,
+                idx,
+                record,
+                ann_key,
+                keep_unmatched,
             )
 
             # Breakend records *may* have the "EVENT" specified, but don't have to.
             # In that case only the MATEID *may* be available
             # (which may contain more than one ID)
-            if is_bnd_record(record):
+            if record.is_bnd_record:
                 event_name, mate_pair_name = get_event_name(record)
 
                 # if EVENT is set, it has priority over MATEID.
@@ -282,9 +272,9 @@ def filter_vcf(
         # If order *is* important, the first pass cannot emit any records but only
         # keep track of breakend events. The records will only be emitted during the
         # second pass.
-        event_set: Set[str] = set()
+        event_set: set[str] = set()
 
-        def fallback_name(record: VariantRecord) -> str:
+        def fallback_name(record: VCFRecord) -> str:
             event_name, mate_pair_name = get_event_name(record)
 
             # There may be BND record which have neither of
@@ -293,39 +283,52 @@ def filter_vcf(
             # which we construct from the record's index in the file.
             return event_name or mate_pair_name or record.id or f"DUMMY: {idx}"
 
-        for idx, record in enumerate(vcf):
-            if is_bnd_record(record):
+        for idx, record in enumerate(reader):
+            if record.is_bnd_record:
                 record, keep = test_and_update_record(
-                    env, idx, record, ann_key, keep_unmatched
+                    env,
+                    idx,
+                    record,
+                    ann_key,
+                    keep_unmatched,
                 )
                 if keep:
                     event_name = fallback_name(record)
                     event_set.add(event_name)
 
         # The second pass can now yield records in the correct order
-        vcf.reset()
-        for idx, record in enumerate(vcf):
-            if is_bnd_record(record):
+        reader.reset()
+        for idx, record in enumerate(reader):
+            if record.is_bnd_record:
                 event_name = fallback_name(record)
                 if event_name in event_set:
                     yield record
             else:
                 record, keep = test_and_update_record(
-                    env, idx, record, ann_key, keep_unmatched
+                    env,
+                    idx,
+                    record,
+                    ann_key,
+                    keep_unmatched,
                 )
                 if keep:
                     yield record
 
 
 def statistics(
-    records: Iterator[VariantRecord], vcf: VariantFile, filename: str, ann_key: str
-) -> Iterator[VariantRecord]:
+    records: Iterator[VCFRecord],
+    vcf: VCFReader,
+    filename: str,
+    ann_key: str,
+) -> Iterator[VCFRecord]:
     annotation_keys = get_annotation_keys(vcf.header, ann_key)
     counter = defaultdict(lambda: defaultdict(lambda: 0))
     for record in records:
         for annotation in record.info[ann_key]:
             for key, raw_value in zip(
-                annotation_keys, split_annotation_entry(annotation)
+                annotation_keys,
+                split_annotation_entry(annotation),
+                strict=True,
             ):
                 value = raw_value.strip()
                 if value:
@@ -344,56 +347,54 @@ def statistics(
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with VariantFile(args.vcf) as vcf:
-        header: VariantHeader = vcf.header
-        header.add_meta("vembraneVersion", __version__)
+    overwrite_number = {
+        "INFO": dict(args.overwrite_number_info),
+        "FORMAT": dict(args.overwrite_number_format),
+    }
+    with create_reader(
+        args.vcf,
+        backend=args.backend,
+        overwrite_number=overwrite_number,
+    ) as reader:
+        reader.header.add_generic("vembraneVersion", __version__)
         # NOTE: If .modules.filter.execute might be used as a library function
         #       in the future, we should not record sys.argv directly below.
         cmd_parts = [normalize(arg) if " " in arg else arg for arg in sys.argv[3:]]
         expr = " ".join(a.strip() for a in args.expression.split("\n"))
         expr = normalize(expr)
 
-        header.add_meta(
+        reader.header.add_generic(
             "vembraneCmd",
             "vembrane " + expr + " " + " ".join(cmd_parts),
         )
 
-        overwrite_number = {
-            "INFO": dict(args.overwrite_number_info),
-            "FORMAT": dict(args.overwrite_number_format),
-        }
-
         records = filter_vcf(
-            vcf,
+            reader,
             args.expression,
             args.annotation_key,
             keep_unmatched=args.keep_unmatched,
             preserve_order=args.preserve_order,
             auxiliary=aux,
-            overwrite_number=overwrite_number,
         )
 
         try:
             first_record = list(islice(records, 1))
         except VembraneError as ve:
             print(ve, file=stderr)
-            exit(1)
+            sys.exit(1)
 
         records = chain(first_record, records)
 
         if args.statistics is not None:
-            records = statistics(records, vcf, args.statistics, args.annotation_key)
+            records = statistics(records, reader, args.statistics, args.annotation_key)
 
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
-        with VariantFile(
-            args.output,
-            f"w{fmt}",
-            header=header,
-        ) as out:
+
+        with create_writer(args.output, fmt, reader, backend=args.backend) as writer:
             try:
                 for record in records:
-                    out.write(record)
+                    writer.write(record)
 
             except VembraneError as ve:
                 print(ve, file=stderr)
-                exit(1)
+                sys.exit(1)

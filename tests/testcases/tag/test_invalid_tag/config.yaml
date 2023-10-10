@@ -1,0 +1,5 @@
+function: "tag"
+raises: "FilterTagNameInvalidError"
+tags:
+ high_im;pact: '"HIGH" in ANN["Annotation_Impact"]'
+ mis sense: "'missense_variant' in ANN['Annotation']"

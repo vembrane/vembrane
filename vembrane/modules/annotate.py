@@ -1,13 +1,18 @@
-from collections.abc import Iterable
-from sys import stderr
-from typing import Any, Callable, Dict, Iterator
+from collections.abc import Callable, Iterable, Iterator
+from sys import exit, stderr
+from typing import Any
 
 import numpy as np
 import yaml
 from intervaltree import Interval, IntervalTree
-from pysam.libcbcf import VariantFile, VariantRecord
 
-from ..common import check_expression
+from ..backend.base import VCFReader, VCFRecord
+from ..common import (
+    add_common_arguments,
+    check_expression,
+    create_reader,
+    create_writer,
+)
 from ..representations import Environment
 
 
@@ -19,7 +24,10 @@ def add_subcommmand(subparsers):
         help="The configuration file.",
     )
     parser.add_argument(
-        "vcf", help="The file containing the variants.", nargs="?", default="-"
+        "vcf",
+        help="The file containing the variants.",
+        nargs="?",
+        default="-",
     )
     parser.add_argument(
         "--annotation-key",
@@ -41,9 +49,10 @@ def add_subcommmand(subparsers):
         choices=["vcf", "bcf", "uncompressed-bcf"],
         help="Output format.",
     )
+    add_common_arguments(parser)
 
 
-typeparser: Dict[str, Callable[[str], Any]] = {
+typeparser: dict[str, Callable[[str], Any]] = {
     "Float": float,
     "Integer": int,
     "Character": lambda x: str(x)[0],
@@ -53,22 +62,22 @@ typeparser: Dict[str, Callable[[str], Any]] = {
 
 
 def annotate_vcf(
-    vcf: VariantFile,
+    vcf: VCFReader,
     expression: str,
     ann_key: str,
     ann_data,
     config: dict,
-) -> Iterator[VariantRecord]:
+) -> Iterator[VCFRecord]:
     env = Environment(expression, ann_key, vcf.header)
 
-    config_chrom_column = config["annotation"]["columns"]["chrom"]
-    config_start_column = config["annotation"]["columns"]["start"]
-    config_stop_column = config["annotation"]["columns"]["stop"]
+    config_chrom_column: str = config["annotation"]["columns"]["chrom"]
+    config_start_column: str = config["annotation"]["columns"]["start"]
+    config_stop_column: str = config["annotation"]["columns"]["stop"]
 
-    available_chromsomes = set(np.unique(ann_data[config_chrom_column]))
+    available_chromsomes: set[str] = set(np.unique(ann_data[config_chrom_column]))
 
-    tree = dict()
-    chrom_ann_data = dict()
+    tree: dict[str, IntervalTree] = {}
+    chrom_ann_data: dict[str, Any] = {}
     for chrom in available_chromsomes:
         d = ann_data[ann_data[config_chrom_column] == chrom]
         chrom_ann_data[chrom] = d
@@ -77,12 +86,10 @@ def annotate_vcf(
             for i, d in enumerate(d)
         )
 
-        # tree = IntervalTree.from_tuples(interval_tuples))
-
     current_chrom = None
     current_ann_data = None
 
-    record: VariantRecord
+    record: VCFRecord
     for idx, record in enumerate(vcf):
         chrom = None
         if current_chrom != record.chrom:
@@ -106,33 +113,32 @@ def annotate_vcf(
                 ann_values = env.table()
 
                 for v, expression_value in zip(
-                    map(lambda x: x["value"], config["annotation"]["values"]),
+                    (x["value"] for x in config["annotation"]["values"]),
                     ann_values,
+                    strict=True,
                 ):
-                    if not v["number"] == ".":
-                        number = int(v["number"])
-                    else:
-                        number = -1
+                    number = int(v["number"]) if v["number"] != "." else -1
 
                     parse = typeparser[v["type"]]
                     if number == -1:
-                        expression_value = list(map(parse, expression_value))
+                        ev = list(map(parse, expression_value))
                     elif number > 1:
-                        expression_value = list(map(parse, expression_value))
-                        assert len(expression_value) == number
+                        ev = list(map(parse, expression_value))
+                        assert len(ev) == number
                     else:
                         # number == 1
                         assert isinstance(expression_value, str) or not isinstance(
-                            expression_value, Iterable
+                            expression_value,
+                            Iterable,
                         )
-                        expression_value = parse(expression_value)
-                    record.info[v["vcf_name"]] = expression_value
+                        ev = parse(expression_value)
+                    record.info[v["vcf_name"]] = ev
 
         yield record
 
 
 def execute(args):
-    with open(args.config, "r") as stream:
+    with open(args.config) as stream:
         try:
             config = yaml.safe_load(stream)
         except yaml.YAMLError as e:
@@ -140,39 +146,37 @@ def execute(args):
             exit(1)
 
     # load annotation data
-    ann_data = np.genfromtxt(
+    ann_data: np.ndarray = np.genfromtxt(
         config["annotation"]["file"],
         delimiter=config["annotation"].get("delimiter", "\t"),
         names=True,
         dtype=None,
         encoding=None,
     )
-    # ann_data = pd.read_csv(config["annotation"]["file"], sep="\t", header=0)
-    # ann_data = dict(tuple(ann_data.groupby("chrom")))
 
     # build expression
     expression = ",".join(
         f'{value["expression"]}'
-        for value in map(lambda x: x["value"], config["annotation"]["values"])
+        for value in (x["value"] for x in config["annotation"]["values"])
     )
     expression = f"({expression})"
 
-    with VariantFile(args.vcf) as vcf:
+    with create_reader(args.vcf) as vcf:
         # add new info
         for value in config["annotation"]["values"]:
-            value = value["value"]
+            v = value["value"]
             vcf.header.add_meta(
                 "INFO",
                 items=[
-                    ("ID", value["vcf_name"]),
-                    ("Number", value["number"]),
-                    ("Type", value["type"]),
-                    ("Description", value["description"]),
+                    ("ID", v["vcf_name"]),
+                    ("Number", v["number"]),
+                    ("Type", v["type"]),
+                    ("Description", v["description"]),
                 ],
             )
 
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
-        with VariantFile(
+        with create_writer(
             args.output,
             f"w{fmt}",
             header=vcf.header,

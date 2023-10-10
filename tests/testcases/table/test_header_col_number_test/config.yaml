@@ -1,0 +1,4 @@
+function: "table"
+expression: "CHROM, POS, for_each_sample( lambda sample: FORMAT['GT'][sample] )"
+header: "for_each_sample(lambda sample: f'useless_concat_on_sample_{sample}')"
+raises: "HeaderWrongColumnNumberError"

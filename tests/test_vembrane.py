@@ -2,29 +2,47 @@ import argparse
 import builtins
 import os
 import tempfile
-from itertools import zip_longest
+from itertools import product, zip_longest
 from pathlib import Path
 
 import pytest
 import yaml
-from pysam import VariantFile
 
 from vembrane import __version__, errors
+from vembrane.backend.base import Backend
+from vembrane.common import create_reader
 from vembrane.modules import filter, table, tag
 
-CASES = Path(__file__).parent.joinpath("testcases")
+FILTER_CASES = Path(__file__).parent.joinpath("testcases/filter")
+TABLE_CASES = Path(__file__).parent.joinpath("testcases/table")
+TAG_CASES = Path(__file__).parent.joinpath("testcases/tag")
+ANNOTATE_CASES = Path(__file__).parent.joinpath("testcases/annotate")
 
 
 def test_version():
     assert __version__ != "unknown"
 
 
-@pytest.mark.parametrize(
-    "testcase", [d for d in os.listdir(CASES) if not d.startswith(".")]
-)
-def test_filter(testcase):
-    path = CASES.joinpath(testcase)
+def idfn(val):
+    if isinstance(val, os.PathLike):
+        return "-".join(os.path.normpath(val).split(os.sep)[-2:])
 
+
+@pytest.mark.parametrize(
+    "testcase,backend",
+    product(
+        (
+            case_path.joinpath(d)
+            for case_path in [FILTER_CASES, TABLE_CASES, TAG_CASES, ANNOTATE_CASES]
+            for d in os.listdir(case_path)
+            if not d.startswith(".")
+        ),
+        (Backend.pysam, Backend.cyvcf2),  # Backend.cyvcf2
+    ),
+    ids=idfn,
+)
+def test_command(testcase: os.PathLike, backend: Backend):
+    path = testcase
     vcf_path = path.joinpath("test.vcf")
 
     with open(path.joinpath("config.yaml")) as config_fp:
@@ -32,6 +50,85 @@ def test_filter(testcase):
 
     # emulate command-line command setup to use argparse afterwards
     cmd = config["function"]
+    command = parse_command_config(cmd, config, vcf_path)
+    parser = construct_parser()
+
+    try:
+        args, unknown = parser.parse_known_args(command)
+    # we have to catch and compare such exceptions here, because they
+    # do not cause a SystemExit like the .execute() instances below
+    except Exception as e:
+        assert type(e).__name__ == config["raises"]
+        return
+
+    if "raises" in config:
+        exception = config["raises"]
+        try:
+            exception = getattr(errors, exception)
+            with pytest.raises(SystemExit), pytest.raises(exception):
+                if args.command == "filter":
+                    filter.execute(args)
+                elif args.command == "table":
+                    table.execute(args)
+                elif args.command == "tag":
+                    tag.execute(args)
+                else:
+                    raise AssertionError from None
+        except AttributeError:
+            exception = getattr(builtins, exception)
+            with pytest.raises(exception):
+                if args.command == "filter":
+                    filter.execute(args)
+                elif args.command == "table":
+                    table.execute(args)
+                elif args.command == "tag":
+                    tag.execute(args)
+                else:
+                    raise AssertionError from None
+    else:
+        with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
+            args.output = tmp_out.name
+            args.backend = backend
+            if args.command == "filter" or args.command == "tag":
+                module = filter if args.command == "filter" else tag
+                expected = str(path.joinpath("expected.vcf"))
+                module.execute(args)
+                with create_reader(tmp_out.name, backend=backend) as vcf_actual:
+                    with create_reader(expected, backend=backend) as vcf_expected:
+                        for r1, r2 in zip_longest(vcf_actual, vcf_expected):
+                            assert r1 == r2
+
+                        assert (
+                            vcf_actual.header.get_generic("vembraneVersion")
+                            == __version__
+                        )
+            elif args.command == "table":
+                expected = str(path.joinpath("expected.tsv"))
+                table.execute(args)
+                t_out = "".join(
+                    line for line in tmp_out if not line.startswith("##vembrane")
+                )
+                with open(expected) as e:
+                    e_out = e.read()
+                assert t_out == e_out
+            else:
+                assert args.command in {"filter", "table", "tag"}, "Unknown subcommand"
+
+
+def construct_parser():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(
+        dest="command",
+        description="valid subcommands",
+        required=True,
+    )
+    filter.add_subcommmand(subparsers)
+    table.add_subcommmand(subparsers)
+    tag.add_subcommand(subparsers)
+    return parser
+
+
+def parse_command_config(cmd, config, vcf_path):
     if cmd in ("filter", "table"):
         command = [cmd, config["expression"], str(vcf_path)]
     elif cmd == "tag":
@@ -42,7 +139,6 @@ def test_filter(testcase):
         command.append(str(vcf_path))
     else:
         raise ValueError(f"Unknown subcommand {config['function']}")
-
     for key in config:
         if isinstance(config[key], str):
             command.append(f"--{key.replace('_', '-')}")
@@ -56,78 +152,4 @@ def test_filter(testcase):
                 command.append(f"--{key.replace('_', '-')}")
                 for argument in config[key]:
                     command.append(argument)
-
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(
-        dest="command", description="valid subcommands", required=True
-    )
-    filter.add_subcommmand(subparsers)
-    table.add_subcommmand(subparsers)
-    tag.add_subcommand(subparsers)
-    try:
-        args, unknown = parser.parse_known_args(command)
-    # we have to catch and compare such exceptions here, because they
-    # do not cause a SystemExit like the .execute() instances below
-    except Exception as e:
-        assert type(e).__name__ == config["raises"]
-        return
-
-    if "raises" in config:
-        exception = config["raises"]
-        try:
-            exception = getattr(errors, exception)
-            with pytest.raises(SystemExit):
-                with pytest.raises(exception):
-                    if args.command == "filter":
-                        filter.execute(args)
-                    elif args.command == "table":
-                        table.execute(args)
-                    elif args.command == "tag":
-                        tag.execute(args)
-                    else:
-                        assert False
-        except AttributeError:
-            exception = getattr(builtins, exception)
-            with pytest.raises(exception):
-                if args.command == "filter":
-                    filter.execute(args)
-                elif args.command == "table":
-                    table.execute(args)
-                elif args.command == "tag":
-                    tag.execute(args)
-                else:
-                    assert False
-    else:
-        with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
-            args.output = tmp_out.name
-            if args.command == "filter" or args.command == "tag":
-                module = filter if args.command == "filter" else tag
-                expected = str(path.joinpath("expected.vcf"))
-                module.execute(args)
-                with VariantFile(tmp_out.name) as vcf_actual:
-                    with VariantFile(expected) as vcf_expected:
-                        for r1, r2 in zip_longest(vcf_actual, vcf_expected):
-                            assert r1 == r2
-
-                        for r1, r2 in zip_longest(
-                            vcf_actual.header.records, vcf_expected.header.records
-                        ):
-                            if r1.key == "vembraneVersion":
-                                assert r1.value == __version__
-                            elif r1.key == "vembraneCmd":
-                                assert r1.value.startswith("vembrane ")
-                            else:
-                                assert r1.key == r2.key
-                                assert r1.value == r2.value
-                                assert r1.items() == r2.items()
-            elif args.command == "table":
-                expected = str(path.joinpath("expected.tsv"))
-                table.execute(args)
-                t_out = "".join(
-                    line for line in tmp_out if not line.startswith("##vembrane")
-                )
-                with open(expected, mode="r") as e:
-                    e_out = e.read()
-                assert t_out == e_out
-            else:
-                assert args.command in {"filter", "table"}, "Unknown subcommand"
+    return command

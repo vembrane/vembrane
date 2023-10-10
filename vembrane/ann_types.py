@@ -4,9 +4,11 @@ import re
 from collections import defaultdict
 from ctypes import c_float
 from sys import stderr
-from typing import Any, Callable, Dict, Iterable, Optional, Set, Tuple, Union
+from typing import Any, Callable, Iterable, Union
 
-from .errors import MoreThanOneAltAllele, NotExactlyOneValue
+import numpy as np
+
+from .errors import MoreThanOneAltAlleleError, NotExactlyOneValueError
 
 
 def float32(val: str) -> float:
@@ -17,35 +19,35 @@ def float32(val: str) -> float:
 # but just comes up empty-handed, which is convenient behaviour.
 # This way, we do not have to special case / monkey patch / wrap the regex module.
 class NoValue(str):
-    warnings: Set[str] = set()
+    warnings: set[str] = set()
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
         return False
 
-    def __gt__(self, other):
+    def __gt__(self, other) -> bool:
         return False
 
-    def __le__(self, other):
+    def __le__(self, other) -> bool:
         return False
 
-    def __ge__(self, other):
+    def __ge__(self, other) -> bool:
         return False
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return False
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return True
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         # nonexistent fields will result in an empty string
         # should be configurable in upcoming versions
         return ""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
 
     def __hash__(self) -> int:
@@ -72,7 +74,7 @@ NA = NoValue()
 class InfoTuple:
     """A container that lazily evaluates None to NA in case of access."""
 
-    def __init__(self, values):
+    def __init__(self, values) -> None:
         self.values = values
 
     def __getitem__(self, spec):
@@ -83,13 +85,13 @@ class InfoTuple:
             return NA
         return values
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.values.__str__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(values={self.values!r})"
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.values)
 
     def __eq__(self, other):
@@ -107,7 +109,7 @@ class InfoTuple:
                     f" (value type: {type(other.values)})"
                     if isinstance(other, InfoTuple)
                     else ""
-                )
+                ),
             )
 
     def __hash__(self):
@@ -121,24 +123,37 @@ NvFloat = Union[float, NoValue]
 
 
 def type_info(
-    value, number=".", field=None, record_idx=None
-) -> Union[NvIntFloatStr, InfoTuple]:
+    value,
+    number=".",
+    field=None,
+    record_idx=None,
+) -> NvIntFloatStr | InfoTuple:
     if value is None:
         return NA
+    if value is NA:
+        if number == "0":
+            return False
+        return NA
     if number == "0":
-        return NA if value is None else value
+        return False if value is NA else value
+    if isinstance(value, np.ndarray):
+        value = tuple(value.tolist())
+    elif isinstance(value, list):
+        value = tuple(value)
     if number == "A":
-        if len(value) != 1:
-            raise MoreThanOneAltAllele()
-        return value[0] if value[0] is not None else NA
+        if isinstance(value, tuple):
+            if len(value) != 1:
+                raise MoreThanOneAltAlleleError()
+            return value[0] if value[0] is not None else NA
+        return value
     if number == "R":
         if len(value) != 2:
-            raise MoreThanOneAltAllele()
-        return InfoTuple(value)
+            raise MoreThanOneAltAlleleError()
+        return InfoTuple(tuple(value))
     if number == "1":
         if isinstance(value, tuple):
             if len(value) != 1:
-                raise NotExactlyOneValue(field, len(value), record_idx)
+                raise NotExactlyOneValueError(field, len(value), record_idx)
             return value[0] if value[0] is not None else NA
         return value if value is not None else NA
     if isinstance(value, tuple):
@@ -148,7 +163,7 @@ def type_info(
 
 
 class PosRange:
-    def __init__(self, start: NvInt, end: NvInt, raw: str):
+    def __init__(self, start: NvInt, end: NvInt, raw: str) -> None:
         self.start = start
         self.end = end
         self._raw = raw
@@ -157,7 +172,7 @@ class PosRange:
 
     @classmethod
     def from_snpeff_str(cls, value: str) -> PosRange:
-        pos, length = [int(v.strip()) for v in value.split("/")]
+        pos, length = (int(v.strip()) for v in value.split("/"))
         return cls(pos, pos + length, value)
 
     @classmethod
@@ -180,10 +195,10 @@ class PosRange:
         else:
             return NA
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"(start: {self.start}, end: {self.end}, length: {self.length})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(start={self.start!r}, end={self.end!r})"
 
 
@@ -200,8 +215,8 @@ class AnnotationEntry:
         name: str,
         typefunc: Callable[[str], Any] = str,
         nafunc: Callable[[], Any] = na_func,
-        description: Optional[str] = None,
-    ):
+        description: str | None = None,
+    ) -> None:
         self._name = name
         self._typefunc = typefunc
         self._nafunc = nafunc
@@ -220,7 +235,7 @@ class AnnotationEntry:
     def description(self):
         return self._description
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}("
             f"name={self._name!r}, "
@@ -236,10 +251,10 @@ class AnnotationListEntry(AnnotationEntry):
         self,
         name: str,
         sep: str,
-        typefunc: Optional[Callable[[str], Any]] = None,
+        typefunc: Callable[[str], Any] | None = None,
         inner_typefunc: Callable[[str], Any] = lambda x: x,
         **kwargs,
-    ):
+    ) -> None:
         typefunc = (
             typefunc
             if typefunc
@@ -249,9 +264,9 @@ class AnnotationListEntry(AnnotationEntry):
 
 
 class AnnotationListDictEntry(AnnotationEntry):
-    def __init__(self, name: str, nafunc=lambda: None, **kwargs):
+    def __init__(self, name: str, nafunc=lambda: None, **kwargs) -> None:
         def typefunc(x):
-            key_value_tuples = map(lambda v: v.split(":", maxsplit=1), x.split("&"))
+            key_value_tuples = (v.split(":", maxsplit=1) for v in x.split("&"))
             mapping = defaultdict(list)
             for key, value in key_value_tuples:
                 mapping[key].append(value)
@@ -264,8 +279,8 @@ class AnnotationListDictEntry(AnnotationEntry):
         super().__init__(name=name, typefunc=typefunc, **kwargs)
 
 
-class RangeTotal(object):
-    def __init__(self, r: range, total: int, raw: str):
+class RangeTotal:
+    def __init__(self, r: range, total: int, raw: str) -> None:
         self.range = r
         self.total = total
         self._raw = raw
@@ -283,10 +298,10 @@ class RangeTotal(object):
         else:
             raise ValueError(
                 "Found more than two values separated by '-', "
-                "expected only a single int, or two ints separated by '-'."
+                "expected only a single int, or two ints separated by '-'.",
             )
 
-    def __str__(self):
+    def __str__(self) -> str:
         if len(self.range) == 1:
             return f"number / total: {self.range.start} / {self.total}"
         else:
@@ -295,7 +310,7 @@ class RangeTotal(object):
                 f"{self.range.start} - {self.range.stop - 1} / {self.total}"
             )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}"
             f"(range=range({self.range.start!r}, {self.range.stop!r}), "
@@ -304,12 +319,12 @@ class RangeTotal(object):
 
 
 class AnnotationRangeTotalEntry(AnnotationEntry):
-    def __init__(self, name: str, **kwargs):
+    def __init__(self, name: str, **kwargs) -> None:
         super().__init__(name, typefunc=RangeTotal.from_vep_string, **kwargs)
 
 
-class NumberTotal(object):
-    def __init__(self, number: int, total: int, raw: str):
+class NumberTotal:
+    def __init__(self, number: int, total: int, raw: str) -> None:
         self.number = number
         self.total = total
         self._raw = raw
@@ -321,17 +336,17 @@ class NumberTotal(object):
         v = value.split("/")
         return cls(int(v[0]), int(v[1]), value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"number / total: {self.number} / {self.total}"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}(number={self.number!r}, total={self.total!r})"
         )
 
 
 class AnnotationNumberTotalEntry(AnnotationEntry):
-    def __init__(self, name: str, **kwargs):
+    def __init__(self, name: str, **kwargs) -> None:
         super().__init__(name, typefunc=NumberTotal.from_vep_string, **kwargs)
 
 
@@ -339,21 +354,21 @@ PREDICTION_SCORE_REGEXP: re.Pattern = re.compile(r"(.*)\((.*)\)")
 
 
 class AnnotationPredictionScoreEntry(AnnotationEntry):
-    def __init__(self, name: str, **kwargs):
-        def typefunc(x: str) -> Dict[str, float]:
+    def __init__(self, name: str, **kwargs) -> None:
+        def typefunc(x: str) -> dict[str, float]:
             match = PREDICTION_SCORE_REGEXP.findall(x)[0]
             return {match[0]: float32(match[1])}
 
-        super().__init__(name, typefunc=typefunc, nafunc=lambda: dict(), **kwargs)
+        super().__init__(name, typefunc=typefunc, nafunc=lambda: {}, **kwargs)
 
 
 class DefaultAnnotationEntry(AnnotationEntry):
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         super().__init__(name)
 
 
 class AnnotationTyper:
-    def __init__(self, mapping: Dict[str, AnnotationEntry]):
+    def __init__(self, mapping: dict[str, AnnotationEntry]) -> None:
         self._mapping = mapping
 
     def get_entry(self, key: str) -> AnnotationEntry:
@@ -370,7 +385,7 @@ class AnnotationTyper:
             entry = self._mapping[key]
         return entry
 
-    def convert(self, key: str, value: str) -> Tuple[str, AnnotationType]:
+    def convert(self, key: str, value: str) -> tuple[str, AnnotationType]:
         entry = self.get_entry(key)
         return entry.name, entry.convert(value)
 
@@ -388,13 +403,16 @@ KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "HGVS.c": AnnotationEntry("HGVS.c"),
     "HGVS.p": AnnotationEntry("HGVS.p"),
     "cDNA.pos / cDNA.length": AnnotationEntry(
-        "cDNA.pos / cDNA.length", PosRange.from_snpeff_str
+        "cDNA.pos / cDNA.length",
+        PosRange.from_snpeff_str,
     ),
     "CDS.pos / CDS.length": AnnotationEntry(
-        "CDS.pos / CDS.length", PosRange.from_snpeff_str
+        "CDS.pos / CDS.length",
+        PosRange.from_snpeff_str,
     ),
     "AA.pos / AA.length": AnnotationEntry(
-        "AA.pos / AA.length", PosRange.from_snpeff_str
+        "AA.pos / AA.length",
+        PosRange.from_snpeff_str,
     ),
     "Distance": AnnotationEntry("Distance", str),
     "ERRORS / WARNINGS / INFO": AnnotationListEntry(
@@ -411,7 +429,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="In standard coordinate format (chr:start or chr:start-end)",
     ),
     "Allele": AnnotationEntry(
-        "Allele", description="The variant allele used to calculate the consequence"
+        "Allele",
+        description="The variant allele used to calculate the consequence",
     ),
     "Gene": AnnotationEntry("Gene", description="Ensembl stable ID of affected gene"),
     "Feature": AnnotationEntry("Feature", description="Ensembl stable ID of feature"),
@@ -421,7 +440,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "Currently one of Transcript, RegulatoryFeature, MotifFeature.",
     ),
     "Consequence": AnnotationEntry(
-        "Consequence", description="Consequence type of this variant"
+        "Consequence",
+        description="Consequence type of this variant",
     ),
     "cDNA_position": AnnotationEntry("cDNA_position", PosRange.from_vep_str),
     "CDS_position": AnnotationEntry("CDS_position", PosRange.from_vep_str),
@@ -430,14 +450,17 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "HGSVp": AnnotationEntry("HGSVp"),
     "REF_ALLELE": AnnotationEntry("REF_ALLELE", description="The reference allele"),
     "IMPACT": AnnotationEntry(
-        "IMPACT", description="The impact modifier for the consequence type"
+        "IMPACT",
+        description="The impact modifier for the consequence type",
     ),
     "SYMBOL": AnnotationEntry("SYMBOL", description="The gene symbol"),
     "VARIANT_CLASS": AnnotationEntry(
-        "VARIANT_CLASS", description="Sequence Ontology variant class"
+        "VARIANT_CLASS",
+        description="Sequence Ontology variant class",
     ),
     "SYMBOL_SOURCE": AnnotationEntry(
-        "SYMBOL_SOURCE", description="The source of the gene symbol"
+        "SYMBOL_SOURCE",
+        description="The source of the gene symbol",
     ),
     "STRAND": AnnotationEntry(
         "STRAND",
@@ -445,7 +468,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="The DNA strand (1 or -1) on which the transcript/feature lies",
     ),
     "ENSP": AnnotationEntry(
-        "ENSP", description="The Ensembl protein identifier of the affected transcript"
+        "ENSP",
+        description="The Ensembl protein identifier of the affected transcript",
     ),
     "FLAGS": AnnotationListEntry(
         "FLAGS",
@@ -458,10 +482,12 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="Best match UniProtKB/Swiss-Prot accession of protein product",
     ),
     "TREMBL": AnnotationEntry(
-        "TREMBL", description="Best match UniProtKB/TrEMBL accession of protein product"
+        "TREMBL",
+        description="Best match UniProtKB/TrEMBL accession of protein product",
     ),
     "UNIPARC": AnnotationEntry(
-        "UNIPARC", description="Best match UniParc accession of protein product"
+        "UNIPARC",
+        description="Best match UniParc accession of protein product",
     ),
     "HGVSc": AnnotationEntry("HGVSc", description="The HGVS coding sequence name"),
     "HGVSp": AnnotationEntry("HGVSp", description="The HGVS protein sequence name"),
@@ -480,7 +506,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         " with both given as prediction(score)",
     ),
     "PolyPhen": AnnotationPredictionScoreEntry(
-        "PolyPhen", description="The PolyPhen prediction and/or score"
+        "PolyPhen",
+        description="The PolyPhen prediction and/or score",
     ),
     "MOTIF_NAME": AnnotationEntry(
         "MOTIF_NAME",
@@ -516,20 +543,25 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "transcript for this gene",
     ),
     "CCDS": AnnotationEntry(
-        "CCDS", description="The CCDS identifer for this transcript, where applicable"
+        "CCDS",
+        description="The CCDS identifer for this transcript, where applicable",
     ),
     "INTRON": AnnotationNumberTotalEntry(
-        "INTRON", description="The intron number (out of total number)"
+        "INTRON",
+        description="The intron number (out of total number)",
     ),
     "EXON": AnnotationRangeTotalEntry(
-        "EXON", description="The exon index range (out of total number of exons)"
+        "EXON",
+        description="The exon index range (out of total number of exons)",
     ),
     "DOMAINS": AnnotationListDictEntry(
         "DOMAINS",
         description="The source and identifer of any overlapping protein domains",
     ),
     "DISTANCE": AnnotationEntry(
-        "DISTANCE", int, description="Shortest distance from variant to transcript"
+        "DISTANCE",
+        int,
+        description="Shortest distance from variant to transcript",
     ),
     "IND": AnnotationEntry("IND", description="Individual name"),
     # "ZYG": AnnotationEntry(
@@ -540,7 +572,9 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     #     "FREQS", description="Frequencies of overlapping variants used in filtering"
     # ),
     "AF": AnnotationEntry(
-        "AF", float32, description="Frequency of existing variant in 1000 Genomes"
+        "AF",
+        float32,
+        description="Frequency of existing variant in 1000 Genomes",
     ),
     "AFR_AF": AnnotationEntry(
         "AFR_AF",
@@ -661,7 +695,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="ClinVar clinical significance of the dbSNP variant",
     ),
     "BIOTYPE": AnnotationEntry(
-        "BIOTYPE", description="Biotype of transcript or regulatory feature"
+        "BIOTYPE",
+        description="Biotype of transcript or regulatory feature",
     ),
     "APPRIS": AnnotationEntry(
         "APPRIS",
@@ -670,7 +705,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "NB: not available for GRCh37",
     ),
     "TSL": AnnotationEntry(
-        "TSL", description="Transcript support level. NB: not available for GRCh37"
+        "TSL",
+        description="Transcript support level. NB: not available for GRCh37",
     ),
     "PUBMED": AnnotationListEntry(
         "PUBMED",
@@ -722,10 +758,12 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     #     "BAM_EDIT", description="Indicates success or failure of edit using BAM file"
     # ),
     "GIVEN_REF": AnnotationEntry(
-        "GIVEN_REF", description="Reference allele from input"
+        "GIVEN_REF",
+        description="Reference allele from input",
     ),
     "USED_REF": AnnotationEntry(
-        "USED_REF", description="Reference allele as used to get consequences"
+        "USED_REF",
+        description="Reference allele as used to get consequences",
     ),
     # TODO parse flag:
     #  see https://www.ensembl.org/info/docs/tools/vep/vep_formats.html#other_fields
@@ -753,18 +791,24 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     #                 "the expected reference",
     # ),
     "AMBIGUITY": AnnotationEntry(
-        "AMBIGUITY", description="IUPAC allele ambiguity code"
+        "AMBIGUITY",
+        description="IUPAC allele ambiguity code",
     ),
     "Amino_acids": AnnotationListEntry(
-        "Amino_acids", description="Reference and variant amino acids", sep="/"
+        "Amino_acids",
+        description="Reference and variant amino acids",
+        sep="/",
     ),
     "Codons": AnnotationListEntry(
-        "Codons", description="Reference and variant codon sequence", sep="/"
+        "Codons",
+        description="Reference and variant codon sequence",
+        sep="/",
     ),
     # TODO HGNC_ID description
     "HGNC_ID": AnnotationEntry("HGNC_ID"),
     "MANE": AnnotationEntry(
-        "MANE", description="Matched Annotation from NCBI and EMBL-EBI (MANE)."
+        "MANE",
+        description="Matched Annotation from NCBI and EMBL-EBI (MANE).",
     ),
     "MANE_SELECT": AnnotationEntry(
         "MANE_SELECT",
@@ -826,12 +870,12 @@ for key, typer in KNOWN_ANN_TYPE_MAP_VEP.items():
             description = typer.description()
             if t == "g":
                 description = description.replace("gnomAD exomes", "gnomAD genomes")
-            typer = AnnotationEntry(
+            entry = AnnotationEntry(
                 name=name,
                 typefunc=typer._typefunc,
                 description=description,
             )
-            NEW_GNOMAD_ENTRIES[name] = typer
+            NEW_GNOMAD_ENTRIES[name] = entry
 KNOWN_ANN_TYPE_MAP_VEP.update(NEW_GNOMAD_ENTRIES)
 KNOWN_ANN_TYPE_MAP = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}
 

@@ -1,0 +1,4 @@
+function: "filter"
+expression: 'INFO["INT"] > 0'
+raises: "NotExactlyOneValueError"
+

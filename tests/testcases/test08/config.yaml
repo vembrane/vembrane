@@ -1,3 +1,0 @@
-function: "filter"
-raises: "InvalidExpression"
-expression: 'any(["syntax_error")]'

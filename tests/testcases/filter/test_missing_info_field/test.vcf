@@ -1,0 +1,12 @@
+##fileformat=VCFv4.4
+##FILTER=<ID=PASS,Description="All filters passed">
+##fileDate=20191217
+##contig=<ID=chr18,length=80373285>
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##SnpEffVersion="4.3t (build 2017-11-24 10:18), by Pablo Cingolani"
+##SnpEffCmd="SnpEff  hg38 - "
+##INFO=<ID=forget_me_not,Number=1,Type=Integer,Description="Please don't forget me">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TUMOR
+chr18	27963698	.	T	C	30	PASS	forget_me_not=1	GT	0/1
+chr18	28036487	.	A	T	162	PASS	forget_me_not=.	GT	0/1
+chr18	29036487	.	A	T	162	PASS		GT	0/1

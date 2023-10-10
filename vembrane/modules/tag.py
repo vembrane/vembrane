@@ -2,21 +2,25 @@ import re
 import sys
 from itertools import chain, islice
 from sys import stderr
-from typing import Dict, Iterator, Set, Tuple
-
-from pysam.libcbcf import VariantFile, VariantHeader, VariantRecord
+from types import MappingProxyType
+from typing import Iterator
 
 from .. import __version__
+from ..ann_types import NA
+from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
     AppendKeyValuePair,
     AppendTagExpression,
+    add_common_arguments,
     check_expression,
+    create_reader,
+    create_writer,
     normalize,
     read_auxiliary,
     single_outer,
     swap_quotes,
 )
-from ..errors import FilterAlreadyDefined, FilterTagNameInvalid, VembraneError
+from ..errors import FilterAlreadyDefinedError, FilterTagNameInvalidError, VembraneError
 from ..representations import Environment
 from .filter import DeprecatedAction
 
@@ -36,7 +40,10 @@ def add_subcommand(subparsers):
         required=True,
     )
     parser.add_argument(
-        "vcf", help="The file containing the variants.", nargs="?", default="-"
+        "vcf",
+        help="The file containing the variants.",
+        nargs="?",
+        default="-",
     )
     parser.add_argument(
         "--output",
@@ -68,26 +75,6 @@ def add_subcommand(subparsers):
         help="Path to an auxiliary file containing a set of symbols",
     )
     parser.add_argument(
-        "--overwrite-number-info",
-        nargs=2,
-        action="append",
-        metavar=("FIELD", "NUMBER"),
-        default=[],
-        help="Overwrite the number specification for INFO fields "
-        "given in the VCF header. "
-        "Example: `--overwrite-number cosmic_CNT=.`",
-    )
-    parser.add_argument(
-        "--overwrite-number-format",
-        nargs=2,
-        action="append",
-        metavar=("FIELD", "NUMBER"),
-        default=[],
-        help="Overwrite the number specification for FORMAT fields "
-        "given in the VCF header. "
-        "Example: `--overwrite-number-format DP=2`",
-    )
-    parser.add_argument(
         "--tag-mode",
         "-m",
         default="pass",
@@ -100,23 +87,30 @@ def add_subcommand(subparsers):
         "However, the VCF specification (`v4.4`) defines tags to be set when a "
         "filter expression is failed, so vembrane also offers the `fail` mode.",
     )
+    add_common_arguments(parser)
 
 
 def test_record(
     env: Environment,
     idx: int,
-    record: VariantRecord,
+    record: VCFRecord,
     ann_key: str,
-) -> Tuple[VariantRecord, bool]:
+) -> tuple[VCFRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
         # if the expression contains a reference to the ANN field
         # get all annotations from the record.info field
         # (or supply an empty ANN value if the record has no ANN field)
-        try:
-            annotations = record.info[ann_key]
-        except KeyError:
-            annotations = [""]
+        annotations = record.info[ann_key]
+        if annotations is NA:
+            num_ann_entries = len(env._annotation._ann_conv.keys())
+            empty = "|" * num_ann_entries
+            print(
+                f"No ANN field found in record {idx}, "
+                f"replacing with NAs (i.e. 'ANN={empty}')",
+                file=sys.stderr,
+            )
+            annotations = [empty]
 
         #  … and check if the expression evaluates to true for any  of the annotations
         filtered = any(map(env.evaluate, annotations))
@@ -128,20 +122,19 @@ def test_record(
 
 
 def tag_vcf(
-    vcf: VariantFile,
-    expressions: Dict[str, str],
+    vcf: VCFReader,
+    expressions: dict[str, str],
     ann_key: str,
-    auxiliary: Dict[str, Set[str]] = {},
-    overwrite_number: Dict[str, Dict[str, str]] = {},
+    auxiliary: dict[str, set[str]] = MappingProxyType({}),
     invert: bool = False,
-) -> Iterator[VariantRecord]:
+) -> Iterator[VCFRecord]:
     # For each tag-expression pair, a different Environment must be used.
     envs = {
-        tag: Environment(expression, ann_key, vcf.header, auxiliary, overwrite_number)
+        tag: Environment(expression, ann_key, vcf.header, auxiliary)
         for tag, expression in expressions.items()
     }
 
-    record: VariantRecord
+    record: VCFRecord
     for idx, record in enumerate(vcf):
         for tag, env in envs.items():
             record, keep = test_record(env, idx, record, ann_key)
@@ -154,50 +147,50 @@ def tag_vcf(
 
 def check_tag(tag: str):
     if re.search(r"^0$|[\s;]", tag):
-        raise FilterTagNameInvalid(tag)
+        raise FilterTagNameInvalidError(tag)
 
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
-    with VariantFile(args.vcf) as vcf:
-        header: VariantHeader = vcf.header
+    overwrite_number = {
+        "INFO": dict(args.overwrite_number_info),
+        "FORMAT": dict(args.overwrite_number_format),
+    }
 
-        overwrite_number = {
-            "INFO": dict(args.overwrite_number_info),
-            "FORMAT": dict(args.overwrite_number_format),
-        }
-
+    with create_reader(
+        args.vcf,
+        backend=args.backend,
+        overwrite_number=overwrite_number,
+    ) as reader:
+        header: VCFHeader = reader.header
         expressions = dict(args.tag)
         for tag, expr in expressions.items():
-            for t, rec in vcf.header.filters.items():
+            for t, _rec in reader.header.filters.items():
                 if t == tag:
-                    e = FilterAlreadyDefined(tag)
+                    e = FilterAlreadyDefinedError(tag)
                     print(e, file=stderr)
-                    exit(1)
+                    sys.exit(1)
             try:
                 check_tag(tag)
             except VembraneError as ve:
                 print(ve, file=stderr)
-                exit(1)
-            expr = swap_quotes(expr) if single_outer(expr) else expr
-            check_expression(expr)
-            vcf.header.add_meta(
-                key="FILTER", items=[("ID", tag), ("Description", expr)]
-            )
+                sys.exit(1)
+            expression = swap_quotes(expr) if single_outer(expr) else expr
+            check_expression(expression)
+            reader.header.add_filter(tag, expression)
 
-        header.add_meta("vembraneVersion", __version__)
-        header.add_meta(
+        header.add_generic("vembraneVersion", __version__)
+        header.add_generic(
             "vembraneCmd",
             "vembrane "
             + " ".join(normalize(arg) if " " in arg else arg for arg in sys.argv[1:]),
         )
 
         records = tag_vcf(
-            vcf,
+            reader,
             expressions,
             args.annotation_key,
             auxiliary=aux,
-            overwrite_number=overwrite_number,
             invert=(args.tag_mode == "fail"),
         )
 
@@ -205,19 +198,16 @@ def execute(args) -> None:
             first_record = list(islice(records, 1))
         except VembraneError as ve:
             print(ve, file=stderr)
-            exit(1)
+            sys.exit(1)
 
         records = chain(first_record, records)
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
-        with VariantFile(
-            args.output,
-            f"w{fmt}",
-            header=header,
-        ) as out:
+
+        with create_writer(args.output, fmt, reader, backend=args.backend) as writer:
             try:
                 for record in records:
-                    out.write(record)
+                    writer.write(record)
 
             except VembraneError as ve:
                 print(ve, file=stderr)
-                exit(1)
+                sys.exit(1)

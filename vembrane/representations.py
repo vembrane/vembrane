@@ -1,33 +1,16 @@
 import ast
-from itertools import chain
-from types import CodeType
-from typing import Any, Dict, List, Optional, Set, Tuple
+from types import CodeType, MappingProxyType
+from typing import Any
 
-from pysam.libcbcf import VariantHeader, VariantRecord, VariantRecordSamples
-
-from .ann_types import (
-    ANN_TYPER,
-    NA,
-    MoreThanOneAltAllele,
-    NvFloat,
-    NvInt,
-    NvIntFloatStr,
-    type_info,
-)
-from .common import get_annotation_keys, is_bnd_record, split_annotation_entry
-from .errors import (
-    MalformedAnnotationError,
-    NonBoolTypeError,
-    UnknownAnnotation,
-    UnknownFormatField,
-    UnknownInfoField,
-    UnknownSample,
-)
+from .ann_types import ANN_TYPER, NA, MoreThanOneAltAlleleError, NvFloat, NvInt
+from .backend.base import VCFHeader, VCFRecord, VCFRecordFormats, VCFRecordInfo
+from .common import get_annotation_keys, split_annotation_entry
+from .errors import MalformedAnnotationError, NonBoolTypeError, UnknownAnnotationError
 from .globals import _explicit_clear, allowed_globals, custom_functions
 
 
 class NoValueDict:
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         try:
             value = self[item]
         except KeyError:
@@ -44,125 +27,19 @@ class DefaultGet:
             return default
 
 
-class Format(NoValueDict, DefaultGet):
-    def __init__(
-        self,
-        record_idx: int,
-        record: VariantRecord,
-        name: str,
-        number: str,
-        record_samples: VariantRecordSamples,
-    ):
-        self._record_idx = record_idx
-        self._record = record
-        self._name = name
-        self._number = number
-        self._record_samples = record_samples
-        self._sample_values: Dict[str, NvIntFloatStr] = {}
-
-    def __getitem__(self, sample):
-        try:
-            return self._sample_values[sample]
-        except KeyError:
-            try:
-                record_sample = self._record_samples[sample]
-            except KeyError:
-                raise UnknownSample(self._record_idx, self._record, sample)
-            value = type_info(
-                record_sample[self._name], self._number, self._name, self._record_idx
-            )
-            self._sample_values[sample] = value
-            return value
-
-
-class Formats(NoValueDict):
-    def __init__(
-        self,
-        record_idx: int,
-        record: VariantRecord,
-        header_format_fields: Dict[str, str],
-    ):
-        self._record = record
-        self._record_idx = record_idx
-        self._header_format_fields = header_format_fields
-        self._record_format = record.format
-        self._record_samples = record.samples
-        self._formats: Dict[str, Format] = {}
-
-    def __getitem__(self, item):
-        try:
-            return self._formats[item]
-        except KeyError:
-            try:
-                self._record_format[item]
-            except KeyError:
-                raise UnknownFormatField(self._record_idx, self._record, item)
-            number = self._header_format_fields[item]
-            format_field = Format(
-                self._record_idx, self._record, item, number, self._record_samples
-            )
-            self._formats[item] = format_field
-            return format_field
-
-
-class Info(NoValueDict, DefaultGet):
-    def __init__(
-        self,
-        record_idx: int,
-        record: VariantRecord,
-        header_info_fields: Dict[str, str],
-        ann_key: str,
-    ):
-        self._record_idx = record_idx
-        self._record = record
-        self._record_info = record.info
-        self._header_info_fields = header_info_fields
-        self._ann_key = ann_key
-        self._info_dict: Dict[str, NvIntFloatStr] = {}
-
-    def __getitem__(self, item):
-        try:
-            return self._info_dict[item]
-        except KeyError:
-            if item == "END":
-                # pysam removes END from info. In order to fit with user expectations,
-                # (they will expect INFO["END"] to work) we emulate it being present by
-                # inferring it from pysams record representation.
-                value = get_end(self._record)
-            else:
-                try:
-                    if item == self._ann_key:
-                        raise KeyError(item)
-                    untyped_value = self._record_info[item]
-                except KeyError:
-                    if item in self._header_info_fields:
-                        value = NA
-                    else:
-                        raise UnknownInfoField(self._record_idx, self._record, item)
-                else:
-                    value = type_info(
-                        untyped_value,
-                        self._header_info_fields[item],
-                        item,
-                        self._record_idx,
-                    )
-            self._info_dict[item] = value
-            return value
-
-
 class Annotation(NoValueDict, DefaultGet):
-    def __init__(self, ann_key: str, header: VariantHeader):
+    def __init__(self, ann_key: str, header: VCFHeader) -> None:
         self._record_idx = -1
-        self._record: Optional[VariantRecord] = None
-        self._annotation_data: List[str] = []
-        self._data: Dict[str, Any] = {}
+        self._record: VCFRecord | None = None
+        self._annotation_data: list[str] = []
+        self._data: dict[str, Any] = {}
         annotation_keys = get_annotation_keys(header, ann_key)
         self._ann_conv = {
             entry.name: (ann_idx, entry.convert)
             for ann_idx, entry in enumerate(map(ANN_TYPER.get_entry, annotation_keys))
         }
 
-    def update(self, record_idx: int, record: VariantRecord, annotation: str):
+    def update(self, record_idx: int, record: VCFRecord, annotation: str):
         self._record_idx = record_idx
         self._record = record
         self._data.clear()
@@ -174,12 +51,18 @@ class Annotation(NoValueDict, DefaultGet):
         except KeyError:
             try:
                 ann_idx, convert = self._ann_conv[item]
-            except KeyError:
-                raise UnknownAnnotation(self._record_idx, self._record, item)
+            except KeyError as ke2:
+                raise UnknownAnnotationError(
+                    self._record,
+                    item,
+                ) from ke2
             if ann_idx >= len(self._annotation_data):
                 raise MalformedAnnotationError(
-                    self._record_idx, self._record, item, ann_idx
-                )
+                    self._record_idx,
+                    self._record,
+                    item,
+                    ann_idx,
+                ) from None
             raw_value = self._annotation_data[ann_idx].strip()
             value = self._data[item] = convert(raw_value)
             return value
@@ -203,18 +86,17 @@ class Environment(dict):
         self,
         expression: str,
         ann_key: str,
-        header: VariantHeader,
-        auxiliary: Dict[str, Set[str]] = {},
-        overwrite_number: Dict[str, Dict[str, str]] = {},
+        header: VCFHeader,
+        auxiliary: dict[str, set[str]] = MappingProxyType({}),
         evaluation_function_template: str = "lambda: {expression}",
-    ):
+    ) -> None:
         self._ann_key: str = ann_key
         self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
             for node in ast.walk(ast.parse(expression))
         )
         self._annotation: Annotation = Annotation(ann_key, header)
-        self._globals: Dict[str, Any] = {}
+        self._globals: dict[str, Any] = {}
         # We use self + self.func as a closure.
         self._globals = dict(allowed_globals)
         self._globals.update(custom_functions(self))
@@ -270,33 +152,22 @@ class Environment(dict):
         # Then, in the case of `number == "A"`, the value tuples only have one entry,
         # so that the value can be accessed directly and need not be accessed via
         # an index operation.
-        self._numbers = {
-            kind: {
-                record.get("ID"): overwrite_number.get(kind, {}).get(record.get("ID"))
-                or record.get("Number")
-                for record in header.records
-                if record.type == kind
-            }
-            for kind in set(r.type for r in header.records)
-        }
 
         # always explicitly set "Number" for certain fields
         # which get special pysam treatment:
         # - `FORMAT["GT"]` is always parsed as a list of integer values
-        self._numbers.get("FORMAT", {})["GT"] = "."
+        # self._numbers.get("FORMAT", {})["GT"] = "."
 
         # At the moment, only INFO and FORMAT records are checked
-        self._header_info_fields = self._numbers.get("INFO", dict())
-        self._header_format_fields = self._numbers.get("FORMAT", dict())
         self._empty_globals = {name: UNSET for name in self._getters}
-        self.record: VariantRecord = None
+        self.record: VCFRecord = None
         self.idx: int = -1
         self.aux = auxiliary
 
     def expression_annotations(self):
         return self._has_ann
 
-    def update_from_record(self, idx: int, record: VariantRecord):
+    def update_from_record(self, idx: int, record: VCFRecord):
         self.idx = idx
         self.record = record
         self._globals.update(self._empty_globals)
@@ -306,29 +177,29 @@ class Environment(dict):
         self._globals["DATA"] = data
 
     def _get_chrom(self) -> str:
-        value = self.record.chrom
+        value = self.record.contig
         self._globals["CHROM"] = value
         return value
 
     def _get_pos(self) -> int:
-        value = self.record.pos
+        value = self.record.position
         self._globals["POS"] = value
         return value
 
     def _get_end(self) -> NvInt:
-        value = get_end(self.record)
+        value = self.record.end
         self._globals["END"] = value
         return value
 
-    def _get_id(self) -> Optional[str]:
+    def _get_id(self) -> str | None:
         value = self.record.id
         self._globals["ID"] = value
         return value
 
-    def _get_alleles(self) -> Tuple[str, ...]:
+    def _get_alleles(self) -> tuple[str, ...]:
         alleles = self._alleles
         if not alleles:
-            alleles = self._alleles = tuple(chain(self.record.alleles))
+            alleles = self._alleles = self.record.alleles
         return alleles
 
     def _get_ref(self) -> str:
@@ -340,37 +211,28 @@ class Environment(dict):
     def _get_alt(self) -> str:
         alleles = self._get_alleles()
         if len(alleles) > 2:
-            raise MoreThanOneAltAllele()
+            raise MoreThanOneAltAlleleError
         value = alleles[1] if len(alleles) == 2 else NA
         self._globals["ALT"] = value
         return value
 
     def _get_qual(self) -> NvFloat:
-        value: NvFloat = NA if self.record.qual is None else self.record.qual
+        value: NvFloat = NA if self.record.quality is None else self.record.quality
         self._globals["QUAL"] = value
         return value
 
-    def _get_filter(self) -> List[str]:
+    def _get_filter(self) -> list[str]:
         value = list(self.record.filter)
         self._globals["FILTER"] = value
         return value
 
-    def _get_info(self) -> Info:
-        value = Info(
-            self.idx,
-            self.record,
-            self._header_info_fields,
-            self._ann_key,
-        )
+    def _get_info(self) -> VCFRecordInfo:
+        value = self.record.info
         self._globals["INFO"] = value
         return value
 
-    def _get_format(self) -> Formats:
-        value = Formats(
-            self.idx,
-            self.record,
-            self._header_format_fields,
-        )
+    def _get_format(self) -> VCFRecordFormats:
+        value = self.record.formats
         self._globals["FORMAT"] = value
         return value
 
@@ -386,7 +248,7 @@ class Environment(dict):
         self._globals["INDEX"] = self.idx
         return self.idx
 
-    def _get_aux(self) -> Dict[str, Set[str]]:
+    def _get_aux(self) -> dict[str, set[str]]:
         self._globals["AUX"] = self.aux
         return self.aux
 
@@ -402,15 +264,3 @@ class Environment(dict):
         if self._has_ann:
             self._annotation.update(self.idx, self.record, annotation)
         return self._func()
-
-
-def get_end(record: VariantRecord):
-    if is_bnd_record(record):
-        return NA
-    else:
-        # record.stop is pysams unified approach to get the end position of a variant.
-        # It either considers the alt allele or the END field, depending on the record.
-        # Stop is 0-based, but for consistency with POS we convert into 1-based.
-        # Since for 1-based coordinates, the expectation is that END is inclusive
-        # instead of exclusive (as it is with 0-based), we do not need to add 1.
-        return record.stop

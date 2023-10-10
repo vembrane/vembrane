@@ -1,2 +1,0 @@
-function: "filter"
-expression: mean(replace_na((FORMAT['DP'][s] for s in SAMPLES), 0)) == 10.0

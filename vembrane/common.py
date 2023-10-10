@@ -1,27 +1,64 @@
 import argparse
 import ast
 import shlex
-from typing import Dict, Iterable, Iterator, List, Optional, Set
+from collections import defaultdict
+from typing import Iterable, Iterator
 
-from pysam.libcbcf import VariantHeader, VariantRecord
+from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
+from .backend.backend_pysam import PysamReader, PysamWriter
+from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
+from .errors import InvalidExpressionError
 
-from .errors import InvalidExpression
+
+def add_common_arguments(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--overwrite-number-info",
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="FIELD=NUMBER",
+        default={},
+        help="Overwrite the number specification for INFO fields "
+        "given in the VCF header. "
+        "Example: `--overwrite-number cosmic_CNT=.`",
+    )
+    parser.add_argument(
+        "--overwrite-number-format",
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="FIELD=NUMBER",
+        default={},
+        help="Overwrite the number specification for FORMAT fields "
+        "given in the VCF header. "
+        "Example: `--overwrite-number-format DP=2`",
+    )
+    parser.add_argument(
+        "--backend",
+        "-b",
+        default="cyvcf2",
+        type=Backend.from_string,
+        choices=[Backend.cyvcf2, Backend.pysam],
+        help="Set the backend library.",
+    )
 
 
 def check_expression(expression: str) -> str:
     if ".__" in expression:
-        raise InvalidExpression(expression, "The expression must not contain '.__'")
+        raise InvalidExpressionError(
+            expression,
+            "The expression must not contain '.__'",
+        )
     try:
         tree = ast.parse(expression, mode="eval")
-        if isinstance(tree.body, (ast.BoolOp, ast.Compare)):
+        if isinstance(tree.body, ast.BoolOp | ast.Compare):
             return expression
         else:
             # TODO possibly check for ast.Call, func return type
             return expression
-    except SyntaxError:
-        raise InvalidExpression(
-            expression, "The expression has to be syntactically correct."
-        )
+    except SyntaxError as se:
+        raise InvalidExpressionError(
+            expression,
+            "The expression has to be syntactically correct.",
+        ) from se
 
 
 def swap_quotes(s: str) -> str:
@@ -42,46 +79,40 @@ def normalize(s: str) -> str:
     return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
 
 
-def get_annotation_keys(header: VariantHeader, ann_key: str) -> List[str]:
+def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
     separator = "'"
-    for rec in header.records:
-        if rec.key == "VEP":
-            separator = ":"
-            continue
-        if rec.get("ID") == ann_key:
-            return list(
-                map(
-                    str.strip,
-                    rec.get("Description").strip('"').split(separator)[1].split("|"),
-                )
-            )
+    if header.contains_generic("VEP"):
+        separator = ":"
+    if h := header.infos.get(ann_key):
+        return list(
+            map(
+                str.strip,
+                h.get("Description").strip('"').split(separator)[1].split("|"),
+            ),
+        )
     return []
 
 
-def split_annotation_entry(entry: str) -> List[str]:
+def split_annotation_entry(entry: str) -> list[str]:
     return entry.split("|")
 
 
-def is_bnd_record(record: VariantRecord) -> bool:
-    return "SVTYPE" in record.info and record.info.get("SVTYPE", None) == "BND"
-
-
-class BreakendEvent(object):
+class BreakendEvent:
     __slots__ = ["name", "keep", "records", "keep_records", "mate_pair"]
 
-    def __init__(self, name: str, mate_pair: bool = False):
+    def __init__(self, name: str, mate_pair: bool = False) -> None:
         self.name = name
-        self.records: List[VariantRecord] = []
-        self.keep_records: List[bool] = []
+        self.records: list[VCFRecord] = []
+        self.keep_records: list[bool] = []
         self.keep = False
         self.mate_pair = mate_pair
 
-    def add(self, record: VariantRecord, keep_record: bool):
+    def add(self, record: VCFRecord, keep_record: bool):
         self.records.append(record)
         self.keep_records.append(keep_record)
         self.keep |= keep_record
 
-    def emit(self) -> Iterator[VariantRecord]:
+    def emit(self) -> Iterator[VCFRecord]:
         assert self.keep
         yield from self.records
         self.records = []
@@ -91,7 +122,7 @@ class BreakendEvent(object):
     def is_mate_pair(self) -> bool:
         return self.mate_pair
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     def __hash__(self):
@@ -101,7 +132,7 @@ class BreakendEvent(object):
         return self.name == other.name
 
 
-def mate_key(mates: Iterable[Optional[str]]) -> str:
+def mate_key(mates: Iterable[str | None]) -> str:
     return "__MATES: " + ",".join(sorted(m for m in mates if m is not None))
 
 
@@ -109,7 +140,7 @@ class AppendTagExpression(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         assert len(values) == 1
         if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, dict())
+            setattr(namespace, self.dest, {})
         value = values[0].strip()
         key, value = value.strip().split("=", 1)
         expr = check_expression(value)
@@ -120,16 +151,46 @@ class AppendKeyValuePair(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         assert len(values) == 1
         if not hasattr(namespace, self.dest) or getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, dict())
+            setattr(namespace, self.dest, {})
         value = values[0].strip()
         key, value = value.strip().split("=", 1)
         getattr(namespace, self.dest)[key.strip()] = value
 
 
-def read_auxiliary(aux: Dict[str, str]) -> Dict[str, Set[str]]:
+def read_auxiliary(aux: dict[str, str]) -> dict[str, set[str]]:
     # read auxiliary files, split at any whitespace and store contents in a set
-    def read_set(path: str) -> Set[str]:
-        with open(path, "rt") as f:
-            return set(line.rstrip() for line in f)
+    def read_set(path: str) -> set[str]:
+        with open(path) as f:
+            return {line.rstrip() for line in f}
 
     return {name: read_set(contents) for name, contents in aux.items()}
+
+
+def create_reader(
+    filename: str,
+    backend: Backend = Backend.pysam,
+    overwrite_number=None,
+):
+    # GT should always be "."
+    if overwrite_number is None:
+        overwrite_number = defaultdict(dict)
+    if backend == Backend.pysam:
+        return PysamReader(filename, overwrite_number)
+    elif backend == Backend.cyvcf2:
+        return Cyvcf2Reader(filename, overwrite_number)
+    else:
+        raise ValueError(f"{backend} is not a known backend.")
+
+
+def create_writer(
+    filename: str,
+    fmt: str,
+    template: VCFReader,
+    backend: Backend = Backend.pysam,
+):
+    if backend == Backend.pysam:
+        return PysamWriter(filename, fmt, template)
+    elif backend == Backend.cyvcf2:
+        return Cyvcf2Writer(filename, fmt, template)
+    else:
+        raise ValueError(f"{backend} is not a known backend.")
