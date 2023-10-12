@@ -11,7 +11,7 @@ import yaml
 from vembrane import __version__, errors
 from vembrane.backend.base import Backend
 from vembrane.common import create_reader
-from vembrane.modules import filter, table, tag
+from vembrane.modules import annotate, filter, table, tag
 
 FILTER_CASES = Path(__file__).parent.joinpath("testcases/filter")
 TABLE_CASES = Path(__file__).parent.joinpath("testcases/table")
@@ -61,36 +61,31 @@ def test_command(testcase: os.PathLike, backend: Backend):
         assert type(e).__name__ == config["raises"]
         return
 
+    module = {
+        "annotate": annotate,
+        "filter": filter,
+        "table": table,
+        "tag": tag,
+    }.get(args.command, None)
+
+    if module is None:
+        raise ValueError(f"Unknown subcommand '{args.command}'") from None
+
     if "raises" in config:
         exception = config["raises"]
         try:
             exception = getattr(errors, exception)
             with pytest.raises(SystemExit), pytest.raises(exception):
-                if args.command == "filter":
-                    filter.execute(args)
-                elif args.command == "table":
-                    table.execute(args)
-                elif args.command == "tag":
-                    tag.execute(args)
-                else:
-                    raise AssertionError from None
+                module.execute(args)
         except AttributeError:
             exception = getattr(builtins, exception)
             with pytest.raises(exception):
-                if args.command == "filter":
-                    filter.execute(args)
-                elif args.command == "table":
-                    table.execute(args)
-                elif args.command == "tag":
-                    tag.execute(args)
-                else:
-                    raise AssertionError from None
+                module.execute(args)
     else:
         with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
             args.output = tmp_out.name
             args.backend = backend
-            if args.command == "filter" or args.command == "tag":
-                module = filter if args.command == "filter" else tag
+            if args.command in {"filter", "tag", "annotate"}:
                 expected = str(path.joinpath("expected.vcf"))
                 module.execute(args)
                 with create_reader(tmp_out.name, backend=backend) as vcf_actual:
@@ -104,15 +99,13 @@ def test_command(testcase: os.PathLike, backend: Backend):
                         )
             elif args.command == "table":
                 expected = str(path.joinpath("expected.tsv"))
-                table.execute(args)
+                module.execute(args)
                 t_out = "".join(
                     line for line in tmp_out if not line.startswith("##vembrane")
                 )
                 with open(expected) as e:
                     e_out = e.read()
                 assert t_out == e_out
-            else:
-                assert args.command in {"filter", "table", "tag"}, "Unknown subcommand"
 
 
 def construct_parser():
@@ -122,6 +115,7 @@ def construct_parser():
         description="valid subcommands",
         required=True,
     )
+    annotate.add_subcommmand(subparsers)
     filter.add_subcommmand(subparsers)
     table.add_subcommmand(subparsers)
     tag.add_subcommand(subparsers)
@@ -131,6 +125,10 @@ def construct_parser():
 def parse_command_config(cmd, config, vcf_path):
     if cmd in ("filter", "table"):
         command = [cmd, config["expression"], str(vcf_path)]
+    elif cmd == "annotate":
+        annotation_yaml_path = vcf_path.parent.joinpath(config["config"])
+        command = [cmd, str(annotation_yaml_path), str(vcf_path)]
+        return command
     elif cmd == "tag":
         command = [cmd]
         tags = config["tags"]
