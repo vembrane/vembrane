@@ -17,7 +17,7 @@ from ..common import (
     create_writer,
     get_annotation_description_and_keys,
 )
-from ..errors import FilterTagNameInvalidError
+from ..errors import FilterTagNameInvalidError, VembraneError
 from ..representations import Environment
 
 
@@ -230,6 +230,7 @@ def execute(args):
     ) as reader:
         header: VCFHeader = reader.header
 
+        definitions = None
         if args.definitions:
             # add or modify meta defitions
             with open(args.definitions, "r") as stream:
@@ -239,35 +240,76 @@ def execute(args):
                     print(e, file=stderr)
                     exit(1)
 
-            # add info definitions
-            for key, definition in definitions.get("info", {}).items():
-                if key in header.infos:
-                    continue
-                header.add_info(
-                    key,
-                    definition["number"],
-                    definition["type"],
-                    definition["description"],
+        for key in tag_keys:
+            # we just go on if the definition already exists
+            # maybe we should throw an error?
+            if key in header.filters:
+                continue
+
+            # definition does not exist in header ...
+            if not definitions:
+                # ... and no definitions are provided
+                raise VembraneError(
+                    f"""Error: please provide definition file by
+                    -d including a definition for tag {key}""",
                 )
 
-            # add tag (filter) definitions
-            for key, definition in definitions.get("tag", {}).items():
-                if key in header.filters:
-                    continue
-                header.add_filter(key, definition["description"])
+            if not (definition := definitions.get("tag", {}).get(key, None)):
+                # ... and no definitions for tag in file
+                raise VembraneError(
+                    f"Error: No definition found in definition file for tag {key}",
+                )
 
-            # modify annotation key
+            # all correct, add filter
+            header.add_filter(key, definition["description"])
+
+        for key in info_keys:
+            # we just go on if the definition already exists
+            # maybe we should throw an error?
+            if key in header.infos:
+                continue
+
+            # definition does not exist in header ...
+            if not definitions:
+                # ... and no definitions are provided
+                raise VembraneError(
+                    f"""Error: please provide definition file by
+                    -d including a definition for info {key}""",
+                )
+
+            if not (definition := definitions.get("info", {}).get(key, None)):
+                # ... and no definitions for tag in file
+                raise VembraneError(
+                    f"Error: No definition found in definition file for tag {key}",
+                )
+
+            # all correct, add info
+            header.add_info(
+                key,
+                definition["number"],
+                definition["type"],
+                definition["description"],
+            )
+
+        for key in ann_keys:
             ann_key = args.annotation_key
+            if ann_key not in header.infos:
+                raise VembraneError(
+                    f"""Error: Currently Vembrane needs an existing
+                    annotation field with key {key} to add an annotation""",
+                )
+
+            ann_description, ann_keys = get_annotation_description_and_keys(
+                header,
+                ann_key,
+            )
+
             new_ann_keys = []
             # add annotation definitions
             # here things become complicated
             for key, _ in definitions.get("ann", {}).items():
                 new_ann_keys.append(key)
 
-            ann_description, ann_keys = get_annotation_description_and_keys(
-                header,
-                ann_key,
-            )
             new_ann_keys = ann_keys + new_ann_keys
             ann_meta = header.infos[ann_key]
             header.update_info(
