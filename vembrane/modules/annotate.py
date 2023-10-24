@@ -79,6 +79,19 @@ def add_subcommmand(subparsers):
         choices=["vcf", "bcf", "uncompressed-bcf"],
         help="Output format.",
     )
+    parser.add_argument(
+        "--tag-mode",
+        "-m",
+        default="pass",
+        choices=["pass", "fail"],
+        help="Set, whether to tag records that pass the tag expression(s), "
+        "or records that fail them."
+        "By default, vembrane tags records for which the tag expression(s) pass. "
+        "This allows for descriptive tag names such as `q_at_least_30`, "
+        "which would correspond to an expression `QUAL >= 30`. "
+        "However, the VCF specification (`v4.4`) defines tags to be set when a "
+        "filter expression is failed, so vembrane also offers the `fail` mode.",
+    )
     add_common_arguments(parser)
 
 
@@ -96,6 +109,7 @@ def annotate_vcf(
     targets: str,
     expression: str,
     ann_key: str,
+    invert_tag_expression: bool = False,
 ) -> Iterator[VCFRecord]:
     env = Environment(expression, ann_key, vcf.header)
     tag_targets, info_targets, ann_targets = targets
@@ -105,6 +119,16 @@ def annotate_vcf(
         tag_values, info_values, ann_values = env.table()
         for target, value in zip(info_targets, info_values, strict=True):
             record.info[target] = value
+
+        for target, value in zip(tag_targets, tag_values, strict=True):
+            if invert_tag_expression:
+                value = not value
+            if value:
+                record.filter.add(target)
+
+        # for tag, env in envs.items():
+        #     record, keep = test_record(env, idx, record, ann_key)
+
         # if env.expression_annotations():
         #     try:
         #         annotations = record.info[ann_key]
@@ -332,6 +356,7 @@ def execute(args):
                 targets,
                 expression,
                 args.annotation_key,
+                invert_tag_expression=(args.tag_mode == "fail"),
             )
             for record in records:
                 writer.write(record)
