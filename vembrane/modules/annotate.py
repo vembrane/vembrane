@@ -240,6 +240,7 @@ def execute(args):
                     print(e, file=stderr)
                     exit(1)
 
+        # add tag definitions
         for key in tag_keys:
             # we just go on if the definition already exists
             # maybe we should throw an error?
@@ -263,6 +264,7 @@ def execute(args):
             # all correct, add filter
             header.add_filter(key, definition["description"])
 
+        # add info definitions
         for key in info_keys:
             # we just go on if the definition already exists
             # maybe we should throw an error?
@@ -280,7 +282,7 @@ def execute(args):
             if not (definition := definitions.get("info", {}).get(key, None)):
                 # ... and no definitions for tag in file
                 raise VembraneError(
-                    f"Error: No definition found in definition file for tag {key}",
+                    f"Error: No definition found in definition file for info {key}",
                 )
 
             # all correct, add info
@@ -291,6 +293,7 @@ def execute(args):
                 definition["description"],
             )
 
+        # add annotation definitions
         for key in ann_keys:
             ann_key = args.annotation_key
             if ann_key not in header.infos:
@@ -305,8 +308,6 @@ def execute(args):
             )
 
             new_ann_keys = []
-            # add annotation definitions
-            # here things become complicated
             for key, _ in definitions.get("ann", {}).items():
                 new_ann_keys.append(key)
 

@@ -160,6 +160,7 @@ class Cyvcf2Header(VCFHeader):
             "Description": description,
             "HeaderType": "FILTER",
         }
+        self._raw_header.insert(-2, f'##FILTER=<ID={id},Description="{description}">')
 
     def __iter__(self):
         raise NotImplementedError
@@ -183,9 +184,15 @@ class Cyvcf2Header(VCFHeader):
             },
         )
         self._meta_category["INFO"][id] = self._reader._file.get_header_type(id)
+        self._raw_header.insert(
+            -2,
+            f'##INFO=<ID={id},Number={number},Type={type},Description="{description}">',
+        )
 
     @property
     def raw(self):
+        # print(self._raw_header)
+        # exit()
         return "\n".join(self._raw_header)
 
     def update_info(
@@ -195,7 +202,7 @@ class Cyvcf2Header(VCFHeader):
         type: str,
         description: str,
     ):
-        # cyvcf2 "update" doesn't function correctly
+        # cyvcf2 "update" doesn't work correctly
         self._raw_header = [
             f"##INFO=<ID={id},Number={number},Type={type},Description={description}>"
             if line.startswith(f"##INFO=<ID={id},")
