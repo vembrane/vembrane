@@ -1,4 +1,5 @@
 import re
+import sys
 
 # from intervaltree import Interval, IntervalTree
 from collections.abc import Callable, Iterator
@@ -141,43 +142,20 @@ def annotate_vcf(
                 record.filter.add(target)
 
         if ann_targets:
-            new_annotations = []
-            annotations = record.info[ann_key]
-            for a in annotations:
-                a_values = a.split("|")
-                a_values.extend((len(ann_keys) - len(a_values)) * [""])
-                for target, value in zip(ann_targets, ann_values, strict=True):
-                    a_values[ann_keys_dict[target]] = str(value)
-                new_annotations.append("|".join(a_values))
-        record.info[ann_key] = new_annotations
-
-        # for target, value in zip(ann_targets, ann_values, strict=True):
-        #     print(target, value, ann_keys)
-        #     exit()
-
-        # for tag, env in envs.items():
-        #     record, keep = test_record(env, idx, record, ann_key)
-
-        # if env.expression_annotations():
-        #     try:
-        #         annotations = record.info[ann_key]
-        #     except KeyError:
-        #         num_ann_entries = len(env._annotation._ann_conv.keys())
-        #         empty = "|" * num_ann_entries
-        #         print(
-        #             f"No ANN field found in record {idx}, "
-        #             f"replacing with NAs (i.e. 'ANN={empty}')",
-        #             file=sys.stderr,
-        #         )
-        #         annotations = [empty]
-        #     new_annotations = []
-        #     for annotation in annotations:
-        #         ann_values = env.table(annotation)
-        #         for t, v in zip(target_func, ann_values):
-        #             t(record, v)
-        #             new_annotations.append(env._annotation)
-        #     print(new_annotations, file=stderr)
-        #     # record.info["ANN"] = new_annotations
+            if ann_key not in record.info:
+                print(
+                    f"No ANN field found in record {idx}",
+                    file=sys.stderr,
+                )
+            else:
+                new_annotations = []
+                for a in record.info[ann_key]:
+                    a_values = a.split("|")
+                    a_values.extend((len(ann_keys) - len(a_values)) * [""])
+                    for target, value in zip(ann_targets, ann_values, strict=True):
+                        a_values[ann_keys_dict[target]] = str(value)
+                    new_annotations.append("|".join(a_values))
+                record.info[ann_key] = new_annotations
         yield record
 
     # config_chrom_column: str = config["annotation"]["columns"]["chrom"]
