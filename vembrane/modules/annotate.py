@@ -16,7 +16,6 @@ from ..common import (
     create_reader,
     create_writer,
     get_annotation_description_and_keys,
-    split_annotation_entry,
 )
 from ..errors import FilterTagNameInvalidError, VembraneError
 from ..representations import Environment
@@ -122,9 +121,6 @@ def annotate_vcf(
     ann_expressions = "".join(f"({e})," for e in ann_expressions)
 
     expression = f"(({tag_expressions}), ({info_expressions}), ({ann_expressions}))"
-    import sys
-
-    print(expression, file=sys.stderr)
 
     env = Environment(expression, ann_key, reader.header)
 
@@ -148,13 +144,13 @@ def annotate_vcf(
             new_annotations = []
             annotations = record.info[ann_key]
             for a in annotations:
-                a_values = split_annotation_entry(a)
+                a_values = a.split("|")
                 a_values.extend((len(ann_keys) - len(a_values)) * [""])
                 for target, value in zip(ann_targets, ann_values, strict=True):
-                    a_values[ann_keys_dict[target]] = value
-                new_annotations.append(a_values)
-            print(new_annotations, file=sys.stderr)
-        exit()
+                    a_values[ann_keys_dict[target]] = str(value)
+                new_annotations.append("|".join(a_values))
+        record.info[ann_key] = new_annotations
+
         # for target, value in zip(ann_targets, ann_values, strict=True):
         #     print(target, value, ann_keys)
         #     exit()
