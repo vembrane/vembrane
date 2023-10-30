@@ -71,14 +71,14 @@ class Annotation(NoValueDict, DefaultGet):
 UNSET = object()
 
 
-class WrapFloat32Visitor(ast.NodeTransformer):
+class WrapFloat64Visitor(ast.NodeTransformer):
     def visit_Constant(self, node):
-        from ctypes import c_float
+        from ctypes import c_double
 
         if not isinstance(node.value, float):
             return node
 
-        return ast.Constant(c_float(node.value).value)
+        return ast.Constant(c_double(node.value).value)
 
 
 class Environment(dict):
@@ -119,7 +119,7 @@ class Environment(dict):
         expression_ast = ast.parse(func_str, mode="eval")
 
         # wrap each float constant in numpy.float32
-        expression_ast = WrapFloat32Visitor().visit(expression_ast)
+        expression_ast = WrapFloat64Visitor().visit(expression_ast)
 
         # housekeeping
         expression_ast = ast.fix_missing_locations(expression_ast)
