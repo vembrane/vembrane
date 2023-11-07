@@ -58,7 +58,6 @@ class Annotation(NoValueDict, DefaultGet):
                 ) from ke2
             if ann_idx >= len(self._annotation_data):
                 raise MalformedAnnotationError(
-                    self._record_idx,
                     self._record,
                     item,
                     ann_idx,

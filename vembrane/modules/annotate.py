@@ -273,19 +273,26 @@ def execute(args):
             if target in header.filters:
                 continue
 
-            # definition does not exist in header ...
-            if not definitions:
-                # ... and no definitions are provided
-                raise VembraneError(
-                    f"""Error: please provide definition file by
-                    -d including a definition for tag {target}""",
-                )
+            if not definitions or not (
+                definition := definitions.get("tag", {}).get(target, None)
+            ):
+                header.add_filter(target, "")  # ADD definition without description
+                # TODO: show a warning
+                continue
 
-            if not (definition := definitions.get("tag", {}).get(target, None)):
-                # ... and no definitions for tag in file
-                raise VembraneError(
-                    f"Error: No definition found in definition file for tag {target}",
-                )
+            # # definition does not exist in header ...
+            # if not definitions:
+            #     # ... and no definitions are provided
+            #     raise VembraneError(
+            #         f"""Error: please provide definition file by
+            #         -d including a definition for tag {target}""",
+            #     )
+
+            # if not (definition := definitions.get("tag", {}).get(target, None)):
+            #     # ... and no definitions for tag in file
+            #     raise VembraneError(
+            #         f"Error: No definition found in definition file for tag {target}",
+            #     )
 
             # all correct, add filter
             header.add_filter(target, definition["description"])
