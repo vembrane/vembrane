@@ -97,6 +97,7 @@ def test_command(testcase: os.PathLike, backend: Backend):
                         for r1, r2 in zip_longest(vcf_actual, vcf_expected):
                             assert r1 == r2
 
+                        print("foo", vcf_actual.header.get_generic("vembraneVersion"))
                         assert (
                             vcf_actual.header.get_generic("vembraneVersion")
                             == __version__
@@ -125,8 +126,8 @@ def construct_parser():
         description="valid subcommands",
         required=True,
     )
-    filter.add_subcommmand(subparsers)
-    table.add_subcommmand(subparsers)
+    filter.add_subcommand(subparsers)
+    table.add_subcommand(subparsers)
     annotate.add_subcommand(subparsers)
     return parser
 

@@ -143,6 +143,7 @@ class Cyvcf2Header(VCFHeader):
     ):
         self._metadata_generic[key] = value
         self._reader._file.add_to_header(f"##{key}={value}")
+        self._raw_header.insert(-2, f"##{key}={value}")
 
     def add_filter(
         self,

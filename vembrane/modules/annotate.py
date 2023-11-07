@@ -10,6 +10,7 @@ from typing import Any, List
 # import numpy as np
 import yaml
 
+from .. import __version__
 from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
     AppendTagExpression,
@@ -22,7 +23,7 @@ from ..errors import FilterTagNameInvalidError, VembraneError
 from ..representations import Environment
 
 
-def add_subcommmand(subparsers):
+def add_subcommand(subparsers):
     parser = subparsers.add_parser("annotate")
     parser.add_argument(
         "vcf",
@@ -253,6 +254,7 @@ def execute(args):
         # overwrite_number=overwrite_number,
     ) as reader:
         header: VCFHeader = reader.header
+        reader.header.add_generic("vembraneVersion", __version__)
 
         definitions = None
         if args.definitions:

@@ -23,7 +23,7 @@ from ..representations import Environment
 from .filter import DeprecatedAction
 
 
-def add_subcommmand(subparsers):
+def add_subcommand(subparsers):
     parser = subparsers.add_parser("table")
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(

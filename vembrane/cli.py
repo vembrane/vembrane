@@ -17,9 +17,9 @@ def main():
         description="valid subcommands",
         required=True,
     )
-    filter.add_subcommmand(subparsers)
-    table.add_subcommmand(subparsers)
-    annotate.add_subcommmand(subparsers)
+    filter.add_subcommand(subparsers)
+    table.add_subcommand(subparsers)
+    annotate.add_subcommand(subparsers)
     tag.add_subcommand(subparsers)
 
     args = parser.parse_args()
