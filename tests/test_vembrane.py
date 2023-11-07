@@ -11,11 +11,10 @@ import yaml
 from vembrane import __version__, errors
 from vembrane.backend.base import Backend
 from vembrane.common import create_reader
-from vembrane.modules import filter, table, tag
+from vembrane.modules import annotate, filter, table
 
 FILTER_CASES = Path(__file__).parent.joinpath("testcases/filter")
 TABLE_CASES = Path(__file__).parent.joinpath("testcases/table")
-TAG_CASES = Path(__file__).parent.joinpath("testcases/tag")
 ANNOTATE_CASES = Path(__file__).parent.joinpath("testcases/annotate")
 
 
@@ -33,7 +32,7 @@ def idfn(val):
     product(
         (
             case_path.joinpath(d)
-            for case_path in [FILTER_CASES, TABLE_CASES, TAG_CASES, ANNOTATE_CASES]
+            for case_path in [FILTER_CASES, TABLE_CASES, ANNOTATE_CASES]
             for d in os.listdir(case_path)
             if not d.startswith(".")
         ),
@@ -70,8 +69,8 @@ def test_command(testcase: os.PathLike, backend: Backend):
                     filter.execute(args)
                 elif args.command == "table":
                     table.execute(args)
-                elif args.command == "tag":
-                    tag.execute(args)
+                elif args.command == "annotate":
+                    annotate.execute(args)
                 else:
                     raise AssertionError from None
         except AttributeError:
@@ -81,16 +80,16 @@ def test_command(testcase: os.PathLike, backend: Backend):
                     filter.execute(args)
                 elif args.command == "table":
                     table.execute(args)
-                elif args.command == "tag":
-                    tag.execute(args)
+                elif args.command == "annotate":
+                    annotate.execute(args)
                 else:
                     raise AssertionError from None
     else:
         with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
             args.output = tmp_out.name
             args.backend = backend
-            if args.command == "filter" or args.command == "tag":
-                module = filter if args.command == "filter" else tag
+            if args.command == "filter" or args.command == "annotate":
+                module = filter if args.command == "filter" else annotate
                 expected = str(path.joinpath("expected.vcf"))
                 module.execute(args)
                 with create_reader(tmp_out.name, backend=backend) as vcf_actual:
@@ -112,7 +111,11 @@ def test_command(testcase: os.PathLike, backend: Backend):
                     e_out = e.read()
                 assert t_out == e_out
             else:
-                assert args.command in {"filter", "table", "tag"}, "Unknown subcommand"
+                assert args.command in {
+                    "filter",
+                    "table",
+                    "annotate",
+                }, "Unknown subcommand"
 
 
 def construct_parser():
@@ -124,14 +127,14 @@ def construct_parser():
     )
     filter.add_subcommmand(subparsers)
     table.add_subcommmand(subparsers)
-    tag.add_subcommand(subparsers)
+    annotate.add_subcommand(subparsers)
     return parser
 
 
 def parse_command_config(cmd, config, vcf_path):
     if cmd in ("filter", "table"):
         command = [cmd, config["expression"], str(vcf_path)]
-    elif cmd == "tag":
+    elif cmd == "annotate":
         command = [cmd]
         tags = config["tags"]
         for name, expr in tags.items():
