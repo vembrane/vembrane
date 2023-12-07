@@ -518,7 +518,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "CCDS": AnnotationEntry(
         "CCDS", description="The CCDS identifer for this transcript, where applicable"
     ),
-    "INTRON": AnnotationNumberTotalEntry(
+    "INTRON": AnnotationRangeTotalEntry(
         "INTRON", description="The intron number (out of total number)"
     ),
     "EXON": AnnotationRangeTotalEntry(
