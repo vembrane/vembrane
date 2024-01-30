@@ -39,6 +39,13 @@ def add_common_arguments(parser: argparse.ArgumentParser):
         choices=[Backend.cyvcf2, Backend.pysam],
         help="Set the backend library.",
     )
+    parser.add_argument(
+        "--definitions",
+        "-d",
+        metavar="FILENAME",
+        default=None,
+        help="A file containing additional info and annotation definitions.",
+    )
 
 
 def check_expression(expression: str) -> str:
@@ -79,18 +86,25 @@ def normalize(s: str) -> str:
     return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
 
 
-def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
+def get_annotation_description_and_keys(header: VCFHeader, ann_key: str) -> list[str]:
     separator = "'"
     if header.contains_generic("VEP"):
         separator = ":"
     if h := header.infos.get(ann_key):
-        return list(
-            map(
-                str.strip,
-                h.get("Description").strip('"').split(separator)[1].split("|"),
-            ),
-        )
-    return []
+        split = h.get("Description").split(separator, 3)
+        if len(split) == 3:
+            prefix, key_string, suffix = h.get("Description").split(separator)
+        else:
+            prefix, key_string = h.get("Description").split(separator)
+            suffix = ""
+        description_string = separator.join([prefix, "{keys}", suffix])
+
+        return description_string, list(map(str.strip, key_string.split("|")))
+    return "", []
+
+
+def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
+    return get_annotation_description_and_keys(header, ann_key)[1]
 
 
 def split_annotation_entry(entry: str) -> list[str]:

@@ -37,7 +37,7 @@ class DeprecatedAction(argparse.Action):
         sys.exit(1)
 
 
-def add_subcommmand(subparsers):
+def add_subcommand(subparsers):
     parser = subparsers.add_parser("filter")
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
