@@ -1,0 +1,2 @@
+function: "filter"
+expression: 'ANN["SpliceAI_pred_DS_AG"] >= 0.01'
