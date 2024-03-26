@@ -809,9 +809,51 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "ExACpLI": AnnotationEntry(
         "ExACpLI",
         typefunc=float32,
-        description="Probabililty of a gene being loss-of-function intolerant (pLI). "
+        description="Probability of a gene being loss-of-function intolerant (pLI). "
         "Please cite the respective ExAC publication alongside the VEP if you use this "
         "resource: https://www.ncbi.nlm.nih.gov/pubmed/27535533",
+    ),
+    "am_class": AnnotationEntry(
+        "am_class",
+        description="AlphaMissense classification of variant into one of three discrete categories: "
+        "'Likely pathogenic', 'Likely benign', or 'ambiguous'"
+        "Please cite the AlphaMissense publication alongside Ensembl VEP if you use this "
+        "resource: https://doi.org/10.1126/science.adg7492",
+    ),
+    "am_pathogenicity": AnnotationEntry(
+        "am_pathogenicity",
+        typefunc=float32,
+        description="AlphaMissense score of a variant being likely pathogenic, likely benign, or ambiguous."
+        "Please cite the AlphaMissense publication alongside Ensembl VEP if you use this "
+        "resource: https://doi.org/10.1126/science.adg7492",
+    ),
+    "SpliceAI_pred_DS_AG": AnnotationEntry(
+        "SpliceAI_pred_DS_AG",
+        typefunc=float32,
+        description="Probability of variant being splice-altering acceptor gain. "
+        "Please cite the respective ExAC publication alongside the VEP if you use this "
+        "resource: https://www.ncbi.nlm.nih.gov/pubmed/30661751",
+    ),
+    "SpliceAI_pred_DS_AL": AnnotationEntry(
+        "SpliceAI_pred_DS_AL",
+        typefunc=float32,
+        description="Probability of variant being splice-altering acceptor loss. "
+        "Please cite the respective ExAC publication alongside the VEP if you use this "
+        "resource: https://www.ncbi.nlm.nih.gov/pubmed/30661751",
+    ),
+    "SpliceAI_pred_DS_DG": AnnotationEntry(
+        "SpliceAI_pred_DS_DG",
+        typefunc=float32,
+        description="Probability of variant being splice-altering donor gain. "
+        "Please cite the respective ExAC publication alongside the VEP if you use this "
+        "resource: https://www.ncbi.nlm.nih.gov/pubmed/30661751",
+    ),
+    "SpliceAI_pred_DS_DL": AnnotationEntry(
+        "SpliceAI_pred_DS_DL",
+        typefunc=float32,
+        description="Probability of variant being splice-altering donor loss. "
+        "Please cite the respective ExAC publication alongside the VEP if you use this "
+        "resource: https://www.ncbi.nlm.nih.gov/pubmed/30661751",
     ),
 }
 

@@ -1,0 +1,2 @@
+function: "filter"
+expression: 'ANN["am_pathogenicity"] > 0.5'
