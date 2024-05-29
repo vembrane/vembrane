@@ -90,11 +90,13 @@ class Environment(dict):
         evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
         self._ann_key: str = ann_key
+        self._header: VCFHeader = header
         self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
             for node in ast.walk(ast.parse(expression))
         )
         self._annotation: Annotation = Annotation(ann_key, header)
+        self._all_annotations: list[Annotation] = []
         self._globals: dict[str, Any] = {}
         # We use self + self.func as a closure.
         self._globals = dict(allowed_globals)
@@ -142,6 +144,7 @@ class Environment(dict):
             "INFO": self._get_info,
             "FORMAT": self._get_format,
             "INDEX": self._get_index,
+            "ANNS": self._get_anns,
         }
 
         # vembrane only supports bi-allelic records (i.e. one REF, one ALT allele).
@@ -250,6 +253,24 @@ class Environment(dict):
     def _get_aux(self) -> dict[str, set[str]]:
         self._globals["AUX"] = self.aux
         return self.aux
+
+    def _get_anns(self) -> VCFRecordInfo:
+        n = len(self.record.info[self._ann_key])
+        # if there are more annotions in record
+        # than we have in our memory array then
+        # extend the memory array
+        while len(self._all_annotations) < n:
+            self._all_annotations.append(Annotation(self._ann_key, self._header))
+        # please note the non-strict zip here
+        for annotation, all_annotations_entry in zip(
+            self.record.info[self._ann_key],
+            self._all_annotations,
+            strict=False,
+        ):
+            all_annotations_entry.update(self.idx, self.record, annotation)
+
+        self._globals["ANNS"] = (ret := self._all_annotations[:n])
+        return ret
 
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:

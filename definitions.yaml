@@ -1,0 +1,15 @@
+info:
+    genehancer_score: # a new info entry in the info field of the vcf named genehancer_score
+        number: "1" # number of values for each entry
+        description: "Score from genehancer." # description of this entry in the header
+        type: "Float" # type of the values
+    genehancer_score2: # a second annotation entry to annotate
+        number: "1"
+        description: "Score from genehancer anything."
+        type: "Float"
+ann:
+    foo:
+        type: "Float"
+tag:
+    mytag:
+        description: "A filter tag"
