@@ -285,15 +285,15 @@ class Environment(dict):
         self._globals["ANNS"] = (ret := self._all_annotations[:n])
         return ret
 
-    def evaluate(self, annotation: str = "") -> bool:
-        if self._has_ann:
+    def evaluate(self, annotation: str = "", n: int = 0) -> bool:
+        if self._has_ann[n]:
             self._annotation.update(self.idx, self.record, annotation)
-        keep = self._func()
+        keep = self._func[n]()
         if not isinstance(keep, bool):
             raise NonBoolTypeError(keep)
         return keep
 
-    def table(self, annotation: str = "", n=0) -> tuple:
+    def table(self, annotation: str = "", n: int = 0) -> tuple:
         if self._has_ann[n]:
             self._annotation.update(self.idx, self.record, annotation)
         return self._func[n]()

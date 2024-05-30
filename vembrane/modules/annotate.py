@@ -121,17 +121,22 @@ def annotate_vcf(
     tag_expressions = "".join(f"({e})," for e in tag_expressions)
     info_expressions = "".join(f"({e})," for e in info_expressions)
     ann_expressions = "".join(f"({e})," for e in ann_expressions)
+    if not ann_expressions:
+        ann_expressions = "()"
 
-    expression = f"(({tag_expressions}), ({info_expressions}), ({ann_expressions}))"
+    tag_info_expressions = (
+        f"(({tag_expressions}), ({info_expressions}))"  # ({ann_expressions})
+    )
+    ann_expressions = f"({ann_expressions})"
 
-    env = Environment(expression, ann_key, reader.header)
+    env = Environment([tag_info_expressions, ann_expressions], ann_key, reader.header)
 
     if ann_keys:
         ann_keys_dict = {key: i for i, key in enumerate(ann_keys)}
 
     for idx, record in enumerate(reader):
         env.update_from_record(idx, record)
-        tag_values, info_values, ann_values = env.table()
+        tag_values, info_values = env.table()
 
         for target, value in zip(info_targets, info_values, strict=True):
             record.info[target] = value
@@ -151,6 +156,8 @@ def annotate_vcf(
             else:
                 new_annotations = []
                 for a in record.info[ann_key]:
+                    ann_values = env.table(a, n=1)
+                    # print(ann_values, file=sys.stderr)
                     a_values = a.split("|")
                     a_values.extend((len(ann_keys) - len(a_values)) * [""])
                     for target, value in zip(ann_targets, ann_values, strict=True):
