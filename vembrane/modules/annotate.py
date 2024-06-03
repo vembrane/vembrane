@@ -4,6 +4,7 @@ import sys
 # from intervaltree import Interval, IntervalTree
 from collections.abc import Callable, Iterator
 from sys import exit, stderr
+from types import MappingProxyType
 from typing import Any, List
 
 # import sys
@@ -13,11 +14,14 @@ import yaml
 from .. import __version__
 from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
+    AppendKeyValuePair,
     AppendTagExpression,
+    Auxiliary,
     add_common_arguments,
     create_reader,
     create_writer,
     get_annotation_description_and_keys,
+    read_auxiliary,
 )
 from ..errors import FilterTagNameInvalidError, VembraneError
 from ..representations import Environment
@@ -69,6 +73,14 @@ def add_subcommand(subparsers):
         help="The INFO key for the annotation field.",
     )
     parser.add_argument(
+        "--aux",
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="NAME=PATH",
+        default={},
+        help="Path to an auxiliary file containing a set of symbols",
+    )
+    parser.add_argument(
         "--output",
         "-o",
         default="-",
@@ -117,6 +129,7 @@ def annotate_vcf(
     ann_key: str,
     ann_keys: List[str],
     invert_tag_expression: bool = False,
+    auxiliary: dict[str, Auxiliary] = MappingProxyType({}),
 ) -> Iterator[VCFRecord]:
     tag_expressions = "".join(f"({e})," for e in tag_expressions)
     info_expressions = "".join(f"({e})," for e in info_expressions)
@@ -129,7 +142,12 @@ def annotate_vcf(
     )
     ann_expressions = f"({ann_expressions})"
 
-    env = Environment([tag_info_expressions, ann_expressions], ann_key, reader.header)
+    env = Environment(
+        [tag_info_expressions, ann_expressions],
+        ann_key,
+        reader.header,
+        auxiliary=auxiliary,
+    )
 
     if ann_keys:
         ann_keys_dict = {key: i for i, key in enumerate(ann_keys)}
@@ -239,6 +257,7 @@ def check_tag(tag: str):
 
 
 def execute(args):
+    aux = read_auxiliary(args.aux)
     # build expression
     # expression = ",".join(
     #     f'{value["expression"]}'
@@ -397,6 +416,7 @@ def execute(args):
                 args.annotation_key,
                 ann_keys=new_ann_keys,
                 invert_tag_expression=(args.tag_mode == "fail"),
+                auxiliary=aux,
             )
             for record in records:
                 writer.write(record)

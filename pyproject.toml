@@ -18,6 +18,7 @@ pyyaml = "^6.0.1"
 asttokens = "^2.2.1"
 numpy = { version = "^1.25.1", python = ">=3.10" }
 intervaltree = "^3.1.0"
+pandas = "^2.2.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.280"

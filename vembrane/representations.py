@@ -4,7 +4,7 @@ from typing import Any
 
 from .ann_types import ANN_TYPER, NA, MoreThanOneAltAlleleError, NvFloat, NvInt
 from .backend.base import VCFHeader, VCFRecord, VCFRecordFormats, VCFRecordInfo
-from .common import get_annotation_keys, split_annotation_entry
+from .common import Auxiliary, get_annotation_keys, split_annotation_entry
 from .errors import MalformedAnnotationError, NonBoolTypeError, UnknownAnnotationError
 from .globals import _explicit_clear, allowed_globals, custom_functions
 
@@ -86,7 +86,7 @@ class Environment(dict):
         expression: str | list[str],
         ann_key: str,
         header: VCFHeader,
-        auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        auxiliary: dict[str, Auxiliary] = MappingProxyType({}),
     ) -> None:
         self._ann_key: str = ann_key
         self._header: VCFHeader = header
@@ -178,6 +178,8 @@ class Environment(dict):
         self.record: VCFRecord = None
         self.idx: int = -1
         self.aux = auxiliary
+        if auxiliary:
+            self.update_data(auxiliary)
 
     def expression_annotations(self):
         return self._has_ann

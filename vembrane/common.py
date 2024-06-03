@@ -4,6 +4,10 @@ import shlex
 from collections import defaultdict
 from typing import Iterable, Iterator
 
+import numpy as np
+import pandas as pd
+from intervaltree import Interval, IntervalTree
+
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamReader, PysamWriter
 from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
@@ -111,6 +115,31 @@ def split_annotation_entry(entry: str) -> list[str]:
     return entry.split("|")
 
 
+class Auxiliary(dict):
+    def __init__(self, path: str):
+        df = pd.read_csv(path, sep="\t")
+        self._df = df
+        for c in df.columns:
+            self[c] = None
+        self._tree: dict[IntervalTree] = None
+
+    def __getitem__(self, arg):
+        # lazy set building
+        if self[arg] is None:
+            self[arg] = set(self._df[arg])
+        return self[arg]
+
+    def overlap(self, chrom_column="chrom", start_column="start", end_column="end"):
+        if self._tree is None:
+            # build the tree
+            available_chromsomes: set[str] = set(np.unique(self._df[chrom_column]))
+            for chrom in available_chromsomes:
+                d = self._df[self._df[chrom_column] == chrom]
+                self._tree[chrom] = IntervalTree(
+                    Interval(d[start_column], d[end_column], i) for i, d in enumerate(d)
+                )
+
+
 class BreakendEvent:
     __slots__ = ["name", "keep", "records", "keep_records", "mate_pair"]
 
@@ -171,13 +200,9 @@ class AppendKeyValuePair(argparse.Action):
         getattr(namespace, self.dest)[key.strip()] = value
 
 
-def read_auxiliary(aux: dict[str, str]) -> dict[str, set[str]]:
-    # read auxiliary files, split at any whitespace and store contents in a set
-    def read_set(path: str) -> set[str]:
-        with open(path) as f:
-            return {line.rstrip() for line in f}
-
-    return {name: read_set(contents) for name, contents in aux.items()}
+def read_auxiliary(aux: dict[str, str]) -> dict[Auxiliary]:
+    # read auxiliary files
+    return {name: Auxiliary(contents) for name, contents in aux.items()}
 
 
 def create_reader(
