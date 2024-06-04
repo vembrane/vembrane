@@ -179,6 +179,8 @@ class Environment(dict):
         self.idx: int = -1
         self.aux = auxiliary
         if auxiliary:
+            for a in auxiliary.values():
+                a.environment = self
             self.update_data(auxiliary)
 
     def expression_annotations(self):

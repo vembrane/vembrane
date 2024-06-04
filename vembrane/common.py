@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import argparse
 import ast
 import shlex
 from collections import defaultdict
 from typing import Iterable, Iterator
 
-import numpy as np
 import pandas as pd
 from intervaltree import Interval, IntervalTree
 
@@ -116,28 +117,48 @@ def split_annotation_entry(entry: str) -> list[str]:
 
 
 class Auxiliary(dict):
-    def __init__(self, path: str):
-        df = pd.read_csv(path, sep="\t")
-        self._df = df
-        for c in df.columns:
+    def __init__(self, path: str = None, df=None, environment=None):
+        if path:
+            self._df = pd.read_csv(path, sep="\t")
+        elif df is not None:
+            self._df = df
+        else:
+            raise AssertionError()
+
+        for c in self._df.columns:
             self[c] = None
         self._tree: dict[IntervalTree] = None
+        self._sets = dict()
+        self.environment = environment
 
     def __getitem__(self, arg):
         # lazy set building
-        if self[arg] is None:
-            self[arg] = set(self._df[arg])
-        return self[arg]
+        if arg not in self._sets:
+            self._sets[arg] = set(self._df[arg])
+        return self._sets[arg]
 
-    def overlap(self, chrom_column="chrom", start_column="start", end_column="end"):
+    def overlap(
+        self,
+        chrom_column="chrom",
+        start_column="start",
+        end_column="end",
+    ) -> Auxiliary:
+        # lazy tree building
+        # TODO: build lazy only chromosome-wise?
         if self._tree is None:
-            # build the tree
-            available_chromsomes: set[str] = set(np.unique(self._df[chrom_column]))
+            self._tree = dict()
+            available_chromsomes: set[str] = set(self._df[chrom_column])
             for chrom in available_chromsomes:
                 d = self._df[self._df[chrom_column] == chrom]
                 self._tree[chrom] = IntervalTree(
-                    Interval(d[start_column], d[end_column], i) for i, d in enumerate(d)
+                    Interval(d[start_column], d[end_column], i) for i, d in d.iterrows()
                 )
+
+        t = self._tree[self.environment._get_chrom()]
+        start, end = self.environment._get_pos(), self.environment._get_end() + 1
+        indices = [i for _, _, i in t.overlap(start, end)]
+        test = self._df.loc[indices]
+        return Auxiliary(df=test, environment=self.environment)
 
 
 class BreakendEvent:
