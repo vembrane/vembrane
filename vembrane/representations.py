@@ -87,6 +87,7 @@ class Environment(dict):
         ann_key: str,
         header: VCFHeader,
         auxiliary: dict[str, Auxiliary] = MappingProxyType({}),
+        evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
         self._ann_key: str = ann_key
         self._header: VCFHeader = header
@@ -101,8 +102,6 @@ class Environment(dict):
         # REF/ALT alleles are cached separately to raise "MoreThanOneAltAllele"
         # only if ALT (but not REF) is accessed (and ALT has multiple entries).
         self._alleles = None
-
-        evaluation_function_template: str = "lambda: {expression}"
 
         if isinstance(expression, str):
             expression = [expression]
