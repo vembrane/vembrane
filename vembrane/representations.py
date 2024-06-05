@@ -27,6 +27,37 @@ class DefaultGet:
             return default
 
 
+class AccessTable:
+    def __init__(self, ann_key, header):
+        self.data = []
+        self.n = 0
+        self._ann_key = ann_key
+        self._header = header
+
+    def __len__(self):
+        return self.n
+
+    def __getitem__(self, arg):
+        return [d[arg] for d in self.data]
+
+    def set_n(self, n):
+        while len(self.data) < n:
+            self.data.append(Annotation(self._ann_key, self._header))
+        self.n = n
+
+    def __iter__(self):
+        self.a = 0
+        return self
+
+    def __next__(self):
+        if self.a <= self.n:
+            x = self.a
+            self.a += 1
+            return self.data[x]
+        else:
+            raise StopIteration
+
+
 class Annotation(NoValueDict, DefaultGet):
     def __init__(self, ann_key: str, header: VCFHeader) -> None:
         self._record_idx = -1
@@ -93,7 +124,7 @@ class Environment(dict):
         self._header: VCFHeader = header
         self._has_ann: list[bool] = []
         self._annotation: Annotation = Annotation(ann_key, header)
-        self._all_annotations: list[Annotation] = []
+        self._all_annotations: AccessTable = AccessTable(ann_key, header)
         self._globals: dict[str, Any] = {}
         # We use self + self.func as a closure.
         self._globals = dict(allowed_globals)
@@ -270,26 +301,22 @@ class Environment(dict):
         self._globals["AUX"] = self.aux
         return self.aux
 
-    def Annotations():
-        pass
-
     def _get_anns(self) -> VCFRecordInfo:
         n = len(self.record.info[self._ann_key])
         # if there are more annotions in record
         # than we have in our memory array then
         # extend the memory array
-        while len(self._all_annotations) < n:
-            self._all_annotations.append(Annotation(self._ann_key, self._header))
-        # please note the non-strict zip here
+        self._all_annotations.set_n(n)
+
         for annotation, all_annotations_entry in zip(
             self.record.info[self._ann_key],
-            self._all_annotations,
+            self._all_annotations.data,
             strict=False,
         ):
             all_annotations_entry.update(self.idx, self.record, annotation)
 
-        self._globals["ANNS"] = (ret := self._all_annotations[:n])
-        return ret
+        self._globals["ANNS"] = self._all_annotations
+        return self._all_annotations
 
     def evaluate(self, annotation: str = "", n: int = 0) -> bool:
         if self._has_ann[n]:

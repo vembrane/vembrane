@@ -151,7 +151,8 @@ class FilterAlreadyDefinedError(VembraneError):
 class FilterTagNameInvalidError(VembraneError):
     def __init__(self, tag: str) -> None:
         super().__init__(
-            f"Filter '{tag}' contains invalid characters (whitespace or semicolon) "
+            f"Filter '{tag}' contains invalid characters \
+                (e.g. whitespace or semicolon) "
             f"or is '0'.",
         )
 

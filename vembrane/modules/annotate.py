@@ -1,4 +1,3 @@
-import re
 import sys
 
 # from intervaltree import Interval, IntervalTree
@@ -251,7 +250,8 @@ def annotate_vcf(
 
 
 def check_tag(tag: str):
-    if re.search(r"^0$|[\s;]", tag):
+    # if re.search(r"^0$|[\s;]", tag):
+    if not tag.isidentifier():
         raise FilterTagNameInvalidError(tag)
 
 
@@ -262,9 +262,18 @@ def execute(args):
     #     for value in (x["value"] for x in config["annotation"]["values"])
     # )
     # expression = f"({expression})"
+
     tag_targets, tag_expressions = (
         zip(*args.tag.items(), strict=True) if args.tag else ([], [])
     )
+
+    for tag in tag_targets:
+        try:
+            check_tag(tag)
+        except VembraneError as ve:
+            print(ve, file=stderr)
+        sys.exit(1)
+
     info_targets, info_expressions = (
         zip(*args.info.items(), strict=True) if args.info else ([], [])
     )
