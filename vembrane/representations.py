@@ -270,6 +270,9 @@ class Environment(dict):
         self._globals["AUX"] = self.aux
         return self.aux
 
+    def Annotations():
+        pass
+
     def _get_anns(self) -> VCFRecordInfo:
         n = len(self.record.info[self._ann_key])
         # if there are more annotions in record
