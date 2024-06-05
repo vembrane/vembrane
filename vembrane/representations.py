@@ -183,8 +183,8 @@ class Environment(dict):
                 a.environment = self
             self.update_data(auxiliary)
 
-    def expression_annotations(self):
-        return self._has_ann
+    def expression_annotations(self, n=0):
+        return self._has_ann[n]
 
     def update_from_record(self, idx: int, record: VCFRecord):
         self.idx = idx

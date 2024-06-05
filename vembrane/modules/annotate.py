@@ -21,7 +21,6 @@ from ..common import (
     create_reader,
     create_writer,
     get_annotation_description_and_keys,
-    read_auxiliary,
 )
 from ..errors import FilterTagNameInvalidError, VembraneError
 from ..representations import Environment
@@ -257,7 +256,6 @@ def check_tag(tag: str):
 
 
 def execute(args):
-    aux = read_auxiliary(args.aux)
     # build expression
     # expression = ",".join(
     #     f'{value["expression"]}'
@@ -416,7 +414,7 @@ def execute(args):
                 args.annotation_key,
                 ann_keys=new_ann_keys,
                 invert_tag_expression=(args.tag_mode == "fail"),
-                auxiliary=aux,
+                auxiliary=args.aux,
             )
             for record in records:
                 writer.write(record)
