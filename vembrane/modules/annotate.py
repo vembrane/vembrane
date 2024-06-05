@@ -272,7 +272,7 @@ def execute(args):
             check_tag(tag)
         except VembraneError as ve:
             print(ve, file=stderr)
-        sys.exit(1)
+            sys.exit(1)
 
     info_targets, info_expressions = (
         zip(*args.info.items(), strict=True) if args.info else ([], [])
