@@ -24,7 +24,7 @@ pandas = "^2.2.1"
 ruff = "^0.0.280"
 pytest = "^7.4.0"
 pre-commit = "^3.3.3"
-black = "^23.7.0"
+black = "^24.3.0"
 
 [tool.black]
 line-length = 88
