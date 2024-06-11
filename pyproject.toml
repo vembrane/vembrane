@@ -23,8 +23,7 @@ pandas = "^2.2.1"
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.4.8"
 pytest = "^7.4.0"
-pre-commit = "^3.3.3"
-black = "^24.3.0"
+pre-commit = "^3.7.1"
 
 [tool.ruff]
 line-length = 88
