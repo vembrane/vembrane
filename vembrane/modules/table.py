@@ -95,9 +95,9 @@ def tableize_vcf(
 ) -> Iterator[tuple]:
     kwargs: dict[str, Any] = dict(auxiliary=auxiliary)
     if long:
-        kwargs[
-            "evaluation_function_template"
-        ] = "lambda: (({expression}) for SAMPLE in SAMPLES)"
+        kwargs["evaluation_function_template"] = (
+            "lambda: (({expression}) for SAMPLE in SAMPLES)"
+        )
     else:
         expression = f"({expression})"
     env = Environment(expression, ann_key, vcf.header, **kwargs)

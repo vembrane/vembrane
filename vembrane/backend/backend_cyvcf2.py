@@ -205,9 +205,11 @@ class Cyvcf2Header(VCFHeader):
     ):
         # cyvcf2 "update" doesn't work correctly
         self._raw_header = [
-            f"##INFO=<ID={id},Number={number},Type={type},Description={description}>"
-            if line.startswith(f"##INFO=<ID={id},")
-            else line
+            (
+                f"##INFO=<ID={id},Number={number},Type={type},Description={description}>"
+                if line.startswith(f"##INFO=<ID={id},")
+                else line
+            )
             for line in self._raw_header
         ]
 
