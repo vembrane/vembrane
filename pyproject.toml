@@ -13,7 +13,7 @@ vembrane = 'vembrane.cli:main'
 [tool.poetry.dependencies]
 python = ">=3.10"
 pysam = "^0.22.0"
-cyvcf2 = "^v0.30"
+cyvcf2 = "^v0.31"
 pyyaml = "^6.0.1"
 asttokens = "^2.2.1"
 numpy = { version = "^1.25.1", python = ">=3.10" }
