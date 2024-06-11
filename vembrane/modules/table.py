@@ -23,7 +23,7 @@ from ..representations import Environment
 from .filter import DeprecatedAction
 
 
-def add_subcommmand(subparsers):
+def add_subcommand(subparsers):
     parser = subparsers.add_parser("table")
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
@@ -95,9 +95,9 @@ def tableize_vcf(
 ) -> Iterator[tuple]:
     kwargs: dict[str, Any] = dict(auxiliary=auxiliary)
     if long:
-        kwargs[
-            "evaluation_function_template"
-        ] = "lambda: (({expression}) for SAMPLE in SAMPLES)"
+        kwargs["evaluation_function_template"] = (
+            "lambda: (({expression}) for SAMPLE in SAMPLES)"
+        )
     else:
         expression = f"({expression})"
     env = Environment(expression, ann_key, vcf.header, **kwargs)

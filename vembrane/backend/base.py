@@ -292,6 +292,14 @@ class VCFHeader:
     def add_filter(self, id: str, description: str):
         raise NotImplementedError
 
+    @abstractmethod
+    def add_info(self, id: str, number: str, type: str, description: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_info(self, id: str, number: str, type: str, description: str):
+        raise NotImplementedError
+
 
 class VCFWriter:
     __slots__ = ("_file",)

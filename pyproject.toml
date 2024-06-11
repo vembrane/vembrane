@@ -13,38 +13,52 @@ vembrane = 'vembrane.cli:main'
 [tool.poetry.dependencies]
 python = ">=3.10"
 pysam = "^0.22.0"
-cyvcf2 = "^v0.30"
+cyvcf2 = "^v0.31"
 pyyaml = "^6.0.1"
 asttokens = "^2.2.1"
 numpy = { version = "^1.25.1", python = ">=3.10" }
 intervaltree = "^3.1.0"
+pandas = "^2.2.1"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.0.280"
+ruff = "^0.4.8"
 pytest = "^7.4.0"
-pre-commit = "^3.3.3"
-black = "^23.7.0"
-
-[tool.black]
-line-length = 88
-target-version = ['py310', 'py311']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
+pre-commit = "^3.7.1"
 
 [tool.ruff]
+line-length = 88
+indent-width = 4
+target-version = "py311"
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+[tool.ruff.lint]
 select = ["E", "F", "B", "COM", "I"]
 exclude = ["D"]
 

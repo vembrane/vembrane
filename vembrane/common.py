@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import argparse
 import ast
 import shlex
 from collections import defaultdict
 from typing import Iterable, Iterator
+
+import pandas as pd
+from intervaltree import Interval, IntervalTree
 
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamReader, PysamWriter
@@ -38,6 +43,13 @@ def add_common_arguments(parser: argparse.ArgumentParser):
         type=Backend.from_string,
         choices=[Backend.cyvcf2, Backend.pysam],
         help="Set the backend library.",
+    )
+    parser.add_argument(
+        "--definitions",
+        "-d",
+        metavar="FILENAME",
+        default=None,
+        help="A file containing additional info and annotation definitions.",
     )
 
 
@@ -79,22 +91,74 @@ def normalize(s: str) -> str:
     return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
 
 
-def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
+def get_annotation_description_and_keys(header: VCFHeader, ann_key: str) -> list[str]:
     separator = "'"
     if header.contains_generic("VEP"):
         separator = ":"
     if h := header.infos.get(ann_key):
-        return list(
-            map(
-                str.strip,
-                h.get("Description").strip('"').split(separator)[1].split("|"),
-            ),
-        )
-    return []
+        split = h.get("Description").split(separator, 3)
+        if len(split) == 3:
+            prefix, key_string, suffix = h.get("Description").split(separator)
+        else:
+            prefix, key_string = h.get("Description").split(separator)
+            suffix = ""
+        description_string = separator.join([prefix, "{keys}", suffix])
+
+        return description_string, list(map(str.strip, key_string.split("|")))
+    return "", []
+
+
+def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
+    return get_annotation_description_and_keys(header, ann_key)[1]
 
 
 def split_annotation_entry(entry: str) -> list[str]:
     return entry.split("|")
+
+
+class Auxiliary(dict):
+    def __init__(self, path: str = None, df=None, environment=None):
+        if path:
+            self._df = pd.read_csv(path, sep="\t")
+        elif df is not None:
+            self._df = df
+        else:
+            raise AssertionError()
+
+        for c in self._df.columns:
+            self[c] = None
+        self._tree: dict[IntervalTree] = None
+        self._sets = dict()
+        self.environment = environment
+
+    def __getitem__(self, arg):
+        # lazy set building
+        if arg not in self._sets:
+            self._sets[arg] = set(self._df[arg])
+        return self._sets[arg]
+
+    def overlap(
+        self,
+        chrom_column="chrom",
+        start_column="start",
+        end_column="end",
+    ) -> Auxiliary:
+        # lazy tree building
+        # TODO: build lazy only chromosome-wise?
+        if self._tree is None:
+            self._tree = dict()
+            available_chromsomes: set[str] = set(self._df[chrom_column])
+            for chrom in available_chromsomes:
+                d = self._df[self._df[chrom_column] == chrom]
+                self._tree[chrom] = IntervalTree(
+                    Interval(d[start_column], d[end_column], i) for i, d in d.iterrows()
+                )
+
+        t = self._tree[self.environment._get_chrom()]
+        start, end = self.environment._get_pos(), self.environment._get_end() + 1
+        indices = [i for _, _, i in t.overlap(start, end)]
+        test = self._df.loc[indices]
+        return Auxiliary(df=test, environment=self.environment)
 
 
 class BreakendEvent:
@@ -157,13 +221,9 @@ class AppendKeyValuePair(argparse.Action):
         getattr(namespace, self.dest)[key.strip()] = value
 
 
-def read_auxiliary(aux: dict[str, str]) -> dict[str, set[str]]:
-    # read auxiliary files, split at any whitespace and store contents in a set
-    def read_set(path: str) -> set[str]:
-        with open(path) as f:
-            return {line.rstrip() for line in f}
-
-    return {name: read_set(contents) for name, contents in aux.items()}
+def read_auxiliary(aux: dict[str, str]) -> dict[Auxiliary]:
+    # read auxiliary files
+    return {name: Auxiliary(contents) for name, contents in aux.items()}
 
 
 def create_reader(

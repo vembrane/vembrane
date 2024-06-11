@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 from cyvcf2.cyvcf2 import VCF, Variant, Writer
@@ -67,7 +67,13 @@ class Cyvcf2Reader(VCFReader):
 
 
 class Cyvcf2Header(VCFHeader):
-    __slots__ = ("_reader", "_data", "_data_category", "_metadata_generic")
+    __slots__ = (
+        "_reader",
+        "_data",
+        "_meta_category",
+        "_metadata_generic",
+        "_raw_header",
+    )
 
     def __init__(
         self,
@@ -76,8 +82,9 @@ class Cyvcf2Header(VCFHeader):
     ):
         self._reader = reader
         self._data = []
-        self._data_category = defaultdict(OrderedDict)
+        self._meta_category = defaultdict(OrderedDict)
         self._metadata_generic = dict()
+        self._raw_header = reader._file.raw_header.split("\n")
 
         for r in reader._file.header_iter():
             if r.type == "GENERIC":
@@ -85,7 +92,7 @@ class Cyvcf2Header(VCFHeader):
             d = r.info()
             self._data.append(d)
             if "ID" in d:
-                self._data_category[r.type][d["ID"]] = d
+                self._meta_category[r.type][d["ID"]] = d
 
         specific_keys = {r.type for r in reader._file.header_iter()} | {"contig"}
         generic_entries = [
@@ -100,12 +107,12 @@ class Cyvcf2Header(VCFHeader):
         # override numbers
         for category, items in overwrite_number.items():
             for key, value in items.items():
-                if key in self._data_category[category]:
-                    self._data_category[category][key]["Number"] = value
+                if key in self._meta_category[category]:
+                    self._meta_category[category][key]["Number"] = value
 
     @property
     def records(self):
-        return self._data_category
+        return self._meta_category
 
     def contains_generic(self, key: str):
         return key in self._metadata_generic
@@ -115,15 +122,15 @@ class Cyvcf2Header(VCFHeader):
 
     @property
     def infos(self):
-        return self._data_category["INFO"]
+        return self._meta_category["INFO"]
 
     @property
     def formats(self):
-        return self._data_category["FORMAT"]
+        return self._meta_category["FORMAT"]
 
     @property
     def filters(self):
-        return self._data_category["FILTER"]
+        return self._meta_category["FILTER"]
 
     @property
     def samples(self):
@@ -136,9 +143,25 @@ class Cyvcf2Header(VCFHeader):
     ):
         self._metadata_generic[key] = value
         self._reader._file.add_to_header(f"##{key}={value}")
+        self._raw_header.insert(-2, f"##{key}={value}")
 
-    def add_filter(self, id: str, description: str):
-        self._reader._file.add_filter_to_header({"ID": id, "Description": description})
+    def add_filter(
+        self,
+        id: str,
+        description: str,
+    ):
+        self._reader._file.add_filter_to_header(
+            {
+                "ID": id,
+                "Description": description,
+            },
+        )
+        self._meta_category["FILTER"][id] = {
+            "ID": id,
+            "Description": description,
+            "HeaderType": "FILTER",
+        }
+        self._raw_header.insert(-2, f'##FILTER=<ID={id},Description="{description}">')
 
     def __iter__(self):
         raise NotImplementedError
@@ -146,13 +169,49 @@ class Cyvcf2Header(VCFHeader):
     def __next__(self):
         raise NotImplementedError
 
-    def add_meta(
+    def add_info(
         self,
-        key: str,
-        value: Optional[str] = None,
-        items: Optional[List[Tuple[str, str]]] = None,
+        id: str,
+        number: str,
+        type: str,
+        description: str,
     ):
-        raise NotImplementedError
+        self._reader._file.add_info_to_header(
+            {
+                "ID": id,
+                "Type": type,
+                "Description": description,
+                "Number": number,
+            },
+        )
+        self._meta_category["INFO"][id] = self._reader._file.get_header_type(id)
+        self._raw_header.insert(
+            -2,
+            f'##INFO=<ID={id},Number={number},Type={type},Description="{description}">',
+        )
+
+    @property
+    def raw(self):
+        # print(self._raw_header)
+        # exit()
+        return "\n".join(self._raw_header)
+
+    def update_info(
+        self,
+        id: str,
+        number: str,
+        type: str,
+        description: str,
+    ):
+        # cyvcf2 "update" doesn't work correctly
+        self._raw_header = [
+            (
+                f"##INFO=<ID={id},Number={number},Type={type},Description={description}>"
+                if line.startswith(f"##INFO=<ID={id},")
+                else line
+            )
+            for line in self._raw_header
+        ]
 
 
 class Cyvcf2Record(VCFRecord):
@@ -350,7 +409,8 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
 
 class Cyvcf2Writer(VCFWriter):
     def __init__(self, filename: str, fmt: str, template: VCFReader):
-        self._file = Writer(filename, template._file, mode=f"w{fmt}")
+        self._file = Writer.from_string(filename, template.header.raw, mode=f"w{fmt}")
+        # self._file = Writer(filename, template._file, mode=f"w{fmt}")
 
     def write(self, record: Cyvcf2Record):
         self._file.write_record(record._raw_record)
