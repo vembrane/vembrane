@@ -137,12 +137,10 @@ def parse_command_config(cmd, config, vcf_path):
         command = [cmd, config["expression"], str(vcf_path)]
     elif cmd == "annotate":
         command = [cmd]
-        tags = config["tags"]
+        tags = config.get("tags", [])
         for name, expr in tags.items():
             command += ["--tag", f"{name}={expr}"]
         command.append(str(vcf_path))
-        print(command)
-        exit()
     else:
         raise ValueError(f"Unknown subcommand {config['function']}")
     for key in config:
