@@ -134,7 +134,10 @@ def type_info(
     if number == "R":
         if len(value) > 2:
             raise MoreThanOneAltAllele()
-        return InfoTuple(value)
+        if len(value) == 1:
+            return InfoTuple(value + (None,))
+        else:
+            return InfoTuple(value)
     if number == "1":
         if isinstance(value, tuple):
             if len(value) != 1:
