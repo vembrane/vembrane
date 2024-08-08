@@ -5,11 +5,26 @@ on:
     types: [published]
 
 jobs:
-  build:
+  pypi-publish:
+    name: Upload release to PyPI
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/vembrane
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
-    - uses: actions/checkout@v2.3.4
-    - name: Publish python poetry package
-      uses: JRubics/poetry-publish@v1.8
-      with:
-        pypi_token: ${{ secrets.PYPI_SECRET }}
+    - uses: actions/checkout@v4
+
+    - name: Install Python
+      uses: actions/setup-python@v4
+
+    - name: Install poetry
+      uses: abatilo/actions-poetry@v2
+
+    - name: Build package distribution with poetry
+      run: poetry build
+
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+
