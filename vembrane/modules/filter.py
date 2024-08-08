@@ -12,7 +12,6 @@ from .. import __version__
 from ..ann_types import NA
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
-    AppendKeyValuePair,
     BreakendEvent,
     add_common_arguments,
     check_expression,
@@ -22,10 +21,12 @@ from ..common import (
     mate_key,
     normalize,
     read_auxiliary,
+    read_ontology,
     split_annotation_entry,
 )
 from ..errors import VembraneError
 from ..representations import Environment
+from ..sequence_ontology import SequenceOntology
 
 
 class DeprecatedAction(argparse.Action):
@@ -64,22 +65,6 @@ def add_subcommmand(subparsers):
         default="vcf",
         choices=["vcf", "bcf", "uncompressed-bcf"],
         help="Output format.",
-    )
-    parser.add_argument(
-        "--annotation-key",
-        "-k",
-        metavar="FIELDNAME",
-        default="ANN",
-        help="The INFO key for the annotation field.",
-    )
-    parser.add_argument(
-        "--aux",
-        "-a",
-        nargs=1,
-        action=AppendKeyValuePair,
-        default={},
-        metavar="NAME=PATH",
-        help="Path to an auxiliary file containing a set of symbols",
     )
     parser.add_argument(
         "--statistics",
@@ -173,8 +158,9 @@ def filter_vcf(
     keep_unmatched: bool = False,
     preserve_order: bool = False,
     auxiliary: dict[str, set[str]] = MappingProxyType({}),
+    ontology: SequenceOntology | None = None,
 ) -> Iterator[VCFRecord]:
-    env = Environment(expression, ann_key, reader.header, auxiliary)
+    env = Environment(expression, ann_key, reader.header, auxiliary, ontology)
     has_mateid_key = reader.header.infos.get("MATEID", None) is not None
     has_event_key = reader.header.infos.get("EVENT", None) is not None
 
@@ -347,6 +333,8 @@ def statistics(
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
+    ontology = read_ontology(args.ontology)
+
     overwrite_number = {
         "INFO": dict(args.overwrite_number_info),
         "FORMAT": dict(args.overwrite_number_format),
@@ -375,6 +363,7 @@ def execute(args) -> None:
             keep_unmatched=args.keep_unmatched,
             preserve_order=args.preserve_order,
             auxiliary=aux,
+            ontology=ontology,
         )
 
         try:

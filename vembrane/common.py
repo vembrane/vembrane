@@ -8,9 +8,34 @@ from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamReader, PysamWriter
 from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
 from .errors import InvalidExpressionError
+from .sequence_ontology import SequenceOntology
 
 
 def add_common_arguments(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--annotation-key",
+        "-k",
+        metavar="FIELDNAME",
+        default="ANN",
+        help="The INFO key for the annotation field.",
+    )
+    parser.add_argument(
+        "--aux",
+        "-a",
+        nargs=1,
+        action=AppendKeyValuePair,
+        metavar="NAME=PATH",
+        default={},
+        help="Path to an auxiliary file containing a set of symbols",
+    )
+    parser.add_argument(
+        "--ontology",
+        nargs=1,
+        default=None,
+        help="Path to an ontology in OBO format. "
+        "May be compressed with gzip, bzip2 and xz. "
+        "Defaults to built-in ontology (from sequenceontology.org, 2024-06-06).",
+    )
     parser.add_argument(
         "--overwrite-number-info",
         nargs=1,
@@ -164,6 +189,10 @@ def read_auxiliary(aux: dict[str, str]) -> dict[str, set[str]]:
             return {line.rstrip() for line in f}
 
     return {name: read_set(contents) for name, contents in aux.items()}
+
+
+def read_ontology(path: str | None) -> SequenceOntology | None:
+    return SequenceOntology.from_obo(path) if path else None
 
 
 def create_reader(

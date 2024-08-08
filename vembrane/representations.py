@@ -89,6 +89,7 @@ class Environment(dict):
         ann_key: str,
         header: VCFHeader,
         auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        ontology: SequenceOntology | None = None,
         evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
         self._ann_key: str = ann_key
@@ -133,7 +134,7 @@ class Environment(dict):
 
         self._getters = {
             "AUX": self._get_aux,
-            "SO": self._get_so,
+            "SO": self._get_ontology,
             "CHROM": self._get_chrom,
             "POS": self._get_pos,
             "END": self._get_end,
@@ -165,7 +166,7 @@ class Environment(dict):
         self.record: VCFRecord = None
         self.idx: int = -1
         self.aux = auxiliary
-        self.so = SequenceOntology.default()
+        self.so = ontology
 
     def expression_annotations(self):
         return self._has_ann
@@ -255,7 +256,9 @@ class Environment(dict):
         self._globals["AUX"] = self.aux
         return self.aux
 
-    def _get_so(self) -> SequenceOntology:
+    def _get_ontology(self) -> SequenceOntology:
+        if not self.so:
+            self.so = SequenceOntology.default()
         self._globals["SO"] = self.so
         return self.so
 
