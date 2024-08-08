@@ -197,8 +197,10 @@ The following functions are available for ontologies:
 - `SO.any_is_a(terms: set[str], parent: str) -> bool`: Check if any of the terms is a subtype of `parent`.
 - `SO.get_id(term: str) -> str`: Convert from term name (e.g. `stop_gained`) to accession (e.g. `SO:0001587`).
 - `SO.get_term(id_: str) -> str`: Convert from accession (e.g. `SO:0001587`) to term name (e.g. `stop_gained`).
-- `SO.get_parents(term: str) -> set[str]`: Get all direct parents of a term.
-- `SO.get_children(term: str) -> set[str]`: Get all direct children of a term.
+- `SO.ancestors(term: str) -> set[str]`: Get *all* parents of a term.
+- `SO.descendants(term: str) -> set[str]`: Get *all* children of a term.
+- `SO.direct_ancestors(term: str) -> set[str]`: Get parents of a term.
+- `SO.direct_descendants(term: str) -> set[str]`: Get children of a term.
 - `SO.is_ancestor(term: str, other: str) -> bool`: Check if `term` is an ancestor of `other`.
 - `SO.is_descendant(term: str, other: str) -> bool`: Check if `term` is a descendant of `other`. (Same as `is_a`)
 - `SO.path_length(source: str, target: str) -> int | None`: Get the shortest path length from `source` to `target` or vice versa. Returns `None` if no path exists.

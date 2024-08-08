@@ -49,22 +49,36 @@ class SequenceOntology:
     def get_term(self, id_: Id) -> Term:
         return self.id_to_term[id_]
 
-    def get_parents(self, term: Term) -> set[Term]:
+    def direct_ancestors(self, term: Term) -> set[Term]:
         # obo file has reversed edges,
         # so networkx descendants are ancestors and vice versa
-        return networkx.descendants(self.graph, self.get_id(term))
+        return set(map(self.get_term, self.graph.successors(self.get_id(term))))
 
-    def get_children(self, term: Term) -> set[Term]:
+    def ancestors(self, term: Term) -> set[Term]:
+        # obo file has reversed edges,
+        # so networkx descendants are ancestors and vice versa
+        return set(
+            map(self.get_term, networkx.descendants(self.graph, self.get_id(term)))
+        )
+
+    def direct_descendants(self, term: Term) -> set[Term]:
         # obo file has reversed edges,
         # so networkx ancestors are descendants and vice versa
-        return networkx.ancestors(self.graph, self.get_id(term))
+        return set(map(self.get_term, self.graph.predecessors(self.get_id(term))))
 
-    def is_descendant(self, source_term: Term, target_term: Term) -> bool:
+    def descendants(self, term: Term) -> set[Term]:
+        # obo file has reversed edges,
+        # so networkx ancestors are descendants and vice versa
+        return set(
+            map(self.get_term, networkx.ancestors(self.graph, self.get_id(term)))
+        )
+
+    def is_ancestor(self, source_term: Term, target_term: Term) -> bool:
         if not source_term or not target_term:
             return False
         return self.path_lengths[target_term].get(source_term) is not None
 
-    def is_ancestor(self, source_term: Term, target_term: Term) -> bool:
+    def is_descendant(self, source_term: Term, target_term: Term) -> bool:
         if not source_term or not target_term:
             return False
         return self.path_lengths[source_term].get(target_term) is not None
