@@ -1,34 +1,8 @@
 repos:
-
-  - repo: https://github.com/psf/black
-    rev: 23.7.0
-    hooks:
-      - id: black
-
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     # Ruff version.
-    rev: 'v0.0.280'
+    rev: v0.5.6
     hooks:
       - id: ruff
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
-    hooks:
-      - id: check-byte-order-marker
-        exclude: ^tests/.*
-      - id: check-case-conflict
-        exclude: ^tests/.*
-      - id: check-merge-conflict
-        exclude: ^tests/.*
-      - id: check-symlinks
-        exclude: ^tests/.*
-      - id: check-yaml
-        exclude: ^tests/.*
-      - id: end-of-file-fixer
-        exclude: ^tests/.*
-      - id: mixed-line-ending
-        exclude: ^tests/.*
-      - id: trailing-whitespace
-        exclude: ^tests/.*
-      - id: end-of-file-fixer
-        exclude: ^tests/.*
+        args: [ --fix ]
+      - id: ruff-format
