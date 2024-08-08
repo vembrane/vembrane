@@ -118,10 +118,6 @@ The following VCF fields can be accessed in the filter expression:
   ```sh
   vembrane filter 'INFO["MQ"] == 60' variants.bcf
   ```
-* Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
-  ```sh
-  vembrane filter 're.search("(up|down)stream", ANN["Consequence"])' variants.vcf
-  ```
 * Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
   ```sh
   vembrane filter \
