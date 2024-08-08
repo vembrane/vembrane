@@ -1,4 +1,5 @@
-from typing import NewType
+from os import PathLike
+from typing import NewType, TextIO
 
 import networkx
 import obonet
@@ -28,7 +29,7 @@ class SequenceOntology:
         }
 
     @classmethod
-    def from_obo(cls, path: str):
+    def from_obo(cls, path: str | PathLike | TextIO):
         graph = obonet.read_obo(path)
         return cls(graph)
 
