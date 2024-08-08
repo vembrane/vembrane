@@ -33,6 +33,9 @@ options:
                         The INFO key for the annotation field. Defaults to "ANN".
   --aux NAME=PATH, -a NAME=PATH
                         Path to an auxiliary file containing a set of symbols.
+  --ontology PATH       Path to an ontology in OBO format. 
+                        May be compressed with gzip, bzip2 and xz.
+                        Defaults to built-in ontology (from sequenceontology.org, 2024-06-06).
   --keep-unmatched      Keep all annotations of a variant if at least one of them
                         passes the expression (mimics SnpSift behaviour).
   --preserve-order      Ensures that the order of the output matches that of the input.
@@ -184,6 +187,22 @@ Sometimes, multi-valued fields may contain missing values; in this case, the `wi
 ### Auxiliary files
 `vembrane` supports additional files, such as lists of genes or ids with the `--aux NAME=path/to/file` option. The file should contain one item per line and is parsed as a set. For example `vembrane filter --aux genes=genes.txt "ANN['SYMBOL'] in AUX['genes']" variants.vcf` will keep only records where the annotated symbol is in the set specified in `genes.txt`.
 
+### Ontologies
+`vembrane` supports ontologies in OBO format. The ontology is loaded into memory and can be accessed in the filter expression via the `SO` symbol. This enables filtering based on relationships between ontology terms. 
+For example, `vembrane filter --ontology so.obo "SO.any_is_a(ANN['Consequence'], "intron_variant")"` will keep only records where at least one of the consequences is an intron variant *or a subtype thereof*.
+If no ontology is provided, the built-in ontology from sequenceontology.org (date: 2024-06-06) is loaded automatically if the `SO` symbol is accessed.
+
+The following functions are available for ontologies:
+- `SO.is_a(term: str, parent: str) -> bool`: Check if there is a path from `term` to `parent`.
+- `SO.any_is_a(terms: set[str], parent: str) -> bool`: Check if any of the terms is a subtype of `parent`.
+- `SO.get_id(term: str) -> str`: Convert from term name (e.g. `stop_gained`) to accession (e.g. `SO:0001587`).
+- `SO.get_term(id_: str) -> str`: Convert from accession (e.g. `SO:0001587`) to term name (e.g. `stop_gained`).
+- `SO.get_parents(term: str) -> set[str]`: Get all direct parents of a term.
+- `SO.get_children(term: str) -> set[str]`: Get all direct children of a term.
+- `SO.is_ancestor(term: str, other: str) -> bool`: Check if `term` is an ancestor of `other`.
+- `SO.is_descendant(term: str, other: str) -> bool`: Check if `term` is a descendant of `other`. (Same as `is_a`)
+- `SO.path_length(source: str, target: str) -> int | None`: Get the shortest path length from `source` to `target` or vice versa. Returns `None` if no path exists.
+- `SO.shortest_path_length(terms: set[str], target: str) -> int | None`: Get the shortest path length from any of the `terms` to `target` or vice versa. Returns `None` if no path exists.
 
 ## `vembrane tag`
 While `vembrane filter` removes/skips records which do not pass the supplied expression,
