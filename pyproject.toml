@@ -65,6 +65,7 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "B", "COM", "I"]
 exclude = ["D"]
+ignore = ["COM812"]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
