@@ -3,7 +3,7 @@ from typing import NewType
 import networkx
 import obonet
 
-DEFAULT_SEQUENCE_ONTOLOGY_PATH = "resources/sequence_ontology.2024-06-06.obo.xz"
+DEFAULT_SEQUENCE_ONTOLOGY_FILE = "sequence_ontology.2024-06-06.obo.xz"
 
 Term = NewType("Term", str)
 Id = NewType("Id", str)
@@ -34,7 +34,13 @@ class SequenceOntology:
 
     @classmethod
     def default(cls):
-        return cls.from_obo(DEFAULT_SEQUENCE_ONTOLOGY_PATH)
+        import importlib.resources
+
+        so_resource = importlib.resources.files("vembrane.resources").joinpath(
+            DEFAULT_SEQUENCE_ONTOLOGY_FILE
+        )
+        with importlib.resources.as_file(so_resource) as so_file:
+            return cls.from_obo(so_file)
 
     def get_id(self, term: Term) -> Id:
         return self.term_to_id[term]
