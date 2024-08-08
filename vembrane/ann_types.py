@@ -392,7 +392,7 @@ class AnnotationTyper:
 
 KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "Allele": AnnotationEntry("Allele"),
-    "Annotation": AnnotationEntry("Annotation"),
+    "Annotation": AnnotationListEntry("Annotation", sep="&"),
     "Annotation_Impact": AnnotationEntry("Annotation_Impact"),
     "Gene_Name": AnnotationEntry("Gene_Name"),
     "Gene_ID": AnnotationEntry("Gene_ID"),
@@ -439,8 +439,9 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="Type of feature. "
         "Currently one of Transcript, RegulatoryFeature, MotifFeature.",
     ),
-    "Consequence": AnnotationEntry(
+    "Consequence": AnnotationListEntry(
         "Consequence",
+        sep="&",
         description="Consequence type of this variant",
     ),
     "cDNA_position": AnnotationEntry("cDNA_position", PosRange.from_vep_str),
