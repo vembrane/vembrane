@@ -263,6 +263,23 @@ class AnnotationListEntry(AnnotationEntry):
         super().__init__(name, typefunc, nafunc=lambda: [], **kwargs)
 
 
+class AnnotationSetEntry(AnnotationEntry):
+    def __init__(
+        self,
+        name: str,
+        sep: str,
+        typefunc: Callable[[str], Any] | None = None,
+        inner_typefunc: Callable[[str], Any] = lambda x: x,
+        **kwargs,
+    ) -> None:
+        typefunc = (
+            typefunc
+            if typefunc
+            else lambda v: {inner_typefunc(x.strip()) for x in v.split(sep)}
+        )
+        super().__init__(name, typefunc, nafunc=lambda: set(), **kwargs)
+
+
 class AnnotationListDictEntry(AnnotationEntry):
     def __init__(self, name: str, nafunc=lambda: None, **kwargs) -> None:
         def typefunc(x):
@@ -392,7 +409,7 @@ class AnnotationTyper:
 
 KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "Allele": AnnotationEntry("Allele"),
-    "Annotation": AnnotationListEntry("Annotation", sep="&"),
+    "Annotation": AnnotationSetEntry("Annotation", sep="&"),
     "Annotation_Impact": AnnotationEntry("Annotation_Impact"),
     "Gene_Name": AnnotationEntry("Gene_Name"),
     "Gene_ID": AnnotationEntry("Gene_ID"),
@@ -439,7 +456,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="Type of feature. "
         "Currently one of Transcript, RegulatoryFeature, MotifFeature.",
     ),
-    "Consequence": AnnotationListEntry(
+    "Consequence": AnnotationSetEntry(
         "Consequence",
         sep="&",
         description="Consequence type of this variant",
