@@ -24,6 +24,7 @@ numpy = { version = "^2.0.1", python = ">=3.10" }
 intervaltree = "^3.1.0"
 obonet = "^1.1.0"
 networkx = "^3.3"
+typing-extensions = "^4.12.2"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.5.6"

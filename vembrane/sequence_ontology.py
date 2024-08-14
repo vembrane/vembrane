@@ -1,5 +1,9 @@
 from os import PathLike
-from typing import NewType, Self, TextIO
+
+try:
+    from typing import NewType, Self, TextIO
+except ImportError:
+    from typing_extensions import NewType, Self, TextIO
 
 import networkx
 import obonet
