@@ -9,6 +9,7 @@ from typing import Any, Callable, Iterable, Union
 import numpy as np
 
 from .errors import MoreThanOneAltAlleleError, NotExactlyOneValueError
+from .sequence_ontology import Consequences, Term
 
 
 def float32(val: str) -> float:
@@ -280,6 +281,16 @@ class AnnotationSetEntry(AnnotationEntry):
         super().__init__(name, typefunc, nafunc=lambda: set(), **kwargs)
 
 
+class ConsequenceEntry(AnnotationSetEntry):
+    def __init__(self, name: str, **kwargs) -> None:
+        super().__init__(
+            name,
+            sep="&",
+            typefunc=lambda v: Consequences(Term(t.strip()) for t in v.split("&")),
+            **kwargs,
+        )
+
+
 class AnnotationListDictEntry(AnnotationEntry):
     def __init__(self, name: str, nafunc=lambda: None, **kwargs) -> None:
         def typefunc(x):
@@ -409,7 +420,7 @@ class AnnotationTyper:
 
 KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "Allele": AnnotationEntry("Allele"),
-    "Annotation": AnnotationSetEntry("Annotation", sep="&"),
+    "Annotation": ConsequenceEntry("Annotation"),
     "Annotation_Impact": AnnotationEntry("Annotation_Impact"),
     "Gene_Name": AnnotationEntry("Gene_Name"),
     "Gene_ID": AnnotationEntry("Gene_ID"),
@@ -456,9 +467,8 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="Type of feature. "
         "Currently one of Transcript, RegulatoryFeature, MotifFeature.",
     ),
-    "Consequence": AnnotationSetEntry(
+    "Consequence": ConsequenceEntry(
         "Consequence",
-        sep="&",
         description="Consequence type of this variant",
     ),
     "cDNA_position": AnnotationEntry("cDNA_position", PosRange.from_vep_str),

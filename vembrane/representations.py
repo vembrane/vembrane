@@ -7,7 +7,7 @@ from .backend.base import VCFHeader, VCFRecord, VCFRecordFormats, VCFRecordInfo
 from .common import get_annotation_keys, split_annotation_entry
 from .errors import MalformedAnnotationError, NonBoolTypeError, UnknownAnnotationError
 from .globals import _explicit_clear, allowed_globals, custom_functions
-from .sequence_ontology import SequenceOntology
+from .sequence_ontology import _C, SequenceOntology
 
 
 class NoValueDict:
@@ -167,6 +167,8 @@ class Environment(dict):
         self.idx: int = -1
         self.aux = auxiliary
         self.so = ontology
+        if ontology:
+            _C.__dict__["ontology"] = ontology
 
     def expression_annotations(self):
         return self._has_ann
