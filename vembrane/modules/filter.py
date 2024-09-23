@@ -180,7 +180,12 @@ def filter_vcf(
         has_mateid_key=has_mateid_key,
         has_event_key=has_event_key,
     ) -> Tuple[Optional[str], Optional[str]]:
-        mate_ids: List[str] = record.info.get("MATEID", []) if has_mateid_key else []
+        mate_ids: List[str] | str = (
+            record.info.get("MATEID", []) if has_mateid_key else []
+        )
+        if isinstance(mate_ids, str):
+            # some callers annotate MATEID as single string
+            mate_ids = [mate_ids]
         event_name: Optional[str] = (
             record.info.get("EVENT", None) if has_event_key else None
         )
