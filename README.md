@@ -115,6 +115,10 @@ The following VCF fields can be accessed in the filter expression:
   ```sh
   vembrane filter 'ANN["Protein_position"].start < 10' variants.bcf
   ```
+* Only keep variants where the ID matches the regex pattern `^rs[0-9]+`:
+  ```sh
+  vembrane filter 'bool(re.search("^rs[0-9]+", ID or ""))' variants.vcf
+  ```
 * Only keep variants where mapping quality is exactly 60:
   ```sh
   vembrane filter 'INFO["MQ"] == 60' variants.bcf
@@ -201,7 +205,7 @@ The following functions are available for ontologies, where `term` is a single `
 - `term.descendants() -> Consequences`: Get *all* children of a term.
 - `term.parents() -> Consequences`: Get parents of a term.
 - `term.children() -> Consequences`: Get children of a term.
-- `term.is_a(parent: Term) -> bool`: Check if there is a path from `term` to `parent`.
+- `term.is_a(parent: Term) -> bool`: Check if there is a path from `term` to `parent`, i.e. whether `term` is the `parent` type or a subtype of it.
 - `terms.any_is_a(parent: str) -> bool`: Check if any of the terms is a subtype of `parent`.
 - `term.is_ancestor(other: Term) -> bool`: Check if `term` is an ancestor of `other`.
 - `term.is_descendant(other: Term) -> bool`: Check if `term` is a descendant of `other`. (Same as `is_a`)
