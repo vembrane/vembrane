@@ -186,22 +186,26 @@ Sometimes, multi-valued fields may contain missing values; in this case, the `wi
 
 ### Ontologies
 `vembrane` supports ontologies in OBO format. The ontology is loaded into memory and can be accessed in the filter expression via the `SO` symbol. This enables filtering based on relationships between ontology terms. 
-For example, `vembrane filter --ontology so.obo "SO.any_is_a(ANN['Consequence'], "intron_variant")"` will keep only records where at least one of the consequences is an intron variant *or a subtype thereof*.
+For example, `vembrane filter --ontology so.obo 'ANN["Consequence"].any_is_a("intron_variant")'` will keep only records where at least one of the consequences is an intron variant *or a subtype thereof*.
 If no ontology is provided, the built-in ontology from sequenceontology.org (date: 2024-06-06) is loaded automatically if the `SO` symbol is accessed.
 
-The following functions are available for ontologies:
-- `SO.is_a(term: str, parent: str) -> bool`: Check if there is a path from `term` to `parent`.
-- `SO.any_is_a(terms: set[str], parent: str) -> bool`: Check if any of the terms is a subtype of `parent`.
-- `SO.get_id(term: str) -> str`: Convert from term name (e.g. `stop_gained`) to accession (e.g. `SO:0001587`).
-- `SO.get_term(id_: str) -> str`: Convert from accession (e.g. `SO:0001587`) to term name (e.g. `stop_gained`).
-- `SO.ancestors(term: str) -> set[str]`: Get *all* parents of a term.
-- `SO.descendants(term: str) -> set[str]`: Get *all* children of a term.
-- `SO.direct_ancestors(term: str) -> set[str]`: Get parents of a term.
-- `SO.direct_descendants(term: str) -> set[str]`: Get children of a term.
-- `SO.is_ancestor(term: str, other: str) -> bool`: Check if `term` is an ancestor of `other`.
-- `SO.is_descendant(term: str, other: str) -> bool`: Check if `term` is a descendant of `other`. (Same as `is_a`)
-- `SO.path_length(source: str, target: str) -> int | None`: Get the shortest path length from `source` to `target` or vice versa. Returns `None` if no path exists.
-- `SO.shortest_path_length(terms: set[str], target: str) -> int | None`: Get the shortest path length from any of the `terms` to `target` or vice versa. Returns `None` if no path exists.
+There are three relevant classes/types:
+- `Term`: Represents a term in the ontology. It inherits from `str` and can be used as such.
+- `Consequences`: Represents a list of terms. It inherits from `list` and can be used as such.
+- `SO`: Represents the ontology itself. It is a singleton and can be used to access the ontology.
+
+The following functions are available for ontologies, where `term` is a single `Term` and `terms` is a `Consequences` object:
+- `SO.get_id(term: Term) -> str`: Convert from term name (e.g. `stop_gained`) to accession (e.g. `SO:0001587`).
+- `SO.get_term(id_: str) -> Term`: Convert from accession (e.g. `SO:0001587`) to term name (e.g. `stop_gained`).
+- `term.ancestors() -> Consequences`: Get *all* parents of a term.
+- `term.descendants() -> Consequences`: Get *all* children of a term.
+- `term.parents() -> Consequences`: Get parents of a term.
+- `term.children() -> Consequences`: Get children of a term.
+- `term.is_a(parent: Term) -> bool`: Check if there is a path from `term` to `parent`.
+- `terms.any_is_a(parent: str) -> bool`: Check if any of the terms is a subtype of `parent`.
+- `term.is_ancestor(other: Term) -> bool`: Check if `term` is an ancestor of `other`.
+- `term.is_descendant(other: Term) -> bool`: Check if `term` is a descendant of `other`. (Same as `is_a`)
+- `term.path_length(target: Term) -> int | None`: Get the shortest path length from `term` to `target` *or vice versa*. Returns `None` if no path exists.
 
 ## `vembrane tag`
 While `vembrane filter` removes/skips records which do not pass the supplied expression,
