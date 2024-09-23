@@ -1,0 +1,4 @@
+function: "filter"
+annotation_key: CSQ
+# range.stop is exclusive, so +1 with respect to the value in the annotation
+expression: 'CSQ["INTRON"].range.start == 32 and CSQ["INTRON"].range.stop == 35 and CSQ["INTRON"].total == 75'
