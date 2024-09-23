@@ -11,15 +11,16 @@ import asttokens
 from ..ann_types import NA
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
-    AppendKeyValuePair,
     add_common_arguments,
     check_expression,
     create_reader,
     read_auxiliary,
+    read_ontology,
 )
 from ..errors import HeaderWrongColumnNumberError, VembraneError
 from ..globals import allowed_globals
 from ..representations import Environment
+from ..sequence_ontology import SequenceOntology
 from .filter import DeprecatedAction
 
 
@@ -36,13 +37,6 @@ def add_subcommmand(subparsers):
         help="The file containing the variants.",
         nargs="?",
         default="-",
-    )
-    parser.add_argument(
-        "--annotation-key",
-        "-k",
-        metavar="FIELDNAME",
-        default="ANN",
-        help="The INFO key for the annotation field.",
     )
     parser.add_argument(
         "--separator",
@@ -73,15 +67,6 @@ def add_subcommmand(subparsers):
         default="-",
         help="Output file, if not specified, output is written to STDOUT.",
     )
-    parser.add_argument(
-        "--aux",
-        "-a",
-        nargs=1,
-        action=AppendKeyValuePair,
-        metavar="NAME=PATH",
-        default={},
-        help="Path to an auxiliary file containing a set of symbols",
-    )
     add_common_arguments(parser)
 
 
@@ -92,8 +77,9 @@ def tableize_vcf(
     overwrite_number: dict[str, dict[str, str]] = MappingProxyType({}),
     long: bool = False,
     auxiliary: dict[str, set[str]] = MappingProxyType({}),
+    ontology: SequenceOntology | None = None,
 ) -> Iterator[tuple]:
-    kwargs: dict[str, Any] = dict(auxiliary=auxiliary)
+    kwargs: dict[str, Any] = dict(auxiliary=auxiliary, ontology=ontology)
     if long:
         kwargs["evaluation_function_template"] = (
             "lambda: (({expression}) for SAMPLE in SAMPLES)"
@@ -287,6 +273,7 @@ def smart_open(filename=None, *args, **kwargs):
 
 def execute(args):
     aux = read_auxiliary(args.aux)
+    ontology = read_ontology(args.ontology)
     overwrite_number = {
         "INFO": dict(args.overwrite_number_info),
         "FORMAT": dict(args.overwrite_number_format),
@@ -306,6 +293,7 @@ def execute(args):
             overwrite_number=overwrite_number,
             long=args.long,
             auxiliary=aux,
+            ontology=ontology,
         )
 
         try:

@@ -9,7 +9,6 @@ from .. import __version__
 from ..ann_types import NA
 from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
-    AppendKeyValuePair,
     AppendTagExpression,
     add_common_arguments,
     check_expression,
@@ -17,11 +16,13 @@ from ..common import (
     create_writer,
     normalize,
     read_auxiliary,
+    read_ontology,
     single_outer,
     swap_quotes,
 )
 from ..errors import FilterAlreadyDefinedError, FilterTagNameInvalidError, VembraneError
 from ..representations import Environment
+from ..sequence_ontology import SequenceOntology
 from .filter import DeprecatedAction
 
 
@@ -57,22 +58,6 @@ def add_subcommand(subparsers):
         default="vcf",
         choices=["vcf", "bcf", "uncompressed-bcf"],
         help="Output format.",
-    )
-    parser.add_argument(
-        "--annotation-key",
-        "-k",
-        metavar="FIELDNAME",
-        default="ANN",
-        help="The INFO key for the annotation field.",
-    )
-    parser.add_argument(
-        "--aux",
-        "-a",
-        nargs=1,
-        action=AppendKeyValuePair,
-        metavar="NAME=PATH",
-        default={},
-        help="Path to an auxiliary file containing a set of symbols",
     )
     parser.add_argument(
         "--tag-mode",
@@ -126,11 +111,12 @@ def tag_vcf(
     expressions: dict[str, str],
     ann_key: str,
     auxiliary: dict[str, set[str]] = MappingProxyType({}),
+    ontology: SequenceOntology | None = None,
     invert: bool = False,
 ) -> Iterator[VCFRecord]:
     # For each tag-expression pair, a different Environment must be used.
     envs = {
-        tag: Environment(expression, ann_key, vcf.header, auxiliary)
+        tag: Environment(expression, ann_key, vcf.header, auxiliary, ontology)
         for tag, expression in expressions.items()
     }
 
@@ -152,6 +138,7 @@ def check_tag(tag: str):
 
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
+    ontology = read_ontology(args.ontology)
     overwrite_number = {
         "INFO": dict(args.overwrite_number_info),
         "FORMAT": dict(args.overwrite_number_format),
@@ -191,6 +178,7 @@ def execute(args) -> None:
             expressions,
             args.annotation_key,
             auxiliary=aux,
+            ontology=ontology,
             invert=(args.tag_mode == "fail"),
         )
 

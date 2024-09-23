@@ -7,6 +7,7 @@ from .backend.base import VCFHeader, VCFRecord, VCFRecordFormats, VCFRecordInfo
 from .common import get_annotation_keys, split_annotation_entry
 from .errors import MalformedAnnotationError, NonBoolTypeError, UnknownAnnotationError
 from .globals import _explicit_clear, allowed_globals, custom_functions
+from .sequence_ontology import _C, SequenceOntology
 
 
 class NoValueDict:
@@ -88,6 +89,7 @@ class Environment(dict):
         ann_key: str,
         header: VCFHeader,
         auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        ontology: SequenceOntology | None = None,
         evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
         self._ann_key: str = ann_key
@@ -132,6 +134,7 @@ class Environment(dict):
 
         self._getters = {
             "AUX": self._get_aux,
+            "SO": self._get_ontology,
             "CHROM": self._get_chrom,
             "POS": self._get_pos,
             "END": self._get_end,
@@ -163,6 +166,9 @@ class Environment(dict):
         self.record: VCFRecord = None
         self.idx: int = -1
         self.aux = auxiliary
+        self.so = ontology
+        if ontology:
+            _C.__dict__["ontology"] = ontology
 
     def expression_annotations(self):
         return self._has_ann
@@ -251,6 +257,12 @@ class Environment(dict):
     def _get_aux(self) -> dict[str, set[str]]:
         self._globals["AUX"] = self.aux
         return self.aux
+
+    def _get_ontology(self) -> SequenceOntology:
+        if not self.so:
+            self.so = SequenceOntology.default()
+        self._globals["SO"] = self.so
+        return self.so
 
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
