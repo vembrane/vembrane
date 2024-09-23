@@ -88,7 +88,7 @@ Annotations with type `str`:
 | `TREMBL`             | Best match UniProtKB/TrEMBL accession of protein product                                                                                    |                             |
 | `UNIPARC`            | Best match UniParc accession of protein product                                                                                             |                             |
 | `MOTIF_NAME`         | The source and identifier of a transcription factor binding profile aligned at this position                                                |                             |
-| `CCDS`               | The CCDS identifer for this transcript, where applicable                                                                                    |                             |
+| `CCDS`               | The CCDS identifier for this transcript, where applicable                                                                                   |                             |
 | `IND`                | Individual name                                                                                                                             |                             |
 | `BIOTYPE`            | Biotype of transcript or regulatory feature                                                                                                 |                             |
 | `APPRIS`             | Annotates alternatively spliced transcripts as primary or alternate based on a range of computational methods. NB: not available for GRCh37 |                             |
