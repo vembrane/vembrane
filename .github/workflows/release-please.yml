@@ -17,5 +17,4 @@ jobs:
       - uses: googleapis/release-please-action@v4
         with:
           release-type: python
-          token: ${{ secrets.SNAPPY_RELEASE_PLEASE_TOKEN }}
           target-branch: dev-1.0
