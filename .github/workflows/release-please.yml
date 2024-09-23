@@ -20,4 +20,3 @@ jobs:
           release-type: python
           token: ${{ secrets.SNAPPY_RELEASE_PLEASE_TOKEN }}
           target-branch: dev-1.0
-
