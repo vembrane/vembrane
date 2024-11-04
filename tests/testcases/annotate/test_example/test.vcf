@@ -1,0 +1,7 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##fileDate=20210218
+##contig=<ID=chr10,length=1000500>
+##INFO=<ID=INT,Number=1,Type=Integer,Description="One single integer">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Sample
+chr10	76001	annotate_me_1	A	60	PASS	.	.	.
