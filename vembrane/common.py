@@ -2,8 +2,8 @@ import argparse
 import ast
 import contextlib
 import shlex
-from collections import defaultdict
 import sys
+from collections import defaultdict
 from typing import Iterable, Iterator
 
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer

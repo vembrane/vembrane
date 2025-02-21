@@ -1,15 +1,15 @@
-from io import TextIOWrapper
 import json
 import textwrap
+from io import TextIOWrapper
 from typing import Any, Iterator
+
 import yaml
+import yte
 
 from vembrane.backend.base import VCFReader
 from vembrane.common import add_common_arguments, create_reader, smart_open
 from vembrane.errors import VembraneError
-
 from vembrane.representations import ModifiableEnvironment
-import yte
 
 
 def add_subcommand(subparsers):
@@ -112,7 +112,8 @@ def execute(args):
             )
         else:
             raise VembraneError(
-                f"Unsupported file format: {args.output}, only .json, .jsonl and .yaml are supported."
+                f"Unsupported file format: {args.output}, only .json, .jsonl and "
+                ".yaml are supported."
             )
 
     if args.output_fmt == "jsonl":

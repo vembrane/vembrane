@@ -1,4 +1,3 @@
-import contextlib
 import csv
 import sys
 from collections.abc import Iterator

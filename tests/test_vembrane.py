@@ -12,7 +12,7 @@ import yaml
 from vembrane import __version__, errors
 from vembrane.backend.base import Backend
 from vembrane.common import create_reader
-from vembrane.modules import filter, table, tag, structured
+from vembrane.modules import filter, structured, table, tag
 
 FILTER_CASES = Path(__file__).parent.joinpath("testcases/filter")
 TABLE_CASES = Path(__file__).parent.joinpath("testcases/table")
