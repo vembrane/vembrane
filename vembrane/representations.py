@@ -84,17 +84,11 @@ class WrapFloat32Visitor(ast.NodeTransformer):
 class Environment(dict):
     def __init__(
         self,
-        expression: str,
         ann_key: str,
         header: VCFHeader,
         auxiliary: dict[str, set[str]] = MappingProxyType({}),
-        evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
         self._ann_key: str = ann_key
-        self._has_ann: bool = any(
-            hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
-            for node in ast.walk(ast.parse(expression))
-        )
         self._annotation: Annotation = Annotation(ann_key, header)
         self._globals: dict[str, Any] = {}
         # We use self + self.func as a closure.
@@ -105,30 +99,7 @@ class Environment(dict):
         # only if ALT (but not REF) is accessed (and ALT has multiple entries).
         self._alleles = None
 
-        func_str: str = evaluation_function_template.format(expression=expression)
-
-        # The VCF specification only allows 32bit floats.
-        # Comparisons such as `INFO["some_float"] > CONST` may yield unexpected results,
-        # because `some_float` is a 32bit float while `CONST` is a python 64bit float.
-        # Example: `c_float(0.6) = 0.6000000238418579 > 0.6`.
-        # We can work around this by wrapping user provided floats in `ctypes.c_float`,
-        # which should follow the same IEEE 754 specification as the VCF spec, as most C
-        # compilers should follow this standard (https://stackoverflow.com/a/17904539):
-
-        # parse the expression, obtaining an AST
-        expression_ast = ast.parse(func_str, mode="eval")
-
-        # wrap each float constant in numpy.float32
-        expression_ast = WrapFloat32Visitor().visit(expression_ast)
-
-        # housekeeping
-        expression_ast = ast.fix_missing_locations(expression_ast)
-
-        # compile the now-fixed code-tree
-        func: CodeType = compile(expression_ast, filename="<string>", mode="eval")
-
         self.update(**_explicit_clear)
-        self._func = eval(func, self, {})
 
         self._getters = {
             "AUX": self._get_aux,
@@ -163,9 +134,6 @@ class Environment(dict):
         self.record: VCFRecord = None
         self.idx: int = -1
         self.aux = auxiliary
-
-    def expression_annotations(self):
-        return self._has_ann
 
     def update_from_record(self, idx: int, record: VCFRecord):
         self.idx = idx
@@ -252,6 +220,50 @@ class Environment(dict):
         self._globals["AUX"] = self.aux
         return self.aux
 
+
+class EvalEnvironment(Environment):
+    def __init__(
+        self,
+        expression: str,
+        ann_key: str,
+        header: VCFHeader,
+        auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        evaluation_function_template: str = "lambda: {expression}",
+    ) -> None:
+        super().__init__(ann_key, header, auxiliary)
+
+        self._has_ann: bool = any(
+            hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
+            for node in ast.walk(ast.parse(expression))
+        )
+
+        func_str: str = evaluation_function_template.format(expression=expression)
+
+        # The VCF specification only allows 32bit floats.
+        # Comparisons such as `INFO["some_float"] > CONST` may yield unexpected results,
+        # because `some_float` is a 32bit float while `CONST` is a python 64bit float.
+        # Example: `c_float(0.6) = 0.6000000238418579 > 0.6`.
+        # We can work around this by wrapping user provided floats in `ctypes.c_float`,
+        # which should follow the same IEEE 754 specification as the VCF spec, as most C
+        # compilers should follow this standard (https://stackoverflow.com/a/17904539):
+
+        # parse the expression, obtaining an AST
+        expression_ast = ast.parse(func_str, mode="eval")
+
+        # wrap each float constant in numpy.float32
+        expression_ast = WrapFloat32Visitor().visit(expression_ast)
+
+        # housekeeping
+        expression_ast = ast.fix_missing_locations(expression_ast)
+
+        # compile the now-fixed code-tree
+        func: CodeType = compile(expression_ast, filename="<string>", mode="eval")
+
+        self._func = eval(func, self, {})
+
+    def expression_annotations(self):
+        return self._has_ann
+
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
             self._annotation.update(self.idx, self.record, annotation)
@@ -264,3 +276,9 @@ class Environment(dict):
         if self._has_ann:
             self._annotation.update(self.idx, self.record, annotation)
         return self._func()
+    
+
+class ModifiableEnvironment(Environment):
+    def __setitem__(self, key, value):
+        self._globals[key] = value
+        return value

@@ -25,7 +25,7 @@ from ..common import (
     split_annotation_entry,
 )
 from ..errors import VembraneError
-from ..representations import Environment
+from ..representations import EvalEnvironment
 
 
 class DeprecatedAction(argparse.Action):
@@ -107,7 +107,7 @@ def add_subcommmand(subparsers):
 
 
 def test_and_update_record(
-    env: Environment,
+    env: EvalEnvironment,
     idx: int,
     record: VCFRecord,
     ann_key: str,
@@ -124,7 +124,7 @@ def test_and_update_record(
 
 
 def _test_and_update_record(
-    env: Environment,
+    env: EvalEnvironment,
     idx: int,
     record: VCFRecord,
     ann_key: str,
@@ -174,7 +174,7 @@ def filter_vcf(
     preserve_order: bool = False,
     auxiliary: dict[str, set[str]] = MappingProxyType({}),
 ) -> Iterator[VCFRecord]:
-    env = Environment(expression, ann_key, reader.header, auxiliary)
+    env = EvalEnvironment(expression, ann_key, reader.header, auxiliary)
     has_mateid_key = reader.header.infos.get("MATEID", None) is not None
     has_event_key = reader.header.infos.get("EVENT", None) is not None
 

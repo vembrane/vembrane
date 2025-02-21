@@ -1,0 +1,5 @@
+observation:
+  chrom: ?CHROM
+  pos: ?POS
+  ref: ?REF
+  alt: ?ALT

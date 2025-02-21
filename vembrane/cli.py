@@ -1,7 +1,7 @@
 import argparse
 
 from . import __version__
-from .modules import annotate, filter, table, tag
+from .modules import annotate, filter, table, tag, structured
 
 
 def main():
@@ -21,6 +21,7 @@ def main():
     table.add_subcommmand(subparsers)
     annotate.add_subcommmand(subparsers)
     tag.add_subcommand(subparsers)
+    structured.add_subcommand(subparsers)
 
     args = parser.parse_args()
     if args.command == "filter":
@@ -31,5 +32,7 @@ def main():
         annotate.execute(args)
     elif args.command == "tag":
         tag.execute(args)
+    elif args.command == "structured":
+        structured.execute(args)
     else:
         raise ValueError(f"Unknown subcommand {args.command}")

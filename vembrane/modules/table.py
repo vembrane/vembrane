@@ -16,10 +16,11 @@ from ..common import (
     check_expression,
     create_reader,
     read_auxiliary,
+    smart_open,
 )
 from ..errors import HeaderWrongColumnNumberError, VembraneError
 from ..globals import allowed_globals
-from ..representations import Environment
+from ..representations import EvalEnvironment
 from .filter import DeprecatedAction
 
 
@@ -100,7 +101,7 @@ def tableize_vcf(
         )
     else:
         expression = f"({expression})"
-    env = Environment(expression, ann_key, vcf.header, **kwargs)
+    env = EvalEnvironment(expression, ann_key, vcf.header, **kwargs)
 
     record: VCFRecord
     for idx, record in enumerate(vcf):
@@ -272,17 +273,6 @@ def get_row(row):
     if not isinstance(row, tuple):
         row = (row,)
     return row
-
-
-@contextlib.contextmanager
-def smart_open(filename=None, *args, **kwargs):
-    fh = open(filename, *args, **kwargs) if filename and filename != "-" else sys.stdout
-
-    try:
-        yield fh
-    finally:
-        if fh is not sys.stdout:
-            fh.close()
 
 
 def execute(args):

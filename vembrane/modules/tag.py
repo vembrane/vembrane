@@ -21,7 +21,7 @@ from ..common import (
     swap_quotes,
 )
 from ..errors import FilterAlreadyDefinedError, FilterTagNameInvalidError, VembraneError
-from ..representations import Environment
+from ..representations import EvalEnvironment
 from .filter import DeprecatedAction
 
 
@@ -91,7 +91,7 @@ def add_subcommand(subparsers):
 
 
 def test_record(
-    env: Environment,
+    env: EvalEnvironment,
     idx: int,
     record: VCFRecord,
     ann_key: str,
@@ -130,7 +130,7 @@ def tag_vcf(
 ) -> Iterator[VCFRecord]:
     # For each tag-expression pair, a different Environment must be used.
     envs = {
-        tag: Environment(expression, ann_key, vcf.header, auxiliary)
+        tag: EvalEnvironment(expression, ann_key, vcf.header, auxiliary)
         for tag, expression in expressions.items()
     }
 

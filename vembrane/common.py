@@ -1,7 +1,9 @@
 import argparse
 import ast
+import contextlib
 import shlex
 from collections import defaultdict
+import sys
 from typing import Iterable, Iterator
 
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
@@ -194,3 +196,14 @@ def create_writer(
         return Cyvcf2Writer(filename, fmt, template)
     else:
         raise ValueError(f"{backend} is not a known backend.")
+
+
+@contextlib.contextmanager
+def smart_open(filename=None, *args, **kwargs):
+    fh = open(filename, *args, **kwargs) if filename and filename != "-" else sys.stdout
+
+    try:
+        yield fh
+    finally:
+        if fh is not sys.stdout:
+            fh.close()

@@ -13,7 +13,7 @@ from ..common import (
     create_reader,
     create_writer,
 )
-from ..representations import Environment
+from ..representations import EvalEnvironment
 
 
 def add_subcommmand(subparsers):
@@ -68,7 +68,7 @@ def annotate_vcf(
     ann_data,
     config: dict,
 ) -> Iterator[VCFRecord]:
-    env = Environment(expression, ann_key, vcf.header)
+    env = EvalEnvironment(expression, ann_key, vcf.header)
 
     config_chrom_column: str = config["annotation"]["columns"]["chrom"]
     config_start_column: str = config["annotation"]["columns"]["start"]

@@ -129,6 +129,17 @@ files = [
 ]
 
 [[package]]
+name = "dpath"
+version = "2.2.0"
+description = "Filesystem-like pathing and searching for dictionaries"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "dpath-2.2.0-py3-none-any.whl", hash = "sha256:b330a375ded0a0d2ed404440f6c6a715deae5313af40bbb01c8a41d891900576"},
+    {file = "dpath-2.2.0.tar.gz", hash = "sha256:34f7e630dc55ea3f219e555726f5da4b4b25f2200319c8e6902c394258dd6a3e"},
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.2"
 description = "Backport of PEP 654 (exception groups)"
@@ -284,6 +295,17 @@ python-versions = ">=3.8"
 files = [
     {file = "packaging-24.1-py3-none-any.whl", hash = "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"},
     {file = "packaging-24.1.tar.gz", hash = "sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002"},
+]
+
+[[package]]
+name = "plac"
+version = "1.4.3"
+description = "The smartest command line arguments parser in the world"
+optional = false
+python-versions = "*"
+files = [
+    {file = "plac-1.4.3-py2.py3-none-any.whl", hash = "sha256:8a84fde8f950c9de6588a2d53c9deeac3ba1ddb456d887a33228460cf6549750"},
+    {file = "plac-1.4.3.tar.gz", hash = "sha256:d4cb3387b2113a28aebd509433d0264a4e5d9bb7c1a86db4fbd0a8f11af74eb3"},
 ]
 
 [[package]]
@@ -546,7 +568,23 @@ platformdirs = ">=3.9.1,<5"
 docs = ["furo (>=2023.7.26)", "proselint (>=0.13)", "sphinx (>=7.1.2,!=7.3)", "sphinx-argparse (>=0.4)", "sphinxcontrib-towncrier (>=0.2.1a0)", "towncrier (>=23.6)"]
 test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=23.1)", "pytest (>=7.4)", "pytest-env (>=0.8.2)", "pytest-freezer (>=0.4.8)", "pytest-mock (>=3.11.1)", "pytest-randomly (>=3.12)", "pytest-timeout (>=2.1)", "setuptools (>=68)", "time-machine (>=2.10)"]
 
+[[package]]
+name = "yte"
+version = "1.5.7"
+description = "A YAML template engine with Python expressions"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "yte-1.5.7-py3-none-any.whl", hash = "sha256:a66118fbe236bcf293fc920473ad19eb20f801172f0cd43764d3c283ceee6452"},
+    {file = "yte-1.5.7.tar.gz", hash = "sha256:1e22a74e7c4d1aa70c54fe79d23938cb249d08c0804ad764ab97d5c587cbbad2"},
+]
+
+[package.dependencies]
+dpath = ">=2.1,<3.0"
+plac = ">=1.3.4,<2.0.0"
+pyyaml = ">=6.0,<7.0"
+
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10"
-content-hash = "44a87c3bce3f32f3fb441d5cbadc9234d4166a0b53d620bee9d05f0152c4bc06"
+content-hash = "bbc050a990f755d47cf6e05895f96a1f59014f5ee417cc79db3f017e80e8b8bf"
