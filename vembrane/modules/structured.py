@@ -54,7 +54,6 @@ def process_vcf(
     vcf: VCFReader,
     template: str,
     ann_key: str,
-
 ) -> ConvertedRecords:
     env = ModifiableEnvironment(ann_key, vcf.header)
     for idx, record in enumerate(vcf):
@@ -86,7 +85,7 @@ def write_records_yaml(output_file: TextIOWrapper, records: ConvertedRecords):
         head, tail = yaml.dump(record).split("\n", 1)
         head = f"- {head}"
         tail = textwrap.indent(tail, "  ")
-        
+
         print(head, file=output_file)
         print(tail, file=output_file)
 
@@ -115,7 +114,7 @@ def execute(args):
             raise VembraneError(
                 f"Unsupported file format: {args.output}, only .json, .jsonl and .yaml are supported."
             )
-        
+
     if args.output_fmt == "jsonl":
         write_records = write_records_jsonl
     elif args.output_fmt == "json":
@@ -123,9 +122,12 @@ def execute(args):
     elif args.output_fmt == "yaml":
         write_records = write_records_yaml
 
-    with create_reader(
-        args.vcf,
-        backend=args.backend,
-        overwrite_number=overwrite_number,
-    ) as reader, smart_open(args.output, mode="w") as writer:
+    with (
+        create_reader(
+            args.vcf,
+            backend=args.backend,
+            overwrite_number=overwrite_number,
+        ) as reader,
+        smart_open(args.output, mode="w") as writer,
+    ):
         write_records(writer, process_vcf(reader, template, args.annotation_key))

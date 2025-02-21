@@ -35,7 +35,13 @@ def idfn(val):
     product(
         (
             case_path.joinpath(d)
-            for case_path in [FILTER_CASES, TABLE_CASES, TAG_CASES, ANNOTATE_CASES, STRUCTURED_CASES]
+            for case_path in [
+                FILTER_CASES,
+                TABLE_CASES,
+                TAG_CASES,
+                ANNOTATE_CASES,
+                STRUCTURED_CASES,
+            ]
             for d in os.listdir(case_path)
             if not d.startswith(".")
         ),
@@ -129,7 +135,12 @@ def test_command(testcase: os.PathLike, backend: Backend):
                         e_out = yaml.safe_load(e)
                 assert t_out == e_out
             else:
-                assert args.command in {"filter", "table", "tag", "structured"}, "Unknown subcommand"
+                assert args.command in {
+                    "filter",
+                    "table",
+                    "tag",
+                    "structured",
+                }, "Unknown subcommand"
 
 
 def construct_parser():

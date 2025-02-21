@@ -276,7 +276,7 @@ class EvalEnvironment(Environment):
         if self._has_ann:
             self._annotation.update(self.idx, self.record, annotation)
         return self._func()
-    
+
 
 class ModifiableEnvironment(Environment):
     def __setitem__(self, key, value):
