@@ -37,9 +37,18 @@ vembrane = 'vembrane.cli:main'
 
 [dependency-groups]
 dev = [
+    "mypy>=1.15.0",
     "pre-commit~=3.8.0",
     "pytest~=8.3.2",
     "ruff~=0.5.6",
+]
+test = [
+    "pytest",
+    "pytest-sugar",
+]
+lint = [
+    "ruff",
+    "mypy",
 ]
 
 [tool.ruff]
@@ -111,3 +120,49 @@ docstring-code-format = false
 # enabled.
 docstring-code-line-length = "dynamic"
 
+[tool.tox]
+requires = ["tox>=4.23"]
+env_list = ["format-check", "lints", "mypy", "3.10", "3.11", "3.12", "3.13"]
+allowlist_externals = ["pytest", "ruff"]
+isolated_build = true
+
+[tool.tox.env_run_base]
+runner = "uv-venv-lock-runner"
+description = "run unit tests"
+dependency_groups = ["test"]
+commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
+
+[tool.tox.env."format-check"]
+runner = "uv-venv-lock-runner"
+skip_install = true
+dependency_groups = ["lint"]
+commands = [["ruff", "format", "--check"]]
+
+[tool.tox.env."lints"]
+runner = "uv-venv-lock-runner"
+skip_install = true
+dependency_groups = ["lint"]
+commands = [["ruff", "check"]]
+
+[tool.tox.env."mypy"]
+runner = "uv-venv-lock-runner"
+skip_install = false
+dependency_groups = ["lint"]
+commands = [["mypy"]]
+
+[tool.uv]
+dev-dependencies = [
+    "mypy>=1.13.0",
+    "ruff~=0.5.6",
+    "tox>=4.23.2",
+    "tox-uv>=1.20.1",
+]
+
+[tool.mypy]
+python_version = "3.10"
+packages = "vembrane"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
