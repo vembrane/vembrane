@@ -35,11 +35,11 @@ dependencies = [
 vembrane = 'vembrane.cli:main'
 
 
-[optional-dependencies]
+[dependency-groups]
 dev = [
-    "ruff~=0.5.6",
+    "pre-commit~=3.8.0",
     "pytest~=8.3.2",
-    "pre-commit~=3.8.0"
+    "ruff~=0.5.6",
 ]
 
 [tool.ruff]
