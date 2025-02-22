@@ -1,6 +1,6 @@
 import ast
 import sys
-from types import CodeType, MappingProxyType
+from types import CodeType
 from typing import Any
 
 from .ann_types import ANN_TYPER, NA, MoreThanOneAltAlleleError, NvFloat, NvInt
@@ -13,7 +13,7 @@ from .globals import _explicit_clear, allowed_globals, custom_functions
 class NoValueDict:
     def __contains__(self, item) -> bool:
         try:
-            value = self[item]
+            value = self[item]  # type: ignore
         except KeyError:
             return False
         return value is not NA
@@ -104,8 +104,10 @@ class Environment(dict):
         self,
         ann_key: str,
         header: VCFHeader,
-        auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        auxiliary: dict[str, set[str]] | None = None,
     ) -> None:
+        if auxiliary is None:
+            auxiliary = {}
         self._ann_key: str = ann_key
         self._annotation: Annotation = Annotation(ann_key, header)
         self._globals: dict[str, Any] = {}
@@ -149,7 +151,7 @@ class Environment(dict):
 
         # At the moment, only INFO and FORMAT records are checked
         self._empty_globals = {name: UNSET for name in self._getters}
-        self.record: VCFRecord = None
+        self.record: VCFRecord = None  # type: ignore
         self.idx: int = -1
         self.aux = auxiliary
 
@@ -191,7 +193,7 @@ class Environment(dict):
     def _get_alleles(self) -> tuple[str, ...]:
         alleles = self._alleles
         if not alleles:
-            alleles = self._alleles = self.record.alleles
+            alleles = self._alleles = self.record.alleles  # type: ignore
         return alleles
 
     def _get_ref(self) -> str:
@@ -290,7 +292,7 @@ class FuncWrappedExpressionEnvironment(SourceEnvironment):
         expression: str,
         ann_key: str,
         header: VCFHeader,
-        auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        auxiliary: dict[str, set[str]] | None = None,
         evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
         func_str: str = evaluation_function_template.format(expression=expression)

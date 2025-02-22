@@ -2,7 +2,6 @@ import csv
 import sys
 from collections.abc import Iterator
 from sys import stderr
-from types import MappingProxyType
 from typing import Any
 
 import asttokens
@@ -88,10 +87,15 @@ def tableize_vcf(
     vcf: VCFReader,
     expression: str,
     ann_key: str,
-    overwrite_number: dict[str, dict[str, str]] = MappingProxyType({}),
+    overwrite_number: dict[str, dict[str, str]] | None = None,
     long: bool = False,
-    auxiliary: dict[str, set[str]] = MappingProxyType({}),
+    auxiliary: dict[str, set[str]] | None = None,
 ) -> Iterator[tuple]:
+    if overwrite_number is None:
+        overwrite_number = {}
+    if auxiliary is None:
+        auxiliary = {}
+
     kwargs: dict[str, Any] = dict(auxiliary=auxiliary)
     if long:
         kwargs["evaluation_function_template"] = (

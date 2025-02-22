@@ -112,9 +112,15 @@ class VCFRecord:
     def contig(self) -> str:
         raise NotImplementedError
 
+    def chrom(self) -> str:
+        return self.contig
+
     @abstractproperty
     def position(self) -> int:
         raise NotImplementedError
+
+    def start(self) -> int:
+        return self.position
 
     @abstractproperty
     def stop(self) -> int:
@@ -125,8 +131,8 @@ class VCFRecord:
         raise NotImplementedError
 
     @property
-    def alleles(self) -> Tuple[str]:
-        return (self.reference_allele, *self.alt_alleles)
+    def alleles(self) -> Tuple[str, ...]:
+        return self.reference_allele, *self.alt_alleles
 
     @abstractproperty
     def reference_allele(self) -> str:
@@ -149,7 +155,7 @@ class VCFRecord:
         raise NotImplementedError
 
     @abstractproperty
-    def formats(self) -> VCFRecordFormat:
+    def formats(self) -> "VCFRecordFormats":
         raise NotImplementedError
 
     @abstractproperty
@@ -181,7 +187,9 @@ class VCFRecord:
     def __str__(self):
         return self._raw_record.__str__()
 
-    def __eq__(self, other: "VCFRecord"):
+    def __eq__(self, other: object):
+        if not isinstance(other, VCFRecord):
+            return NotImplemented
         return all(
             (
                 self.contig == other.contig,
@@ -195,11 +203,11 @@ class VCFRecord:
                 # i.e. None == None is True
                 all(
                     (self.info.get(key) or None) == (other.info.get(key) or None)
-                    for key in self.header.infos
+                    for key in self.header.infos  # type: ignore
                 ),
                 all(
                     (self.formats.get(key) or None) == (other.formats.get(key) or None)
-                    for key in self.header.formats
+                    for key in self.header.formats  # type: ignore
                 ),
             ),
         )
@@ -236,6 +244,10 @@ class VCFReader:
 
     def __iter__(self):
         return self
+
+    @property
+    def file(self):
+        return self._file
 
     @abstractmethod
     def __next__(self) -> VCFRecord:
@@ -275,6 +287,14 @@ class VCFHeader:
     def records(self):
         raise NotImplementedError
 
+    @abstractproperty
+    def infos(self) -> VCFRecordInfo:
+        raise NotImplementedError
+
+    @abstractproperty
+    def formats(self) -> VCFRecordFormats:
+        raise NotImplementedError
+
     @abstractmethod
     def add_meta(
         self,
@@ -290,6 +310,10 @@ class VCFHeader:
 
     @abstractmethod
     def add_filter(self, id: str, description: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def contains_generic(self, key: str):
         raise NotImplementedError
 
 
