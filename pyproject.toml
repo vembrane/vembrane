@@ -1,33 +1,46 @@
 [build-system]
-requires = ["poetry-core>=1.8.0"]
-build-backend = "poetry.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry]
+[project]
 name = "vembrane"
 version = "2.0.0"
 description = "Filter VCF/BCF files with Python expressions."
-authors = ["Till Hartmann", "Christopher Schröder", "Johannes Köster", "Jan Forster", "Marcel Bargull", "Felix Mölder", "Elias Kuthe", "David Lähnemann"]
+authors = [
+    { name = "Till Hartmann" },
+    { name = "Christopher Schröder" },
+    { name = "Johannes Köster" },
+    { name = "Jan Forster" },
+    { name = "Marcel Bargull" },
+    { name = "Felix Mölder" },
+    { name = "Elias Kuthe" },
+    { name = "David Lähnemann" }
+]
+requires-python = ">=3.10"
 readme = "README.md"
 homepage = "https://github.com/vembrane/vembrane"
 repository = "https://github.com/vembrane/vembrane"
 
-[tool.poetry.scripts]
+dependencies = [
+  "pysam~=0.22.1",
+  "cyvcf2~=0.31.1",
+  "pyyaml~=6.0.2",
+  "asttokens~=2.4.1",
+  "numpy~=2.0.1",
+  "intervaltree~=3.1.0",
+  "yte~=1.6.0"
+]
+
+[project.scripts]
 vembrane = 'vembrane.cli:main'
 
-[tool.poetry.dependencies]
-python = ">=3.12"
-pysam = "^0.22.1"
-cyvcf2 = "^0.31.1"
-pyyaml = "^6.0.2"
-asttokens = "^2.4.1"
-numpy = { version = "^2.0.1", python = ">=3.10" }
-intervaltree = "^3.1.0"
-yte = "^1.6.0"
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.5.6"
-pytest = "^8.3.2"
-pre-commit = "^3.8.0"
+[optional-dependencies]
+dev = [
+    "ruff~=0.5.6",
+    "pytest~=8.3.2",
+    "pre-commit~=3.8.0"
+]
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
@@ -77,7 +90,6 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 [tool.ruff.lint.flake8-quotes]
 docstring-quotes = "double"
 
-
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
@@ -98,3 +110,4 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
