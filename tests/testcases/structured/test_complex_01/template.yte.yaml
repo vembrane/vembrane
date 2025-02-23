@@ -7,8 +7,8 @@ variant:
   ref: ?REF
   alt: ?ALT
   ?if ANN:
-    ?if ANN["GENE"]:
-      gene: ?ANN["GENE"]
+    ?if ANN["Gene"]:
+      gene: ?ANN["Gene"]
     impact: ?ANN["IMPACT"]
   ?if samples_with_af:
     samples:
