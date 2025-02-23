@@ -71,7 +71,6 @@ def process_vcf(
         else:
             for annotation in annotations:
                 env.update_annotation(annotation)
-                breakpoint()
                 converted = yte.process_yaml(template, variables=env)
                 yield converted
 
