@@ -1,0 +1,17 @@
+__variables__:
+  samples_with_af: "[sample for sample in SAMPLES if FORMAT['AF'][sample]]"
+
+variant:
+  chrom: ?CHROM
+  pos: ?POS
+  ref: ?REF
+  alt: ?ALT
+  ?if ANN:
+    ?if ANN["GENE"]:
+      gene: ?ANN["GENE"]
+    impact: ?ANN["IMPACT"]
+  ?if samples_with_af:
+    samples:
+      ?for sample in samples_with_af:
+        ?sample:
+          allelic_fraction: ?f"{AF[sample]:.0%}"

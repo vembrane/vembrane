@@ -1,0 +1,20 @@
+- variant:
+    chrom: "1"
+    pos: 26696985
+    ref: C
+    alt: T
+    impact: low
+    gene: ARID1A
+    samples:
+      tumor:
+        5%
+- variant:
+    chrom: "1"
+    pos: 26696986
+    ref: C
+    alt: T
+    impact: low
+    gene: ARID1A
+    samples:
+      tumor:
+        5%

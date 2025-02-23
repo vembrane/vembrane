@@ -6,6 +6,7 @@ from typing import Any, Iterator
 import yaml
 import yte
 
+from vembrane.ann_types import NA
 from vembrane.backend.base import VCFReader
 from vembrane.common import add_common_arguments, create_reader, smart_open
 from vembrane.errors import VembraneError
@@ -62,8 +63,17 @@ def process_vcf(
         # work around the float32 issue, see the AST parsing in
         # EvalEnvironment.__init__
         # This needs however an extension of YTE internals.
-        converted = yte.process_yaml(template, variables=env)
-        yield converted
+
+        annotations = record.info[ann_key]
+        if annotations is NA:
+            converted = yte.process_yaml(template, variables=env)
+            yield converted
+        else:
+            for annotation in annotations:
+                env.update_annotation(annotation)
+                breakpoint()
+                converted = yte.process_yaml(template, variables=env)
+                yield converted
 
 
 def write_records_jsonl(output_file: TextIOWrapper, records: ConvertedRecords):

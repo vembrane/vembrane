@@ -311,6 +311,61 @@ Exemplary invocation: `vembrane annotate example.yaml example.bcf > annotated.vc
 
 Internally for each vcf record the overlapping regions of the annotation file are determined and stored in `DATA`. The expression may then access the `DATA` object and its columns by the columns names to generate a single or multiple values of cardinality `number` of type `type`. These values are stored in the new annotation entry under the name `vcf_name` and with header description `description`.
 
+## `vembrane structured`
+
+The `structured` subcommand allows you to convert VCF records into structured data formats such as JSON, JSONL, or YAML based on a [YTE template](https://yte-template-engine.github.io).
+
+### Usage
+```
+usage: vembrane structured [options] template [input vcf]
+
+options:
+  -h, --help            show this help message and exit
+  --annotation-key FIELDNAME, -k FIELDNAME
+                        The INFO key for the annotation field. Defaults to "ANN".
+  --output OUTPUT, -o OUTPUT
+                        Output file. If not specified, output is written to STDOUT.
+  --output-fmt {json,jsonl,yaml}
+                        Output format. If not specified, can be automatically determined from the --output file extension.
+```
+
+### Examples
+
+* Convert VCF records to JSON format using a YTE template:
+  ```sh
+  vembrane structured template.yml input.vcf --output output.json
+  ```
+
+* Convert VCF records to YAML format and write to STDOUT:
+  ```sh
+  vembrane structured template.yml input.vcf --output-fmt yaml
+  ```
+
+* Convert VCF records to JSONL format and write to a file:
+  ```sh
+  vembrane structured template.yml input.vcf --output output.jsonl
+  ```
+
+In the template file, you can define the desired structure and expressions to retrieve data from the VCF record.
+The YTE template thereby models the desired structure into which each VCF record shall be converted.
+Inside of the template, VCF record specific variable are accessible analogous to expressions in other vembrane commands, for example:
+
+```yaml
+variant:
+  chromosome: ?CHROM
+  position: ?POS
+  reference_allele: ?REF
+  alternative_allele: ?ALT
+  ?if ANN:
+    ?if ANN["GENE"]:
+      gene: ?ANN["GENE"]
+    impact: ?ANN["IMPACT"]
+```
+
+As can be seen, YTE supports the specification of Python expressions for templating.
+This works by prefixing strings with `?`.
+More details and examples can be found in the [YTE documentation](https://yte-template-engine.github.io).
+
 ## Citation
 Check the "Cite this repository" entry in the sidebar for citation options.
 

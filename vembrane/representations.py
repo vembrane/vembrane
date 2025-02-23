@@ -144,6 +144,9 @@ class Environment(dict):
     def update_data(self, data):
         self._globals["DATA"] = data
 
+    def update_annotation(self, annotation):
+        self._annotation.update(self.idx, self.record, annotation)
+
     def _get_chrom(self) -> str:
         value = self.record.contig
         self._globals["CHROM"] = value
@@ -205,6 +208,7 @@ class Environment(dict):
         return value
 
     def __getitem__(self, item):
+        print(item)
         if item == self._ann_key:
             return self._annotation
         value = self._globals[item]
@@ -266,7 +270,7 @@ class EvalEnvironment(Environment):
 
     def evaluate(self, annotation: str = "") -> bool:
         if self._has_ann:
-            self._annotation.update(self.idx, self.record, annotation)
+            self.update_annotation(annotation)
         keep = self._func()
         if not isinstance(keep, bool):
             raise NonBoolTypeError(keep)
@@ -274,7 +278,7 @@ class EvalEnvironment(Environment):
 
     def table(self, annotation: str = "") -> tuple:
         if self._has_ann:
-            self._annotation.update(self.idx, self.record, annotation)
+            self.update_annotation(annotation)
         return self._func()
 
 
