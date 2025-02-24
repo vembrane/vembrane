@@ -13,7 +13,7 @@ from ..common import (
     create_reader,
     create_writer,
 )
-from ..representations import EvalEnvironment
+from ..representations import FuncWrappedExpressionEnvironment
 
 
 def add_subcommmand(subparsers):
@@ -68,7 +68,7 @@ def annotate_vcf(
     ann_data,
     config: dict,
 ) -> Iterator[VCFRecord]:
-    env = EvalEnvironment(expression, ann_key, vcf.header)
+    env = FuncWrappedExpressionEnvironment(expression, ann_key, vcf.header)
 
     config_chrom_column: str = config["annotation"]["columns"]["chrom"]
     config_start_column: str = config["annotation"]["columns"]["start"]
@@ -110,7 +110,7 @@ def annotate_vcf(
             if len(indices):
                 env.update_data(current_ann_data[(np.array(indices))])
                 env.update_from_record(idx, record)
-                ann_values = env.table()
+                ann_values = env.table_row()
 
                 for v, expression_value in zip(
                     (x["value"] for x in config["annotation"]["values"]),

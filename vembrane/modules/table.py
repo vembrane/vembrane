@@ -18,7 +18,7 @@ from ..common import (
 )
 from ..errors import HeaderWrongColumnNumberError, VembraneError
 from ..globals import allowed_globals
-from ..representations import EvalEnvironment
+from ..representations import FuncWrappedExpressionEnvironment
 from .filter import DeprecatedAction
 
 
@@ -99,7 +99,7 @@ def tableize_vcf(
         )
     else:
         expression = f"({expression})"
-    env = EvalEnvironment(expression, ann_key, vcf.header, **kwargs)
+    env = FuncWrappedExpressionEnvironment(expression, ann_key, vcf.header, **kwargs)
 
     record: VCFRecord
     for idx, record in enumerate(vcf):
@@ -108,14 +108,14 @@ def tableize_vcf(
             annotations = env.get_record_annotations(idx, record)
             for annotation in annotations:
                 if long:
-                    yield from env.table(annotation)
+                    yield from env.table_row(annotation)
                 else:
-                    yield env.table(annotation)
+                    yield env.table_row(annotation)
         else:
             if long:
-                yield from env.table()
+                yield from env.table_row()
             else:
-                yield env.table()
+                yield env.table_row()
 
 
 def generate_for_each_sample_expressions(s: str, vcf: VCFReader) -> list[str]:

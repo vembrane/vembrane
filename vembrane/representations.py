@@ -245,23 +245,20 @@ class Environment(dict):
         return self.aux
 
 
-class EvalEnvironment(Environment):
+class SourceEnvironment(Environment):
     def __init__(
         self,
-        expression: str,
+        source: str,
         ann_key: str,
         header: VCFHeader,
         auxiliary: dict[str, set[str]] = MappingProxyType({}),
-        evaluation_function_template: str = "lambda: {expression}",
-    ) -> None:
+    ):
         super().__init__(ann_key, header, auxiliary)
 
         self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
-            for node in ast.walk(ast.parse(expression))
+            for node in ast.walk(ast.parse(source))
         )
-
-        func_str: str = evaluation_function_template.format(expression=expression)
 
         # The VCF specification only allows 32bit floats.
         # Comparisons such as `INFO["some_float"] > CONST` may yield unexpected results,
@@ -272,23 +269,35 @@ class EvalEnvironment(Environment):
         # compilers should follow this standard (https://stackoverflow.com/a/17904539):
 
         # parse the expression, obtaining an AST
-        expression_ast = ast.parse(func_str, mode="eval")
+        source_ast = ast.parse(source, mode="eval")
 
         # wrap each float constant in numpy.float32
-        expression_ast = WrapFloat32Visitor().visit(expression_ast)
+        source_ast = WrapFloat32Visitor().visit(source_ast)
 
         # housekeeping
-        expression_ast = ast.fix_missing_locations(expression_ast)
+        source_ast = ast.fix_missing_locations(source_ast)
 
         # compile the now-fixed code-tree
-        func: CodeType = compile(expression_ast, filename="<string>", mode="eval")
-
-        self._func = eval(func, self, {})
+        self.compiled: CodeType = compile(source_ast, filename="<string>", mode="eval")
 
     def expression_annotations(self):
         return self._has_ann
 
-    def evaluate(self, annotation: str = "") -> bool:
+
+class FuncWrappedExpressionEnvironment(SourceEnvironment):
+    def __init__(
+        self,
+        expression: str,
+        ann_key: str,
+        header: VCFHeader,
+        auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        evaluation_function_template: str = "lambda: {expression}",
+    ) -> None:
+        func_str: str = evaluation_function_template.format(expression=expression)
+        super().__init__(func_str, ann_key, header, auxiliary)
+        self._func = eval(self.compiled, self, {})
+
+    def is_true(self, annotation: str = "") -> bool:
         if self._has_ann:
             self.update_annotation(annotation)
         keep = self._func()
@@ -296,7 +305,7 @@ class EvalEnvironment(Environment):
             raise NonBoolTypeError(keep)
         return keep
 
-    def table(self, annotation: str = "") -> tuple:
+    def table_row(self, annotation: str = "") -> tuple:
         if self._has_ann:
             self.update_annotation(annotation)
         return self._func()

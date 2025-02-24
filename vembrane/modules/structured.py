@@ -12,7 +12,7 @@ from vembrane.common import add_common_arguments, create_reader, smart_open
 from vembrane.errors import VembraneError
 from vembrane.representations import (
     Annotation,
-    EvalEnvironment,
+    SourceEnvironment,
 )
 
 
@@ -58,7 +58,7 @@ class CodeHandler(yte.CodeHandler):
     def __init__(self, ann_key: str, header: VCFHeader):
         self.ann_key = ann_key
         self.header = header
-        self._envs: Dict[str, EvalEnvironment] = {}
+        self._envs: Dict[str, SourceEnvironment] = {}
         self._record = None
         self._record_idx = None
         self._annotation = None
@@ -79,7 +79,7 @@ class CodeHandler(yte.CodeHandler):
     def _env(self, expr: str):
         env = self._envs.get(expr)
         if env is None:
-            env = EvalEnvironment(expr, self.ann_key, self.header)
+            env = SourceEnvironment(expr, self.ann_key, self.header)
             env.update_from_record(self._record_idx, self._record)
             if self._annotation is not None:
                 env.update_annotation(self._annotation)
@@ -88,11 +88,11 @@ class CodeHandler(yte.CodeHandler):
 
     def eval(self, expr: str, variables: Dict[str, Any]):
         env = self._env(expr)
-        return eval(expr, variables, env)
+        return eval(env.compiled, variables, env)
 
     def exec(self, source: str, variables: Dict[str, Any]):
         env = self._env(source)
-        return exec(source, variables, env)
+        return exec(env.compiled, variables, env)
 
 
 class ValueHandler(yte.ValueHandler):
