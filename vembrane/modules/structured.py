@@ -88,11 +88,11 @@ class CodeHandler(yte.CodeHandler):
 
     def eval(self, expr: str, variables: Dict[str, Any]):
         env = self._env(expr)
-        return eval(env.compiled, variables, env)
+        return eval(expr, variables, env)
 
     def exec(self, source: str, variables: Dict[str, Any]):
         env = self._env(source)
-        return exec(env.compiled, variables, env)
+        return exec(source, variables, env)
 
 
 class ValueHandler(yte.ValueHandler):
