@@ -219,8 +219,7 @@ def custom_functions(env) -> dict[str, Callable]:
             {},
         ),
         "has_var": eval(
-            "lambda sample: "
-            "any(x != 0 for x in FORMAT['GT'][sample] if x is not NA)",
+            "lambda sample: any(x != 0 for x in FORMAT['GT'][sample] if x is not NA)",
             env,
             {},
         ),

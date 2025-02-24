@@ -29,7 +29,7 @@ dependencies = [
   "asttokens~=2.4.1",
   "numpy~=2.0.1",
   "intervaltree~=3.1.0",
-  "yte~=1.6.0"
+  "yte~=1.6.0",
 ]
 
 [project.scripts]
@@ -41,7 +41,7 @@ dev = [
     "mypy>=1.15.0",
     "pre-commit~=3.8.0",
     "pytest~=8.3.2",
-    "ruff~=0.5.6",
+    "ruff~=0.9.7",
 ]
 test = [
     "pytest",
@@ -88,7 +88,7 @@ exclude = [
 ]
 line-length = 88
 indent-width = 4
-target-version = "py310"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "B", "COM", "I"]
@@ -127,7 +127,7 @@ docstring-code-line-length = "dynamic"
 
 [tool.tox]
 requires = ["tox>=4.23"]
-env_list = ["format-check", "lints", "mypy", "3.10", "3.11", "3.12", "3.13"]
+env_list = ["format-check", "lints", "mypy", "3.12", "3.13"]
 allowlist_externals = ["pytest", "ruff"]
 isolated_build = true
 
@@ -159,7 +159,7 @@ commands = [["mypy"]]
 dev-dependencies = [
     "mypy>=1.13.0",
     "types-pyyaml>=6.0.12.20240917",
-    "ruff~=0.5.6",
+    "ruff~=0.9.7",
     "tox>=4.23.2",
     "tox-uv>=1.20.1",
 ]
