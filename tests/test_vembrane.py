@@ -19,6 +19,7 @@ TABLE_CASES = Path(__file__).parent.joinpath("testcases/table")
 TAG_CASES = Path(__file__).parent.joinpath("testcases/tag")
 ANNOTATE_CASES = Path(__file__).parent.joinpath("testcases/annotate")
 STRUCTURED_CASES = Path(__file__).parent.joinpath("testcases/structured")
+FHIR_CASES = Path(__file__).parent.joinpath("testcases/fhir")
 
 
 def test_version():
@@ -41,6 +42,7 @@ def idfn(val):
                 TAG_CASES,
                 ANNOTATE_CASES,
                 STRUCTURED_CASES,
+                FHIR_CASES,
             ]
             for d in os.listdir(case_path)
             if not d.startswith(".")
@@ -119,9 +121,13 @@ def test_command(testcase: os.PathLike, backend: Backend):
                 with open(expected) as e:
                     e_out = e.read()
                 assert t_out == e_out
-            elif args.command == "structured":
+            elif args.command == "structured" or args.command == "fhir":
                 expected = (path / "expected").with_suffix(f".{config['output_fmt']}")
-                structured.execute(args)
+
+                if args.command == "structured":
+                    structured.execute(args)
+                else:
+                    fhir.execute(args)
 
                 with open(expected) as e:
                     if config["output_fmt"] == "jsonl":
@@ -134,9 +140,6 @@ def test_command(testcase: os.PathLike, backend: Backend):
                         t_out = yaml.safe_load(tmp_out)
                         e_out = yaml.safe_load(e)
                 assert t_out == e_out
-            elif args.command == "fhir":
-                fhir.execute(args)
-
             else:
                 assert args.command in {
                     "filter",

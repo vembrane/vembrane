@@ -1,2 +1,5 @@
 function: fhir
 annotation_key: ANN
+sample: tumor
+output_fmt: yaml
+profile: mii_molgen
