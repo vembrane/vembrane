@@ -1,4 +1,5 @@
 import ast
+import sys
 from types import CodeType, MappingProxyType
 from typing import Any
 
@@ -33,6 +34,7 @@ class Annotation(NoValueDict, DefaultGet):
         self._record: VCFRecord | None = None
         self._annotation_data: list[str] = []
         self._data: dict[str, Any] = {}
+        self._ann_key = ann_key
         annotation_keys = get_annotation_keys(header, ann_key)
         self._ann_conv = {
             entry.name: (ann_idx, entry.convert)
@@ -44,6 +46,22 @@ class Annotation(NoValueDict, DefaultGet):
         self._record = record
         self._data.clear()
         self._annotation_data = split_annotation_entry(annotation)
+
+    def get_record_annotations(self, idx: int, record: VCFRecord) -> list[str]:
+        # if the expression contains a reference to the ANN field
+        # get all annotations from the record.info field
+        # (or supply an empty ANN value if the record has no ANN field)
+        annotations = record.info[self._ann_key]
+        if annotations is NA:
+            num_ann_entries = len(self._ann_conv.keys())
+            empty = "|" * num_ann_entries
+            print(
+                f"No ANN field found in record {idx}, "
+                f"replacing with NAs (i.e. 'ANN={empty}')",
+                file=sys.stderr,
+            )
+            annotations = [empty]
+        return annotations
 
     def __getitem__(self, item):
         try:
@@ -147,6 +165,9 @@ class Environment(dict):
     def update_annotation(self, annotation):
         self._annotation.update(self.idx, self.record, annotation)
 
+    def get_record_annotations(self, idx: int, record: VCFRecord) -> list[str]:
+        return self._annotation.get_record_annotations(idx, record)
+
     def _get_chrom(self) -> str:
         value = self.record.contig
         self._globals["CHROM"] = value
@@ -208,7 +229,6 @@ class Environment(dict):
         return value
 
     def __getitem__(self, item):
-        print(item)
         if item == self._ann_key:
             return self._annotation
         value = self._globals[item]

@@ -1,16 +1,19 @@
 import json
 import textwrap
 from io import TextIOWrapper
-from typing import Any, Iterator
+from typing import Any, Dict, Iterator
 
 import yaml
 import yte
 
 from vembrane.ann_types import NA
-from vembrane.backend.base import VCFReader
+from vembrane.backend.base import VCFHeader, VCFReader
 from vembrane.common import add_common_arguments, create_reader, smart_open
 from vembrane.errors import VembraneError
-from vembrane.representations import ModifiableEnvironment
+from vembrane.representations import (
+    Annotation,
+    EvalEnvironment,
+)
 
 
 def add_subcommand(subparsers):
@@ -51,28 +54,80 @@ def add_subcommand(subparsers):
 ConvertedRecords = Iterator[list[Any] | dict[Any] | Any]
 
 
+class CodeHandler(yte.CodeHandler):
+    def __init__(self, ann_key: str, header: VCFHeader):
+        self.ann_key = ann_key
+        self.header = header
+        self._envs: Dict[str, EvalEnvironment] = {}
+        self._record = None
+        self._record_idx = None
+        self._annotation = None
+
+    def update_from_record(self, idx: int, record: VCFReader):
+        self._record = record
+        self._record_idx = idx
+        for env in self._envs.values():
+            env.update_from_record(idx, record)
+
+    def update_from_annotation(self, annotation: str | None):
+        self._annotation = annotation
+        if annotation is not None:
+            for env in self._envs.values():
+                if env.expression_annotations():
+                    env.update_annotation(annotation)
+
+    def _env(self, expr: str):
+        env = self._envs.get(expr)
+        if env is None:
+            env = EvalEnvironment(expr, self.ann_key, self.header)
+            env.update_from_record(self._record_idx, self._record)
+            if self._annotation is not None:
+                env.update_annotation(self._annotation)
+            self._envs[expr] = env
+        return env
+
+    def eval(self, expr: str, variables: Dict[str, Any]):
+        env = self._env(expr)
+        return eval(expr, variables, env)
+
+    def exec(self, source: str, variables: Dict[str, Any]):
+        env = self._env(source)
+        return exec(source, variables, env)
+
+
+class ValueHandler(yte.ValueHandler):
+    def postprocess_atomic_value(self, value: Any) -> Any:
+        processed = super().postprocess_atomic_value(value)
+        if processed is NA:
+            return None
+        return processed
+
+
 def process_vcf(
     vcf: VCFReader,
     template: str,
     ann_key: str,
 ) -> ConvertedRecords:
-    env = ModifiableEnvironment(ann_key, vcf.header)
+    code_handler = CodeHandler(ann_key, vcf.header)
+    value_handler = ValueHandler()
+
+    annotation = Annotation(ann_key, vcf.header)
+
     for idx, record in enumerate(vcf):
-        env.update_from_record(idx, record)
+        code_handler.update_from_record(idx, record)
+        annotations = annotation.get_record_annotations(idx, record)
+
         # TODO: analogous to EvalEnvironment, we should implement a way to
         # work around the float32 issue, see the AST parsing in
         # EvalEnvironment.__init__
         # This needs however an extension of YTE internals.
 
-        annotations = record.info[ann_key]
-        if annotations is NA:
-            converted = yte.process_yaml(template, variables=env)
+        for ann in annotations:
+            code_handler.update_from_annotation(ann)
+            converted = yte.process_yaml(
+                template, code_handler=code_handler, value_handler=value_handler
+            )
             yield converted
-        else:
-            for annotation in annotations:
-                env.update_annotation(annotation)
-                converted = yte.process_yaml(template, variables=env)
-                yield converted
 
 
 def write_records_jsonl(output_file: TextIOWrapper, records: ConvertedRecords):

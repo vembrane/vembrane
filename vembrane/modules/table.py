@@ -7,7 +7,6 @@ from typing import Any
 
 import asttokens
 
-from ..ann_types import NA
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
     AppendKeyValuePair,
@@ -106,19 +105,7 @@ def tableize_vcf(
     for idx, record in enumerate(vcf):
         env.update_from_record(idx, record)
         if env.expression_annotations():
-            # if the expression contains a reference to the ANN field
-            # get all annotations from the record.info field
-            # (or supply an empty ANN value if the record has no ANN field)
-            annotations = record.info[ann_key]
-            if annotations is NA:
-                num_ann_entries = len(env._annotation._ann_conv.keys())
-                empty = "|" * num_ann_entries
-                print(
-                    f"No ANN field found in record {idx}, "
-                    f"replacing with NAs (i.e. 'ANN={empty}')",
-                    file=sys.stderr,
-                )
-                annotations = [empty]
+            annotations = env.get_record_annotations(idx, record)
             for annotation in annotations:
                 if long:
                     yield from env.table(annotation)

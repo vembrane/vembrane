@@ -364,7 +364,41 @@ variant:
 
 As can be seen, YTE supports the specification of Python expressions for templating.
 This works by prefixing strings with `?`.
-More details and examples can be found in the [YTE documentation](https://yte-template-engine.github.io).
+More YTE details and examples can be found in the [YTE documentation](https://yte-template-engine.github.io).
+
+A more complex example, leveraging most capabilities of YTE, is the following:
+
+```yaml
+__variables__:
+  samples_with_af: "?[sample for sample in SAMPLES if FORMAT['AF'][sample] is not NA]"
+
+variant:
+  chrom: ?CHROM
+  pos: ?POS
+  ref: ?REF
+  alt: ?ALT
+  qual: ?QUAL
+  ?if ID is not None:
+    id: ?ID
+  ?if INFO["SVLEN"] is not NA:
+    svlen: ?INFO["SVLEN"]
+  ?if ANN:
+    ?if ANN["SYMBOL"]:
+      gene: ?ANN["SYMBOL"]
+    impact: ?ANN["IMPACT"]
+  ?if samples_with_af:
+    samples:
+      ?for sample in samples_with_af:
+        ?sample:
+          allelic_fraction: ?f"{FORMAT['AF'][sample]:.0%}"
+```
+
+* We define a variable at the top, collecting all samples having a value in the AF format field.
+* If the variant record has a value for ID, this is included in the output.
+* If the variant record has a value for INFO/SVLEN, this is included in the output. Note that unlike all the primary optional fields like ID, QUAL etc., missing values in INFO and FORMAT are represented as `NA` instead of `None`.
+* If the record has annotation, we show gene symbol (if present) and impact.
+* If there is at least one sample with allele frequency (`AF`) information, we show this in a substructure with an entry for each such sample.
+
 
 ## Citation
 Check the "Cite this repository" entry in the sidebar for citation options.

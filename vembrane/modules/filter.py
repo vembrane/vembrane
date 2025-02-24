@@ -9,7 +9,6 @@ from types import MappingProxyType
 import yaml
 
 from .. import __version__
-from ..ann_types import NA
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
     AppendKeyValuePair,
@@ -132,19 +131,7 @@ def _test_and_update_record(
 ) -> tuple[VCFRecord, bool]:
     env.update_from_record(idx, record)
     if env.expression_annotations():
-        # if the expression contains a reference to the ANN field
-        # get all annotations from the record.info field
-        # (or supply an empty ANN value if the record has no ANN field)
-        annotations = record.info[ann_key]
-        if annotations is NA:
-            num_ann_entries = len(env._annotation._ann_conv.keys())
-            empty = "|" * num_ann_entries
-            print(
-                f"No ANN field found in record {idx}, "
-                f"replacing with NAs (i.e. 'ANN={empty}')",
-                file=sys.stderr,
-            )
-            annotations = [empty]
+        annotations = env.get_record_annotations(idx, record)
 
         #  … and only keep the annotations where the expression evaluates to true
         if keep_unmatched:
