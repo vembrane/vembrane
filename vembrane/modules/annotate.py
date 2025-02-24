@@ -156,7 +156,7 @@ def execute(args):
 
     # build expression
     expression = ",".join(
-        f'{value["expression"]}'
+        f"{value['expression']}"
         for value in (x["value"] for x in config["annotation"]["values"])
     )
     expression = f"({expression})"
