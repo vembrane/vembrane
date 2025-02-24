@@ -26,7 +26,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]  # ${{ fromJson(needs.get-python-versions.outputs.python-matrix) }}
+        # cyvcf2 3.31.1 does not yet support python 3.13
+        python-version: ["3.12"]  # ${{ fromJson(needs.get-python-versions.outputs.python-matrix) }}
         os: [ubuntu-latest, macos-latest]
 
     steps:
