@@ -12,7 +12,7 @@ import yaml
 from vembrane import __version__, errors
 from vembrane.backend.base import Backend
 from vembrane.common import create_reader
-from vembrane.modules import filter, structured, table, tag
+from vembrane.modules import fhir, filter, structured, table, tag
 
 FILTER_CASES = Path(__file__).parent.joinpath("testcases/filter")
 TABLE_CASES = Path(__file__).parent.joinpath("testcases/table")
@@ -134,12 +134,16 @@ def test_command(testcase: os.PathLike, backend: Backend):
                         t_out = yaml.safe_load(tmp_out)
                         e_out = yaml.safe_load(e)
                 assert t_out == e_out
+            elif args.command == "fhir":
+                fhir.execute(args)
+                
             else:
                 assert args.command in {
                     "filter",
                     "table",
                     "tag",
                     "structured",
+                    "fhir",
                 }, "Unknown subcommand"
 
 
@@ -154,6 +158,7 @@ def construct_parser():
     table.add_subcommmand(subparsers)
     tag.add_subcommand(subparsers)
     structured.add_subcommand(subparsers)
+    fhir.add_subcommand(subparsers)
     return parser
 
 
@@ -169,6 +174,8 @@ def parse_command_config(cmd, config, vcf_path):
     elif cmd == "structured":
         template_path = vcf_path.parent / "template.yte.yaml"
         command = [cmd, str(template_path), str(vcf_path)]
+    elif cmd == "fhir":
+        command = [cmd, str(vcf_path), config["sample"]]
     else:
         raise ValueError(f"Unknown subcommand {config['function']}")
     for key in config:

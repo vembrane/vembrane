@@ -556,13 +556,13 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 
 [[package]]
 name = "yte"
-version = "1.6.0"
+version = "1.7.0"
 description = "A YAML template engine with Python expressions"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "yte-1.6.0-py3-none-any.whl", hash = "sha256:dbd688874754e388ff4f715a4f713fd266a0391dc34e9aef825ba98173a0effa"},
-    {file = "yte-1.6.0.tar.gz", hash = "sha256:d901d4cc0ead79c1c72a8fe9960fb4102d1c6d29d3c5e344f0ce7b6f64cf01e8"},
+    {file = "yte-1.7.0-py3-none-any.whl", hash = "sha256:ebe106c97544e90068b57edd90ee552cefc42cd6421e76065c6c6aa0f5a93308"},
+    {file = "yte-1.7.0.tar.gz", hash = "sha256:d9cadcb597128490356a8260842fd71bf3145fa4ee633ecc4023f53a6b3f646d"},
 ]
 
 [package.dependencies]
@@ -573,4 +573,4 @@ pyyaml = ">=6.0,<7.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12"
-content-hash = "49a342c87f32602f0541c17586b47c7567fa7a2f75223d0930f1f208a0be7040"
+content-hash = "0a5b5ae01a68d92b2132ac8eff7cdf8e15e21e9e520370eb33f9f090f5888902"
