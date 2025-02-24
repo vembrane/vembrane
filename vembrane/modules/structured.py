@@ -76,14 +76,14 @@ class CodeHandler(yte.CodeHandler):
                 if env.expression_annotations():
                     env.update_annotation(annotation)
 
-    def _env(self, expr: str):
-        env = self._envs.get(expr)
+    def _env(self, source: str):
+        env = self._envs.get(source)
         if env is None:
-            env = SourceEnvironment(expr, self.ann_key, self.header)
+            env = SourceEnvironment(source, self.ann_key, self.header)
             env.update_from_record(self._record_idx, self._record)
             if self._annotation is not None:
                 env.update_annotation(self._annotation)
-            self._envs[expr] = env
+            self._envs[source] = env
         return env
 
     def eval(self, expr: str, variables: Dict[str, Any]):
