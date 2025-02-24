@@ -136,7 +136,7 @@ def test_command(testcase: os.PathLike, backend: Backend):
                 assert t_out == e_out
             elif args.command == "fhir":
                 fhir.execute(args)
-                
+
             else:
                 assert args.command in {
                     "filter",

@@ -1,12 +1,15 @@
-from collections import defaultdict
 import csv
 import importlib
-from typing import Self
-from vembrane.common import add_common_arguments
-from vembrane.modules import structured
+from collections import defaultdict
+
 from intervaltree import IntervalTree
 
-PROFILE_DIR = importlib.resources.files("vembrane.modules") / "assets" / "fhir" / "profiles"
+from vembrane.common import add_common_arguments
+from vembrane.modules import structured
+
+PROFILE_DIR = (
+    importlib.resources.files("vembrane.modules") / "assets" / "fhir" / "profiles"
+)
 
 
 def add_subcommand(subparsers):
@@ -54,7 +57,10 @@ class Cytobands:
         self._data = defaultdict(IntervalTree)
 
         with open(
-            importlib.resources.files("vembrane.modules") / "assets" / "fhir" / "cytobands.txt",
+            importlib.resources.files("vembrane.modules")
+            / "assets"
+            / "fhir"
+            / "cytobands.txt",
             "r",
         ) as asset:
             reader = csv.reader(asset, delimiter="\t")
