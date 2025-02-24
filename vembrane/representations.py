@@ -309,9 +309,3 @@ class FuncWrappedExpressionEnvironment(SourceEnvironment):
         if self._has_ann:
             self.update_annotation(annotation)
         return self._func()
-
-
-class ModifiableEnvironment(Environment):
-    def __setitem__(self, key, value):
-        self._globals[key] = value
-        return value

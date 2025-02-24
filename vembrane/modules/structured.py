@@ -55,7 +55,7 @@ ConvertedRecords = Iterator[list[Any] | dict[Any] | Any]
 
 
 class CodeHandler(yte.CodeHandler):
-    def __init__(self, ann_key: str, header: VCFHeader):
+    def __init__(self, ann_key: str, header: VCFHeader) -> None:
         self.ann_key = ann_key
         self.header = header
         self._envs: Dict[str, SourceEnvironment] = {}
@@ -63,20 +63,20 @@ class CodeHandler(yte.CodeHandler):
         self._record_idx = None
         self._annotation = None
 
-    def update_from_record(self, idx: int, record: VCFReader):
+    def update_from_record(self, idx: int, record: VCFReader) -> None:
         self._record = record
         self._record_idx = idx
         for env in self._envs.values():
             env.update_from_record(idx, record)
 
-    def update_from_annotation(self, annotation: str | None):
+    def update_from_annotation(self, annotation: str | None) -> None:
         self._annotation = annotation
         if annotation is not None:
             for env in self._envs.values():
                 if env.expression_annotations():
                     env.update_annotation(annotation)
 
-    def _env(self, source: str):
+    def _env(self, source: str) -> SourceEnvironment:
         env = self._envs.get(source)
         if env is None:
             env = SourceEnvironment(source, self.ann_key, self.header)
@@ -86,11 +86,11 @@ class CodeHandler(yte.CodeHandler):
             self._envs[source] = env
         return env
 
-    def eval(self, expr: str, variables: Dict[str, Any]):
+    def eval(self, expr: str, variables: Dict[str, Any]) -> Any:
         env = self._env(expr)
         return eval(env.compiled, variables, env)
 
-    def exec(self, source: str, variables: Dict[str, Any]):
+    def exec(self, source: str, variables: Dict[str, Any]) -> Any:
         env = self._env(source)
         return exec(env.compiled, variables, env)
 
@@ -117,11 +117,6 @@ def process_vcf(
         code_handler.update_from_record(idx, record)
         annotations = annotation.get_record_annotations(idx, record)
 
-        # TODO: analogous to EvalEnvironment, we should implement a way to
-        # work around the float32 issue, see the AST parsing in
-        # EvalEnvironment.__init__
-        # This needs however an extension of YTE internals.
-
         for ann in annotations:
             code_handler.update_from_annotation(ann)
             converted = yte.process_yaml(
@@ -130,12 +125,12 @@ def process_vcf(
             yield converted
 
 
-def write_records_jsonl(output_file: TextIOWrapper, records: ConvertedRecords):
+def write_records_jsonl(output_file: TextIOWrapper, records: ConvertedRecords) -> None:
     for record in records:
         print(json.dumps(record), file=output_file)
 
 
-def write_records_json(output_file: TextIOWrapper, records: ConvertedRecords):
+def write_records_json(output_file: TextIOWrapper, records: ConvertedRecords) -> None:
     print("[", file=output_file)
     for idx, record in enumerate(records):
         if idx > 0:
@@ -144,7 +139,7 @@ def write_records_json(output_file: TextIOWrapper, records: ConvertedRecords):
     print("]", file=output_file)
 
 
-def write_records_yaml(output_file: TextIOWrapper, records: ConvertedRecords):
+def write_records_yaml(output_file: TextIOWrapper, records: ConvertedRecords) -> None:
     for record in records:
         head, tail = yaml.dump(record).split("\n", 1)
         head = f"- {head}"
