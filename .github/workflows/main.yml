@@ -18,7 +18,7 @@ jobs:
     - uses: snok/latest-python-versions@v1
       id: get-python-versions-action
       with:
-        min-version: 3.10
+        min-version: 3.12
         max-version: 3.13.0
 
   test:
@@ -26,7 +26,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]  # ${{ fromJson(needs.get-python-versions.outputs.python-matrix) }}
+        # TODO cyvcf2 0.31.1 does not yet support python 3.13
+        python-version: ["3.12"]  # ${{ fromJson(needs.get-python-versions.outputs.python-matrix) }}
         os: [ubuntu-latest, macos-latest]
 
     steps:

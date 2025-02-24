@@ -1,0 +1,22 @@
+__variables__:
+  samples_with_af: "?[sample for sample in SAMPLES if FORMAT['AF'][sample] is not NA]"
+
+variant:
+  chrom: ?CHROM
+  pos: ?POS
+  ref: ?REF
+  alt: ?ALT
+  qual: ?QUAL
+  ?if ID is not None:
+    id: ?ID
+  ?if INFO["SVLEN"] is not NA:
+    svlen: ?INFO["SVLEN"]
+  ?if ANN:
+    ?if ANN["SYMBOL"]:
+      gene: ?ANN["SYMBOL"]
+    impact: ?ANN["IMPACT"]
+  ?if samples_with_af:
+    samples:
+      ?for sample in samples_with_af:
+        ?sample:
+          allelic_fraction: ?f"{FORMAT['AF'][sample]:.0%}"

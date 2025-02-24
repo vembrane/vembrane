@@ -1,4 +1,3 @@
-import contextlib
 import csv
 import sys
 from collections.abc import Iterator
@@ -8,7 +7,6 @@ from typing import Any
 
 import asttokens
 
-from ..ann_types import NA
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
     AppendKeyValuePair,
@@ -16,10 +14,11 @@ from ..common import (
     check_expression,
     create_reader,
     read_auxiliary,
+    smart_open,
 )
 from ..errors import HeaderWrongColumnNumberError, VembraneError
 from ..globals import allowed_globals
-from ..representations import Environment
+from ..representations import FuncWrappedExpressionEnvironment
 from .filter import DeprecatedAction
 
 
@@ -100,35 +99,23 @@ def tableize_vcf(
         )
     else:
         expression = f"({expression})"
-    env = Environment(expression, ann_key, vcf.header, **kwargs)
+    env = FuncWrappedExpressionEnvironment(expression, ann_key, vcf.header, **kwargs)
 
     record: VCFRecord
     for idx, record in enumerate(vcf):
         env.update_from_record(idx, record)
         if env.expression_annotations():
-            # if the expression contains a reference to the ANN field
-            # get all annotations from the record.info field
-            # (or supply an empty ANN value if the record has no ANN field)
-            annotations = record.info[ann_key]
-            if annotations is NA:
-                num_ann_entries = len(env._annotation._ann_conv.keys())
-                empty = "|" * num_ann_entries
-                print(
-                    f"No ANN field found in record {idx}, "
-                    f"replacing with NAs (i.e. 'ANN={empty}')",
-                    file=sys.stderr,
-                )
-                annotations = [empty]
+            annotations = env.get_record_annotations(idx, record)
             for annotation in annotations:
                 if long:
-                    yield from env.table(annotation)
+                    yield from env.table_row(annotation)
                 else:
-                    yield env.table(annotation)
+                    yield env.table_row(annotation)
         else:
             if long:
-                yield from env.table()
+                yield from env.table_row()
             else:
-                yield env.table()
+                yield env.table_row()
 
 
 def generate_for_each_sample_expressions(s: str, vcf: VCFReader) -> list[str]:
@@ -272,17 +259,6 @@ def get_row(row):
     if not isinstance(row, tuple):
         row = (row,)
     return row
-
-
-@contextlib.contextmanager
-def smart_open(filename=None, *args, **kwargs):
-    fh = open(filename, *args, **kwargs) if filename and filename != "-" else sys.stdout
-
-    try:
-        yield fh
-    finally:
-        if fh is not sys.stdout:
-            fh.close()
 
 
 def execute(args):

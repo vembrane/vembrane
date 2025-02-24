@@ -1,5 +1,6 @@
 import argparse
 import builtins
+import json
 import os
 import tempfile
 from itertools import product, zip_longest
@@ -11,12 +12,13 @@ import yaml
 from vembrane import __version__, errors
 from vembrane.backend.base import Backend
 from vembrane.common import create_reader
-from vembrane.modules import filter, table, tag
+from vembrane.modules import filter, structured, table, tag
 
 FILTER_CASES = Path(__file__).parent.joinpath("testcases/filter")
 TABLE_CASES = Path(__file__).parent.joinpath("testcases/table")
 TAG_CASES = Path(__file__).parent.joinpath("testcases/tag")
 ANNOTATE_CASES = Path(__file__).parent.joinpath("testcases/annotate")
+STRUCTURED_CASES = Path(__file__).parent.joinpath("testcases/structured")
 
 
 def test_version():
@@ -33,7 +35,13 @@ def idfn(val):
     product(
         (
             case_path.joinpath(d)
-            for case_path in [FILTER_CASES, TABLE_CASES, TAG_CASES, ANNOTATE_CASES]
+            for case_path in [
+                FILTER_CASES,
+                TABLE_CASES,
+                TAG_CASES,
+                ANNOTATE_CASES,
+                STRUCTURED_CASES,
+            ]
             for d in os.listdir(case_path)
             if not d.startswith(".")
         ),
@@ -111,8 +119,28 @@ def test_command(testcase: os.PathLike, backend: Backend):
                 with open(expected) as e:
                     e_out = e.read()
                 assert t_out == e_out
+            elif args.command == "structured":
+                expected = (path / "expected").with_suffix(f".{config['output_fmt']}")
+                structured.execute(args)
+
+                with open(expected) as e:
+                    if config["output_fmt"] == "jsonl":
+                        t_out = [json.loads(line) for line in tmp_out]
+                        e_out = [json.loads(line) for line in e]
+                    elif config["output_fmt"] == "json":
+                        t_out = json.load(tmp_out)
+                        e_out = json.load(e)
+                    elif config["output_fmt"] == "yaml":
+                        t_out = yaml.safe_load(tmp_out)
+                        e_out = yaml.safe_load(e)
+                assert t_out == e_out
             else:
-                assert args.command in {"filter", "table", "tag"}, "Unknown subcommand"
+                assert args.command in {
+                    "filter",
+                    "table",
+                    "tag",
+                    "structured",
+                }, "Unknown subcommand"
 
 
 def construct_parser():
@@ -125,6 +153,7 @@ def construct_parser():
     filter.add_subcommmand(subparsers)
     table.add_subcommmand(subparsers)
     tag.add_subcommand(subparsers)
+    structured.add_subcommand(subparsers)
     return parser
 
 
@@ -137,6 +166,9 @@ def parse_command_config(cmd, config, vcf_path):
         for name, expr in tags.items():
             command += ["--tag", f"{name}={expr}"]
         command.append(str(vcf_path))
+    elif cmd == "structured":
+        template_path = vcf_path.parent / "template.yte.yaml"
+        command = [cmd, str(template_path), str(vcf_path)]
     else:
         raise ValueError(f"Unknown subcommand {config['function']}")
     for key in config:
