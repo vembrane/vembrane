@@ -22,7 +22,7 @@ pyyaml = "^6.0.2"
 asttokens = "^2.4.1"
 numpy = { version = "^2.0.1", python = ">=3.10" }
 intervaltree = "^3.1.0"
-yte = { path = "../yte" } #"^1.5.7"
+yte = "^1.6.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.5.6"
