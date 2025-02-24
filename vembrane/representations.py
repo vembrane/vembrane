@@ -253,7 +253,7 @@ class SourceEnvironment(Environment):
         source: str,
         ann_key: str,
         header: VCFHeader,
-        auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        auxiliary: dict[str, set[str]] | None = None,
     ):
         super().__init__(ann_key, header, auxiliary)
 
