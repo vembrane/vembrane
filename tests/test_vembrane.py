@@ -12,10 +12,11 @@ import yaml
 from vembrane import __version__, errors
 from vembrane.backend.base import Backend
 from vembrane.common import create_reader
-from vembrane.modules import filter, structured, table, tag
+from vembrane.modules import filter, structured, table, table_all, tag
 
 FILTER_CASES = Path(__file__).parent.joinpath("testcases/filter")
 TABLE_CASES = Path(__file__).parent.joinpath("testcases/table")
+TABLE_ALL_CASES = Path(__file__).parent.joinpath("testcases/table_all")
 TAG_CASES = Path(__file__).parent.joinpath("testcases/tag")
 ANNOTATE_CASES = Path(__file__).parent.joinpath("testcases/annotate")
 STRUCTURED_CASES = Path(__file__).parent.joinpath("testcases/structured")
@@ -38,6 +39,7 @@ def idfn(val):
             for case_path in [
                 FILTER_CASES,
                 TABLE_CASES,
+                TABLE_ALL_CASES,
                 TAG_CASES,
                 ANNOTATE_CASES,
                 STRUCTURED_CASES,
@@ -78,6 +80,8 @@ def test_command(testcase: os.PathLike, backend: Backend):
                     filter.execute(args)
                 elif args.command == "table":
                     table.execute(args)
+                elif args.command == "table-all":
+                    table_all.execute(args)
                 elif args.command == "tag":
                     tag.execute(args)
                 else:
@@ -89,6 +93,8 @@ def test_command(testcase: os.PathLike, backend: Backend):
                     filter.execute(args)
                 elif args.command == "table":
                     table.execute(args)
+                elif args.command == "table-all":
+                    table_all.execute(args)
                 elif args.command == "tag":
                     tag.execute(args)
                 else:
@@ -110,9 +116,12 @@ def test_command(testcase: os.PathLike, backend: Backend):
                             vcf_actual.header.get_generic("vembraneVersion")
                             == __version__
                         )
-            elif args.command == "table":
+            elif args.command == "table" or args.command == "table-all":
                 expected = str(path.joinpath("expected.tsv"))
-                table.execute(args)
+                if args.command == "table":
+                    table.execute(args)
+                elif args.command == "table-all":
+                    table_all.execute(args)
                 t_out = "".join(
                     line for line in tmp_out if not line.startswith("##vembrane")
                 )
@@ -138,6 +147,7 @@ def test_command(testcase: os.PathLike, backend: Backend):
                 assert args.command in {
                     "filter",
                     "table",
+                    "table-all",
                     "tag",
                     "structured",
                 }, "Unknown subcommand"
@@ -152,6 +162,7 @@ def construct_parser():
     )
     filter.add_subcommmand(subparsers)
     table.add_subcommmand(subparsers)
+    table_all.add_subcommand(subparsers)
     tag.add_subcommand(subparsers)
     structured.add_subcommand(subparsers)
     return parser
@@ -160,6 +171,8 @@ def construct_parser():
 def parse_command_config(cmd, config, vcf_path):
     if cmd in ("filter", "table"):
         command = [cmd, config["expression"], str(vcf_path)]
+    elif cmd == "table-all":
+        command = [cmd, str(vcf_path)]
     elif cmd == "tag":
         command = [cmd]
         tags = config["tags"]
