@@ -13,7 +13,7 @@ For a comparison with similar tools have a look at the [vembrane benchmarks](htt
 
 ## Installation
 vembrane is available in [bioconda](https://bioconda.github.io/) and can either be installed into an existing conda environment with `mamba install -c conda-forge -c bioconda vembrane` or into a new named environment `mamba create -n environment_name -c conda-forge -c bioconda vembrane`.
-Alternatively, if you are familiar with git and [poetry](https://python-poetry.org/), clone this repository and run `poetry install`.
+Alternatively, if you are familiar with git and [uv](https://docs.astral.sh/uv/), clone this repository and run `uv sync`.
 See [docs/develop.md](docs/develop.md) for further details.
 
 ## `vembrane filter`

@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple
 
 import pysam
 from pysam import VariantRecord
+from pysam.libcbcf import VariantHeader
 
 from vembrane.backend.base import (
     VCFHeader,
@@ -171,13 +172,13 @@ class PysamReader(VCFReader):
     def __init__(
         self,
         filename: str,
-        overwrite_number: Dict[str, Dict[str, str]] = None,
+        overwrite_number: Dict[str, Dict[str, str]] | None = None,
     ):
         if overwrite_number is None:
             overwrite_number = {}
         self.filename = filename
         self._file = pysam.VariantFile(self.filename)
-        self._header = PysamHeader(self, overwrite_number)
+        self._header = PysamHeader(self._file.header, overwrite_number)
         self._current_record_idx = 0
 
     def __iter__(self):
@@ -207,13 +208,14 @@ class PysamHeader(VCFHeader):
         "_samples",
     )
 
-    def __init__(self, reader: PysamReader, overwrite_number=None):
+    def __init__(self, header: VariantHeader, overwrite_number=None):
         if overwrite_number is None:
             overwrite_number = {}
-        self._reader = reader
-        self._raw_header = reader._file.header
+        self._raw_header = header
         self._metadata = []
-        self._metadata_category = defaultdict(OrderedDict)
+        self._metadata_category: defaultdict[str | None, OrderedDict] = defaultdict(
+            OrderedDict
+        )
         self._metadata_generic = dict()
         self._samples = OrderedDict((s, None) for s in self._raw_header.samples)
 
@@ -294,10 +296,10 @@ class PysamWriter(VCFWriter):
         self.filename = filename
         self._file = pysam.VariantFile(
             self.filename,
-            f"w{fmt}",
+            f"w{fmt}",  # type: ignore
             header=template.header._raw_header,
         )
-        self._header = PysamHeader(self)
+        self._header = PysamHeader(self._file.header)
 
-    def write(self, record: PysamRecord):
+    def write(self, record: VCFRecord):
         self._file.write(record._raw_record)

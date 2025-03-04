@@ -2,7 +2,6 @@ import re
 import sys
 from itertools import chain, islice
 from sys import stderr
-from types import MappingProxyType
 from typing import Iterator
 
 from .. import __version__
@@ -125,9 +124,12 @@ def tag_vcf(
     vcf: VCFReader,
     expressions: dict[str, str],
     ann_key: str,
-    auxiliary: dict[str, set[str]] = MappingProxyType({}),
+    auxiliary: dict[str, set[str]] | None = None,
     invert: bool = False,
 ) -> Iterator[VCFRecord]:
+    if auxiliary is None:
+        auxiliary = {}
+
     # For each tag-expression pair, a different Environment must be used.
     envs = {
         tag: FuncWrappedExpressionEnvironment(

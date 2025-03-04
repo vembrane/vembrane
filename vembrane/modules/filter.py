@@ -4,7 +4,7 @@ from collections import defaultdict
 from collections.abc import Iterator
 from itertools import chain, islice
 from sys import stderr
-from types import MappingProxyType
+from typing import Any
 
 import yaml
 
@@ -159,8 +159,10 @@ def filter_vcf(
     ann_key: str,
     keep_unmatched: bool = False,
     preserve_order: bool = False,
-    auxiliary: dict[str, set[str]] = MappingProxyType({}),
+    auxiliary: dict[str, set[str]] | None = None,
 ) -> Iterator[VCFRecord]:
+    if auxiliary is None:
+        auxiliary = {}
     env = FuncWrappedExpressionEnvironment(
         expression, ann_key, reader.header, auxiliary
     )
@@ -246,11 +248,11 @@ def filter_vcf(
 
                         # in the case of a simple mate pair, we can delete the event
                         # at this point, because no more records will be added to it
-                        if event.is_mate_pair():
+                        if event.is_mate_pair() and mate_pair_name:
                             del event_dict[mate_pair_name]
                 else:
                     # if there's no entry for the event or mate pair yet, create one
-                    is_mate_pair = mate_pair_name and mate_pair_name == event_name
+                    is_mate_pair = bool(mate_pair_name) and mate_pair_name == event_name
                     event = BreakendEvent(event_name, is_mate_pair)
                     event.add(record, keep)
                     event_dict[event_name] = event
@@ -316,7 +318,9 @@ def statistics(
     ann_key: str,
 ) -> Iterator[VCFRecord]:
     annotation_keys = get_annotation_keys(vcf.header, ann_key)
-    counter = defaultdict(lambda: defaultdict(lambda: 0))
+    counter: defaultdict[str, defaultdict[str, Any]] = defaultdict(
+        lambda: defaultdict(lambda: 0)
+    )
     for record in records:
         for annotation in record.info[ann_key]:
             for key, raw_value in zip(
@@ -332,7 +336,7 @@ def statistics(
     # reduce dicts with many items, to just one counter
     for key, subdict in counter.items():
         if len(subdict) > 10:
-            counter[key] = f"#{len(subdict)}"
+            counter[key] = f"#{len(subdict)}"  # type: ignore
 
     yaml.add_representer(defaultdict, yaml.representer.Representer.represent_dict)
     with open(filename, "w") as out:
