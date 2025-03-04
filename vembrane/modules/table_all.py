@@ -24,7 +24,7 @@ class NamingConvention(Enum):
 
 
 def add_subcommand(subparsers):
-    parser = subparsers.add_parser("parquet")
+    parser = subparsers.add_parser("table-all")
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
         "vcf",
@@ -38,6 +38,13 @@ def add_subcommand(subparsers):
         metavar="FIELDNAME",
         default="ANN",
         help="The INFO key for the annotation field.",
+    )
+    parser.add_argument(
+        "--separator",
+        "-s",
+        default="\t",
+        metavar="CHAR",
+        help="Define the field separator (default: \\t).",
     )
     parser.add_argument(
         "--naming-convention",
@@ -70,7 +77,6 @@ def parquetize_vcf(
         vcf.header, ann_key, naming_convention
     )
     expression = f"(({default_expression}) for SAMPLE in SAMPLES)"
-    print(expression)
     env = FuncWrappedExpressionEnvironment(expression, ann_key, vcf.header, **kwargs)
 
     record: VCFRecord
@@ -150,7 +156,7 @@ def execute(args):
             with smart_open(args.output, "wt", newline="") as csvfile:
                 writer = csv.writer(
                     csvfile,
-                    delimiter="\t",
+                    delimiter=args.separator,
                     quoting=csv.QUOTE_MINIMAL,
                 )
                 writer.writerow(header)
