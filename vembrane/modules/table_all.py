@@ -116,7 +116,7 @@ def construct_expression_and_header(
     if format_keys:
         default_header += [format_key("FORMAT", key) for key in format_keys]
         format_expr = ", ".join(
-            f'(FORMAT.get("{key}") or {{}}).get(SAMPLE, NA)' for key in format_keys
+            f'(FORMAT["{key}"] or {{}}).get(SAMPLE, NA)' for key in format_keys
         )
         default_expression += ", " + format_expr
 
