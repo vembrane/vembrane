@@ -263,9 +263,15 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
             )
             return type_info(value, ".")
 
-        value = self._raw_record.format(self._format_key)[i]
         meta = self._header.formats[self._format_key]
         number = meta["Number"]
+        value_array = self._raw_record.format(self._format_key)
+
+        if value_array is None:
+            return type_info(NA, number)
+
+        value = value_array[i]
+
         if meta["Type"] == "String" and not number == "1":
             value = value.split(",")
         if number == "1":
