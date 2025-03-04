@@ -104,15 +104,22 @@ class PysamRecordFormat(VCFRecordFormat):
         if not self.__contains__(sample):
             raise UnknownSampleError(self.record, sample)
         meta = self._header.formats[self._format_key]
+        number = meta["Number"] if self._format_key != "GT" else "."
         value_array = self._raw_record.samples[sample]
 
-        if self._format_key == "GT":  # genotype
-            return type_info(value_array.get("GT"), ".")
-
-        return type_info(
-            value_array.get(self._format_key, NA),
-            meta["Number"],
-        )
+        try:
+            value = value_array[self._format_key]
+            return type_info(value, number)
+        except KeyError:
+            print(
+                f"Warning: "
+                f"record {self._record.record_idx} is missing a value "
+                f"for FORMAT key {self._format_key}, "
+                f"returning NA instead."
+                f"\n{self._record}\n",
+                file=stderr,
+            )
+            return type_info(NA, number)
 
     def __setitem__(self, key, value):
         self._raw_record.format[key] = value

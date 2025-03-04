@@ -266,11 +266,19 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
         meta = self._header.formats[self._format_key]
         number = meta["Number"]
         value_array = self._raw_record.format(self._format_key)
-
         if value_array is None:
+            print(
+                f"Warning: "
+                f"record {self._record.record_idx} is missing a value "
+                f"for FORMAT key {self._format_key}, "
+                f"returning NA instead."
+                f"\n{self._record}\n",
+                file=stderr,
+            )
             return type_info(NA, number)
 
-        value = value_array[i]
+        else:
+            value = value_array[i]
 
         if meta["Type"] == "String" and not number == "1":
             value = value.split(",")
@@ -329,9 +337,6 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         self._header = record._header
 
     def __getitem__(self, key):
-        if key == "END":
-            return self._record.end
-
         try:
             meta = self._header.infos[key]
             number = meta["Number"]
@@ -342,6 +347,9 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
             value = self._raw_record.INFO[key]
             typ = meta["Type"]
         except KeyError:
+            if key == "END":
+                return self._raw_record.POS + len(self._raw_record.REF) - 1
+
             print(
                 f"Warning: "
                 f"record {self._record.record_idx} is missing a value "
