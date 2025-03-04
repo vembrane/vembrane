@@ -104,8 +104,13 @@ class PysamRecordFormat(VCFRecordFormat):
         if not self.__contains__(sample):
             raise UnknownSampleError(self.record, sample)
         meta = self._header.formats[self._format_key]
+        value_array = self._raw_record.samples[sample]
+
+        if self._format_key == "GT":  # genotype
+            return type_info(value_array.get("GT"), ".")
+
         return type_info(
-            self._raw_record.samples[sample][self._format_key],
+            value_array.get(self._format_key, NA),
             meta["Number"],
         )
 
