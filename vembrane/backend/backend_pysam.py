@@ -143,7 +143,8 @@ class PysamRecordInfo(VCFRecordInfo):
         except KeyError:
             print(
                 f"Warning: "
-                f"record {self._record.record_idx} is missing a value for key {key}, "
+                f"record {self._record.record_idx} is missing a value "
+                f"for INFO key {key}, "
                 f"returning NA instead."
                 f"\n{self._record}\n",
                 file=stderr,
