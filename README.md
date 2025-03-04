@@ -266,6 +266,13 @@ For example:
 vembrane table --long 'CHROM, POS, FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL' input.vcf > long_table.tsv
 ```
 
+## `vembrane table-all`
+If you want to extract all information from a VCF file, including every single `INFO`, `FORMAT` and annotation `ANN`/`INFO["ANN"]` field that is defined in the header, you can use the `table-all` subcommand.
+This subcommand works analogously to `table`, but automatically includes all available fields.
+```sh
+vembrane table-all input.vcf > table.tsv
+```
+
 ## `vembrane annotate`
 
 vembrane is able to annotate vcf files with a given table-like file. In addition to the vcf and annotation file, the user has to provide a configuration file.
