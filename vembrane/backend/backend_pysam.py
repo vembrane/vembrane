@@ -1,4 +1,5 @@
 from collections import OrderedDict, defaultdict
+from sys import stderr
 from typing import Dict, List, Optional, Tuple
 
 import pysam
@@ -137,6 +138,7 @@ class PysamRecordInfo(VCFRecordInfo):
                 f"record {self._record.record_idx} is missing a value for key {key}, "
                 f"returning NA instead."
                 f"\n{self._record}\n",
+                file=stderr,
             )
             return type_info(NA, meta["Number"])
         return type_info(value, meta["Number"])

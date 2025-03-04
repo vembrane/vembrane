@@ -1,4 +1,5 @@
 from collections import OrderedDict, defaultdict
+from sys import stderr
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -331,6 +332,7 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
                 f"record {self._record.record_idx} is missing a value for key {key}, "
                 f"returning NA instead."
                 f"\n{self._record}\n",
+                file=stderr,
             )
             return type_info(NA, number)
 
