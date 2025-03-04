@@ -63,7 +63,7 @@ def add_subcommand(subparsers):
     add_common_arguments(parser)
 
 
-def parquetize_vcf(
+def tableize_vcf(
     vcf: VCFReader,
     ann_key: str,
     naming_convention: NamingConvention = NamingConvention.DICTIONARY,
@@ -145,7 +145,7 @@ def execute(args):
         _expr, header = construct_expression_and_header(
             vcf.header, args.annotation_key, args.naming_convention
         )
-        rows = parquetize_vcf(
+        rows = tableize_vcf(
             vcf,
             args.annotation_key,
             naming_convention=args.naming_convention,
