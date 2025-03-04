@@ -240,6 +240,9 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
     def __contains__(self, key):
         return key in self._raw_format
 
+    def keys(self):
+        return self._raw_format.keys()
+
 
 class Cyvcf2RecordFormat(VCFRecordFormat):
     __slots__ = ("_header", "_record", "_raw_record", "_format_key")
@@ -281,6 +284,9 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
 
     def __eq__(self, other):
         return all(self[sample] == other[sample] for sample in self._header.samples)
+
+    def keys(self):
+        return self._raw_record.format.keys()
 
 
 class Cyvcf2RecordFilter(VCFRecordFilter):
@@ -352,6 +358,9 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
 
     def __contains__(self, key):
         return self._raw_record.INFO.get(key, None) is not None
+
+    def keys(self):
+        return self._raw_record.info.keys()
 
 
 class Cyvcf2Writer(VCFWriter):

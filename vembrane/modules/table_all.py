@@ -105,23 +105,23 @@ def construct_expression_and_header(
     info_keys = list(header.infos.keys())
     if info_keys:
         info_keys_without_ann = [key for key in info_keys if key != ann_key]
-        info_keys = ", ".join(f'INFO["{key}"]' for key in info_keys_without_ann)
+        info_expr = ", ".join(f'INFO["{key}"]' for key in info_keys_without_ann)
         default_header += [format_key("INFO", key) for key in info_keys_without_ann]
-        default_expression += ", " + info_keys
+        default_expression += ", " + info_expr
 
     format_keys = list(header.formats.keys())
     if format_keys:
         default_header += [format_key("FORMAT", key) for key in format_keys]
-        format_keys = ", ".join(
+        format_expr = ", ".join(
             f'(FORMAT.get("{key}") or {{}}).get(SAMPLE, NA)' for key in format_keys
         )
-        default_expression += ", " + format_keys
+        default_expression += ", " + format_expr
 
     annotation_keys = get_annotation_keys(header, ann_key)
     if annotation_keys:
-        annotations = ", ".join(f'ANN["{key}"]' for key in annotation_keys)
+        annotation_expr = ", ".join(f'ANN["{key}"]' for key in annotation_keys)
         default_header += [format_key(ann_key, key) for key in annotation_keys]
-        default_expression += ", " + annotations
+        default_expression += ", " + annotation_expr
 
     return default_expression, default_header
 
