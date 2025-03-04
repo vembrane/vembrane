@@ -82,9 +82,12 @@ def tableize_vcf(
     record: VCFRecord
     for idx, record in enumerate(vcf):
         env.update_from_record(idx, record)
-        annotations = env.get_record_annotations(idx, record)
-        for annotation in annotations:
-            yield from env.table_row(annotation)
+        if env.expression_annotations():
+            annotations = env.get_record_annotations(idx, record)
+            for annotation in annotations:
+                yield from env.table_row(annotation)
+        else:
+            yield from env.table_row()
 
 
 def construct_expression_and_header(
