@@ -329,6 +329,9 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         self._header = record._header
 
     def __getitem__(self, key):
+        if key == "END":
+            return self._record.end
+
         try:
             meta = self._header.infos[key]
             number = meta["Number"]
