@@ -232,15 +232,22 @@ vembrane table 'CHROM, POS, 10**(-QUAL/10), ANN["CLIN_SIG"]' input.vcf > table.t
 ```
 
 When handling **multi-sample VCFs**, you often want to iterate over all samples in a record by looking at a `FORMAT` field for all of them.
-However, if you use a standard Python list comprehension (something like `[FORMAT['DP'][sample] for sample in SAMPLES]`), this would yield a single column with a list containing one entry per sample (something like `[25, 32, 22]` for three samples with the respective depths).
+Therefore, `vembrane table` defaults to a long table format:
+In this case, the first column will always be called `SAMPLE` and there's an additional variable of the same name available for the expressions.
+For example:
+```sh
+vembrane table 'CHROM, POS, FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL' input.vcf > long_table.tsv
+```
+will yield a table with the columns `'SAMPLE'`, `'CHROM'`, `'POS'`, and `'FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL'`.
 
-In order to have a separate column for each sample, you can use the **`for_each_sample()`** function in both the main `vembrane table` expression and the `--header` expression.
+If you instead want a wide table format, where each sample has its own column, you can toggle this behaviour with the `--wide` flag:
+```sh
+vembrane table --wide --header 'CHROM, POS, for_each_sample(lambda sample: f"{sample}_depth")' 'CHROM, POS, for_each_sample(lambda s: FORMAT["DP"][s])' input.vcf > table.tsv
+```
+
+This makes use of the **`for_each_sample()`** function in both the main `vembrane table` expression and the `--header` expression.
 It should contain one [lambda expression](https://docs.python.org/3/reference/expressions.html#lambda) with exactly one argument, which will be substituted by the sample names in the lambda expression.
 
-For example, you could specifiy expressions for the `--header` and the main VCF record evaluation like this:
-```sh
-vembrane table --header 'CHROM, POS, for_each_sample(lambda sample: f"{sample}_depth")' 'CHROM, POS, for_each_sample(lambda s: FORMAT["DP"][s])' input.vcf > table.tsv
-```
 Given a VCF file with samples `Sample_1`, `Sample_2` and `Sample_3`, the header would expand to be printed as:
 ```
 CHROM  POS   Sample_1_depth   Sample_2_depth   Sample_3_depth
@@ -256,15 +263,10 @@ When supplying a header via `--header`,  its `for_each_sample()` expects an expr
 Please note that, as anywhere in vembrane, you can use arbitrary Python expressions in `for_each_sample()` lambda expressions.
 So you can for example perform computations on fields or combine multiple fields into one value:
 ```sh
-vembrane table 'CHROM, POS, for_each_sample(lambda sample: FORMAT["AD"][sample] / FORMAT["DP"][sample] * QUAL)' input.vcf > table.tsv
+vembrane table --wide 'CHROM, POS, for_each_sample(lambda sample: FORMAT["AD"][sample] / FORMAT["DP"][sample] * QUAL)' input.vcf > table.tsv
 ```
 
-Instead of using the `for_each_sample` (wide format) machinery, it is also possible to generate the data in long format by specifying the `--long` flag.
-In this case, the first column will always be called `SAMPLE` and there's an additional variable of the same name available for the expressions.
-For example:
-```sh
-vembrane table --long 'CHROM, POS, FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL' input.vcf > long_table.tsv
-```
+
 
 ## `vembrane table ALL`
 If you want to extract all information from a VCF file, including every single `INFO`, `FORMAT` and annotation `ANN`/`INFO["ANN"]` field that is defined in the header, you can use the `table` subcommand with the pseudo-expression `ALL`:
