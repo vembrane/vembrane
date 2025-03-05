@@ -80,6 +80,11 @@ def add_subcommmand(subparsers):
         action="store_true",
     )
     parser.add_argument(
+        "--long",
+        action=DeprecatedAction,
+        help="Long format is now the default. For wide format, use `--wide` instead.",
+    )
+    parser.add_argument(
         "--output",
         "-o",
         default="-",
