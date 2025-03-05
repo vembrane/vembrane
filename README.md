@@ -266,12 +266,16 @@ For example:
 vembrane table --long 'CHROM, POS, FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL' input.vcf > long_table.tsv
 ```
 
-## `vembrane table-all`
-If you want to extract all information from a VCF file, including every single `INFO`, `FORMAT` and annotation `ANN`/`INFO["ANN"]` field that is defined in the header, you can use the `table-all` subcommand.
-This subcommand works analogously to `table`, but automatically includes all available fields.
+## `vembrane table ALL`
+If you want to extract all information from a VCF file, including every single `INFO`, `FORMAT` and annotation `ANN`/`INFO["ANN"]` field that is defined in the header, you can use the `table` subcommand with the pseudo-expression `ALL`:
 ```sh
-vembrane table-all input.vcf > table.tsv
+vembrane table 'ALL' input.vcf > table.tsv
 ```
+To control the naming convention of the columns, you can use the `--naming-convention` option with the following allowed values:
+  - `dictionary`: The column names are rendered as a python dictionary acces, e.g. `INFO["DP"]`.
+  - `underscore`: The column names are rendered with underscores, e.g. `INFO_DP`.
+  - `slash`: The column names are rendered with slashes, e.g. `INFO/DP` (`bcftools` style).
+The default is `dictionary`.
 
 ## `vembrane annotate`
 
