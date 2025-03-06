@@ -117,7 +117,8 @@ def tableize_vcf(
 
     kwargs: dict[str, Any] = dict(auxiliary=auxiliary)
 
-    if not wide:
+    long_with_samples = not wide and list(vcf.header.samples)
+    if long_with_samples:
         kwargs["evaluation_function_template"] = (
             "lambda: (({expression}) for SAMPLE in SAMPLES)"
         )
@@ -131,12 +132,12 @@ def tableize_vcf(
         if env.expression_annotations():
             annotations = env.get_record_annotations(idx, record)
             for annotation in annotations:
-                if not wide:
+                if long_with_samples:
                     yield from env.table_row(annotation)
                 else:
                     yield env.table_row(annotation)
         else:
-            if not wide:
+            if long_with_samples:
                 yield from env.table_row()
             else:
                 yield env.table_row()
@@ -358,7 +359,12 @@ def execute(args):
             )
         else:
             if not args.wide:
-                expression = f"SAMPLE, {expression}"
+                if list(vcf.header.samples):
+                    expression = f"SAMPLE, {expression}"
+                else:
+                    # if there are no samples, SAMPLE will be undefined;
+                    # add an empty string instead
+                    expression = f"'', {expression}"
         rows = tableize_vcf(
             vcf,
             expression,
