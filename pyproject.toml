@@ -30,6 +30,9 @@ dependencies = [
   "numpy~=2.0.1",
   "intervaltree~=3.1.0",
   "yte~=1.6.0",
+  "obonet~=1.1.0",
+  "networkx~=3.3",
+  "typing-extensions~=4.12.2",
 ]
 
 [project.scripts]
@@ -50,6 +53,7 @@ test = [
 lint = [
     "ruff",
     "mypy",
+    "types-networkx",
     "types-pyyaml",
 ]
 
@@ -159,13 +163,14 @@ commands = [["mypy"]]
 dev-dependencies = [
     "mypy>=1.13.0",
     "types-pyyaml>=6.0.12.20240917",
+    "types-networkx>=3.4.2.20250304",
     "ruff~=0.9.9",
     "tox>=4.23.2",
     "tox-uv>=1.20.1",
 ]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 packages = "vembrane"
 
 [tool.pytest.ini_options]

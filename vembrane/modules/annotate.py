@@ -30,13 +30,6 @@ def add_subcommmand(subparsers):
         default="-",
     )
     parser.add_argument(
-        "--annotation-key",
-        "-k",
-        metavar="FIELDNAME",
-        default="ANN",
-        help="The INFO key for the annotation field.",
-    )
-    parser.add_argument(
         "--output",
         "-o",
         default="-",

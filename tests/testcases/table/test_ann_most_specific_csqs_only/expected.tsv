@@ -1,0 +1,3 @@
+CHROM	POS	REF	ALT	"ANN[""Allele""]"	"ANN[""Annotation""].most_specific_terms()"
+1	123	A	C	C	frameshift_elongation&splice_donor_5th_base_variant&splice_donor_region_variant
+1	456	A	C	C	transcript_ablation&splice_donor_region_variant&foo
