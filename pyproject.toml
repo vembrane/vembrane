@@ -53,6 +53,7 @@ test = [
 lint = [
     "ruff",
     "mypy",
+    "types-networkx",
     "types-pyyaml",
 ]
 
