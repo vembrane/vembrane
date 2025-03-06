@@ -30,6 +30,7 @@ valueCodeableConcept:
     system: http://loinc.org
 
 component:
+# gene-studied
 - code:
     coding:
     - code: 48018-6
@@ -40,30 +41,17 @@ component:
     - code: ?ANN["HGNC_ID"]
       system: http://www.genenames.org/geneId
       display: ?ANN["SYMBOL"]
+# TODO transcript-ref-seq
 - code:
+  coding:
+  - code: 51958-7
+    display: Transcript reference sequence [ID]
+    system: http://loinc.org
+  valueCodeableConept:
     coding:
-    - code: 48013-7
-      display: Genomic reference sequence [ID]
-      system: http://loinc.org
-  valueCodeableConcept:
-    coding:
-    - code: ?ANN["MANE"]
+    - code: ?ANN["Feature"]
       system: http://www.ncbi.nlm.nih.gov/refseq
-- code:
-    coding:
-    - code: 47999-8
-      display: DNA region name [Identifier]
-      system: http://loinc.org
-  ?if exon.range.start == exon.range.stop:
-    valueString: '?f"Exon #{ exon.range.start }"'
-  ?else:
-    valueString: '?f"Exon #{ exon.range.start } - #{ exon.range.stop }"'
-- code:
-    coding:
-    - code: 47999-8
-      display: DNA region name [Identifier]
-      system: http://loinc.org
-  valueString: '?f"Codon #{protein_position.start} - #{protein_position.end}"'
+# coding-hgvs
 - code:
     coding:
     - code: 48004-6
@@ -72,7 +60,8 @@ component:
   valueCodeableConcept:
     coding:
     - code: ?ANN["HGVSc"]
-      system: http://varnomen.hgvs.org
+      system: http://varnomen.hgvs.org 
+#protein-hgvs
 - code:
     coding:
     - code: 48005-3
@@ -82,6 +71,50 @@ component:
     coding:
     - code: ?ANN["HGVSp"]
       system: http://varnomen.hgvs.org
+#TODO genomic-hgvs
+- code:
+    coding:
+    - code: 81290-9
+      display: Genomic DNA change (gHGVS)
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: ?ANN["HGVSg"]
+      system: http://varnomen.hgvs.org
+# TODO reference-sequence-assembly (via parameter)
+- code:
+    coding:
+    - code: 62374-4
+      display: Human reference sequence assembly version
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: #map loinc code
+      display: #GRCh37/38 via param
+      system: http://loinc.org
+# TODO coding change type
+- code:
+    coding:
+    - code: 48019-4
+      display: Coding DNA Change Type
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: #map loinc code
+      display: ?ANN["VARIANT_CLASS"]
+      system: http://loinc.org
+# amino-acid-change-type
+- code:
+    coding:
+    - code: 48006-1
+      display: Amino acid change [Type]
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: LA6698-0 # map loinc code
+      display: ?ANN["Consequence"]
+      system: http://loinc.org
+# sample-allelic-frequency
 - code:
     coding:
     - code: 81258-6
@@ -91,6 +124,8 @@ component:
     code: '%'
     system: http://unitsofmeasure.org
     value: ?FORMAT['AF'][sample] * 100
+# TODO genomic-source-class (not part of vcf)
+# cytogenic-location
 - code:
     coding:
     - code: 48001-2
@@ -100,16 +135,72 @@ component:
     coding:
     - code: ?cytobands.get(CHROM, POS)
       system: urn:oid:2.16.840.1.113883.6.335
+# TODO copy number (not part of bcf, probably unknown)
+# TODO transcript-ref-seq (duplicate?!)
+# TODO allelic read depth
 - code:
     coding:
-    - code: 48006-1
-      display: Amino acid change [Type]
+    - code: 82121-5
+      display: Allelic Read Depth
+      system: http://loinc.org
+    valueQuantity: ?FORMAT['AD'][sample]
+# TODO dna-region (Methoden.Intron spanning/IVS)
+# TODO exact-start-end
+# TODO chromosome-identifier (valueCodeableConcept not defined)
+- code:
+    coding:
+    - code: 48000-4
+      display: Chromosome Identifier
+      system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+      - code: # lookup table https://loinc.org/LL2938-0
+        system: http://loinc.org
+        display: ?CHROM
+# TODO alt-allele (done)
+- code:
+    coding:
+    - code: 69551-0
+      display: Genomic Alt Allele
+      system: http://loinc.org
+    valueString: ?ALT
+# TODO ref-allele (done)
+- code:
+    coding:
+    - code: 69547-8
+      display: Genomic Ref Allele
+      system: http://loinc.org
+    valueString: ?REF
+# dna-region (Exon)
+- code:
+    coding:
+    - code: 47999-8
+      display: DNA region name [Identifier]
+      system: http://loinc.org
+  ?if exon.range.start == exon.range.stop:
+    valueString: '?f"Exon #{ exon.range.start }"'
+  ?else:
+    valueString: '?f"Exon #{ exon.range.start } - #{ exon.range.stop }"'
+# duplicate (Exon or Codon?)
+- code:
+    coding:
+    - code: 47999-8
+      display: DNA region name [Identifier]
+      system: http://loinc.org
+  valueString: '?f"Codon #{protein_position.start} - #{protein_position.end}"'
+# TODO detection limit (not available)
+
+# unclear
+- code:
+    coding:
+    - code: 48013-7
+      display: Genomic reference sequence [ID]
       system: http://loinc.org
   valueCodeableConcept:
     coding:
-    - code: LA6698-0
-      display: ?ANN["Consequence"]
-      system: http://loinc.org
+    - code: ?ANN["MANE"]
+      system: http://www.ncbi.nlm.nih.gov/refseq
+# variation code
 - ?if ID is None: ?SKIP
   ?else:
     code:
