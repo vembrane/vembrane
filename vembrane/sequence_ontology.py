@@ -182,6 +182,9 @@ class Consequences(list[Term]):
                 "e.g. `ANN['Consequences'].any_is_a('missense_variant')`."
             )
 
+    def __str__(self) -> str:
+        return "&".join(self)
+
 
 class SequenceOntology:
     """
