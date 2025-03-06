@@ -146,9 +146,9 @@ class Term(str):
         This is irrespective of the direction of the path.
         Returns `None` if there is no path between the terms.
         """
-        return _C.ontology.path_lengths[self].get(
+        return _C.ontology.path_lengths.get(self, {}).get(
             target_term
-        ) or _C.ontology.path_lengths[target_term].get(self)
+        ) or _C.ontology.path_lengths.get(target_term, {}).get(self)
 
 
 class Consequences(list[Term]):
