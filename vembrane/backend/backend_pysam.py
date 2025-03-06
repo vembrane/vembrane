@@ -1,8 +1,10 @@
 from collections import OrderedDict, defaultdict
+from sys import stderr
 from typing import Dict, List, Optional, Tuple
 
 import pysam
 from pysam import VariantRecord
+from pysam.libcbcf import VariantHeader
 
 from vembrane.backend.base import (
     VCFHeader,
@@ -81,6 +83,9 @@ class PysamRecordFormats(VCFRecordFormats):
     def __getitem__(self, key):
         return PysamRecordFormat(key, self._record)
 
+    def keys(self):
+        return self._record._header.formats.keys()
+
 
 class PysamRecordFormat(VCFRecordFormat):
     __slots__ = ("_format_key", "_record", "_header", "_raw_record")
@@ -99,10 +104,22 @@ class PysamRecordFormat(VCFRecordFormat):
         if not self.__contains__(sample):
             raise UnknownSampleError(self.record, sample)
         meta = self._header.formats[self._format_key]
-        return type_info(
-            self._raw_record.samples[sample][self._format_key],
-            meta["Number"],
-        )
+        number = meta["Number"] if self._format_key != "GT" else "."
+        value_array = self._raw_record.samples[sample]
+
+        try:
+            value = value_array[self._format_key]
+            return type_info(value, number)
+        except KeyError:
+            print(
+                f"Warning: "
+                f"record {self._record.record_idx} is missing a value "
+                f"for FORMAT key {self._format_key}, "
+                f"returning NA instead."
+                f"\n{self._record}\n",
+                file=stderr,
+            )
+            return type_info(NA, number)
 
     def __setitem__(self, key, value):
         self._raw_record.format[key] = value
@@ -133,9 +150,11 @@ class PysamRecordInfo(VCFRecordInfo):
         except KeyError:
             print(
                 f"Warning: "
-                f"record {self._record.record_idx} is missing a value for key {key}, "
+                f"record {self._record.record_idx} is missing a value "
+                f"for INFO key {key}, "
                 f"returning NA instead."
                 f"\n{self._record}\n",
+                file=stderr,
             )
             return type_info(NA, meta["Number"])
         return type_info(value, meta["Number"])
@@ -145,6 +164,9 @@ class PysamRecordInfo(VCFRecordInfo):
 
     def __contains__(self, key):
         return key in self._raw_record.info
+
+    def keys(self):
+        return self._raw_record.info.keys()
 
 
 class PysamRecordFilter(VCFRecordFilter):
@@ -171,13 +193,13 @@ class PysamReader(VCFReader):
     def __init__(
         self,
         filename: str,
-        overwrite_number: Dict[str, Dict[str, str]] = None,
+        overwrite_number: Dict[str, Dict[str, str]] | None = None,
     ):
         if overwrite_number is None:
             overwrite_number = {}
         self.filename = filename
         self._file = pysam.VariantFile(self.filename)
-        self._header = PysamHeader(self, overwrite_number)
+        self._header = PysamHeader(self._file.header, overwrite_number)
         self._current_record_idx = 0
 
     def __iter__(self):
@@ -207,13 +229,14 @@ class PysamHeader(VCFHeader):
         "_samples",
     )
 
-    def __init__(self, reader: PysamReader, overwrite_number=None):
+    def __init__(self, header: VariantHeader, overwrite_number=None):
         if overwrite_number is None:
             overwrite_number = {}
-        self._reader = reader
-        self._raw_header = reader._file.header
+        self._raw_header = header
         self._metadata = []
-        self._metadata_category = defaultdict(OrderedDict)
+        self._metadata_category: defaultdict[str | None, OrderedDict] = defaultdict(
+            OrderedDict
+        )
         self._metadata_generic = dict()
         self._samples = OrderedDict((s, None) for s in self._raw_header.samples)
 
@@ -294,10 +317,10 @@ class PysamWriter(VCFWriter):
         self.filename = filename
         self._file = pysam.VariantFile(
             self.filename,
-            f"w{fmt}",
+            f"w{fmt}",  # type: ignore
             header=template.header._raw_header,
         )
-        self._header = PysamHeader(self)
+        self._header = PysamHeader(self._file.header)
 
-    def write(self, record: PysamRecord):
+    def write(self, record: VCFRecord):
         self._file.write(record._raw_record)

@@ -1,27 +1,29 @@
-import contextlib
 import csv
 import sys
 from collections.abc import Iterator
+from enum import Enum
 from sys import stderr
-from types import MappingProxyType
 from typing import Any
 
 import asttokens
 
-from ..ann_types import NA
-from ..backend.base import VCFReader, VCFRecord
+from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
     add_common_arguments,
     check_expression,
     create_reader,
+    get_annotation_keys,
     read_auxiliary,
     read_ontology,
+    smart_open,
 )
 from ..errors import HeaderWrongColumnNumberError, VembraneError
 from ..globals import allowed_globals
-from ..representations import Environment
+from ..representations import FuncWrappedExpressionEnvironment
 from ..sequence_ontology import SequenceOntology
 from .filter import DeprecatedAction
+
+ALL_EXPRESSION = "ALL"
 
 
 def add_subcommmand(subparsers):
@@ -30,7 +32,8 @@ def add_subcommmand(subparsers):
     parser.add_argument(
         "expression",
         type=check_expression,
-        help="The expression for the output.",
+        help=f"The expression for the output. "
+        f"Use {ALL_EXPRESSION} to output all fields.",
     )
     parser.add_argument(
         "vcf",
@@ -55,11 +58,25 @@ def add_subcommmand(subparsers):
               disable any header output.',
     )
     parser.add_argument(
-        "--long",
-        help="Instead of using `for_each_sample` to generate multiple columns "
-        "(wide format), "
-        "use only one sample column but one row for each sample (long format).",
+        "--naming-convention",
+        metavar="CONVENTION",
+        default="dictionary",
+        type=NamingConvention,
+        choices=list(NamingConvention),
+        help="The naming convention to use for column names "
+        "when generating the header for the ALL expression.",
+    )
+    parser.add_argument(
+        "--wide",
+        help="Instead of using long format with a special SAMPLE column, "
+        "generate multiple columns per sample "
+        "with the `for_each_sample` utility function.",
         action="store_true",
+    )
+    parser.add_argument(
+        "--long",
+        action=DeprecatedAction,
+        help="Long format is now the default. For wide format, use `--wide` instead.",
     )
     parser.add_argument(
         "--output",
@@ -74,47 +91,86 @@ def tableize_vcf(
     vcf: VCFReader,
     expression: str,
     ann_key: str,
-    overwrite_number: dict[str, dict[str, str]] = MappingProxyType({}),
-    long: bool = False,
-    auxiliary: dict[str, set[str]] = MappingProxyType({}),
+    overwrite_number: dict[str, dict[str, str]] | None = None,
+    wide: bool = False,
+    auxiliary: dict[str, set[str]] | None = None,
     ontology: SequenceOntology | None = None,
 ) -> Iterator[tuple]:
+    if overwrite_number is None:
+        overwrite_number = {}
+    if auxiliary is None:
+        auxiliary = {}
+
     kwargs: dict[str, Any] = dict(auxiliary=auxiliary, ontology=ontology)
-    if long:
+
+    if not wide:
         kwargs["evaluation_function_template"] = (
             "lambda: (({expression}) for SAMPLE in SAMPLES)"
         )
     else:
         expression = f"({expression})"
-    env = Environment(expression, ann_key, vcf.header, **kwargs)
+    env = FuncWrappedExpressionEnvironment(expression, ann_key, vcf.header, **kwargs)
 
     record: VCFRecord
     for idx, record in enumerate(vcf):
         env.update_from_record(idx, record)
         if env.expression_annotations():
-            # if the expression contains a reference to the ANN field
-            # get all annotations from the record.info field
-            # (or supply an empty ANN value if the record has no ANN field)
-            annotations = record.info[ann_key]
-            if annotations is NA:
-                num_ann_entries = len(env._annotation._ann_conv.keys())
-                empty = "|" * num_ann_entries
-                print(
-                    f"No ANN field found in record {idx}, "
-                    f"replacing with NAs (i.e. 'ANN={empty}')",
-                    file=sys.stderr,
-                )
-                annotations = [empty]
+            annotations = env.get_record_annotations(idx, record)
             for annotation in annotations:
-                if long:
-                    yield from env.table(annotation)
+                if not wide:
+                    yield from env.table_row(annotation)
                 else:
-                    yield env.table(annotation)
+                    yield env.table_row(annotation)
         else:
-            if long:
-                yield from env.table()
+            if not wide:
+                yield from env.table_row()
             else:
-                yield env.table()
+                yield env.table_row()
+
+
+class NamingConvention(Enum):
+    DICTIONARY = "dictionary"
+    UNDERSCORE = "underscore"
+    SLASH = "slash"
+
+
+def construct_all_expression_and_header(
+    header: VCFHeader, ann_key: str, naming_convention: NamingConvention
+) -> tuple[str, list[str]]:
+    all_header = ["SAMPLE", "CHROM", "POS", "REF", "ALT", "QUAL", "FILTER", "ID"]
+    all_expression = ", ".join(all_header)
+
+    def format_key(field: str, key: str) -> str:
+        match naming_convention:
+            case NamingConvention.DICTIONARY:
+                return f"{field}['{key}']"
+            case NamingConvention.UNDERSCORE:
+                return f"{field}_{key}"
+            case NamingConvention.SLASH:
+                return f"{field}/{key}"
+
+    info_keys = list(header.infos.keys())
+    if info_keys:
+        info_keys_without_ann = [key for key in info_keys if key != ann_key]
+        info_expr = ", ".join(f'INFO["{key}"]' for key in info_keys_without_ann)
+        all_header += [format_key("INFO", key) for key in info_keys_without_ann]
+        all_expression += ", " + info_expr
+
+    format_keys = list(header.formats.keys())
+    if format_keys:
+        all_header += [format_key("FORMAT", key) for key in format_keys]
+        format_expr = ", ".join(
+            f'(FORMAT["{key}"] or {{}}).get(SAMPLE, NA)' for key in format_keys
+        )
+        all_expression += ", " + format_expr
+
+    annotation_keys = get_annotation_keys(header, ann_key)
+    if annotation_keys:
+        annotation_expr = ", ".join(f'ANN["{key}"]' for key in annotation_keys)
+        all_header += [format_key(ann_key, key) for key in annotation_keys]
+        all_expression += ", " + annotation_expr
+
+    return all_expression, all_header
 
 
 def generate_for_each_sample_expressions(s: str, vcf: VCFReader) -> list[str]:
@@ -187,7 +243,7 @@ def _var_and_body(s):
 
 
 def preprocess_expression(
-    header: str,
+    expression: str,
     vcf: VCFReader,
     make_expression: bool = True,
 ) -> str:
@@ -196,7 +252,11 @@ def preprocess_expression(
     Then, if one of these parts starts with 'for_each_sample',
     that part is expanded for each sample in vcf.header.samples
     """
-    parts: list[str] = get_toplevel(header)
+
+    if expression == ALL_EXPRESSION:
+        return expression
+
+    parts: list[str] = get_toplevel(expression)
     to_expand = list(
         filter(lambda x: x[1].startswith("for_each_sample"), enumerate(parts)),
     )
@@ -216,8 +276,13 @@ def preprocess_expression(
 
 
 def get_header(args, vcf: VCFReader) -> list[str]:
+    if args.expression == ALL_EXPRESSION:
+        _, all_header = construct_all_expression_and_header(
+            vcf.header, args.annotation_key, args.naming_convention
+        )
+        return all_header
     header = args.expression if args.header == "auto" else args.header
-    if args.long:
+    if not args.wide:
         header = f"SAMPLE, {header}"
     return get_toplevel(preprocess_expression(header, vcf, args.header == "auto"))
 
@@ -260,17 +325,6 @@ def get_row(row):
     return row
 
 
-@contextlib.contextmanager
-def smart_open(filename=None, *args, **kwargs):
-    fh = open(filename, *args, **kwargs) if filename and filename != "-" else sys.stdout
-
-    try:
-        yield fh
-    finally:
-        if fh is not sys.stdout:
-            fh.close()
-
-
 def execute(args):
     aux = read_auxiliary(args.aux)
     ontology = read_ontology(args.ontology)
@@ -284,14 +338,20 @@ def execute(args):
         overwrite_number=overwrite_number,
     ) as vcf:
         expression = preprocess_expression(args.expression, vcf, True)
-        if args.long:
-            expression = f"SAMPLE, {expression}"
+        if expression == ALL_EXPRESSION:
+            args.wide = False
+            expression, _header = construct_all_expression_and_header(
+                vcf.header, args.annotation_key, args.naming_convention
+            )
+        else:
+            if not args.wide:
+                expression = f"SAMPLE, {expression}"
         rows = tableize_vcf(
             vcf,
             expression,
             args.annotation_key,
             overwrite_number=overwrite_number,
-            long=args.long,
+            wide=args.wide,
             auxiliary=aux,
             ontology=ontology,
         )

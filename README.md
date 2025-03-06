@@ -13,7 +13,7 @@ For a comparison with similar tools have a look at the [vembrane benchmarks](htt
 
 ## Installation
 vembrane is available in [bioconda](https://bioconda.github.io/) and can either be installed into an existing conda environment with `mamba install -c conda-forge -c bioconda vembrane` or into a new named environment `mamba create -n environment_name -c conda-forge -c bioconda vembrane`.
-Alternatively, if you are familiar with git and [poetry](https://python-poetry.org/), clone this repository and run `poetry install`.
+Alternatively, if you are familiar with git and [uv](https://docs.astral.sh/uv/), clone this repository and run `uv sync`.
 See [docs/develop.md](docs/develop.md) for further details.
 
 ## `vembrane filter`
@@ -258,15 +258,22 @@ vembrane table 'CHROM, POS, 10**(-QUAL/10), ANN["CLIN_SIG"]' input.vcf > table.t
 ```
 
 When handling **multi-sample VCFs**, you often want to iterate over all samples in a record by looking at a `FORMAT` field for all of them.
-However, if you use a standard Python list comprehension (something like `[FORMAT['DP'][sample] for sample in SAMPLES]`), this would yield a single column with a list containing one entry per sample (something like `[25, 32, 22]` for three samples with the respective depths).
+Therefore, `vembrane table` defaults to a long table format:
+In this case, the first column will always be called `SAMPLE` and there's an additional variable of the same name available for the expressions.
+For example:
+```sh
+vembrane table 'CHROM, POS, FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL' input.vcf > long_table.tsv
+```
+will yield a table with the columns `'SAMPLE'`, `'CHROM'`, `'POS'`, and `'FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL'`.
 
-In order to have a separate column for each sample, you can use the **`for_each_sample()`** function in both the main `vembrane table` expression and the `--header` expression.
+If you instead want a wide table format, where each sample has its own column, you can toggle this behaviour with the `--wide` flag:
+```sh
+vembrane table --wide --header 'CHROM, POS, for_each_sample(lambda sample: f"{sample}_depth")' 'CHROM, POS, for_each_sample(lambda s: FORMAT["DP"][s])' input.vcf > table.tsv
+```
+
+This makes use of the **`for_each_sample()`** function in both the main `vembrane table` expression and the `--header` expression.
 It should contain one [lambda expression](https://docs.python.org/3/reference/expressions.html#lambda) with exactly one argument, which will be substituted by the sample names in the lambda expression.
 
-For example, you could specifiy expressions for the `--header` and the main VCF record evaluation like this:
-```sh
-vembrane table --header 'CHROM, POS, for_each_sample(lambda sample: f"{sample}_depth")' 'CHROM, POS, for_each_sample(lambda s: FORMAT["DP"][s])' input.vcf > table.tsv
-```
 Given a VCF file with samples `Sample_1`, `Sample_2` and `Sample_3`, the header would expand to be printed as:
 ```
 CHROM  POS   Sample_1_depth   Sample_2_depth   Sample_3_depth
@@ -282,15 +289,21 @@ When supplying a header via `--header`,  its `for_each_sample()` expects an expr
 Please note that, as anywhere in vembrane, you can use arbitrary Python expressions in `for_each_sample()` lambda expressions.
 So you can for example perform computations on fields or combine multiple fields into one value:
 ```sh
-vembrane table 'CHROM, POS, for_each_sample(lambda sample: FORMAT["AD"][sample] / FORMAT["DP"][sample] * QUAL)' input.vcf > table.tsv
+vembrane table --wide 'CHROM, POS, for_each_sample(lambda sample: FORMAT["AD"][sample] / FORMAT["DP"][sample] * QUAL)' input.vcf > table.tsv
 ```
 
-Instead of using the `for_each_sample` (wide format) machinery, it is also possible to generate the data in long format by specifying the `--long` flag.
-In this case, the first column will always be called `SAMPLE` and there's an additional variable of the same name available for the expressions.
-For example:
+
+
+## `vembrane table ALL`
+If you want to extract all information from a VCF file, including every single `INFO`, `FORMAT` and annotation `ANN`/`INFO["ANN"]` field that is defined in the header, you can use the `table` subcommand with the pseudo-expression `ALL`:
 ```sh
-vembrane table --long 'CHROM, POS, FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL' input.vcf > long_table.tsv
+vembrane table 'ALL' input.vcf > table.tsv
 ```
+To control the naming convention of the columns, you can use the `--naming-convention` option with the following allowed values:
+  - `dictionary`: The column names are rendered as a python dictionary acces, e.g. `INFO["DP"]`.
+  - `underscore`: The column names are rendered with underscores, e.g. `INFO_DP`.
+  - `slash`: The column names are rendered with slashes, e.g. `INFO/DP` (`bcftools` style).
+The default is `dictionary`.
 
 ## `vembrane annotate`
 
@@ -336,6 +349,95 @@ chr10	654480	1000200	HSJKJSD	12
 Exemplary invocation: `vembrane annotate example.yaml example.bcf > annotated.vcf`.
 
 Internally for each vcf record the overlapping regions of the annotation file are determined and stored in `DATA`. The expression may then access the `DATA` object and its columns by the columns names to generate a single or multiple values of cardinality `number` of type `type`. These values are stored in the new annotation entry under the name `vcf_name` and with header description `description`.
+
+## `vembrane structured`
+
+The `structured` subcommand allows you to convert VCF records into structured data formats such as JSON, JSONL, or YAML based on a [YTE template](https://yte-template-engine.github.io).
+
+### Usage
+```
+usage: vembrane structured [options] template [input vcf]
+
+options:
+  -h, --help            show this help message and exit
+  --annotation-key FIELDNAME, -k FIELDNAME
+                        The INFO key for the annotation field. Defaults to "ANN".
+  --output OUTPUT, -o OUTPUT
+                        Output file. If not specified, output is written to STDOUT.
+  --output-fmt {json,jsonl,yaml}
+                        Output format. If not specified, can be automatically determined from the --output file extension.
+```
+
+### Examples
+
+* Convert VCF records to JSON format using a YTE template:
+  ```sh
+  vembrane structured template.yml input.vcf --output output.json
+  ```
+
+* Convert VCF records to YAML format and write to STDOUT:
+  ```sh
+  vembrane structured template.yml input.vcf --output-fmt yaml
+  ```
+
+* Convert VCF records to JSONL format and write to a file:
+  ```sh
+  vembrane structured template.yml input.vcf --output output.jsonl
+  ```
+
+In the template file, you can define the desired structure and expressions to retrieve data from the VCF record.
+The YTE template thereby models the desired structure into which each VCF record shall be converted.
+Inside of the template, VCF record specific variable are accessible analogous to expressions in other vembrane commands, for example:
+
+```yaml
+variant:
+  chromosome: ?CHROM
+  position: ?POS
+  reference_allele: ?REF
+  alternative_allele: ?ALT
+  ?if ANN:
+    ?if ANN["GENE"]:
+      gene: ?ANN["GENE"]
+    impact: ?ANN["IMPACT"]
+```
+
+As can be seen, YTE supports the specification of Python expressions for templating.
+This works by prefixing strings with `?`.
+More YTE details and examples can be found in the [YTE documentation](https://yte-template-engine.github.io).
+
+A more complex example, leveraging most capabilities of YTE, is the following:
+
+```yaml
+__variables__:
+  samples_with_af: "?[sample for sample in SAMPLES if FORMAT['AF'][sample] is not NA]"
+
+variant:
+  chrom: ?CHROM
+  pos: ?POS
+  ref: ?REF
+  alt: ?ALT
+  qual: ?QUAL
+  ?if ID is not None:
+    id: ?ID
+  ?if INFO["SVLEN"] is not NA:
+    svlen: ?INFO["SVLEN"]
+  ?if ANN:
+    ?if ANN["SYMBOL"]:
+      gene: ?ANN["SYMBOL"]
+    impact: ?ANN["IMPACT"]
+  ?if samples_with_af:
+    samples:
+      ?for sample in samples_with_af:
+        ?sample:
+          allelic_fraction: ?f"{FORMAT['AF'][sample]:.0%}"
+```
+
+* We define a variable at the top, collecting all samples having a value in the AF format field.
+* If the variant record has a value for ID, this is included in the output.
+* If the variant record has a value for INFO/SVLEN, this is included in the output. Note that unlike all the primary optional fields like ID, QUAL etc., missing values in INFO and FORMAT are represented as `NA` instead of `None`.
+* If the record has annotation, we show gene symbol (if present) and impact.
+* If there is at least one sample with allele frequency (`AF`) information, we show this in a substructure with an entry for each such sample.
+
 
 ## Citation
 Check the "Cite this repository" entry in the sidebar for citation options.

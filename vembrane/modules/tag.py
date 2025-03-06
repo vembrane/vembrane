@@ -2,7 +2,6 @@ import re
 import sys
 from itertools import chain, islice
 from sys import stderr
-from types import MappingProxyType
 from typing import Iterator
 
 from .. import __version__
@@ -21,7 +20,7 @@ from ..common import (
     swap_quotes,
 )
 from ..errors import FilterAlreadyDefinedError, FilterTagNameInvalidError, VembraneError
-from ..representations import Environment
+from ..representations import FuncWrappedExpressionEnvironment
 from ..sequence_ontology import SequenceOntology
 from .filter import DeprecatedAction
 
@@ -76,7 +75,7 @@ def add_subcommand(subparsers):
 
 
 def test_record(
-    env: Environment,
+    env: FuncWrappedExpressionEnvironment,
     idx: int,
     record: VCFRecord,
     ann_key: str,
@@ -98,25 +97,30 @@ def test_record(
             annotations = [empty]
 
         #  … and check if the expression evaluates to true for any  of the annotations
-        filtered = any(map(env.evaluate, annotations))
+        filtered = any(map(env.is_true, annotations))
         return record, filtered
     else:
         # otherwise, the annotations are irrelevant w.r.t. the expression,
         # so we can omit them
-        return record, env.evaluate()
+        return record, env.is_true()
 
 
 def tag_vcf(
     vcf: VCFReader,
     expressions: dict[str, str],
     ann_key: str,
-    auxiliary: dict[str, set[str]] = MappingProxyType({}),
+    auxiliary: dict[str, set[str]] | None = None,
     ontology: SequenceOntology | None = None,
     invert: bool = False,
 ) -> Iterator[VCFRecord]:
+    if auxiliary is None:
+        auxiliary = {}
+
     # For each tag-expression pair, a different Environment must be used.
     envs = {
-        tag: Environment(expression, ann_key, vcf.header, auxiliary, ontology)
+        tag: FuncWrappedExpressionEnvironment(
+            expression, ann_key, vcf.header, auxiliary, ontology
+        )
         for tag, expression in expressions.items()
     }
 

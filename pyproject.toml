@@ -1,35 +1,63 @@
 [build-system]
-requires = ["poetry-core>=1.8.0"]
-build-backend = "poetry.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry]
+[project]
 name = "vembrane"
-version = "2.0.0"
 description = "Filter VCF/BCF files with Python expressions."
-authors = ["Till Hartmann", "Christopher Schröder", "Johannes Köster", "Jan Forster", "Marcel Bargull", "Felix Mölder", "Elias Kuthe", "David Lähnemann"]
+authors = [
+    { name = "Till Hartmann" },
+    { name = "Christopher Schröder" },
+    { name = "Johannes Köster" },
+    { name = "Jan Forster" },
+    { name = "Marcel Bargull" },
+    { name = "Felix Mölder" },
+    { name = "Elias Kuthe" },
+    { name = "David Lähnemann" }
+]
+requires-python = ">=3.12"
 readme = "README.md"
 homepage = "https://github.com/vembrane/vembrane"
 repository = "https://github.com/vembrane/vembrane"
 
-[tool.poetry.scripts]
+dynamic = ["version"]
+
+dependencies = [
+  "pysam~=0.22.1",
+  "cyvcf2~=0.31.1",
+  "pyyaml~=6.0.2",
+  "asttokens~=2.4.1",
+  "numpy~=2.0.1",
+  "intervaltree~=3.1.0",
+  "yte~=1.6.0",
+  "obonet~=1.1.0",
+  "networkx~=3.3",
+  "typing-extensions~=4.12.2",
+]
+
+[project.scripts]
 vembrane = 'vembrane.cli:main'
 
-[tool.poetry.dependencies]
-python = ">=3.10"
-pysam = "^0.22.1"
-cyvcf2 = "^0.31.1"
-pyyaml = "^6.0.2"
-asttokens = "^2.4.1"
-numpy = { version = "^2.0.1", python = ">=3.10" }
-intervaltree = "^3.1.0"
-obonet = "^1.1.0"
-networkx = "^3.3"
-typing-extensions = "^4.12.2"
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.5.6"
-pytest = "^8.3.2"
-pre-commit = "^3.8.0"
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "pre-commit~=3.8.0",
+    "pytest~=8.3.2",
+    "ruff~=0.9.9",
+]
+test = [
+    "pytest",
+    "pytest-sugar",
+]
+lint = [
+    "ruff",
+    "mypy",
+    "types-pyyaml",
+]
+
+[tool.hatch.version]
+path = "vembrane/__init__.py"
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
@@ -63,7 +91,7 @@ exclude = [
 ]
 line-length = 88
 indent-width = 4
-target-version = "py310"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "B", "COM", "I"]
@@ -78,7 +106,6 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.lint.flake8-quotes]
 docstring-quotes = "double"
-
 
 [tool.ruff.format]
 quote-style = "double"
@@ -100,3 +127,51 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
+[tool.tox]
+requires = ["tox>=4.23"]
+env_list = ["format-check", "lints", "mypy", "3.12"]
+allowlist_externals = ["pytest", "ruff"]
+isolated_build = true
+
+[tool.tox.env_run_base]
+runner = "uv-venv-lock-runner"
+description = "run unit tests"
+dependency_groups = ["test"]
+commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
+
+[tool.tox.env."format-check"]
+runner = "uv-venv-lock-runner"
+skip_install = true
+dependency_groups = ["lint"]
+commands = [["ruff", "format", "--check"]]
+
+[tool.tox.env."lints"]
+runner = "uv-venv-lock-runner"
+skip_install = true
+dependency_groups = ["lint"]
+commands = [["ruff", "check"]]
+
+[tool.tox.env."mypy"]
+runner = "uv-venv-lock-runner"
+skip_install = false
+dependency_groups = ["lint"]
+commands = [["mypy"]]
+
+[tool.uv]
+dev-dependencies = [
+    "mypy>=1.13.0",
+    "types-pyyaml>=6.0.12.20240917",
+    "ruff~=0.9.9",
+    "tox>=4.23.2",
+    "tox-uv>=1.20.1",
+]
+
+[tool.mypy]
+python_version = "3.10"
+packages = "vembrane"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]

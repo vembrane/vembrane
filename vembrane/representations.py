@@ -1,5 +1,6 @@
 import ast
-from types import CodeType, MappingProxyType
+import sys
+from types import CodeType
 from typing import Any
 
 from .ann_types import ANN_TYPER, NA, MoreThanOneAltAlleleError, NvFloat, NvInt
@@ -13,7 +14,7 @@ from .sequence_ontology import _C, SequenceOntology
 class NoValueDict:
     def __contains__(self, item) -> bool:
         try:
-            value = self[item]
+            value = self[item]  # type: ignore
         except KeyError:
             return False
         return value is not NA
@@ -34,6 +35,7 @@ class Annotation(NoValueDict, DefaultGet):
         self._record: VCFRecord | None = None
         self._annotation_data: list[str] = []
         self._data: dict[str, Any] = {}
+        self._ann_key = ann_key
         annotation_keys = get_annotation_keys(header, ann_key)
         self._ann_conv = {
             entry.name: (ann_idx, entry.convert)
@@ -45,6 +47,22 @@ class Annotation(NoValueDict, DefaultGet):
         self._record = record
         self._data.clear()
         self._annotation_data = split_annotation_entry(annotation)
+
+    def get_record_annotations(self, idx: int, record: VCFRecord) -> list[str]:
+        # if the expression contains a reference to the ANN field
+        # get all annotations from the record.info field
+        # (or supply an empty ANN value if the record has no ANN field)
+        annotations = record.info[self._ann_key]
+        if annotations is NA:
+            num_ann_entries = len(self._ann_conv.keys())
+            empty = "|" * num_ann_entries
+            print(
+                f"No ANN field found in record {idx}, "
+                f"replacing with NAs (i.e. 'ANN={empty}')",
+                file=sys.stderr,
+            )
+            annotations = [empty]
+        return annotations
 
     def __getitem__(self, item):
         try:
@@ -85,18 +103,14 @@ class WrapFloat32Visitor(ast.NodeTransformer):
 class Environment(dict):
     def __init__(
         self,
-        expression: str,
         ann_key: str,
         header: VCFHeader,
-        auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        auxiliary: dict[str, set[str]] | None = None,
         ontology: SequenceOntology | None = None,
-        evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
+        if auxiliary is None:
+            auxiliary = {}
         self._ann_key: str = ann_key
-        self._has_ann: bool = any(
-            hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
-            for node in ast.walk(ast.parse(expression))
-        )
         self._annotation: Annotation = Annotation(ann_key, header)
         self._globals: dict[str, Any] = {}
         # We use self + self.func as a closure.
@@ -107,30 +121,7 @@ class Environment(dict):
         # only if ALT (but not REF) is accessed (and ALT has multiple entries).
         self._alleles = None
 
-        func_str: str = evaluation_function_template.format(expression=expression)
-
-        # The VCF specification only allows 32bit floats.
-        # Comparisons such as `INFO["some_float"] > CONST` may yield unexpected results,
-        # because `some_float` is a 32bit float while `CONST` is a python 64bit float.
-        # Example: `c_float(0.6) = 0.6000000238418579 > 0.6`.
-        # We can work around this by wrapping user provided floats in `ctypes.c_float`,
-        # which should follow the same IEEE 754 specification as the VCF spec, as most C
-        # compilers should follow this standard (https://stackoverflow.com/a/17904539):
-
-        # parse the expression, obtaining an AST
-        expression_ast = ast.parse(func_str, mode="eval")
-
-        # wrap each float constant in numpy.float32
-        expression_ast = WrapFloat32Visitor().visit(expression_ast)
-
-        # housekeeping
-        expression_ast = ast.fix_missing_locations(expression_ast)
-
-        # compile the now-fixed code-tree
-        func: CodeType = compile(expression_ast, filename="<string>", mode="eval")
-
         self.update(**_explicit_clear)
-        self._func = eval(func, self, {})
 
         self._getters = {
             "AUX": self._get_aux,
@@ -163,15 +154,12 @@ class Environment(dict):
 
         # At the moment, only INFO and FORMAT records are checked
         self._empty_globals = {name: UNSET for name in self._getters}
-        self.record: VCFRecord = None
+        self.record: VCFRecord = None  # type: ignore
         self.idx: int = -1
         self.aux = auxiliary
         self.so = ontology
         if ontology:
             _C.__dict__["ontology"] = ontology
-
-    def expression_annotations(self):
-        return self._has_ann
 
     def update_from_record(self, idx: int, record: VCFRecord):
         self.idx = idx
@@ -181,6 +169,12 @@ class Environment(dict):
 
     def update_data(self, data):
         self._globals["DATA"] = data
+
+    def update_annotation(self, annotation):
+        self._annotation.update(self.idx, self.record, annotation)
+
+    def get_record_annotations(self, idx: int, record: VCFRecord) -> list[str]:
+        return self._annotation.get_record_annotations(idx, record)
 
     def _get_chrom(self) -> str:
         value = self.record.contig
@@ -205,7 +199,7 @@ class Environment(dict):
     def _get_alleles(self) -> tuple[str, ...]:
         alleles = self._alleles
         if not alleles:
-            alleles = self._alleles = self.record.alleles
+            alleles = self._alleles = self.record.alleles  # type: ignore
         return alleles
 
     def _get_ref(self) -> str:
@@ -264,15 +258,68 @@ class Environment(dict):
         self._globals["SO"] = self.so
         return self.so
 
-    def evaluate(self, annotation: str = "") -> bool:
+
+class SourceEnvironment(Environment):
+    def __init__(
+        self,
+        source: str,
+        ann_key: str,
+        header: VCFHeader,
+        auxiliary: dict[str, set[str]] | None = None,
+    ):
+        super().__init__(ann_key, header, auxiliary)
+
+        self._has_ann: bool = any(
+            hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
+            for node in ast.walk(ast.parse(source))
+        )
+
+        # The VCF specification only allows 32bit floats.
+        # Comparisons such as `INFO["some_float"] > CONST` may yield unexpected results,
+        # because `some_float` is a 32bit float while `CONST` is a python 64bit float.
+        # Example: `c_float(0.6) = 0.6000000238418579 > 0.6`.
+        # We can work around this by wrapping user provided floats in `ctypes.c_float`,
+        # which should follow the same IEEE 754 specification as the VCF spec, as most C
+        # compilers should follow this standard (https://stackoverflow.com/a/17904539):
+
+        # parse the expression, obtaining an AST
+        source_ast = ast.parse(source, mode="eval")
+
+        # wrap each float constant in numpy.float32
+        source_ast = WrapFloat32Visitor().visit(source_ast)
+
+        # housekeeping
+        source_ast = ast.fix_missing_locations(source_ast)
+
+        # compile the now-fixed code-tree
+        self.compiled: CodeType = compile(source_ast, filename="<string>", mode="eval")
+
+    def expression_annotations(self):
+        return self._has_ann
+
+
+class FuncWrappedExpressionEnvironment(SourceEnvironment):
+    def __init__(
+        self,
+        expression: str,
+        ann_key: str,
+        header: VCFHeader,
+        auxiliary: dict[str, set[str]] | None = None,
+        evaluation_function_template: str = "lambda: {expression}",
+    ) -> None:
+        func_str: str = evaluation_function_template.format(expression=expression)
+        super().__init__(func_str, ann_key, header, auxiliary)
+        self._func = eval(self.compiled, self, {})
+
+    def is_true(self, annotation: str = "") -> bool:
         if self._has_ann:
-            self._annotation.update(self.idx, self.record, annotation)
+            self.update_annotation(annotation)
         keep = self._func()
         if not isinstance(keep, bool):
             raise NonBoolTypeError(keep)
         return keep
 
-    def table(self, annotation: str = "") -> tuple:
+    def table_row(self, annotation: str = "") -> tuple:
         if self._has_ann:
-            self._annotation.update(self.idx, self.record, annotation)
+            self.update_annotation(annotation)
         return self._func()

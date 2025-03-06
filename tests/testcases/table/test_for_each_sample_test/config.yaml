@@ -1,3 +1,4 @@
 function: "table"
 expression: "CHROM, for_each_sample(lambda sample: (FORMAT['AD'][sample][0] / FORMAT['DP'][sample]) * INFO['MQ'])"
 header: "auto"
+wide: []

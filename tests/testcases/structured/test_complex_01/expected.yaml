@@ -1,0 +1,23 @@
+- variant:
+    chrom: "1"
+    pos: 26696985
+    ref: C
+    alt: T
+    qual: null
+    id: rs1283126655
+    impact: LOW
+    gene: ARID1A
+    samples:
+      tumor:
+        allelic_fraction: 6%
+- variant:
+    chrom: "1"
+    pos: 26696986
+    ref: C
+    alt: T
+    qual: 20.0
+    impact: LOW
+    gene: ARID1A
+    samples:
+      tumor:
+        allelic_fraction: 6%

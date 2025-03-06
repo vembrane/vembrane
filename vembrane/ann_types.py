@@ -687,8 +687,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "gnomAD_FIN_AF": AnnotationEntry(
         "gnomAD_FIN_AF",
         float32,
-        description="Frequency of existing variant in gnomAD exomes "
-        "Finnish population",
+        description="Frequency of existing variant in gnomAD exomes Finnish population",
     ),
     "gnomAD_NFE_AF": AnnotationEntry(
         "gnomAD_NFE_AF",
@@ -711,8 +710,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "MAX_AF": AnnotationEntry(
         "MAX_AF",
         float32,
-        description="Maximum observed allele frequency in "
-        "1000 Genomes, ESP and gnomAD",
+        description="Maximum observed allele frequency in 1000 Genomes, ESP and gnomAD",
     ),
     "MAX_AF_POPS": AnnotationListEntry(
         "MAX_AF_POPS",

@@ -188,8 +188,7 @@ class SequenceOntology:
             graph = obonet.read_obo(path)
         else:
             raise TypeError(
-                f"Expected str, PathLike, or TextIO, "
-                f"got {type(path)} for value {path}"
+                f"Expected str, PathLike, or TextIO, got {type(path)} for value {path}"
             )
         return cls(graph)
 
