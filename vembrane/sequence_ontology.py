@@ -64,7 +64,10 @@ class Term(str):
 
     def get_id(self) -> Id:
         """Get the ID of this term."""
-        return _C.ontology.term_to_id[self]
+        try:
+            return _C.ontology.term_to_id[self]
+        except KeyError as ke:
+            raise ValueError(f"Term {self} not found in the ontology") from ke
 
     def parents(self) -> "Consequences":
         """Return the parent terms of this term."""
@@ -118,7 +121,7 @@ class Term(str):
         """
         if not target_term:
             return False
-        return _C.ontology.path_lengths[target_term].get(self) is not None
+        return _C.ontology.path_lengths.get(target_term, {}).get(self) is not None
 
     def is_descendant(self, target_term: Self) -> bool:
         """
@@ -126,7 +129,7 @@ class Term(str):
         """
         if not target_term:
             return False
-        return _C.ontology.path_lengths[self].get(target_term) is not None
+        return _C.ontology.path_lengths.get(self, {}).get(target_term) is not None
 
     def is_a(self, target_term: Self) -> bool:
         """
@@ -222,8 +225,14 @@ class SequenceOntology:
 
     def get_id(self, term: Term) -> Id:
         """Get the ID of a term."""
-        return self.term_to_id[term]
+        try:
+            return self.term_to_id[term]
+        except KeyError as ke:
+            raise ValueError(f"Term {term} not found in the ontology") from ke
 
     def get_term(self, id_: Id) -> Term:
         """Get the term for an ID."""
-        return self.id_to_term[id_]
+        try:
+            return self.id_to_term[id_]
+        except KeyError as ke:
+            raise ValueError(f"ID {id_} not found in the ontology") from ke
