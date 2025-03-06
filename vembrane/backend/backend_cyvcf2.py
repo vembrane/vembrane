@@ -1,4 +1,5 @@
 from collections import OrderedDict, defaultdict
+from sys import stderr
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -239,6 +240,9 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
     def __contains__(self, key):
         return key in self._raw_format
 
+    def keys(self):
+        return self._raw_format.keys()
+
 
 class Cyvcf2RecordFormat(VCFRecordFormat):
     __slots__ = ("_header", "_record", "_raw_record", "_format_key")
@@ -259,9 +263,23 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
             )
             return type_info(value, ".")
 
-        value = self._raw_record.format(self._format_key)[i]
         meta = self._header.formats[self._format_key]
         number = meta["Number"]
+        value_array = self._raw_record.format(self._format_key)
+        if value_array is None:
+            print(
+                f"Warning: "
+                f"record {self._record.record_idx} is missing a value "
+                f"for FORMAT key {self._format_key}, "
+                f"returning NA instead."
+                f"\n{self._record}\n",
+                file=stderr,
+            )
+            return type_info(NA, number)
+
+        else:
+            value = value_array[i]
+
         if meta["Type"] == "String" and not number == "1":
             value = value.split(",")
         if number == "1":
@@ -280,6 +298,9 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
 
     def __eq__(self, other):
         return all(self[sample] == other[sample] for sample in self._header.samples)
+
+    def keys(self):
+        return self._raw_record.format.keys()
 
 
 class Cyvcf2RecordFilter(VCFRecordFilter):
@@ -326,11 +347,16 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
             value = self._raw_record.INFO[key]
             typ = meta["Type"]
         except KeyError:
+            if key == "END":
+                return self._raw_record.POS + len(self._raw_record.REF) - 1
+
             print(
                 f"Warning: "
-                f"record {self._record.record_idx} is missing a value for key {key}, "
+                f"record {self._record.record_idx} is missing a value "
+                f"for INFO key {key}, "
                 f"returning NA instead."
                 f"\n{self._record}\n",
+                file=stderr,
             )
             return type_info(NA, number)
 
@@ -350,6 +376,9 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
 
     def __contains__(self, key):
         return self._raw_record.INFO.get(key, None) is not None
+
+    def keys(self):
+        return self._raw_record.info.keys()
 
 
 class Cyvcf2Writer(VCFWriter):

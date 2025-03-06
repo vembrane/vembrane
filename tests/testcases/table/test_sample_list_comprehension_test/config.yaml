@@ -1,3 +1,4 @@
 function: "table"
 expression: "CHROM, [ FORMAT['DP'][sample] for sample in SAMPLES ]"
 header: "auto"
+wide: []

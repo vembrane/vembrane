@@ -1,2 +1,3 @@
 function: "table"
 expression: "CHROM, POS, ANN['EXON']"
+wide: []

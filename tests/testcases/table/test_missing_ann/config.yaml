@@ -3,3 +3,4 @@ expression: 'ANN["Gene_Name"] in AUX["genes"] and ANN["Annotation_Impact"] == "H
 header: "known_with_high_impact"
 aux:
   genes: 'tests/resources/genes.txt'
+wide: []

@@ -39,6 +39,10 @@ class VCFRecordInfo:
     def __setitem__(self, key, value):
         raise NotImplementedError
 
+    @abstractmethod
+    def keys(self):
+        raise NotImplementedError
+
     def get(self, key, default=None):
         if key in self:
             return self[key]
@@ -77,6 +81,10 @@ class VCFRecordFormat(NoValueDict):
             return self[sample]
         except UnknownSampleError:
             return default
+
+    @abstractmethod
+    def keys(self):
+        raise NotImplementedError
 
     def __repr__(self):
         return str(
@@ -219,6 +227,10 @@ class VCFRecordFormats(NoValueDict):
         self,
         record: VCFRecord,
     ):
+        raise NotImplementedError
+
+    @abstractmethod
+    def keys(self):
         raise NotImplementedError
 
     def get(self, key: str, default=None):

@@ -1,0 +1,16 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##fileDate=20191217
+##source=strelka
+##source_version=2.9.10
+##startTime=Tue Dec 17 17:01:25 2019
+##contig=<ID=chr18,length=80373285>
+##content=strelka somatic snv calls
+##priorSomaticSnvRate=0.0001
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth for tier1 (used+filtered)">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TUMOR
+chr18	27963423	.	G	A	276	PASS	.	GT:DP	0/1:61
+chr18	27963698	.	T	C	30	PASS	.	GT:DP	0/1:7
+chr18	28036487	.	A	T	162	PASS	.	GT:DP	0/1:36
+chr18	28045161	.	G	A	37	PASS	.	GT:DP	0/1:4
