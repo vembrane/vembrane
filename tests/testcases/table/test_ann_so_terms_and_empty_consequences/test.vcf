@@ -5,4 +5,4 @@
 ##reference=GRCh38
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
 1	123	.	A	C	.	.	ANN=C|frameshift_variant&frameshift_elongation&intron_variant&splice_donor_5th_base_variant&splice_region_variant&splice_donor_region_variant
-1	456	.	A	C	.	.	ANN=C|transcript_ablation&splice_region_variant&splice_donor_region_variant&foo
+1	456	.	A	C	.	.	ANN=C|
