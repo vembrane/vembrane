@@ -266,8 +266,9 @@ class SourceEnvironment(Environment):
         ann_key: str,
         header: VCFHeader,
         auxiliary: dict[str, set[str]] | None = None,
+        ontology: SequenceOntology | None = None,
     ):
-        super().__init__(ann_key, header, auxiliary)
+        super().__init__(ann_key, header, auxiliary, ontology)
 
         self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
@@ -305,10 +306,11 @@ class FuncWrappedExpressionEnvironment(SourceEnvironment):
         ann_key: str,
         header: VCFHeader,
         auxiliary: dict[str, set[str]] | None = None,
+        ontology: SequenceOntology | None = None,
         evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
         func_str: str = evaluation_function_template.format(expression=expression)
-        super().__init__(func_str, ann_key, header, auxiliary)
+        super().__init__(func_str, ann_key, header, auxiliary, ontology)
         self._func = eval(self.compiled, self, {})
 
     def is_true(self, annotation: str = "") -> bool:
