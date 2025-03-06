@@ -152,6 +152,23 @@ class Consequences(list[Term]):
     def any_is_a(self, target_term: Term) -> bool:
         return any(term.is_a(target_term) for term in self)
 
+    def __eq__(self, other):
+        if isinstance(other, Consequences) or isinstance(other, list):
+            return super().__eq__(other)
+        else:
+            raise TypeError(
+                "Can only directly compare Consequences to other Consequences "
+                "or lists of Terms, not str or any other types.\n"
+                "If you want to check "
+                "whether a single term is part of the Consequences, "
+                "use the `in` operator, "
+                "e.g. `'missense_variant' in ANN['Consequences']`.\n"
+                "If you do want an exact match of a list of terms, "
+                "use e.g. `['missense_variant'] == ANN['Consequences']`.\n"
+                "Otherwise, prefer using the `any_is_a` method,"
+                "e.g. `ANN['Consequences'].any_is_a('missense_variant')`."
+            )
+
 
 class SequenceOntology:
     """
