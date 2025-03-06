@@ -468,6 +468,18 @@ wheels = [
 ]
 
 [[package]]
+name = "types-networkx"
+version = "3.4.2.20250304"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/40/6dd15ecf27303c4c645e6e6f5ee60fc0d4b8edb4e859e72ac1e300eec471/types_networkx-3.4.2.20250304.tar.gz", hash = "sha256:249c74deeb6d64a360ce94fcbc6e4077d1bfd433b9186596f89b1146327cec1f", size = 55100 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d0/bf/c0b0edd702562de22994cd6643ae7c17250a2a666dc24f8b298ee3c1a43a/types_networkx-3.4.2.20250304-py3-none-any.whl", hash = "sha256:d578c3100d7cd066996c49da0274e8bd18a251cd0ae57cd2ca7bad0e9c41dc6a", size = 137452 },
+]
+
+[[package]]
 name = "types-pyyaml"
 version = "6.0.12.20241230"
 source = { registry = "https://pypi.org/simple" }
@@ -534,6 +546,7 @@ dev = [
     { name = "ruff" },
     { name = "tox" },
     { name = "tox-uv" },
+    { name = "types-networkx" },
     { name = "types-pyyaml" },
 ]
 lint = [
@@ -569,6 +582,7 @@ dev = [
     { name = "ruff", specifier = "~=0.9.9" },
     { name = "tox", specifier = ">=4.23.2" },
     { name = "tox-uv", specifier = ">=1.20.1" },
+    { name = "types-networkx", specifier = ">=3.4.2.20250304" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20240917" },
 ]
 lint = [

@@ -48,7 +48,7 @@ class _Container:
 
     ontology: "SequenceOntology"
 
-    @cached_property
+    @cached_property  # type: ignore
     def ontology(self) -> "SequenceOntology":
         return SequenceOntology.default()
 

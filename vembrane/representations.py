@@ -256,7 +256,7 @@ class Environment(dict):
         if not self.so:
             self.so = SequenceOntology.default()
         self._globals["SO"] = self.so
-        return self.so
+        return self.so  # type: ignore
 
 
 class SourceEnvironment(Environment):
