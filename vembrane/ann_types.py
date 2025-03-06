@@ -274,6 +274,7 @@ class AnnotationSetEntry(AnnotationEntry):
         sep: str,
         typefunc: Callable[[str], Any] | None = None,
         inner_typefunc: Callable[[str], Any] = lambda x: x,
+        nafunc: Callable[[], Any] = lambda: set(),
         **kwargs,
     ) -> None:
         typefunc = (
@@ -281,7 +282,7 @@ class AnnotationSetEntry(AnnotationEntry):
             if typefunc
             else lambda v: {inner_typefunc(x.strip()) for x in v.split(sep)}
         )
-        super().__init__(name, typefunc, nafunc=lambda: set(), **kwargs)
+        super().__init__(name, typefunc, nafunc=nafunc, **kwargs)
 
 
 class ConsequenceEntry(AnnotationSetEntry):
@@ -290,6 +291,7 @@ class ConsequenceEntry(AnnotationSetEntry):
             name,
             sep="&",
             typefunc=lambda v: Consequences(Term(t.strip()) for t in v.split("&")),
+            nafunc=lambda: Consequences(),
             **kwargs,
         )
 
