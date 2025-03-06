@@ -155,6 +155,16 @@ class Consequences(list[Term]):
     def any_is_a(self, target_term: Term) -> bool:
         return any(term.is_a(target_term) for term in self)
 
+    def most_specific_terms(self) -> "Consequences":
+        """
+        Return the most specific terms from the given list of terms.
+        """
+        return Consequences(
+            term
+            for term in self
+            if not any(other.is_descendant(term) for other in self if term != other)
+        )
+
     def __eq__(self, other):
         if isinstance(other, Consequences) or isinstance(other, list):
             return super().__eq__(other)
