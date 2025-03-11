@@ -1,14 +1,85 @@
 # as defined here: https://www.medizininformatik-initiative.de/Kerndatensatz/Modul_Molekulargenetischer_Befundbericht/Variante-Observation.html
 
+# missing entries:
+# transcript-ref-seq (alterantive definition: Methoden.Referenzsequenz)
+# dna-region (Methoden.Intron spanning/IVS)
+# detection limit (not available)
+
 __variables__:
   exon: ?ANN["EXON"]
   protein_position: ?ANN["Protein_position"]
+  assembly_dict: ?"""
+    {
+      "GRCh37": "LA14029-5",
+      "GRCh38": "LA26806-2"
+    }
+    """
+  coding_change_type_dict: ?"""
+    {
+      # "": ("Wild type", "LA9658-1"),
+      "deletion": ("Deletion", "LA6692-3"),
+      "duplication": ("Duplication", "LA6686-5"),
+      "insertion": ("Insertion", "LA6687-3"),
+      "indel": ("Insertion/Deletion", "LA6688-1"),
+      "inversion": ("Inversion", "LA6689-9"),
+      "substitution": ("Substitution", "LA6690-7"),
+
+    }
+    """
+  amino_acid_change_dict: ?"""
+    {
+      "": ("Wild type", "LA9658-1"),
+      "": ("Deletion", "LA6692-3"),
+      "": ("Duplication", "LA6686-5"),
+      "frameshift_variant": ("Frameshift", "LA6694-9"),
+      "": ("Initiating Methionine", "LA6695-6"),
+      "": ("Insertion", "LA6687-3"),
+      "": ("Insertion and Deletion", "LA9659-9"),
+      "missense_variant": ("Missense", "6698-0"),
+      "": ("Nonsense", "LA6699-8"),
+      "": ("Silent", "LA6700-4"),
+      "": ("Stop Codon Mutation", "LA6701-2"),
+    }
+    """
+  chromosome_dict: ?"""
+    {
+    "chr1": "Chromosome 1", "LA21254-0",)
+    "chr2": "Chromosome 2", "LA21255-7",)
+    "chr3": "Chromosome 3", "LA21256-5",)
+    "chr4": "Chromosome 4", "LA21257-3",)
+    "chr5": "Chromosome 5", "LA21258-1",)
+    "chr6": "Chromosome 6", "LA21259-9",)
+    "chr7": "Chromosome 7", "LA21260-7",)
+    "chr8": "Chromosome 8", "LA21261-5",)
+    "chr9": "Chromosome 9", "LA21262-3",)
+    "chr10": "Chromosome 10", "LA21263-1",)
+    "chr11": "Chromosome 11", "LA21264-9",)
+    "chr12": "Chromosome 12", "LA21265-6",)
+    "chr13": "Chromosome 13", "LA21266-4",)
+    "chr14": "Chromosome 14", "LA21267-2",)
+    "chr15": "Chromosome 15", "LA21268-0",)
+    "chr16": "Chromosome 16", "LA21269-8",)
+    "chr17": "Chromosome 17", "LA21270-6",)
+    "chr18": "Chromosome 18", "LA21271-4",)
+    "chr19": "Chromosome 19", "LA21272-2",)
+    "chr20": "Chromosome 20", "LA21273-0",)
+    "chr21": "Chromosome 21", "LA21274-8",)
+    "chr22": "Chromosome 22", "LA21275-5",)
+    "chrX": "Chromosome X", "LA21276-3",)
+    "chrY": "Chromosome Y", "LA21277-1",)
+    }
+    """
 
 resourceType: Observation
 
+# TODO
+extension:
+ - url: "http://uk-essen/Pathology/foobar/FileName"
+   valueString: ?filename
+
 meta:
   profile:
-  - https://www.medizininformatik-initiative.de/fhir/ext/modul-molgen/StructureDefinition/variante
+  - https://simplifier.net/medizininformatikinitiative-modulomics/mii_pr_molgen_variante
   - http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/variant
 
 code:
@@ -30,7 +101,6 @@ valueCodeableConcept:
     system: http://loinc.org
 
 component:
-# gene-studied
 - code:
     coding:
     - code: 48018-6
@@ -41,17 +111,17 @@ component:
     - code: ?ANN["HGNC_ID"]
       system: http://www.genenames.org/geneId
       display: ?ANN["SYMBOL"]
-# TODO transcript-ref-seq
 - code:
   coding:
   - code: 51958-7
     display: Transcript reference sequence [ID]
     system: http://loinc.org
-  valueCodeableConept:
+  valueCodeableConcept:
     coding:
     - code: ?ANN["Feature"]
       system: http://www.ncbi.nlm.nih.gov/refseq
-# coding-hgvs
+    # - code: ?ANN["Feature_ensembl"]
+    # system: http://www.ncbi.nlm.nih.gov/ensembl
 - code:
     coding:
     - code: 48004-6
@@ -61,7 +131,6 @@ component:
     coding:
     - code: ?ANN["HGVSc"]
       system: http://varnomen.hgvs.org 
-#protein-hgvs
 - code:
     coding:
     - code: 48005-3
@@ -71,7 +140,6 @@ component:
     coding:
     - code: ?ANN["HGVSp"]
       system: http://varnomen.hgvs.org
-#TODO genomic-hgvs
 - code:
     coding:
     - code: 81290-9
@@ -89,10 +157,9 @@ component:
       system: http://loinc.org
   valueCodeableConcept:
     coding:
-    - code: #map loinc code
+    - code: ?assembly_dict[...]
       display: #GRCh37/38 via param
       system: http://loinc.org
-# TODO coding change type
 - code:
     coding:
     - code: 48019-4
@@ -100,21 +167,20 @@ component:
       system: http://loinc.org
   valueCodeableConcept:
     coding:
-    - code: #map loinc code
-      display: ?ANN["VARIANT_CLASS"]
+    - code: ?coding_change_type_dict[ANN["VARIANT_CLASS"]][1]
+      display: ?coding_change_type_dict[ANN["VARIANT_CLASS"]][0]
       system: http://loinc.org
-# amino-acid-change-type
-- code:
-    coding:
-    - code: 48006-1
-      display: Amino acid change [Type]
-      system: http://loinc.org
-  valueCodeableConcept:
-    coding:
-    - code: LA6698-0 # map loinc code
-      display: ?ANN["Consequence"]
-      system: http://loinc.org
-# sample-allelic-frequency
+# amino-acid-change-type (check for correct ANN field)
+# - code:
+#     coding:
+#     - code: 48006-1
+#       display: Amino acid change [Type]
+#       system: http://loinc.org
+#   valueCodeableConcept:
+#     coding:
+#     - code: ?amino_acid_change_dict[ANN["Consequence"]][1]
+#       display: ?amino_acid_change_dict[ANN["Consequence"]][0]
+#       system: http://loinc.org
 - code:
     coding:
     - code: 81258-6
@@ -124,8 +190,16 @@ component:
     code: '%'
     system: http://unitsofmeasure.org
     value: ?FORMAT['AF'][sample] * 100
-# TODO genomic-source-class (not part of vcf)
-# cytogenic-location
+- code:
+  coding:
+    - code: 48002-0
+      display: Genomic source class [Type]
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: LA6684-0
+      display: Somatic
+      system: http://loinc.org 
 - code:
     coding:
     - code: 48001-2
@@ -135,18 +209,21 @@ component:
     coding:
     - code: ?cytobands.get(CHROM, POS)
       system: urn:oid:2.16.840.1.113883.6.335
-# TODO copy number (not part of bcf, probably unknown)
-# TODO transcript-ref-seq (duplicate?!)
-# TODO allelic read depth
 - code:
     coding:
     - code: 82121-5
       display: Allelic Read Depth
       system: http://loinc.org
     valueQuantity: ?FORMAT['AD'][sample]
-# TODO dna-region (Methoden.Intron spanning/IVS)
-# TODO exact-start-end
-# TODO chromosome-identifier (valueCodeableConcept not defined)
+- code:
+    coding:
+    - code: 81254-5
+      display: Genomic allele start-end
+      system: http://loinc.org
+      ?if POS == END:
+        valueRange: ?f"{CHROM}:{POS}"
+    ?else:
+        valueRange: ?f"{CHROM}:{POS}-{END}"
 - code:
     coding:
     - code: 48000-4
@@ -154,24 +231,21 @@ component:
       system: http://loinc.org
     valueCodeableConcept:
       coding:
-      - code: # lookup table https://loinc.org/LL2938-0
+      - code: chromosome_dict[CHROM][1]
+        display: chromosome_dict[CHROM][0]
         system: http://loinc.org
-        display: ?CHROM
-# TODO alt-allele (done)
 - code:
     coding:
     - code: 69551-0
       display: Genomic Alt Allele
       system: http://loinc.org
     valueString: ?ALT
-# TODO ref-allele (done)
 - code:
     coding:
     - code: 69547-8
       display: Genomic Ref Allele
       system: http://loinc.org
     valueString: ?REF
-# dna-region (Exon)
 - code:
     coding:
     - code: 47999-8
@@ -181,34 +255,33 @@ component:
     valueString: '?f"Exon #{ exon.range.start }"'
   ?else:
     valueString: '?f"Exon #{ exon.range.start } - #{ exon.range.stop }"'
-# duplicate (Exon or Codon?)
-- code:
-    coding:
-    - code: 47999-8
-      display: DNA region name [Identifier]
-      system: http://loinc.org
-  valueString: '?f"Codon #{protein_position.start} - #{protein_position.end}"'
-# TODO detection limit (not available)
+# - code:
+#     coding:
+#     - code: 47999-8
+#       display: DNA region name [Identifier]
+#       system: http://loinc.org
+#   valueString: '?f"Codon #{protein_position.start} - #{protein_position.end}"'
+
 
 # unclear
-- code:
-    coding:
-    - code: 48013-7
-      display: Genomic reference sequence [ID]
-      system: http://loinc.org
-  valueCodeableConcept:
-    coding:
-    - code: ?ANN["MANE"]
-      system: http://www.ncbi.nlm.nih.gov/refseq
+# - code:
+#     coding:
+#     - code: 48013-7
+#       display: Genomic reference sequence [ID]
+#       system: http://loinc.org
+#   valueCodeableConcept:
+#     coding:
+#     - code: ?ANN["MANE"]
+#       system: http://www.ncbi.nlm.nih.gov/refseq
 # variation code
-- ?if ID is None: ?SKIP
-  ?else:
-    code:
-      coding:
-      - code: 81252-9
-        display: Discrete genetic variant
-        system: http://loinc.org
-    valueCodeableConcept:
-      coding:
-      - code: ?ID
-        system: http://www.ncbi.nlm.nih.gov/projects/SNP
+# - ?if ID is None: ?SKIP
+#   ?else:
+#     code:
+#       coding:
+#       - code: 81252-9
+#         display: Discrete genetic variant
+#         system: http://loinc.org
+#     valueCodeableConcept:
+#       coding:
+#       - code: ?ID
+#         system: http://www.ncbi.nlm.nih.gov/projects/SNP
