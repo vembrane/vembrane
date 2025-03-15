@@ -25,6 +25,11 @@ def add_subcommand(subparsers):
         help="The sample to use for generating FHIR output.",
     )
     parser.add_argument(
+        "assembly",
+        help="The reference assembly used for read mapping.",
+        choices=["GRCh38", "GRCh37"]
+    )
+    parser.add_argument(
         "--annotation-key",
         "-k",
         metavar="FIELDNAME",
@@ -91,5 +96,5 @@ def execute(args):
         overwrite_number_info=args.overwrite_number_info,
         overwrite_number_format=args.overwrite_number_format,
         backend=args.backend,
-        variables={"sample": args.sample, "cytobands": Cytobands()},
+        variables={"sample": args.sample, "cytobands": Cytobands(), "assembly": args.assembly},
     )
