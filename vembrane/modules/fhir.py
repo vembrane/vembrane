@@ -27,7 +27,7 @@ def add_subcommand(subparsers):
     parser.add_argument(
         "assembly",
         help="The reference assembly used for read mapping.",
-        choices=["GRCh38", "GRCh37"]
+        choices=["GRCh38", "GRCh37"],
     )
     parser.add_argument(
         "--annotation-key",
@@ -57,31 +57,88 @@ def add_subcommand(subparsers):
     add_common_arguments(parser)
 
 
+def load_tsv(path, skip_comment=True):
+    with open(path, "r") as file:
+        reader = csv.reader(file, delimiter="\t")
+        if skip_comment:
+            next(reader)
+        return list(reader)
+
+
 class Cytobands:
     def __init__(self):
         self._data = defaultdict(IntervalTree)
-
-        with open(
+        records = load_tsv(
             importlib.resources.files("vembrane.modules")
             / "assets"
             / "fhir"
-            / "cytobands.txt",
-            "r",
-        ) as asset:
-            reader = csv.reader(asset, delimiter="\t")
-            next(reader)  # skip leading comment
-            for record in reader:
-                chrom, start, end, band = record[:4]
-                # cytoband records are 0-based, end-exclusive
-                self._data[chrom].addi(int(start), int(end), band)
+            / "cytobands.txt"
+        )
+        for chrom, start, end, band in records:
+            self._data[chrom].addi(int(start), int(end), band)
 
     def get(self, chrom: str, pos: int) -> str | None:
         if not chrom.startswith("chr"):
             chrom = f"chr{chrom}"
-        try:
-            return self._data[chrom][pos].pop().data
-        except KeyError:
-            return None
+        intervals = self._data.get(chrom)
+        if intervals:
+            hits = intervals[pos]
+            if hits:
+                return next(iter(hits)).data
+        return None
+
+
+class Assemblies:
+    def __init__(self):
+        self._data = {
+            assembly: loinc
+            for assembly, loinc in load_tsv(
+                importlib.resources.files("vembrane.modules")
+                / "assets"
+                / "fhir"
+                / "assemblies.txt",
+                skip_comment=False,
+            )
+        }
+
+    def get(self, assembly: str) -> str | None:
+        return self._data.get(assembly)
+
+
+class Chromosomes:
+    def __init__(self):
+        self._data = {
+            chrom: (chrom_display, loinc)
+            for chrom, chrom_display, loinc in load_tsv(
+                importlib.resources.files("vembrane.modules")
+                / "assets"
+                / "fhir"
+                / "chromosomes.txt",
+                skip_comment=False,
+            )
+        }
+
+    def get(self, chrom: str) -> tuple[str, str] | None:
+        if not chrom.startswith("chr"):
+            chrom = f"chr{chrom}"
+        return self._data.get(chrom)
+
+
+class CodingChangeType:
+    def __init__(self):
+        self._data = {
+            type_short: (type_display, loinc)
+            for type_short, type_display, loinc in load_tsv(
+                importlib.resources.files("vembrane.modules")
+                / "assets"
+                / "fhir"
+                / "coding_change_type.txt",
+                skip_comment=False,
+            )
+        }
+
+    def get(self, type_short: str) -> tuple[str, str] | None:
+        return self._data.get(type_short)
 
 
 def execute(args):
@@ -96,5 +153,11 @@ def execute(args):
         overwrite_number_info=args.overwrite_number_info,
         overwrite_number_format=args.overwrite_number_format,
         backend=args.backend,
-        variables={"sample": args.sample, "cytobands": Cytobands(), "assembly": args.assembly},
+        variables={
+            "sample": args.sample,
+            "cytobands": Cytobands(),
+            "assemblies": Assemblies(),
+            "chromosomes": Chromosomes(),
+            "coding_change_type": CodingChangeType(),
+        },
     )

@@ -8,17 +8,6 @@
 __variables__:
   exon: ?ANN["EXON"]
   protein_position: ?ANN["Protein_position"]
-  assembly_dict:
-    - "GRCh37": "LA14029-5"
-    - "GRCh38": "LA26806-2"
-  coding_change_type_dict:
-    # "": ("Wild type", "LA9658-1"),
-    - "deletion": ("Deletion", "LA6692-3")
-    - "duplication": ("Duplication", "LA6686-5")
-    - "insertion": ("Insertion", "LA6687-3")
-    - "indel": ("Insertion/Deletion", "LA6688-1")
-    - "inversion": ("Inversion", "LA6689-9")
-    - "substitution": ("Substitution", "LA6690-7")cd
   # amino_acid_change_dict:
   #   - "": ("Wild type", "LA9658-1")
   #   - "": ("Deletion", "LA6692-3")
@@ -31,31 +20,6 @@ __variables__:
   #   - "": ("Nonsense", "LA6699-8")
   #   - "": ("Silent", "LA6700-4")
   #   - "": ("Stop Codon Mutation", "LA6701-2")
-  chromosome_dict:
-    - "chr1": ("Chromosome 1", "LA21254-0")
-    - "chr2": ("Chromosome 2", "LA21255-7")
-    - "chr3": ("Chromosome 3", "LA21256-5")
-    - "chr4": ("Chromosome 4", "LA21257-3")
-    - "chr5": ("Chromosome 5", "LA21258-1")
-    - "chr6": ("Chromosome 6", "LA21259-9")
-    - "chr7": ("Chromosome 7", "LA21260-7")
-    - "chr8": ("Chromosome 8", "LA21261-5")
-    - "chr9": ("Chromosome 9", "LA21262-3")
-    - "chr10": ("Chromosome 10", "LA21263-1")
-    - "chr11": ("Chromosome 11", "LA21264-9")
-    - "chr12": ("Chromosome 12", "LA21265-6")
-    - "chr13": ("Chromosome 13", "LA21266-4")
-    - "chr14": ("Chromosome 14", "LA21267-2")
-    - "chr15": ("Chromosome 15", "LA21268-0")
-    - "chr16": ("Chromosome 16", "LA21269-8")
-    - "chr17": ("Chromosome 17", "LA21270-6")
-    - "chr18": ("Chromosome 18", "LA21271-4")
-    - "chr19": ("Chromosome 19", "LA21272-2")
-    - "chr20": ("Chromosome 20", "LA21273-0")
-    - "chr21": ("Chromosome 21", "LA21274-8")
-    - "chr22": ("Chromosome 22", "LA21275-5")
-    - "chrX": ("Chromosome X", "LA21276-3")
-    - "chrY": ("Chromosome Y", "LA21277-1")
 
 resourceType: Observation
 
@@ -143,7 +107,7 @@ component:
       system: http://loinc.org
   valueCodeableConcept:
     coding:
-    - code: ?assembly_dict[assembly]
+    - code: ?assemblies.get(assembly)
       display: assembly
       system: http://loinc.org
 - code:
@@ -153,8 +117,8 @@ component:
       system: http://loinc.org
   valueCodeableConcept:
     coding:
-    - code: ?coding_change_type_dict[ANN["VARIANT_CLASS"]][1]
-      display: ?coding_change_type_dict[ANN["VARIANT_CLASS"]][0]
+    - code: ?coding_change_type.get(ANN["VARIANT_CLASS"])[1]
+      display: ?coding_change_type.get(ANN["VARIANT_CLASS"])[0]
       system: http://loinc.org
 # amino-acid-change-type (check for correct ANN field)
 # - code:
@@ -217,8 +181,8 @@ component:
       system: http://loinc.org
     valueCodeableConcept:
       coding:
-      - code: ?chromosome_dict[CHROM][1]
-        display: ?chromosome_dict[CHROM][0]
+      - code: ?chromosomes.get(CHROM)[1]
+        display: ?chromosomes.get(CHROM)[0]
         system: http://loinc.org
 - code:
     coding:
