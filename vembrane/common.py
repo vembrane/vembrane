@@ -37,7 +37,7 @@ def add_common_arguments(parser: argparse.ArgumentParser):
         metavar="PATH",
         help="Path to an ontology in OBO format. "
         "May be compressed with gzip, bzip2 and xz. "
-        "Defaults to built-in ontology (from sequenceontology.org, 2024-06-06).",
+        "Defaults to built-in ontology (from sequenceontology.org).",
     )
     parser.add_argument(
         "--overwrite-number-info",
