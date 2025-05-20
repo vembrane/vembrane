@@ -35,7 +35,7 @@ options:
                         Path to an auxiliary file containing a set of symbols.
   --ontology PATH       Path to an ontology in OBO format. 
                         The ontology is loaded into memory and can be used in expressions via the SO symbol.
-                        May be compressed with gzip, bzip2 and xz.
+                        May be compressed with gzip, bzip2 or xz.
                         Defaults to built-in ontology (from sequenceontology.org, 2024-06-06).
   --keep-unmatched      Keep all annotations of a variant if at least one of them
                         passes the expression (mimics SnpSift behaviour).
