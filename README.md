@@ -204,7 +204,7 @@ The following functions are available for ontologies, where `term` is a single `
 - `terms.most_specific_terms() -> Consequences`: Narrow down the list of terms to the most specific ones, e.g. `frameshift_variant&frameshift_truncation&intron_variant&splice_site_variant&splice_donor_5th_base_variant` will lead to `frameshift_truncation&splice_donor_5th_base_variant`.
 - `term.ancestors() -> Consequences`: Get *all* parents of a term.
 - `term.descendants() -> Consequences`: Get *all* children of a term.
-- `term.parents() -> Consequences`: Get parents of a term.
+- `term.parents() -> Consequences`: Get immediate parents of a term.
 - `term.children() -> Consequences`: Get children of a term.
 - `term.is_a(parent: Term) -> bool`: Check if there is a path from `term` to `parent`, i.e. whether `term` is the `parent` type or a subtype of it.
 - `terms.any_is_a(parent: Term) -> bool`: Check if any of the terms is a subtype of `parent`.
