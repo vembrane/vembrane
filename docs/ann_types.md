@@ -73,8 +73,6 @@ Annotations with type `str`:
 | `Gene`               | Ensembl stable ID of affected gene                                                                                                          |                             |
 | `Feature`            | Ensembl stable ID of feature                                                                                                                |                             |
 | `Feature_type`       | Type of feature. Currently one of Transcript, RegulatoryFeature, MotifFeature.                                                              |                             |
-| `HGSVc`              |                                                                                                                                             |                             |
-| `HGSVp`              |                                                                                                                                             |                             |
 | `HGVSc`              | The HGVS coding sequence name                                                                                                               |                             |
 | `HGVSp`              | The HGVS protein sequence name                                                                                                              |                             |
 | `HGVSg`              | The HGVS genomic sequence name                                                                                                              |                             |
