@@ -205,7 +205,7 @@ The following functions are available for ontologies, where `term` is a single `
 - `term.ancestors() -> Consequences`: Get *all* parents of a term.
 - `term.descendants() -> Consequences`: Get *all* children of a term.
 - `term.parents() -> Consequences`: Get immediate parents of a term.
-- `term.children() -> Consequences`: Get children of a term.
+- `term.children() -> Consequences`: Get immediate children of a term.
 - `term.is_a(parent: Term) -> bool`: Check if there is a path from `term` to `parent`, i.e. whether `term` is the `parent` type or a subtype of it.
 - `terms.any_is_a(parent: Term) -> bool`: Check if any of the terms is a subtype of `parent`.
 - `term.is_ancestor(other: Term) -> bool`: Check if `term` is an ancestor of `other`.
