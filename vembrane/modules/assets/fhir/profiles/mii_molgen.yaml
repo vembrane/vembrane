@@ -61,7 +61,7 @@ component:
       system: http://loinc.org
   valueCodeableConcept:
     coding:
-    - code: ?ANN["HGNC_ID"] # TODO only available using ensembl cache instead of refseq
+    - code: ?ANN["HGNC_ID"]
       system: http://www.genenames.org/geneId
       display: ?ANN["SYMBOL"]
 - code:
