@@ -30,6 +30,12 @@ def add_subcommand(subparsers):
         choices=["GRCh38", "GRCh37"],
     )
     parser.add_argument(
+        "--url",
+        "-u",
+        help="Source url.",
+        default=None,
+    )
+    parser.add_argument(
         "--annotation-key",
         "-k",
         metavar="FIELDNAME",
@@ -74,7 +80,7 @@ class Cytobands:
             / "fhir"
             / "cytobands.txt"
         )
-        for chrom, start, end, band in records:
+        for chrom, start, end, band, _ in records:
             self._data[chrom].addi(int(start), int(end), band)
 
     def get(self, chrom: str, pos: int) -> str | None:
@@ -138,6 +144,7 @@ class CodingChangeType:
         }
 
     def get(self, type_short: str) -> tuple[str, str] | None:
+        print(type_short)
         return self._data.get(type_short)
 
 
@@ -155,6 +162,8 @@ def execute(args):
         backend=args.backend,
         variables={
             "sample": args.sample,
+            "url": args.url,
+            "assembly": args.assembly,
             "cytobands": Cytobands(),
             "assemblies": Assemblies(),
             "chromosomes": Chromosomes(),

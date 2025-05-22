@@ -1,32 +1,34 @@
 # as defined here: https://www.medizininformatik-initiative.de/Kerndatensatz/Modul_Molekulargenetischer_Befundbericht/Variante-Observation.html
 
 # missing entries:
+# cytogenomic-nomenclature
+# genomic-ref-seq
 # transcript-ref-seq (alterantive definition: Methoden.Referenzsequenz)
-# dna-region (Methoden.Intron spanning/IVS)
-# detection limit (not available)
+# inner-start-end
+# outer-start-end
+# coordinate-system
+# coding-change-type
+# allelic-state
+# variant-inheritance
+# variation-code
+# amino-acid-change-type
+# molecular-consequence
+# copy-number: not part of vcf
+# variant-confidence-status
+# dna-region
+# gene-fusion: not part of vcf
+# detection-limit: unknown / not part of vcf
 
 __variables__:
   exon: ?ANN["EXON"]
   protein_position: ?ANN["Protein_position"]
-  # amino_acid_change_dict:
-  #   - "": ("Wild type", "LA9658-1")
-  #   - "": ("Deletion", "LA6692-3")
-  #   - "": ("Duplication", "LA6686-5")
-  #   - "frameshift_variant": ("Frameshift", "LA6694-9")
-  #   - "": ("Initiating Methionine", "LA6695-6")
-  #   - "": ("Insertion", "LA6687-3")
-  #   - "": ("Insertion and Deletion", "LA9659-9")
-  #   - "missense_variant": ("Missense", "6698-0")
-  #   - "": ("Nonsense", "LA6699-8")
-  #   - "": ("Silent", "LA6700-4")
-  #   - "": ("Stop Codon Mutation", "LA6701-2")
 
 resourceType: Observation
 
-# TODO
-#extension:
-# - url: "http://uk-essen/Pathology/foobar/FileName"
-#   valueString: ?filename
+?if url:
+  extension:
+    - url: ?url
+      valueString: ?sample
 
 meta:
   profile:
@@ -59,20 +61,18 @@ component:
       system: http://loinc.org
   valueCodeableConcept:
     coding:
-    - code: ?ANN["HGNC_ID"]
+    - code: ?ANN["HGNC_ID"] # TODO only available using ensembl cache instead of refseq
       system: http://www.genenames.org/geneId
       display: ?ANN["SYMBOL"]
 - code:
-  coding:
-  - code: 51958-7
-    display: Transcript reference sequence [ID]
-    system: http://loinc.org
+    coding:
+    - code: 51958-7
+      display: Transcript reference sequence [ID]
+      system: http://loinc.org
   valueCodeableConcept:
     coding:
     - code: ?ANN["Feature"]
-      system: http://www.ncbi.nlm.nih.gov/refseq
-    # - code: ?ANN["Feature_ensembl"]
-    # system: http://www.ncbi.nlm.nih.gov/ensembl
+      system: https://mart.ensembl.org/info/genome/stable_ids/index.html
 - code:
     coding:
     - code: 48004-6
@@ -108,18 +108,19 @@ component:
   valueCodeableConcept:
     coding:
     - code: ?assemblies.get(assembly)
-      display: assembly
+      display: ?assembly
       system: http://loinc.org
-- code:
-    coding:
-    - code: 48019-4
-      display: Coding DNA Change Type
-      system: http://loinc.org
-  valueCodeableConcept:
-    coding:
-    - code: ?coding_change_type.get(ANN["VARIANT_CLASS"])[1]
-      display: ?coding_change_type.get(ANN["VARIANT_CLASS"])[0]
-      system: http://loinc.org
+# TODO check if VARIANT_CLASS is correct
+# - code: # not matching loinc
+#     coding:
+#     - code: 48019-4
+#       display: Coding DNA Change Type
+#       system: http://loinc.org
+#   valueCodeableConcept:
+#     coding:
+#     - code: ?coding_change_type.get(ANN["VARIANT_CLASS"])[1]
+#       display: ?coding_change_type.get(ANN["VARIANT_CLASS"])[0]
+#       system: http://loinc.org
 # amino-acid-change-type (check for correct ANN field)
 # - code:
 #     coding:
@@ -139,15 +140,16 @@ component:
   valueQuantity:
     code: '%'
     system: http://unitsofmeasure.org
-    value: ?FORMAT['AF'][sample][0] * 100 # why is this a tuple containing None e.g. (<value>, None)
+    value: ?FORMAT['AF'][sample][0] * 100
 - code:
-  coding:
-    - code: 48002-0
-      display: Genomic source class [Type]
-      system: http://loinc.org
+    coding:
+      - code: 48002-0
+        display: Genomic source class [Type]
+        system: http://loinc.org
   valueCodeableConcept:
     coding:
     - code: LA6684-0
+     # we assume that variants in the vcf are always somatic
       display: Somatic
       system: http://loinc.org 
 - code:
@@ -164,7 +166,7 @@ component:
     - code: 82121-5
       display: Allelic Read Depth
       system: http://loinc.org
-    valueQuantity: ?FORMAT['AD'][sample][1] # is this correct?
+    valueQuantity: ?FORMAT['AD'][sample][1]
 - code:
     coding:
     - code: 81254-5
