@@ -2,16 +2,16 @@
 
 # missing entries:
 # cytogenomic-nomenclature
-# genomic-ref-seq
+# genomic-ref-seq: Not annotate by VEP (must be RefSeq or LRG Identifiers)
 # transcript-ref-seq (alterantive definition: Methoden.Referenzsequenz)
 # inner-start-end
 # outer-start-end
 # coordinate-system
-# coding-change-type
+# coding-change-type: probably VARIANT_CLASS entry but not matching loinc codes
 # allelic-state
 # variant-inheritance
 # variation-code
-# amino-acid-change-type
+# amino-acid-change-type: Consequences field contains more entries that LOINC codes. Mapping might fail: https://www.ensembl.org/info/genome/variation/prediction/predicted_data.html#consequences 
 # molecular-consequence
 # copy-number: not part of vcf
 # variant-confidence-status
@@ -209,7 +209,7 @@ component:
     valueString: '?f"Exon #{ exon.range.start } - #{ exon.range.stop }"'
 
 
-
+# alternative implemention of DNA region name
 # - code:
 #     coding:
 #     - code: 47999-8
@@ -218,16 +218,6 @@ component:
 #   valueString: '?f"Codon #{protein_position.start} - #{protein_position.end}"'
 
 
-# unclear
-# - code:
-#     coding:
-#     - code: 48013-7
-#       display: Genomic reference sequence [ID]
-#       system: http://loinc.org
-#   valueCodeableConcept:
-#     coding:
-#     - code: ?ANN["MANE"]
-#       system: http://www.ncbi.nlm.nih.gov/refseq
 # variation code
 # - ?if ID is None: ?SKIP
 #   ?else:
