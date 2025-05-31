@@ -9,17 +9,18 @@ import asttokens
 
 from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
-    AppendKeyValuePair,
     add_common_arguments,
     check_expression,
     create_reader,
     get_annotation_keys,
     read_auxiliary,
+    read_ontology,
     smart_open,
 )
 from ..errors import HeaderWrongColumnNumberError, VembraneError
 from ..globals import allowed_globals
 from ..representations import FuncWrappedExpressionEnvironment
+from ..sequence_ontology import SequenceOntology
 from .filter import DeprecatedAction
 
 ALL_EXPRESSION = "ALL"
@@ -39,13 +40,6 @@ def add_subcommmand(subparsers):
         help="The file containing the variants.",
         nargs="?",
         default="-",
-    )
-    parser.add_argument(
-        "--annotation-key",
-        "-k",
-        metavar="FIELDNAME",
-        default="ANN",
-        help="The INFO key for the annotation field.",
     )
     parser.add_argument(
         "--separator",
@@ -90,15 +84,6 @@ def add_subcommmand(subparsers):
         default="-",
         help="Output file, if not specified, output is written to STDOUT.",
     )
-    parser.add_argument(
-        "--aux",
-        "-a",
-        nargs=1,
-        action=AppendKeyValuePair,
-        metavar="NAME=PATH",
-        default={},
-        help="Path to an auxiliary file containing a set of symbols",
-    )
     add_common_arguments(parser)
 
 
@@ -109,13 +94,14 @@ def tableize_vcf(
     overwrite_number: dict[str, dict[str, str]] | None = None,
     wide: bool = False,
     auxiliary: dict[str, set[str]] | None = None,
+    ontology: SequenceOntology | None = None,
 ) -> Iterator[tuple]:
     if overwrite_number is None:
         overwrite_number = {}
     if auxiliary is None:
         auxiliary = {}
 
-    kwargs: dict[str, Any] = dict(auxiliary=auxiliary)
+    kwargs: dict[str, Any] = dict(auxiliary=auxiliary, ontology=ontology)
 
     long_with_samples = not wide and list(vcf.header.samples)
     if long_with_samples:
@@ -342,6 +328,7 @@ def get_row(row):
 
 def execute(args):
     aux = read_auxiliary(args.aux)
+    ontology = read_ontology(args.ontology)
     overwrite_number = {
         "INFO": dict(args.overwrite_number_info),
         "FORMAT": dict(args.overwrite_number_format),
@@ -372,6 +359,7 @@ def execute(args):
             overwrite_number=overwrite_number,
             wide=args.wide,
             auxiliary=aux,
+            ontology=ontology,
         )
 
         try:

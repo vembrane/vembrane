@@ -1,0 +1,3 @@
+function: "filter"
+annotation_key: CSQ
+expression: 'any(c.is_a("protein_altering_variant") for c in CSQ["Annotation"])'

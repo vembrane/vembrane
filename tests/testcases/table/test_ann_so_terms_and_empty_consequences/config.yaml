@@ -1,0 +1,2 @@
+function: "table"
+expression: 'CHROM, POS, REF, ALT, ANN["Allele"], ANN["Annotation"].most_specific_terms()'

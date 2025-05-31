@@ -33,6 +33,10 @@ options:
                         The INFO key for the annotation field. Defaults to "ANN".
   --aux NAME=PATH, -a NAME=PATH
                         Path to an auxiliary file containing a set of symbols.
+  --ontology PATH       Path to an ontology in OBO format. 
+                        The ontology is loaded into memory and can be used in expressions via the SO symbol.
+                        May be compressed with gzip, bzip2 or xz.
+                        Defaults to built-in ontology (from sequenceontology.org).
   --keep-unmatched      Keep all annotations of a variant if at least one of them
                         passes the expression (mimics SnpSift behaviour).
   --preserve-order      Ensures that the order of the output matches that of the input.
@@ -111,13 +115,13 @@ The following VCF fields can be accessed in the filter expression:
   ```sh
   vembrane filter 'ANN["Protein_position"].start < 10' variants.bcf
   ```
+* Only keep variants where the ID matches the regex pattern `^rs[0-9]+`:
+  ```sh
+  vembrane filter 'bool(re.search("^rs[0-9]+", ID or ""))' variants.vcf
+  ```
 * Only keep variants where mapping quality is exactly 60:
   ```sh
   vembrane filter 'INFO["MQ"] == 60' variants.bcf
-  ```
-* Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
-  ```sh
-  vembrane filter 're.search("(up|down)stream", ANN["Consequence"])' variants.vcf
   ```
 * Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
   ```sh
@@ -184,6 +188,29 @@ Sometimes, multi-valued fields may contain missing values; in this case, the `wi
 ### Auxiliary files
 `vembrane` supports additional files, such as lists of genes or ids with the `--aux NAME=path/to/file` option. The file should contain one item per line and is parsed as a set. For example `vembrane filter --aux genes=genes.txt "ANN['SYMBOL'] in AUX['genes']" variants.vcf` will keep only records where the annotated symbol is in the set specified in `genes.txt`.
 
+### Ontologies
+`vembrane` supports ontologies in OBO format. The ontology is loaded into memory and can be accessed in the filter expression via the `SO` symbol. This enables filtering based on relationships between ontology terms. 
+For example, `vembrane filter --ontology so.obo 'ANN["Consequence"].any_is_a("intron_variant")'` will keep only records where at least one of the consequences is an intron variant *or a subtype thereof*.
+If no ontology is provided, the built-in ontology from sequenceontology.org (date: 2024-06-06) is loaded automatically if the `SO` symbol is accessed.
+
+There are three relevant classes/types:
+- `Term`: Represents a term in the ontology. It inherits from `str` and can be used as such.
+- `Consequences`: Represents a list of terms. It inherits from `list` and can be used as such.
+- `SO`: Represents the ontology itself. It is a singleton and can be used to access the ontology.
+
+The following functions are available for ontologies, where `term` is a single `Term` and `terms` is a `Consequences` object:
+- `SO.get_id(term: Term) -> str`: Convert from term name (e.g. `stop_gained`) to accession (e.g. `SO:0001587`).
+- `SO.get_term(id_: str) -> Term`: Convert from accession (e.g. `SO:0001587`) to term name (e.g. `stop_gained`).
+- `terms.most_specific_terms() -> Consequences`: Narrow down the list of terms to the most specific ones, e.g. `frameshift_variant&frameshift_truncation&intron_variant&splice_site_variant&splice_donor_5th_base_variant` will lead to `frameshift_truncation&splice_donor_5th_base_variant`.
+- `term.ancestors() -> Consequences`: Get *all* ancestral levels of a term, all the way to the ontology's root node.
+- `term.descendants() -> Consequences`: Get *all* descendant levels of a term, all the way to the ontology's respective leave nodes.
+- `term.parents() -> Consequences`: Get immediate parents of a term.
+- `term.children() -> Consequences`: Get immediate children of a term.
+- `term.is_a(parent: Term) -> bool`: Check if there is a path from `term` to `parent`, i.e. whether `term` is the `parent` type or a subtype of it.
+- `terms.any_is_a(parent: Term) -> bool`: Check if any of the terms is a subtype of `parent`.
+- `term.is_ancestor(other: Term) -> bool`: Check if `term` is an ancestor of `other`.
+- `term.is_descendant(other: Term) -> bool`: Check if `term` is a descendant of `other`. (Same as `is_a`)
+- `term.path_length(target: Term) -> int | None`: Get the shortest path length from `term` to `target` *or vice versa*. Returns `None` if no path exists.
 
 ## `vembrane tag`
 While `vembrane filter` removes/skips records which do not pass the supplied expression,
