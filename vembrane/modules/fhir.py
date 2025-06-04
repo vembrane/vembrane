@@ -143,24 +143,6 @@ class Chromosomes:
         return self._data.get(chrom)
 
 
-class CodingChangeType:
-    def __init__(self):
-        self._data = {
-            type_short: (type_display, loinc)
-            for type_short, type_display, loinc in load_tsv(
-                importlib.resources.files("vembrane.modules")
-                / "assets"
-                / "fhir"
-                / "coding_change_type.txt",
-                skip_comment=False,
-            )
-        }
-
-    def get(self, type_short: str) -> tuple[str, str] | None:
-        print(type_short)
-        return self._data.get(type_short)
-
-
 def execute(args):
     with open(PROFILE_DIR / f"{args.profile}.yaml", "r") as infile:
         template = infile.read()
@@ -182,6 +164,5 @@ def execute(args):
             "cytobands": Cytobands(),
             "assemblies": Assemblies(),
             "chromosomes": Chromosomes(),
-            "coding_change_type": CodingChangeType(),
         },
     )

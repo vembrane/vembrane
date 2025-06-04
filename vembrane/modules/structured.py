@@ -128,18 +128,10 @@ def process_vcf(
                 value_handler=value_handler,
                 variables=variables,
             )
-            converted["component"] = filter_absent_records(converted["component"])
+            converted["component"] = [
+                entry for entry in converted["component"] if is_valid(entry)
+            ]
             yield converted
-
-
-def filter_absent_records(component):
-    print(component)
-
-    valid_entries = [entry for entry in component if is_valid(entry)]
-    invalid_entries = [entry for entry in component if not is_valid(entry)]
-    print(invalid_entries)
-    print("----")
-    return valid_entries
 
 
 def is_valid(record):

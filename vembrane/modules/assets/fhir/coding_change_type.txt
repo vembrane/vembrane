@@ -1,7 +1,0 @@
-	Wild type	LA9658-1
-deletion	Deletion	LA6692-3
-duplication	Duplication	LA6686-5
-insertion	Insertion	LA6687-3
-indel	Insertion/Deletion	LA6688-1
-inversion	Inversion	LA6689-9
-substitution	Substitution	LA6690-7

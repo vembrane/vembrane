@@ -1,5 +1,21 @@
 # as defined here: https://www.medizininformatik-initiative.de/Kerndatensatz/KDS_Molekulargenetischer_Befundbericht_V2025/implementation-guides-ImplementationGuide-2025.x-DE-MIIIGModulMolGenDE-TechnischeImplementierung-Variante-Observation.html
 
+# missing entries:
+# conclusion-string
+# cytogenomic-nomenclature
+# genomic-ref-seq: Not annotate by VEP (must be RefSeq or LRG Identifiers)
+# inner-start-end
+# outer-start-end
+# coding-change-type: probably VARIANT_CLASS entry but not matching loinc codes
+# allelic-state
+# variant-inheritance
+# variation-code
+# amino-acid-change-type: Probably the same as molecular-consequence?
+# copy-number: not part of vcf
+# variant-confidence-status
+# dna-region
+# gene-fusion: not part of vcf
+# detection-limit: unknown / not part of vcf
 
 __variables__:
   exon: ?ANN["EXON"]
@@ -169,7 +185,7 @@ component:
     - code: 47999-8
       display: DNA region name [Identifier]
       system: http://loinc.org
-  ?if not exon.range:
+  ?if not exon:
     valueString:
   ?elif exon.range.start == exon.range.stop:
     valueString: '?f"Exon #{ exon.range.start }"'
@@ -184,24 +200,11 @@ component:
     coding:
     - code: ?coordinates
       display: ?f"{coordinates}-based"
-# alternative implemention of DNA region name
-# - code:
-#     coding:
-#     - code: 47999-8
-#       display: DNA region name [Identifier]
-#       system: http://loinc.org
-#   valueString: '?f"Codon #{protein_position.start} - #{protein_position.end}"'
-
-
-# variation code
-# - ?if ID is None: ?SKIP
-#   ?else:
-#     code:
-#       coding:
-#       - code: 81252-9
-#         display: Discrete genetic variant
-#         system: http://loinc.org
-#     valueCodeableConcept:
-#       coding:
-#       - code: ?ID
-#         system: http://www.ncbi.nlm.nih.gov/projects/SNP
+- code:
+    coding:
+    - code: "molecular-consequence"
+      display: Molecular Consequence
+      system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
+  valueCodeableConcept:
+    coding:
+    - code: ?ANN["Consequence"]
