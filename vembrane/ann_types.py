@@ -9,6 +9,7 @@ from typing import Any, Callable, Iterable, Union
 import numpy as np
 
 from .errors import MoreThanOneAltAlleleError, NotExactlyOneValueError
+from .sequence_ontology import Consequences, Term
 
 
 def float32(val: str) -> float:
@@ -266,6 +267,35 @@ class AnnotationListEntry(AnnotationEntry):
         super().__init__(name, typefunc, nafunc=lambda: [], **kwargs)
 
 
+class AnnotationSetEntry(AnnotationEntry):
+    def __init__(
+        self,
+        name: str,
+        sep: str,
+        typefunc: Callable[[str], Any] | None = None,
+        inner_typefunc: Callable[[str], Any] = lambda x: x,
+        nafunc: Callable[[], Any] = lambda: set(),
+        **kwargs,
+    ) -> None:
+        typefunc = (
+            typefunc
+            if typefunc
+            else lambda v: {inner_typefunc(x.strip()) for x in v.split(sep)}
+        )
+        super().__init__(name, typefunc, nafunc=nafunc, **kwargs)
+
+
+class ConsequenceEntry(AnnotationSetEntry):
+    def __init__(self, name: str, **kwargs) -> None:
+        super().__init__(
+            name,
+            sep="&",
+            typefunc=lambda v: Consequences(Term(t.strip()) for t in v.split("&")),
+            nafunc=lambda: Consequences(),
+            **kwargs,
+        )
+
+
 class AnnotationListDictEntry(AnnotationEntry):
     def __init__(self, name: str, nafunc=lambda: None, **kwargs) -> None:
         def typefunc(x):
@@ -395,7 +425,7 @@ class AnnotationTyper:
 
 KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "Allele": AnnotationEntry("Allele"),
-    "Annotation": AnnotationEntry("Annotation"),
+    "Annotation": ConsequenceEntry("Annotation"),
     "Annotation_Impact": AnnotationEntry("Annotation_Impact"),
     "Gene_Name": AnnotationEntry("Gene_Name"),
     "Gene_ID": AnnotationEntry("Gene_ID"),
@@ -442,7 +472,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         description="Type of feature. "
         "Currently one of Transcript, RegulatoryFeature, MotifFeature.",
     ),
-    "Consequence": AnnotationEntry(
+    "Consequence": ConsequenceEntry(
         "Consequence",
         description="Consequence type of this variant",
     ),
@@ -659,8 +689,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "gnomAD_FIN_AF": AnnotationEntry(
         "gnomAD_FIN_AF",
         float32,
-        description="Frequency of existing variant in gnomAD exomes "
-        "Finnish population",
+        description="Frequency of existing variant in gnomAD exomes Finnish population",
     ),
     "gnomAD_NFE_AF": AnnotationEntry(
         "gnomAD_NFE_AF",
@@ -683,8 +712,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "MAX_AF": AnnotationEntry(
         "MAX_AF",
         float32,
-        description="Maximum observed allele frequency in "
-        "1000 Genomes, ESP and gnomAD",
+        description="Maximum observed allele frequency in 1000 Genomes, ESP and gnomAD",
     ),
     "MAX_AF_POPS": AnnotationListEntry(
         "MAX_AF_POPS",

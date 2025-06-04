@@ -1,6 +1,6 @@
 import ast
 import sys
-from types import CodeType, MappingProxyType
+from types import CodeType
 from typing import Any
 
 from .ann_types import ANN_TYPER, NA, MoreThanOneAltAlleleError, NvFloat, NvInt
@@ -8,12 +8,13 @@ from .backend.base import VCFHeader, VCFRecord, VCFRecordFormats, VCFRecordInfo
 from .common import get_annotation_keys, split_annotation_entry
 from .errors import MalformedAnnotationError, NonBoolTypeError, UnknownAnnotationError
 from .globals import _explicit_clear, allowed_globals, custom_functions
+from .sequence_ontology import _C, SequenceOntology
 
 
 class NoValueDict:
     def __contains__(self, item) -> bool:
         try:
-            value = self[item]
+            value = self[item]  # type: ignore
         except KeyError:
             return False
         return value is not NA
@@ -104,8 +105,11 @@ class Environment(dict):
         self,
         ann_key: str,
         header: VCFHeader,
-        auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        auxiliary: dict[str, set[str]] | None = None,
+        ontology: SequenceOntology | None = None,
     ) -> None:
+        if auxiliary is None:
+            auxiliary = {}
         self._ann_key: str = ann_key
         self._annotation: Annotation = Annotation(ann_key, header)
         self._globals: dict[str, Any] = {}
@@ -121,6 +125,7 @@ class Environment(dict):
 
         self._getters = {
             "AUX": self._get_aux,
+            "SO": self._get_ontology,
             "CHROM": self._get_chrom,
             "POS": self._get_pos,
             "END": self._get_end,
@@ -149,9 +154,12 @@ class Environment(dict):
 
         # At the moment, only INFO and FORMAT records are checked
         self._empty_globals = {name: UNSET for name in self._getters}
-        self.record: VCFRecord = None
+        self.record: VCFRecord = None  # type: ignore
         self.idx: int = -1
         self.aux = auxiliary
+        self.so = ontology
+        if ontology:
+            _C.__dict__["ontology"] = ontology
 
     def update_from_record(self, idx: int, record: VCFRecord):
         self.idx = idx
@@ -191,7 +199,7 @@ class Environment(dict):
     def _get_alleles(self) -> tuple[str, ...]:
         alleles = self._alleles
         if not alleles:
-            alleles = self._alleles = self.record.alleles
+            alleles = self._alleles = self.record.alleles  # type: ignore
         return alleles
 
     def _get_ref(self) -> str:
@@ -244,6 +252,12 @@ class Environment(dict):
         self._globals["AUX"] = self.aux
         return self.aux
 
+    def _get_ontology(self) -> SequenceOntology:
+        if not self.so:
+            self.so = SequenceOntology.default()
+        self._globals["SO"] = self.so
+        return self.so  # type: ignore
+
 
 class SourceEnvironment(Environment):
     def __init__(
@@ -251,9 +265,10 @@ class SourceEnvironment(Environment):
         source: str,
         ann_key: str,
         header: VCFHeader,
-        auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        auxiliary: dict[str, set[str]] | None = None,
+        ontology: SequenceOntology | None = None,
     ):
-        super().__init__(ann_key, header, auxiliary)
+        super().__init__(ann_key, header, auxiliary, ontology)
 
         self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
@@ -290,11 +305,12 @@ class FuncWrappedExpressionEnvironment(SourceEnvironment):
         expression: str,
         ann_key: str,
         header: VCFHeader,
-        auxiliary: dict[str, set[str]] = MappingProxyType({}),
+        auxiliary: dict[str, set[str]] | None = None,
+        ontology: SequenceOntology | None = None,
         evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
         func_str: str = evaluation_function_template.format(expression=expression)
-        super().__init__(func_str, ann_key, header, auxiliary)
+        super().__init__(func_str, ann_key, header, auxiliary, ontology)
         self._func = eval(self.compiled, self, {})
 
     def is_true(self, annotation: str = "") -> bool:

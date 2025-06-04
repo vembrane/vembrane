@@ -49,13 +49,6 @@ def add_subcommand(subparsers):
         choices=["0", "1"],
     )
     parser.add_argument(
-        "--annotation-key",
-        "-k",
-        metavar="FIELDNAME",
-        default="ANN",
-        help="The INFO key for the annotation field.",
-    )
-    parser.add_argument(
         "--profile",
         required=True,
         choices=[path.with_suffix("").name for path in PROFILE_DIR.iterdir()],

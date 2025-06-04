@@ -4,7 +4,7 @@ from typing import Any
 
 import numpy as np
 import yaml
-from intervaltree import Interval, IntervalTree
+from intervaltree import Interval, IntervalTree  # type: ignore
 
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
@@ -28,13 +28,6 @@ def add_subcommmand(subparsers):
         help="The file containing the variants.",
         nargs="?",
         default="-",
-    )
-    parser.add_argument(
-        "--annotation-key",
-        "-k",
-        metavar="FIELDNAME",
-        default="ANN",
-        help="The INFO key for the annotation field.",
     )
     parser.add_argument(
         "--output",
@@ -78,10 +71,10 @@ def annotate_vcf(
 
     tree: dict[str, IntervalTree] = {}
     chrom_ann_data: dict[str, Any] = {}
-    for chrom in available_chromsomes:
-        d = ann_data[ann_data[config_chrom_column] == chrom]
-        chrom_ann_data[chrom] = d
-        tree[chrom] = IntervalTree(
+    for available_chrom in available_chromsomes:
+        d = ann_data[ann_data[config_chrom_column] == available_chrom]
+        chrom_ann_data[available_chrom] = d
+        tree[available_chrom] = IntervalTree(
             Interval(d[config_start_column], d[config_stop_column], i)
             for i, d in enumerate(d)
         )
@@ -91,9 +84,9 @@ def annotate_vcf(
 
     record: VCFRecord
     for idx, record in enumerate(vcf):
-        chrom = None
-        if current_chrom != record.chrom:
-            current_chrom = record.chrom
+        chrom: str | None = None
+        if current_chrom != record.contig:
+            current_chrom = record.contig
 
             # find the correct chrom name
             tmp = current_chrom
@@ -106,9 +99,9 @@ def annotate_vcf(
                     t = tree[chrom]
 
         if chrom:
-            indices = np.fromiter((i for _, _, i in t[record.start]), dtype=int)
+            indices = np.fromiter((i for _, _, i in t[record.position]), dtype=int)
             if len(indices):
-                env.update_data(current_ann_data[(np.array(indices))])
+                env.update_data(current_ann_data[(np.array(indices))])  # type: ignore
                 env.update_from_record(idx, record)
                 ann_values = env.table_row()
 
@@ -156,7 +149,7 @@ def execute(args):
 
     # build expression
     expression = ",".join(
-        f'{value["expression"]}'
+        f"{value['expression']}"
         for value in (x["value"] for x in config["annotation"]["values"])
     )
     expression = f"({expression})"

@@ -1,8 +1,9 @@
 from collections import OrderedDict, defaultdict
+from sys import stderr
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-from cyvcf2.cyvcf2 import VCF, Variant, Writer
+from cyvcf2.cyvcf2 import VCF, Variant, Writer  # type: ignore
 
 from vembrane.backend.base import (
     VCFHeader,
@@ -31,7 +32,7 @@ class Cyvcf2Reader(VCFReader):
     def __init__(
         self,
         filename: str,
-        overwrite_number: Dict[str, Dict[str, str]] = None,
+        overwrite_number: Dict[str, Dict[str, str]] | None = None,
     ):
         if overwrite_number is None:
             overwrite_number = {}
@@ -76,7 +77,9 @@ class Cyvcf2Header(VCFHeader):
     ):
         self._reader = reader
         self._data = []
-        self._data_category = defaultdict(OrderedDict)
+        self._data_category: defaultdict[str | None, OrderedDict] = defaultdict(
+            OrderedDict
+        )
         self._metadata_generic = dict()
 
         for r in reader._file.header_iter():
@@ -88,12 +91,14 @@ class Cyvcf2Header(VCFHeader):
                 self._data_category[r.type][d["ID"]] = d
 
         specific_keys = {r.type for r in reader._file.header_iter()} | {"contig"}
-        generic_entries = [
+        _generic_entries = [
             r.lstrip("#").split("=", 1)
             for r in reader._file.raw_header.split("\n")
             if r.startswith("##")
         ]
-        generic_entries = {k: v for (k, v) in generic_entries if k not in specific_keys}
+        generic_entries: dict[str, str] = {
+            k: v for (k, v) in _generic_entries if k not in specific_keys
+        }
         for k, v in generic_entries.items():
             self._metadata_generic[k] = v
 
@@ -225,7 +230,7 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
     def __init__(self, record: Cyvcf2Record):
         self._record = record
         self._raw_format = record._raw_record.FORMAT
-        self._format = {}
+        self._format: dict[str, Cyvcf2RecordFormat] = {}
 
     def __getitem__(self, key: str):
         if key not in self._format:
@@ -234,6 +239,9 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
 
     def __contains__(self, key):
         return key in self._raw_format
+
+    def keys(self):
+        return self._raw_format.keys()
 
 
 class Cyvcf2RecordFormat(VCFRecordFormat):
@@ -255,9 +263,23 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
             )
             return type_info(value, ".")
 
-        value = self._raw_record.format(self._format_key)[i]
         meta = self._header.formats[self._format_key]
         number = meta["Number"]
+        value_array = self._raw_record.format(self._format_key)
+        if value_array is None:
+            print(
+                f"Warning: "
+                f"record {self._record.record_idx} is missing a value "
+                f"for FORMAT key {self._format_key}, "
+                f"returning NA instead."
+                f"\n{self._record}\n",
+                file=stderr,
+            )
+            return type_info(NA, number)
+
+        else:
+            value = value_array[i]
+
         if meta["Type"] == "String" and not number == "1":
             value = value.split(",")
         if number == "1":
@@ -276,6 +298,9 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
 
     def __eq__(self, other):
         return all(self[sample] == other[sample] for sample in self._header.samples)
+
+    def keys(self):
+        return self._raw_record.format.keys()
 
 
 class Cyvcf2RecordFilter(VCFRecordFilter):
@@ -322,11 +347,16 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
             value = self._raw_record.INFO[key]
             typ = meta["Type"]
         except KeyError:
+            if key == "END":
+                return self._raw_record.POS + len(self._raw_record.REF) - 1
+
             print(
                 f"Warning: "
-                f"record {self._record.record_idx} is missing a value for key {key}, "
+                f"record {self._record.record_idx} is missing a value "
+                f"for INFO key {key}, "
                 f"returning NA instead."
                 f"\n{self._record}\n",
+                file=stderr,
             )
             return type_info(NA, number)
 
@@ -347,10 +377,13 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
     def __contains__(self, key):
         return self._raw_record.INFO.get(key, None) is not None
 
+    def keys(self):
+        return self._raw_record.info.keys()
+
 
 class Cyvcf2Writer(VCFWriter):
     def __init__(self, filename: str, fmt: str, template: VCFReader):
-        self._file = Writer(filename, template._file, mode=f"w{fmt}")
+        self._file = Writer(filename, template.file, mode=f"w{fmt}")
 
-    def write(self, record: Cyvcf2Record):
+    def write(self, record: VCFRecord):
         self._file.write_record(record._raw_record)

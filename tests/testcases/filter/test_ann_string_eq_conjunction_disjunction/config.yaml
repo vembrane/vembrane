@@ -1,2 +1,2 @@
 function: "filter"
-expression: '("HIGH" == ANN["Annotation_Impact"] and ANN["Gene_Name"] == "CDH2") or (ANN["Annotation"] == "upstream_gene_variant")'
+expression: '("HIGH" == ANN["Annotation_Impact"] and ANN["Gene_Name"] == "CDH2") or ("upstream_gene_variant" in ANN["Annotation"])'

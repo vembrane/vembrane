@@ -13,7 +13,7 @@ For a comparison with similar tools have a look at the [vembrane benchmarks](htt
 
 ## Installation
 vembrane is available in [bioconda](https://bioconda.github.io/) and can either be installed into an existing conda environment with `mamba install -c conda-forge -c bioconda vembrane` or into a new named environment `mamba create -n environment_name -c conda-forge -c bioconda vembrane`.
-Alternatively, if you are familiar with git and [poetry](https://python-poetry.org/), clone this repository and run `poetry install`.
+Alternatively, if you are familiar with git and [uv](https://docs.astral.sh/uv/), clone this repository and run `uv sync`.
 See [docs/develop.md](docs/develop.md) for further details.
 
 ## `vembrane filter`
@@ -33,6 +33,10 @@ options:
                         The INFO key for the annotation field. Defaults to "ANN".
   --aux NAME=PATH, -a NAME=PATH
                         Path to an auxiliary file containing a set of symbols.
+  --ontology PATH       Path to an ontology in OBO format. 
+                        The ontology is loaded into memory and can be used in expressions via the SO symbol.
+                        May be compressed with gzip, bzip2 or xz.
+                        Defaults to built-in ontology (from sequenceontology.org).
   --keep-unmatched      Keep all annotations of a variant if at least one of them
                         passes the expression (mimics SnpSift behaviour).
   --preserve-order      Ensures that the order of the output matches that of the input.
@@ -111,13 +115,13 @@ The following VCF fields can be accessed in the filter expression:
   ```sh
   vembrane filter 'ANN["Protein_position"].start < 10' variants.bcf
   ```
+* Only keep variants where the ID matches the regex pattern `^rs[0-9]+`:
+  ```sh
+  vembrane filter 'bool(re.search("^rs[0-9]+", ID or ""))' variants.vcf
+  ```
 * Only keep variants where mapping quality is exactly 60:
   ```sh
   vembrane filter 'INFO["MQ"] == 60' variants.bcf
-  ```
-* Only keep annotations and variants where consequence contains the word "stream" (matching "upstream" and "downstream"):
-  ```sh
-  vembrane filter 're.search("(up|down)stream", ANN["Consequence"])' variants.vcf
   ```
 * Only keep annotations and variants where CLIN_SIG contains "pathogenic", "likely_pathogenic" or "drug_response":
   ```sh
@@ -184,6 +188,29 @@ Sometimes, multi-valued fields may contain missing values; in this case, the `wi
 ### Auxiliary files
 `vembrane` supports additional files, such as lists of genes or ids with the `--aux NAME=path/to/file` option. The file should contain one item per line and is parsed as a set. For example `vembrane filter --aux genes=genes.txt "ANN['SYMBOL'] in AUX['genes']" variants.vcf` will keep only records where the annotated symbol is in the set specified in `genes.txt`.
 
+### Ontologies
+`vembrane` supports ontologies in OBO format. The ontology is loaded into memory and can be accessed in the filter expression via the `SO` symbol. This enables filtering based on relationships between ontology terms. 
+For example, `vembrane filter --ontology so.obo 'ANN["Consequence"].any_is_a("intron_variant")'` will keep only records where at least one of the consequences is an intron variant *or a subtype thereof*.
+If no ontology is provided, the built-in ontology from sequenceontology.org (date: 2024-06-06) is loaded automatically if the `SO` symbol is accessed.
+
+There are three relevant classes/types:
+- `Term`: Represents a term in the ontology. It inherits from `str` and can be used as such.
+- `Consequences`: Represents a list of terms. It inherits from `list` and can be used as such.
+- `SO`: Represents the ontology itself. It is a singleton and can be used to access the ontology.
+
+The following functions are available for ontologies, where `term` is a single `Term` and `terms` is a `Consequences` object:
+- `SO.get_id(term: Term) -> str`: Convert from term name (e.g. `stop_gained`) to accession (e.g. `SO:0001587`).
+- `SO.get_term(id_: str) -> Term`: Convert from accession (e.g. `SO:0001587`) to term name (e.g. `stop_gained`).
+- `terms.most_specific_terms() -> Consequences`: Narrow down the list of terms to the most specific ones, e.g. `frameshift_variant&frameshift_truncation&intron_variant&splice_site_variant&splice_donor_5th_base_variant` will lead to `frameshift_truncation&splice_donor_5th_base_variant`.
+- `term.ancestors() -> Consequences`: Get *all* ancestral levels of a term, all the way to the ontology's root node.
+- `term.descendants() -> Consequences`: Get *all* descendant levels of a term, all the way to the ontology's respective leave nodes.
+- `term.parents() -> Consequences`: Get immediate parents of a term.
+- `term.children() -> Consequences`: Get immediate children of a term.
+- `term.is_a(parent: Term) -> bool`: Check if there is a path from `term` to `parent`, i.e. whether `term` is the `parent` type or a subtype of it.
+- `terms.any_is_a(parent: Term) -> bool`: Check if any of the terms is a subtype of `parent`.
+- `term.is_ancestor(other: Term) -> bool`: Check if `term` is an ancestor of `other`.
+- `term.is_descendant(other: Term) -> bool`: Check if `term` is a descendant of `other`. (Same as `is_a`)
+- `term.path_length(target: Term) -> int | None`: Get the shortest path length from `term` to `target` *or vice versa*. Returns `None` if no path exists.
 
 ## `vembrane tag`
 While `vembrane filter` removes/skips records which do not pass the supplied expression,
@@ -232,15 +259,22 @@ vembrane table 'CHROM, POS, 10**(-QUAL/10), ANN["CLIN_SIG"]' input.vcf > table.t
 ```
 
 When handling **multi-sample VCFs**, you often want to iterate over all samples in a record by looking at a `FORMAT` field for all of them.
-However, if you use a standard Python list comprehension (something like `[FORMAT['DP'][sample] for sample in SAMPLES]`), this would yield a single column with a list containing one entry per sample (something like `[25, 32, 22]` for three samples with the respective depths).
+Therefore, `vembrane table` defaults to a long table format:
+In this case, the first column will always be called `SAMPLE` and there's an additional variable of the same name available for the expressions.
+For example:
+```sh
+vembrane table 'CHROM, POS, FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL' input.vcf > long_table.tsv
+```
+will yield a table with the columns `'SAMPLE'`, `'CHROM'`, `'POS'`, and `'FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL'`.
 
-In order to have a separate column for each sample, you can use the **`for_each_sample()`** function in both the main `vembrane table` expression and the `--header` expression.
+If you instead want a wide table format, where each sample has its own column, you can toggle this behaviour with the `--wide` flag:
+```sh
+vembrane table --wide --header 'CHROM, POS, for_each_sample(lambda sample: f"{sample}_depth")' 'CHROM, POS, for_each_sample(lambda s: FORMAT["DP"][s])' input.vcf > table.tsv
+```
+
+This makes use of the **`for_each_sample()`** function in both the main `vembrane table` expression and the `--header` expression.
 It should contain one [lambda expression](https://docs.python.org/3/reference/expressions.html#lambda) with exactly one argument, which will be substituted by the sample names in the lambda expression.
 
-For example, you could specifiy expressions for the `--header` and the main VCF record evaluation like this:
-```sh
-vembrane table --header 'CHROM, POS, for_each_sample(lambda sample: f"{sample}_depth")' 'CHROM, POS, for_each_sample(lambda s: FORMAT["DP"][s])' input.vcf > table.tsv
-```
 Given a VCF file with samples `Sample_1`, `Sample_2` and `Sample_3`, the header would expand to be printed as:
 ```
 CHROM  POS   Sample_1_depth   Sample_2_depth   Sample_3_depth
@@ -256,15 +290,21 @@ When supplying a header via `--header`,  its `for_each_sample()` expects an expr
 Please note that, as anywhere in vembrane, you can use arbitrary Python expressions in `for_each_sample()` lambda expressions.
 So you can for example perform computations on fields or combine multiple fields into one value:
 ```sh
-vembrane table 'CHROM, POS, for_each_sample(lambda sample: FORMAT["AD"][sample] / FORMAT["DP"][sample] * QUAL)' input.vcf > table.tsv
+vembrane table --wide 'CHROM, POS, for_each_sample(lambda sample: FORMAT["AD"][sample] / FORMAT["DP"][sample] * QUAL)' input.vcf > table.tsv
 ```
 
-Instead of using the `for_each_sample` (wide format) machinery, it is also possible to generate the data in long format by specifying the `--long` flag.
-In this case, the first column will always be called `SAMPLE` and there's an additional variable of the same name available for the expressions.
-For example:
+
+
+## `vembrane table ALL`
+If you want to extract all information from a VCF file, including every single `INFO`, `FORMAT` and annotation `ANN`/`INFO["ANN"]` field that is defined in the header, you can use the `table` subcommand with the pseudo-expression `ALL`:
 ```sh
-vembrane table --long 'CHROM, POS, FORMAT["AD"][SAMPLE] / FORMAT["DP"][SAMPLE] * QUAL' input.vcf > long_table.tsv
+vembrane table 'ALL' input.vcf > table.tsv
 ```
+To control the naming convention of the columns, you can use the `--naming-convention` option with the following allowed values:
+  - `dictionary`: The column names are rendered as a python dictionary acces, e.g. `INFO["DP"]`.
+  - `underscore`: The column names are rendered with underscores, e.g. `INFO_DP`.
+  - `slash`: The column names are rendered with slashes, e.g. `INFO/DP` (`bcftools` style).
+The default is `dictionary`.
 
 ## `vembrane annotate`
 

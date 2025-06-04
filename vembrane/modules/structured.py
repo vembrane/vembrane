@@ -4,10 +4,10 @@ from io import TextIOWrapper
 from typing import Any, Dict, Iterator
 
 import yaml
-import yte
+import yte  # type: ignore
 
 from vembrane.ann_types import NA
-from vembrane.backend.base import VCFHeader, VCFReader
+from vembrane.backend.base import VCFHeader, VCFReader, VCFRecord
 from vembrane.common import add_common_arguments, create_reader, smart_open
 from vembrane.errors import VembraneError
 from vembrane.representations import (
@@ -30,13 +30,6 @@ def add_subcommand(subparsers):
         default="-",
     )
     parser.add_argument(
-        "--annotation-key",
-        "-k",
-        metavar="FIELDNAME",
-        default="ANN",
-        help="The INFO key for the annotation field.",
-    )
-    parser.add_argument(
         "--output-fmt",
         choices=["json", "jsonl", "yaml"],
         help="Output format. If not specified, can be automatically determined from "
@@ -51,7 +44,7 @@ def add_subcommand(subparsers):
     add_common_arguments(parser)
 
 
-ConvertedRecords = Iterator[list[Any] | dict[Any] | Any]
+ConvertedRecords = Iterator[list[Any] | dict[Any, Any] | Any]
 
 
 class CodeHandler(yte.CodeHandler):
@@ -59,11 +52,11 @@ class CodeHandler(yte.CodeHandler):
         self.ann_key = ann_key
         self.header = header
         self._envs: Dict[str, SourceEnvironment] = {}
-        self._record = None
-        self._record_idx = None
-        self._annotation = None
+        self._record: VCFRecord | None = None
+        self._record_idx: int | None = None
+        self._annotation: str | None = None
 
-    def update_from_record(self, idx: int, record: VCFReader) -> None:
+    def update_from_record(self, idx: int, record: VCFRecord) -> None:
         self._record = record
         self._record_idx = idx
         for env in self._envs.values():
@@ -80,7 +73,7 @@ class CodeHandler(yte.CodeHandler):
         env = self._envs.get(source)
         if env is None:
             env = SourceEnvironment(source, self.ann_key, self.header)
-            env.update_from_record(self._record_idx, self._record)
+            env.update_from_record(self._record_idx, self._record)  # type: ignore
             if self._annotation is not None:
                 env.update_annotation(self._annotation)
             self._envs[source] = env

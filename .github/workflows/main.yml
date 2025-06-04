@@ -32,22 +32,30 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run:  |
-              python -m pip install --upgrade pip
-              python -m pip install poetry black flake8
-              poetry install --no-interaction
-      - name: Check formatting with black
-        run:  poetry run black --check .
-      - name: Lint with flake8
-        uses: julianwachholz/flake8-action@v1
-        with:
-          checkName: 'test'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Test and generate coverage report with pytest
-        run:  poetry run pytest
+          # Install a specific version of uv and enable caching.
+          version: "0.6.2"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install the project
+        run: uv sync --all-extras --dev --frozen
+
+      - name: Setup tox-uv
+        run: uv tool install tox --with tox-uv
+
+      - name: Check formatting
+        run: uv run tox -e format-check
+
+      - name: Linting
+        run: uv run tox -e lints
+
+      - name: Run mypy
+        run: uv run tox -e mypy
+
+      - name: Run tests
+        run: uv run tox -e py${{ matrix.python-version }}
