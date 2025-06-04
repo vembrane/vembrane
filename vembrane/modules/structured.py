@@ -128,9 +128,9 @@ def process_vcf(
 
 
 def is_valid(record):
-    if type(record) == dict:
+    if type(record) is dict:
         return all([is_valid(value) for value in record.values()])
-    elif type(record) == list:
+    elif type(record) is list:
         return all([is_valid(entry) for entry in record])
     else:
         return True if record else False
