@@ -32,8 +32,21 @@ def add_subcommand(subparsers):
     parser.add_argument(
         "--url",
         "-u",
-        help="Source url.",
+        help="Generic url used as identifier by FHIR e.g. http://<institute>/<department>/VCF",
         default=None,
+    )
+    parser.add_argument(
+        "--status",
+        "-s",
+        help="Status of vcf records. E.g. final",
+        default=None,
+    )
+    parser.add_argument(
+        "--coordinates",
+        "-c",
+        help="Coordinate system of base positions.",
+        default=None,
+        choices=["0", "1"],
     )
     parser.add_argument(
         "--annotation-key",
@@ -163,7 +176,9 @@ def execute(args):
         variables={
             "sample": args.sample,
             "url": args.url,
+            "status": args.status,
             "assembly": args.assembly,
+            "coordinates": args.coordinates,
             "cytobands": Cytobands(),
             "assemblies": Assemblies(),
             "chromosomes": Chromosomes(),

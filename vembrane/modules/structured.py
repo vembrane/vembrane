@@ -128,7 +128,29 @@ def process_vcf(
                 value_handler=value_handler,
                 variables=variables,
             )
+            converted["component"] = filter_absent_records(converted["component"])
             yield converted
+
+
+# TODO Filter needs to be more complex
+# Instead of valueCodableConcept the following entries might exist: valueQuantity (as dict or as single value), valueString, valueRange
+def filter_absent_records(component):
+    print(component)
+
+    valid_entries = [entry for entry in component if is_valid(entry)]
+    invalid_entries = [entry for entry in component if not is_valid(entry)]
+    print(invalid_entries)
+    print("----")
+    return valid_entries
+
+
+def is_valid(record):
+    if type(record) == dict:
+        return all([is_valid(value) for value in record.values()])
+    elif type(record) == list:
+        return all([is_valid(entry) for entry in record])
+    else:
+        return True if record else False
 
 
 def write_records_jsonl(output_file: TextIOWrapper, records: ConvertedRecords) -> None:

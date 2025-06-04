@@ -1,23 +1,5 @@
-# as defined here: https://www.medizininformatik-initiative.de/Kerndatensatz/Modul_Molekulargenetischer_Befundbericht/Variante-Observation.html
+# as defined here: https://www.medizininformatik-initiative.de/Kerndatensatz/KDS_Molekulargenetischer_Befundbericht_V2025/implementation-guides-ImplementationGuide-2025.x-DE-MIIIGModulMolGenDE-TechnischeImplementierung-Variante-Observation.html
 
-# missing entries:
-# cytogenomic-nomenclature
-# genomic-ref-seq: Not annotate by VEP (must be RefSeq or LRG Identifiers)
-# transcript-ref-seq (alterantive definition: Methoden.Referenzsequenz)
-# inner-start-end
-# outer-start-end
-# coordinate-system
-# coding-change-type: probably VARIANT_CLASS entry but not matching loinc codes
-# allelic-state
-# variant-inheritance
-# variation-code
-# amino-acid-change-type: Consequences field contains more entries that LOINC codes. Mapping might fail: https://www.ensembl.org/info/genome/variation/prediction/predicted_data.html#consequences 
-# molecular-consequence
-# copy-number: not part of vcf
-# variant-confidence-status
-# dna-region
-# gene-fusion: not part of vcf
-# detection-limit: unknown / not part of vcf
 
 __variables__:
   exon: ?ANN["EXON"]
@@ -32,8 +14,11 @@ resourceType: Observation
 
 meta:
   profile:
-  - https://simplifier.net/medizininformatikinitiative-modulomics/mii_pr_molgen_variante
-  - http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/variant
+  - https://simplifier.net/medizininformatikinitiative-modulomics/mii_pr_molgen_variante|2025.0.0
+  - http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/variant|3.0.0
+
+?if status:
+  status: ?status
 
 code:
   coding:
@@ -80,7 +65,7 @@ component:
       system: http://loinc.org
   valueCodeableConcept:
     coding:
-    - code: ?ANN["HGVSc"]
+    - code: ?ANN.get("HGVSc", ":").split(":")[1]
       system: http://varnomen.hgvs.org 
 - code:
     coding:
@@ -89,7 +74,7 @@ component:
       system: http://loinc.org
   valueCodeableConcept:
     coding:
-    - code: ?ANN["HGVSp"]
+    - code: ?ANN.get("HGVSp", ":").split(":")[1]
       system: http://varnomen.hgvs.org
 - code:
     coding:
@@ -98,7 +83,7 @@ component:
       system: http://loinc.org
   valueCodeableConcept:
     coding:
-    - code: ?ANN["HGVSg"]
+    - code: ?ANN.get("HGVSg", ":").split(":")[1]
       system: http://varnomen.hgvs.org
 - code:
     coding:
@@ -166,49 +151,55 @@ component:
     - code: 82121-5
       display: Allelic Read Depth
       system: http://loinc.org
-    valueQuantity: ?FORMAT['AD'][sample][1]
+  valueQuantity: ?FORMAT['AD'][sample][1]
 - code:
     coding:
     - code: 81254-5
       display: Genomic allele start-end
       system: http://loinc.org
-      ?if POS == END:
-        valueRange: ?f"{CHROM}:{POS}"
-      ?else:
-        valueRange: ?f"{CHROM}:{POS}-{END}"
+  ?if POS == END:
+    valueRange: ?f"{CHROM}:{POS}"
+  ?else:
+    valueRange: ?f"{CHROM}:{POS}-{END}"
 - code:
     coding:
-    - code: 48000-4
-      display: Chromosome Identifier
-      system: http://loinc.org
-    valueCodeableConcept:
-      coding:
-      - code: ?chromosomes.get(CHROM)[1]
-        display: ?chromosomes.get(CHROM)[0]
+      - code: 48000-4
+        display: Chromosome [Identifier] in Blood or Tissue by Molecular genetics method
         system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: ?chromosomes.get(CHROM)[1]
+      display: ?chromosomes.get(CHROM)[0]
+      system: http://loinc.org
 - code:
     coding:
     - code: 69551-0
-      display: Genomic Alt Allele
+      display: Genomic alt allele [ID]
       system: http://loinc.org
-    valueString: ?ALT
+  valueString: ?ALT
 - code:
     coding:
     - code: 69547-8
-      display: Genomic Ref Allele
+      display: Genomic ref allele [ID]
       system: http://loinc.org
-    valueString: ?REF
+  valueString: ?REF
 - code:
     coding:
     - code: 47999-8
       display: DNA region name [Identifier]
       system: http://loinc.org
-  ?if exon.range.start == exon.range.stop:
+  ?if not exon.range:
+    valueString:
+  ?elif exon.range.start == exon.range.stop:
     valueString: '?f"Exon #{ exon.range.start }"'
   ?else:
     valueString: '?f"Exon #{ exon.range.start } - #{ exon.range.stop }"'
-
-
+- code:
+    coding:
+    - code: 92822-6
+      display: Genomic coordinate system [Type]
+      system: http://loinc.org
+  valueCodeableConcept: ?coordinates
 # alternative implemention of DNA region name
 # - code:
 #     coding:
