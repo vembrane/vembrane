@@ -38,7 +38,7 @@ def add_subcommand(subparsers):
     parser.add_argument(
         "--status",
         "-s",
-        help="Status of vcf records. E.g. final",
+        help="Status of findings. E.g. final, preliminary, ...",
         default=None,
     )
     parser.add_argument(

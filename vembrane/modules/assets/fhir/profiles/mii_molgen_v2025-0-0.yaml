@@ -95,28 +95,6 @@ component:
     - code: ?assemblies.get(assembly)
       display: ?assembly
       system: http://loinc.org
-# TODO check if VARIANT_CLASS is correct
-# - code: # not matching loinc
-#     coding:
-#     - code: 48019-4
-#       display: Coding DNA Change Type
-#       system: http://loinc.org
-#   valueCodeableConcept:
-#     coding:
-#     - code: ?coding_change_type.get(ANN["VARIANT_CLASS"])[1]
-#       display: ?coding_change_type.get(ANN["VARIANT_CLASS"])[0]
-#       system: http://loinc.org
-# amino-acid-change-type (check for correct ANN field)
-# - code:
-#     coding:
-#     - code: 48006-1
-#       display: Amino acid change [Type]
-#       system: http://loinc.org
-#   valueCodeableConcept:
-#     coding:
-#     - code: ?amino_acid_change_dict[ANN["Consequence"]][1]
-#       display: ?amino_acid_change_dict[ANN["Consequence"]][0]
-#       system: http://loinc.org
 - code:
     coding:
     - code: 81258-6
@@ -151,16 +129,19 @@ component:
     - code: 82121-5
       display: Allelic Read Depth
       system: http://loinc.org
-  valueQuantity: ?FORMAT['AD'][sample][1]
+  valueQuantity:
+      value: ?FORMAT['AD'][sample][1]
 - code:
     coding:
     - code: 81254-5
       display: Genomic allele start-end
       system: http://loinc.org
-  ?if POS == END:
-    valueRange: ?f"{CHROM}:{POS}"
-  ?else:
-    valueRange: ?f"{CHROM}:{POS}-{END}"
+  valueRange:
+    low:
+      value: ?POS
+    ?if POS != END:
+      high:
+        value: ?END
 - code:
     coding:
       - code: 48000-4
@@ -199,7 +180,10 @@ component:
     - code: 92822-6
       display: Genomic coordinate system [Type]
       system: http://loinc.org
-  valueCodeableConcept: ?coordinates
+  valueCodeableConcept:
+    coding:
+    - code: ?coordinates
+      display: ?f"{coordinates}-based"
 # alternative implemention of DNA region name
 # - code:
 #     coding:
