@@ -132,8 +132,6 @@ def process_vcf(
             yield converted
 
 
-# TODO Filter needs to be more complex
-# Instead of valueCodableConcept the following entries might exist: valueQuantity (as dict or as single value), valueString, valueRange
 def filter_absent_records(component):
     print(component)
 
