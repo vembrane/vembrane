@@ -163,7 +163,7 @@ def write_records_yaml(output_file: TextIOWrapper, records: ConvertedRecords) ->
 def process(
     template: str,
     output_fmt: str | None,
-    output: str | None,
+    output: str,
     vcf: str,
     annotation_key: str,
     overwrite_number_info: dict[str, str],
