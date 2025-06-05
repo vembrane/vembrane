@@ -55,13 +55,13 @@ def add_subcommand(subparsers):
         help="The FHIR profile to use for generating the output.",
     )
     parser.add_argument(
-        "--allelic_frequency",
+        "--allelic-frequency",
         default=None,
         help="Python expression calculating the the samples allelic frequency"
         "as percentage. E.g. \"FORMAT['AF'][sample][0] * 100\" ",
     )
     parser.add_argument(
-        "--confidence_status",
+        "--confidence-status",
         default=None,
         help="Python expression for calculating the variants confidence status being High, Intermediate or Low.",
     )
