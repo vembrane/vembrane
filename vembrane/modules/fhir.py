@@ -55,7 +55,7 @@ def add_subcommand(subparsers):
         help="The FHIR profile to use for generating the output.",
     )
     parser.add_argument(
-        "--allelic-frequency",
+        "--sample-allelic-frequency",
         default=None,
         help="Python expression calculating the the samples allelic frequency"
         "as percentage. E.g. \"FORMAT['AF'][sample][0] * 100\" ",
@@ -165,7 +165,7 @@ def execute(args):
             "status": args.status,
             "assembly": args.assembly,
             "coordinates": args.coordinates,
-            "allelic_frequency": args.allelic_frequency,
+            "sample_allelic_frequency": args.sample_allelic_frequency,
             "confidence_status": args.confidence_status,
             "cytobands": Cytobands(),
             "assemblies": Assemblies(),

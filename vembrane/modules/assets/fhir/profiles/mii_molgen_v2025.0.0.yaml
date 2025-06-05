@@ -119,7 +119,7 @@ component:
   valueQuantity:
     code: '%'
     system: http://unitsofmeasure.org
-    value: ?eval(allelic_frequency) if allelic_frequency else ""
+    value: ?eval(sample_allelic_frequency) if sample_allelic_frequency else ""
 - code:
     coding:
       - code: 48002-0
