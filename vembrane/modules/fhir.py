@@ -55,6 +55,17 @@ def add_subcommand(subparsers):
         help="The FHIR profile to use for generating the output.",
     )
     parser.add_argument(
+        "--allelic_frequency",
+        default=None,
+        help="Python expression calculating the the samples allelic frequency"
+        "as percentage. E.g. \"FORMAT['AF'][sample][0] * 100\" ",
+    )
+    parser.add_argument(
+        "--confidence_status",
+        default=None,
+        help="Python expression for calculating the variants confidence status being High, Intermediate or Low.",
+    )
+    parser.add_argument(
         "--output-fmt",
         choices=["json", "jsonl", "yaml"],
         help="Output format. If not specified, can be automatically determined from "
@@ -154,6 +165,8 @@ def execute(args):
             "status": args.status,
             "assembly": args.assembly,
             "coordinates": args.coordinates,
+            "allelic_frequency": args.allelic_frequency,
+            "confidence_status": args.confidence_status,
             "cytobands": Cytobands(),
             "assemblies": Assemblies(),
             "chromosomes": Chromosomes(),

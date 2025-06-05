@@ -12,10 +12,10 @@
 # variation-code
 # amino-acid-change-type: Probably the same as molecular-consequence?
 # copy-number: not part of vcf
-# variant-confidence-status
 # dna-region
 # gene-fusion: not part of vcf
 # detection-limit: unknown / not part of vcf
+
 
 __variables__:
   exon: ?ANN["EXON"]
@@ -119,7 +119,7 @@ component:
   valueQuantity:
     code: '%'
     system: http://unitsofmeasure.org
-    value: ?FORMAT['AF'][sample][0] * 100
+    value: ?eval(allelic_frequency) if allelic_frequency else ""
 - code:
     coding:
       - code: 48002-0
@@ -202,9 +202,17 @@ component:
       display: ?f"{coordinates}-based"
 - code:
     coding:
-    - code: "molecular-consequence"
+    - code: molecular-consequence
       display: Molecular Consequence
       system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
   valueCodeableConcept:
     coding:
     - code: ?ANN["Consequence"]
+- code:
+    coding:
+    - code: variant-confidence-status
+      display: Variant Confidence Status
+      system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
+  valueCodeableConcept:
+    coding:
+    - code: ?eval(confidence_status) if confidence_status else ""
