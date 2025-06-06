@@ -209,7 +209,9 @@ component:
             system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
         valueCodeableConcept:
           coding:
-          - code: consequence
+          - code: consequence.get_id()
+            display: consequence
+            system: "https://sequenceontology.org"
 - code:
     coding:
     - code: variant-confidence-status
