@@ -17,8 +17,6 @@ authors = [
 ]
 requires-python = ">=3.12"
 readme = "README.md"
-homepage = "https://github.com/vembrane/vembrane"
-repository = "https://github.com/vembrane/vembrane"
 
 dynamic = ["version"]
 
@@ -34,6 +32,10 @@ dependencies = [
   "networkx~=3.3",
   "typing-extensions~=4.12.2",
 ]
+
+[project.urls]
+homepage = "https://github.com/vembrane/vembrane"
+repository = "https://github.com/vembrane/vembrane"
 
 [project.scripts]
 vembrane = 'vembrane.cli:main'
