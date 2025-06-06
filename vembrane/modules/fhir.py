@@ -63,7 +63,9 @@ def add_subcommand(subparsers):
     parser.add_argument(
         "--confidence-status",
         default=None,
-        help="Python expression for calculating the variants confidence status being High, Intermediate or Low.",
+        help="Python expression for calculating the variants confidence status being "
+        "High, Intermediate or Low. E.g. \"'High' if QUAL >= 20 else ('Intermediate' "
+        "if QUAL >= 10 else 'Low')\"",
     )
     parser.add_argument(
         "--output-fmt",

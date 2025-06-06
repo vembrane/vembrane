@@ -207,7 +207,7 @@ component:
       system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
   valueCodeableConcept:
     coding:
-    - code: ?ANN["Consequence"]
+    - code: ?str(ANN["Consequence"])
 - code:
     coding:
     - code: variant-confidence-status
