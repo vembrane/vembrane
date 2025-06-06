@@ -200,14 +200,16 @@ component:
     coding:
     - code: ?coordinates
       display: ?f"{coordinates}-based"
-- code:
-    coding:
-    - code: molecular-consequence
-      display: Molecular Consequence
-      system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
-  valueCodeableConcept:
-    coding:
-    - code: ?str(ANN["Consequence"])
+- <:
+    ?for consequence in ANN.get("Consequence", []):
+      - code:
+          coding:
+          - code: molecular-consequence
+            display: Molecular Consequence
+            system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
+        valueCodeableConcept:
+          coding:
+          - code: consequence
 - code:
     coding:
     - code: variant-confidence-status
