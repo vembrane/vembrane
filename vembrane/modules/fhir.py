@@ -2,7 +2,8 @@ import csv
 import importlib
 from collections import defaultdict
 
-from intervaltree import IntervalTree
+# intervaltree is untyped, so we use type: ignore to suppress type checking errors
+from intervaltree import IntervalTree  # type: ignore
 
 from vembrane.common import add_common_arguments
 from vembrane.modules import structured
