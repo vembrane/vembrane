@@ -613,14 +613,14 @@ wheels = [
 
 [[package]]
 name = "yte"
-version = "1.6.0"
+version = "1.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dpath" },
     { name = "plac" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f8/b0/183254cbce3e3453e7a45ae39f93d2b95b5c33c942ca6fab726f702824da/yte-1.6.0.tar.gz", hash = "sha256:d901d4cc0ead79c1c72a8fe9960fb4102d1c6d29d3c5e344f0ce7b6f64cf01e8", size = 6816 }
+sdist = { url = "https://files.pythonhosted.org/packages/79/2d/e397aba1d413e6141ee52e495600d613d77e7d3d89270eda9c60818139bc/yte-1.7.0.tar.gz", hash = "sha256:d9cadcb597128490356a8260842fd71bf3145fa4ee633ecc4023f53a6b3f646d", size = 6849 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b5/b1/21f510442c8c66e6dc5fd50b68b537bfb2825a1ec71d2afe46ed84c308dd/yte-1.6.0-py3-none-any.whl", hash = "sha256:dbd688874754e388ff4f715a4f713fd266a0391dc34e9aef825ba98173a0effa", size = 8745 },
+    { url = "https://files.pythonhosted.org/packages/77/44/b813873f367abf85c76cc16598e64c37d431609fe78357c77f293a816784/yte-1.7.0-py3-none-any.whl", hash = "sha256:ebe106c97544e90068b57edd90ee552cefc42cd6421e76065c6c6aa0f5a93308", size = 8787 },
 ]

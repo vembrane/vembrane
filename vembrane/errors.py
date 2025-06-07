@@ -165,3 +165,8 @@ class NonBoolTypeError(VembraneError):
             "explicitly wrap the expression in `bool(…)`, "
             "or aggregate multiple values via `any(…)` or `all(…)`.",
         )
+
+
+class UnsupportedChromName(VembraneError):
+    def __init__(self, chrom: str):
+        super().__init__(f"Unsupported chromosome name: {chrom}.")
