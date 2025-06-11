@@ -174,4 +174,18 @@ def execute(args):
             "assemblies": Assemblies(),
             "chromosomes": Chromosomes(),
         },
+        postprocess=postprocess_fhir_record,
     )
+
+
+def postprocess_fhir_record(record: dict) -> dict:
+    def is_valid(record):
+        if type(record) is dict:
+            return all([is_valid(value) for value in record.values()])
+        elif type(record) is list:
+            return all([is_valid(entry) for entry in record])
+        else:
+            return True if record is not None else False
+
+    record["component"] = [entry for entry in record["component"] if is_valid(entry)]
+    return record

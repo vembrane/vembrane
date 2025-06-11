@@ -1,7 +1,7 @@
 import json
 import textwrap
 from io import TextIOWrapper
-from typing import Any, Dict, Iterator
+from typing import Any, Callable, Dict, Iterator
 
 import yaml
 import yte  # type: ignore
@@ -101,6 +101,7 @@ def process_vcf(
     template: str,
     ann_key: str,
     variables: Dict[str, Any] | None = None,
+    postprocess: Callable[[Any], Any] | None = None,
 ) -> ConvertedRecords:
     code_handler = CodeHandler(ann_key, vcf.header)
     value_handler = ValueHandler()
@@ -121,19 +122,9 @@ def process_vcf(
                 value_handler=value_handler,
                 variables=variables,
             )
-            converted["component"] = [
-                entry for entry in converted["component"] if is_valid(entry)
-            ]
+            if postprocess is not None:
+                converted = postprocess(converted)
             yield converted
-
-
-def is_valid(record):
-    if type(record) is dict:
-        return all([is_valid(value) for value in record.values()])
-    elif type(record) is list:
-        return all([is_valid(entry) for entry in record])
-    else:
-        return True if record else False
 
 
 def write_records_jsonl(output_file: TextIOWrapper, records: ConvertedRecords) -> None:
@@ -170,6 +161,7 @@ def process(
     overwrite_number_format,
     backend,
     variables: Dict[str, Any] | None = None,
+    postprocess: Callable[[Any], Any] | None = None,
 ) -> None:
     overwrite_number = {
         "INFO": dict(overwrite_number_info),
@@ -209,7 +201,14 @@ def process(
         smart_open(output, mode="w") as writer,
     ):
         write_records(
-            writer, process_vcf(reader, template, annotation_key, variables=variables)
+            writer,
+            process_vcf(
+                reader,
+                template,
+                annotation_key,
+                variables=variables,
+                postprocess=postprocess,
+            ),
         )
 
 

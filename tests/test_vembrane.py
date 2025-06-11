@@ -178,10 +178,14 @@ def parse_command_config(cmd, config, vcf_path):
         template_path = vcf_path.parent / "template.yte.yaml"
         command = [cmd, str(template_path), str(vcf_path)]
     elif cmd == "fhir":
-        command = [cmd, str(vcf_path), config["sample"]]
+        command = [cmd, str(vcf_path), config["sample"], config["assembly"]]
+        del config["sample"]
+        del config["assembly"]
     else:
         raise ValueError(f"Unknown subcommand {config['function']}")
     for key in config:
+        if key == "function":
+            continue
         if isinstance(config[key], str):
             command.append(f"--{key.replace('_', '-')}")
             command.append(config[key])

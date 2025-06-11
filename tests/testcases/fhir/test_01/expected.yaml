@@ -21,15 +21,6 @@
         system: http://www.genenames.org/geneId
   - code:
       coding:
-      - code: 48013-7
-        display: Genomic reference sequence [ID]
-        system: http://loinc.org
-    valueCodeableConcept:
-      coding:
-      - code: NM_006015.6
-        system: http://www.ncbi.nlm.nih.gov/refseq
-  - code:
-      coding:
       - code: 47999-8
         display: DNA region name [Identifier]
         system: http://loinc.org

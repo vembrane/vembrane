@@ -17,7 +17,6 @@ authors = [
 ]
 requires-python = ">=3.12"
 readme = "README.md"
-
 dynamic = ["version"]
 
 dependencies = [

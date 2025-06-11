@@ -111,15 +111,17 @@ component:
     - code: ?assemblies.get(assembly)
       display: ?assembly
       system: http://loinc.org
-- code:
-    coding:
-    - code: 81258-6
-      display: Sample variant allelic frequency [NFr]
-      system: http://loinc.org
-  valueQuantity:
-    code: '%'
-    system: http://unitsofmeasure.org
-    value: ?eval(sample_allelic_frequency) if sample_allelic_frequency else ""
+- ?if sample_allelic_frequency:
+    code:
+      coding:
+      - code: 81258-6
+        display: Sample variant allelic frequency [NFr]
+        system: http://loinc.org
+    valueQuantity:
+      code: '%'
+      system: http://unitsofmeasure.org
+      value: ?eval(sample_allelic_frequency)
+  ?else: ?SKIP
 - code:
     coding:
       - code: 48002-0
@@ -146,7 +148,7 @@ component:
       display: Allelic Read Depth
       system: http://loinc.org
   valueQuantity:
-      value: ?FORMAT['AD'][sample][1]
+    value: ?FORMAT['AD'][sample][1]
 - code:
     coding:
     - code: 81254-5
@@ -209,14 +211,16 @@ component:
             system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
         valueCodeableConcept:
           coding:
-          - code: consequence.get_id()
-            display: consequence
+          - code: ?str(consequence.get_id())
+            display: ?str(consequence)
             system: "https://sequenceontology.org"
-- code:
-    coding:
-    - code: variant-confidence-status
-      display: Variant Confidence Status
-      system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
-  valueCodeableConcept:
-    coding:
-    - code: ?eval(confidence_status) if confidence_status else ""
+- ?if confidence_status:
+    code:
+      coding:
+      - code: variant-confidence-status
+        display: Variant Confidence Status
+        system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
+    valueCodeableConcept:
+      coding:
+      - code: ?eval(confidence_status)
+  ?else: ?SKIP
