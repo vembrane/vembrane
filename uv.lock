@@ -571,7 +571,7 @@ requires-dist = [
     { name = "pysam", specifier = "~=0.22.1" },
     { name = "pyyaml", specifier = "~=6.0.2" },
     { name = "typing-extensions", specifier = "~=4.12.2" },
-    { name = "yte", specifier = "~=1.8.0" },
+    { name = "yte", specifier = "~=1.8.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -613,14 +613,14 @@ wheels = [
 
 [[package]]
 name = "yte"
-version = "1.8.0"
+version = "1.8.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dpath" },
     { name = "plac" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/44/9b/5d677acc91018aa778c3b5ce24a0afae91883245f877357fcff0e5dc562a/yte-1.8.0.tar.gz", hash = "sha256:244c53265c9a95b11f8d45c5a1663ba4f3af77a6a16d024d6e7a25c20dd7592f", size = 7284, upload-time = "2025-06-06T19:59:11.054Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f3/19/a56a000125ade3e9b4d25122f1725c8fdaf24cc907eb296b80f7991d81f9/yte-1.8.1.tar.gz", hash = "sha256:6eefbdceae56e156ba9881ecb63f3c9217cfe5d5cc6f85fdb061c266a8eff112", size = 7105, upload-time = "2025-06-11T10:15:36.496Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/10/21d83e488d3471cd7ecab8b97cd903a6ca93282d4a88fd9500949cfb263b/yte-1.8.0-py3-none-any.whl", hash = "sha256:b3a7dc94d3af347cda508ed64e8edc737ad874ac02f18fe013f5b5a0275de199", size = 9228, upload-time = "2025-06-06T19:59:10.21Z" },
+    { url = "https://files.pythonhosted.org/packages/37/85/6bab533b2eaa21714f312cb9eb758c869dfbed06bc13a4f3bfc3688197d6/yte-1.8.1-py3-none-any.whl", hash = "sha256:4fa0ddfff047984bda0bc521d85cba32a8a7ca4c4cdb16938b6911c049485733", size = 9021, upload-time = "2025-06-11T10:15:35.519Z" },
 ]
