@@ -21,16 +21,13 @@
         system: http://www.genenames.org/geneId
   - code:
       coding:
-      - code: 47999-8
-        display: DNA region name [Identifier]
+      - code: 51958-7
+        display: Transcript reference sequence [ID]
         system: http://loinc.org
-    valueString: 'Exon #4 - #7'
-  - code:
+    valueCodeableConcept:
       coding:
-      - code: 47999-8
-        display: DNA region name [Identifier]
-        system: http://loinc.org
-    valueString: 'Codon #194 - #195'
+      - code: ENST00000324856
+        system: https://mart.ensembl.org/info/genome/stable_ids/index.html
   - code:
       coding:
       - code: 48004-6
@@ -38,7 +35,7 @@
         system: http://loinc.org
     valueCodeableConcept:
       coding:
-      - code: ENST00000324856.13:c.582C>T
+      - code: c.582C>T
         system: http://varnomen.hgvs.org
   - code:
       coding:
@@ -47,17 +44,37 @@
         system: http://loinc.org
     valueCodeableConcept:
       coding:
-      - code: ENSP00000320485.7:p.Pro194%3D
+      - code: p.Pro194%3D
         system: http://varnomen.hgvs.org
   - code:
       coding:
-      - code: 81258-6
-        display: Sample variant allelic frequency [NFr]
+      - code: 81290-9
+        display: Genomic DNA change (gHGVS)
         system: http://loinc.org
-    valueQuantity:
-      code: '%'
-      system: http://unitsofmeasure.org
-      value: 5.714289844036102
+    valueCodeableConcept:
+      coding:
+      - code: g.23142C>T
+        system: http://varnomen.hgvs.org
+  - code:
+      coding:
+      - code: 62374-4
+        display: Human reference sequence assembly version
+        system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+      - code: LA26806-2
+        display: GRCh38
+        system: http://loinc.org
+  - code:
+      coding:
+      - code: 48002-0
+        display: Genomic source class [Type]
+        system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+      - code: LA6684-0
+        display: Somatic
+        system: http://loinc.org
   - code:
       coding:
       - code: 48001-2
@@ -69,27 +86,61 @@
         system: urn:oid:2.16.840.1.113883.6.335
   - code:
       coding:
-      - code: 48006-1
-        display: Amino acid change [Type]
+      - code: 82121-5
+        display: Allelic Read Depth
+        system: http://loinc.org
+    valueQuantity:
+      value: 20
+  - code:
+      coding:
+      - code: 81254-5
+        display: Genomic allele start-end
+        system: http://loinc.org
+    valueRange:
+      low:
+        value: 26696985
+  - code:
+      coding:
+      - code: 48000-4
+        display: Chromosome [Identifier] in Blood or Tissue by Molecular genetics method
         system: http://loinc.org
     valueCodeableConcept:
       coding:
-      - code: LA6698-0
-        display: synonymous_variant
+      - code: LA21254-0
+        display: Chromosome 1
         system: http://loinc.org
   - code:
       coding:
-      - code: 81252-9
-        display: Discrete genetic variant
+      - code: 69551-0
+        display: Genomic alt allele [ID]
         system: http://loinc.org
+    valueString: T
+  - code:
+      coding:
+      - code: 69547-8
+        display: Genomic ref allele [ID]
+        system: http://loinc.org
+    valueString: C
+  - code:
+      coding:
+      - code: 47999-8
+        display: DNA region name [Identifier]
+        system: http://loinc.org
+    valueString: 'Exon #4 - #7'
+  - code:
+      coding:
+      - code: molecular-consequence
+        display: Molecular Consequence
+        system: http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs
     valueCodeableConcept:
       coding:
-      - code: rs1283126655
-        system: http://www.ncbi.nlm.nih.gov/projects/SNP
+      - code: SO:0001819
+        display: synonymous_variant
+        system: https://sequenceontology.org
   meta:
     profile:
-    - https://www.medizininformatik-initiative.de/fhir/ext/modul-molgen/StructureDefinition/variante
-    - http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/variant
+    - https://simplifier.net/medizininformatikinitiative-modulomics/mii_pr_molgen_variante|2025.0.0
+    - http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/variant|3.0.0
   resourceType: Observation
   valueCodeableConcept:
     coding:
@@ -120,25 +171,13 @@
         system: http://www.genenames.org/geneId
   - code:
       coding:
-      - code: 48013-7
-        display: Genomic reference sequence [ID]
+      - code: 51958-7
+        display: Transcript reference sequence [ID]
         system: http://loinc.org
     valueCodeableConcept:
       coding:
-      - code: NM_006015.6
-        system: http://www.ncbi.nlm.nih.gov/refseq
-  - code:
-      coding:
-      - code: 47999-8
-        display: DNA region name [Identifier]
-        system: http://loinc.org
-    valueString: 'Exon #8 - #9'
-  - code:
-      coding:
-      - code: 47999-8
-        display: DNA region name [Identifier]
-        system: http://loinc.org
-    valueString: 'Codon #194 - #195'
+      - code: ENST00000324856
+        system: https://mart.ensembl.org/info/genome/stable_ids/index.html
   - code:
       coding:
       - code: 48004-6
@@ -146,7 +185,7 @@
         system: http://loinc.org
     valueCodeableConcept:
       coding:
-      - code: ENST00000324856.13:c.582C>T
+      - code: c.582C>T
         system: http://varnomen.hgvs.org
   - code:
       coding:
@@ -155,17 +194,37 @@
         system: http://loinc.org
     valueCodeableConcept:
       coding:
-      - code: ENSP00000320485.7:p.Pro194%3D
+      - code: p.Pro194%3D
         system: http://varnomen.hgvs.org
   - code:
       coding:
-      - code: 81258-6
-        display: Sample variant allelic frequency [NFr]
+      - code: 81290-9
+        display: Genomic DNA change (gHGVS)
         system: http://loinc.org
-    valueQuantity:
-      code: '%'
-      system: http://unitsofmeasure.org
-      value: 5.714289844036102
+    valueCodeableConcept:
+      coding:
+      - code: g.23142C>T
+        system: http://varnomen.hgvs.org
+  - code:
+      coding:
+      - code: 62374-4
+        display: Human reference sequence assembly version
+        system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+      - code: LA26806-2
+        display: GRCh38
+        system: http://loinc.org
+  - code:
+      coding:
+      - code: 48002-0
+        display: Genomic source class [Type]
+        system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+      - code: LA6684-0
+        display: Somatic
+        system: http://loinc.org
   - code:
       coding:
       - code: 48001-2
@@ -177,18 +236,61 @@
         system: urn:oid:2.16.840.1.113883.6.335
   - code:
       coding:
-      - code: 48006-1
-        display: Amino acid change [Type]
+      - code: 82121-5
+        display: Allelic Read Depth
+        system: http://loinc.org
+    valueQuantity:
+      value: 20
+  - code:
+      coding:
+      - code: 81254-5
+        display: Genomic allele start-end
+        system: http://loinc.org
+    valueRange:
+      low:
+        value: 26696986
+  - code:
+      coding:
+      - code: 48000-4
+        display: Chromosome [Identifier] in Blood or Tissue by Molecular genetics method
         system: http://loinc.org
     valueCodeableConcept:
       coding:
-      - code: LA6698-0
-        display: synonymous_variant
+      - code: LA21254-0
+        display: Chromosome 1
         system: http://loinc.org
+  - code:
+      coding:
+      - code: 69551-0
+        display: Genomic alt allele [ID]
+        system: http://loinc.org
+    valueString: T
+  - code:
+      coding:
+      - code: 69547-8
+        display: Genomic ref allele [ID]
+        system: http://loinc.org
+    valueString: C
+  - code:
+      coding:
+      - code: 47999-8
+        display: DNA region name [Identifier]
+        system: http://loinc.org
+    valueString: 'Exon #8 - #9'
+  - code:
+      coding:
+      - code: molecular-consequence
+        display: Molecular Consequence
+        system: http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs
+    valueCodeableConcept:
+      coding:
+      - code: SO:0001819
+        display: synonymous_variant
+        system: https://sequenceontology.org
   meta:
     profile:
-    - https://www.medizininformatik-initiative.de/fhir/ext/modul-molgen/StructureDefinition/variante
-    - http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/variant
+    - https://simplifier.net/medizininformatikinitiative-modulomics/mii_pr_molgen_variante|2025.0.0
+    - http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/variant|3.0.0
   resourceType: Observation
   valueCodeableConcept:
     coding:
