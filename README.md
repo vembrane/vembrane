@@ -367,7 +367,9 @@ usage: vembrane structured [options] template [input vcf]
 options:
   -h, --help            show this help message and exit
   --annotation-key FIELDNAME, -k FIELDNAME
-                        The INFO key for the annotation field. Defaults to "ANN".
+                        The INFO key for the annotation field. This defaults to "ANN", but tools might
+                        use other field names. For example, default VEP annotations can be parsed by
+                        setting "CSQ" here.
   --output OUTPUT, -o OUTPUT
                         Output file. If not specified, output is written to STDOUT.
   --output-fmt {json,jsonl,yaml}
