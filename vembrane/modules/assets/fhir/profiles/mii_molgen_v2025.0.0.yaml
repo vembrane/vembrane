@@ -203,7 +203,11 @@ component:
     - code: ?coordinates
       display: ?f"{coordinates}-based"
 - <:
-    ?for consequence in ANN.get("Consequence", []):
+    # TODO: multiple consequences are not yet supported by this profile
+    # see https://github.com/medizininformatik-initiative/kerndatensatzmodul-GenetischeTests/issues/37
+    # will be released in 2026.0.0
+    # Once profile is updated, remove the [:1] slice below
+    ?for consequence in ANN.get("Consequence", [])[:1]:
       - code:
           coding:
           - code: molecular-consequence
@@ -211,7 +215,7 @@ component:
             system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
         valueCodeableConcept:
           coding:
-          - code: ?str(consequence.get_id())
+          - code: ?consequence.get_id()
             display: ?str(consequence)
             system: "https://sequenceontology.org"
 - ?if confidence_status:
