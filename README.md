@@ -30,7 +30,9 @@ options:
   --output-fmt {vcf,bcf,uncompressed-bcf}, -O {vcf,bcf,uncompressed-bcf}
                         Output format.
   --annotation-key FIELDNAME, -k FIELDNAME
-                        The INFO key for the annotation field. Defaults to "ANN".
+                        The INFO key for the annotation field. This defaults to "ANN", but tools might
+                        use other field names. For example, default VEP annotations can be parsed by
+                        setting "CSQ" here.
   --aux NAME=PATH, -a NAME=PATH
                         Path to an auxiliary file containing a set of symbols.
   --ontology PATH       Path to an ontology in OBO format. 
@@ -73,13 +75,13 @@ The following VCF fields can be accessed in the filter expression:
 | Name      | Type                         | Interpretation                                                                                     | Example expression             |
 | --------- | ---------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------ |
 | `INFO`    | `Dict[str, Any¹]`            | `INFO field -> Value`                                                                              | `INFO["DP"] > 0`               |
-| `ANN`     | `Dict[str, Any²]`            | `ANN field -> Value`                                                                               | `ANN["Gene_Name"] == "CDH2"`   |
+| `ANN`²    | `Dict[str, Any³]`            | `ANN field -> Value`²                                                                              | `ANN["SYMBOL"] == "CDH2"`²     |
 | `CHROM`   | `str`                        | Chromosome Name                                                                                    | `CHROM == "chr2"`              |
 | `POS`     | `int`                        | Chromosomal position (1-based)                                                                     | `24 < POS < 42`                |
 | `END`     | `int`                        | Chromosomal end position (1-based, inclusive, NA for breakends); also accessible via `INFO["END"]` | `24 < END < 42`                |
 | `ID`      | `str`                        | Variant ID                                                                                         | `ID == "rs11725853"`           |
 | `REF`     | `str`                        | Reference allele                                                                                   | `REF == "A"`                   |
-| `ALT`     | `str`                        | Alternative allele³                                                                                | `ALT == "C"`                   |
+| `ALT`     | `str`                        | Alternative allele⁴                                                                                | `ALT == "C"`                   |
 | `QUAL`    | `float`                      | Quality                                                                                            | `QUAL >= 60`                   |
 | `FILTER`  | `List[str]`                  | Filter tags                                                                                        | `"PASS" in FILTER`             |
 | `FORMAT`  | `Dict[str, Dict[str, Any¹]]` | `Format -> (Sample -> Value)`                                                                      | `FORMAT["DP"][SAMPLES[0]] > 0` |
@@ -88,9 +90,11 @@ The following VCF fields can be accessed in the filter expression:
 
  ¹ depends on type specified in VCF header
 
- ² for the usual snpeff and vep annotations, custom types have been specified; any unknown ANN field will simply be of type `str`. If something lacks a custom parser/type, please consider filing an issue in the [issue tracker](https://github.com/vembrane/vembrane/issues).
+ ² if you specify something different for `--annotation-key`, use that key here. For example, for the default VEP `--annotation-key CSQ`, use `CSQ["SYMBOL"]`.
 
- ³ vembrane does not handle multi-allelic records itself. Instead, such files should be
+ ³ for the usual snpeff and vep annotations, custom types have been specified; any unknown ANN field will simply be of type `str`. If something lacks a custom parser/type, please consider filing an issue in the [issue tracker](https://github.com/vembrane/vembrane/issues).
+
+ ⁴ vembrane does not handle multi-allelic records itself. Instead, such files should be
  preprocessed by either of the following tools (preferably even before annotation):
  - [`bcftools norm -m-any […]`](http://samtools.github.io/bcftools/bcftools.html#norm)
  - [`gatk LeftAlignAndTrimVariants […] --split-multi-allelics`](https://gatk.broadinstitute.org/hc/en-us/articles/360037225872-LeftAlignAndTrimVariants)
@@ -101,7 +105,7 @@ The following VCF fields can be accessed in the filter expression:
 
 * Only keep annotations and variants where gene equals "CDH2" and its impact is "HIGH":
   ```sh
-  vembrane filter 'ANN["Gene_Name"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"' variants.bcf
+  vembrane filter 'ANN["SYMBOL"] == "CDH2" and ANN["Annotation_Impact"] == "HIGH"' variants.bcf
   ```
 * Only keep variants with quality at least 30:
   ```sh
@@ -167,7 +171,8 @@ The following VCF fields can be accessed in the filter expression:
   ```
 
 ### Custom `ANN` types
-`vembrane` parses entries in the annotation field as outlined in [docs/ann_types.md](docs/ann_types.md).
+
+`vembrane` parses entries in the annotation field (`ANN` or whatever you specify under `--annotatio-key`) as outlined in [docs/ann_types.md](docs/ann_types.md).
 
 ### Missing values in annotations
 
