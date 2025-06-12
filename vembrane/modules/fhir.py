@@ -175,7 +175,7 @@ def execute(args):
             "assembly": args.assembly,
             "coordinates": args.coordinates,
             "sample_allelic_frequency": args.sample_allelic_frequency,
-            "sample_allelic_read_depth":args.sample_allelic_read_depth,
+            "sample_allelic_read_depth": args.sample_allelic_read_depth,
             "confidence_status": args.confidence_status,
             "cytobands": Cytobands(),
             "assemblies": Assemblies(),
