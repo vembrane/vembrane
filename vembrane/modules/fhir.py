@@ -194,5 +194,5 @@ def postprocess_fhir_record(record: dict) -> dict:
         else:
             return True if record is not None else False
 
-    record["component"] = [entry for entry in record["component"] if is_valid(entry)]
+    record["component"] = list(filter(is_valid, record["component"]))
     return record
