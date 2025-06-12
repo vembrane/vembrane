@@ -1,7 +1,7 @@
 import csv
 import importlib.resources
 from collections import defaultdict
-from typing import Any
+from typing import Any, Iterator
 
 # intervaltree is untyped, so we use type: ignore to suppress type checking errors
 from intervaltree import IntervalTree  # type: ignore
@@ -57,6 +57,18 @@ def add_subcommand(subparsers):
         help="The FHIR profile to use for generating the output.",
     )
     parser.add_argument(
+        "--id-source",
+        help="URL to the source of IDs found in the ID column of the VCF file. "
+        "IDs are only used if this is given.",
+    )
+    parser.add_argument(
+        "--genomic-source-class",
+        help="The genomic source class of the given variants as defined by "
+        "LOINC: https://loinc.org/48002-0. Either provide the name as a string or "
+        "a Python expression that evaluates to the name, e.g., for Varlociraptor "
+        '\'"Somatic" if INFO["PROB_SOMATIC"] > 0.95 else ...\'.',
+    )
+    parser.add_argument(
         "--sample-allelic-frequency",
         default=None,
         help="Python expression calculating the the samples allelic frequency"
@@ -74,6 +86,11 @@ def add_subcommand(subparsers):
         help="Python expression for calculating the variants confidence status being "
         "High, Intermediate or Low. E.g. \"'High' if QUAL >= 20 else ('Intermediate' "
         "if QUAL >= 10 else 'Low')\"",
+    )
+    parser.add_argument(
+        "--detection-limit",
+        type=int,
+        help="Detection limit / sensitivity of the analysis in percent (e.g. 95).",
     )
     parser.add_argument(
         "--output-fmt",
@@ -106,7 +123,7 @@ class Cytobands:
             importlib.resources.files("vembrane.modules")
             / "assets"
             / "fhir"
-            / "cytobands.txt"
+            / "cytobands.tsv"
         )
         for chrom, start, end, band, _ in records:
             self._data[chrom].addi(int(start), int(end), band)
@@ -130,7 +147,7 @@ class Assemblies:
                 importlib.resources.files("vembrane.modules")
                 / "assets"
                 / "fhir"
-                / "assemblies.txt",
+                / "assemblies.tsv",
                 skip_comments=False,
             )
         }
@@ -147,7 +164,7 @@ class Chromosomes:
                 importlib.resources.files("vembrane.modules")
                 / "assets"
                 / "fhir"
-                / "chromosomes.txt",
+                / "chromosomes.tsv",
                 skip_comments=False,
             )
         }
@@ -158,7 +175,53 @@ class Chromosomes:
         return self._data.get(chrom)
 
 
+class GenomicSourceClasses:
+    def __init__(self):
+        self._data = {
+            name: code
+            for name, code in load_tsv(
+                importlib.resources.files("vembrane.modules")
+                / "assets"
+                / "fhir"
+                / "genomic_source_classes.tsv"
+            )
+        }
+
+    def code(self, name: str | None) -> str | None:
+        """
+        Get the LOINC code for the given genomic source class name.
+        """
+        if name is None:
+            return None
+        return self._data[name]
+
+    def is_name(self, expr: str | None) -> bool:
+        """
+        Check if the given expression is a valid genomic source class name.
+        """
+        if expr is None:
+            return False
+        return expr in self._data
+
+    def preprocess_expression(self, expr: str | None) -> str | None:
+        """
+        Preprocess the expression to ensure it is a valid genomic source class name.
+        If the expression is a string, it will be wrapped in quotes.
+        """
+        if expr is None:
+            return None
+        if self.is_name(expr):
+            return f'"{expr}"'
+        return expr
+
+
 def execute(args):
+    if args.detection_limit is not None:
+        if not (0 < args.detection_limit <= 100):
+            raise ValueError("Detection limit must be between 1 and 100.")
+
+    genomic_source_classes = GenomicSourceClasses()
+
     with open(PROFILE_DIR / f"{args.profile}.yaml", mode="r") as infile:
         template = infile.read()
     structured.process(
@@ -182,6 +245,12 @@ def execute(args):
             "cytobands": Cytobands(),
             "assemblies": Assemblies(),
             "chromosomes": Chromosomes(),
+            "genomic_source_classes": genomic_source_classes,
+            "genomic_source_class": genomic_source_classes.preprocess_expression(
+                args.genomic_source_class
+            ),
+            "id_source": args.id_source,
+            "detection_limit": args.detection_limit,
         },
         postprocess=postprocess_fhir_record,
     )

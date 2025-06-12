@@ -1,20 +1,14 @@
 # as defined here: https://www.medizininformatik-initiative.de/Kerndatensatz/KDS_Molekulargenetischer_Befundbericht_V2025/implementation-guides-ImplementationGuide-2025.x-DE-MIIIGModulMolGenDE-TechnischeImplementierung-Variante-Observation.html
 
-# TODO eventually add still missing entries:
+# Still missing entries:
 # conclusion-string: has to be filled by a human being or AI, not yet part of vcf
-# cytogenomic-nomenclature
-# genomic-ref-seq: Not annotate by VEP (must be RefSeq or LRG Identifiers)
-# inner-start-end
-# outer-start-end
-# coding-change-type: probably VARIANT_CLASS entry but not matching loinc codes
-# allelic-state
-# variant-inheritance
-# variation-code
+# cytogenomic-nomenclature: needs ISCN codes to be derived from vcf records
+# genomic-ref-seq: Not annotated by VEP (must be RefSeq or LRG Identifiers)
+# coding-change-type: Sequence ontology term like SO:1000008 for point mutations. Maybe vembrane itself can provide that term?
+# variant-inheritance: codes not yet defined
 # amino-acid-change-type: Same as molecular-consequence but artificially tied to coding variants
-# copy-number: not part of vcf
-# dna-region
-# gene-fusion: not part of vcf
-# detection-limit: unknown / not part of vcf
+# copy-number: TODO, maybe add later if CNV notation becomes common in VCF
+# gene-fusion: TODO, maybe add later if gene fusion notation becomes common in VCF
 
 
 __variables__:
@@ -122,17 +116,20 @@ component:
       system: http://unitsofmeasure.org
       value: ?eval(sample_allelic_frequency)
   ?else: ?SKIP
-- code:
-    coding:
+- ?if genomic_source_class:
+    __variables__:
+      name: ?eval(genomic_source_class)
+    code:
+      coding:
       - code: 48002-0
         display: Genomic source class [Type]
         system: http://loinc.org
-  valueCodeableConcept:
-    coding:
-    - code: LA6684-0
-     # we assume that variants in the vcf are always somatic
-      display: Somatic
-      system: http://loinc.org 
+    valueCodeableConcept:
+      coding:
+      - code: ?genomic_source_classes.code(name)
+        display: ?name
+        system: http://loinc.org
+  ?else: ?SKIP
 - code:
     coding:
     - code: 48001-2
@@ -149,17 +146,42 @@ component:
       system: http://loinc.org
   valueQuantity:
     value: ?eval(sample_allelic_read_depth)
-- code:
-    coding:
-    - code: 81254-5
-      display: Genomic allele start-end
-      system: http://loinc.org
-  valueRange:
-    low:
-      value: ?POS
-    ?if POS != END:
-      high:
-        value: ?END
+- <:
+    ?if "CIPOS" in INFO:
+      - code:
+          coding:
+          - code: 81302-2
+            display: Genomic allele inner start-end
+            system: http://loinc.org
+        valueRange:
+          low:
+            value: ?INFO["CIPOS"][1]
+          ?if POS != END:
+            high:
+              value: ?INFO["CIEND"][0]
+      - code:
+          coding:
+          - code: 81302-2
+            display: Genomic allele outer start-end
+            system: http://loinc.org
+        valueRange:
+          low:
+            value: ?INFO["CIPOS"][0]
+          ?if POS != END:
+            high:
+              value: ?INFO["CIEND"][1]
+    ?else:
+      - code:
+          coding:
+          - code: 81254-5
+            display: Genomic allele start-end
+            system: http://loinc.org
+        valueRange:
+          low:
+            value: ?POS
+          ?if POS != END:
+            high:
+              value: ?END
 - code:
     coding:
       - code: 48000-4
@@ -206,8 +228,9 @@ component:
     # TODO: multiple consequences are not yet supported by this profile
     # see https://github.com/medizininformatik-initiative/kerndatensatzmodul-GenetischeTests/issues/37
     # will be released in 2026.0.0
-    # Once profile is updated, remove the [:1] slice below
-    ?for consequence in ANN.get("Consequence", [])[:1]:
+    # However, we already report multiple consequences here.
+    # Better correct than incomplete.
+    ?for consequence in ANN.get("Consequence", []):
       - code:
           coding:
           - code: molecular-consequence
@@ -227,4 +250,44 @@ component:
     valueCodeableConcept:
       coding:
       - code: ?eval(confidence_status)
+  ?else: ?SKIP
+- ?if ID and id_source is not None:
+    code:
+      coding:
+      - code: 81252-9
+        display: Variant ID
+        system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+      - code: ?ID
+        system: ?id_source
+  ?else: ?SKIP
+- ?if detection_limit:
+    code:
+      coding:
+      - code: 81258-6
+        display: Detection limit
+        system: http://loinc.org
+    valueQuantity:
+      value: ?detection_limit
+      unit: "%"
+      code: "%"
+      system: http://unitsofmeasure.org
+  ?else: ?SKIP
+- ?if has_genotype(sample):
+    code:
+      coding:
+      - code: 53034-5
+        display: Allelic state
+        system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+        ?if is_het(sample):
+          - code: LA6706-1
+            display: Heterozygous
+            system: http://loinc.org
+        ?else:
+          - code: LA6705-3
+            display: Homozygous
+            system: http://loinc.org
   ?else: ?SKIP

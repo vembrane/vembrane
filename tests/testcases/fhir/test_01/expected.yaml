@@ -67,16 +67,6 @@
         system: http://loinc.org
   - code:
       coding:
-      - code: 48002-0
-        display: Genomic source class [Type]
-        system: http://loinc.org
-    valueCodeableConcept:
-      coding:
-      - code: LA6684-0
-        display: Somatic
-        system: http://loinc.org
-  - code:
-      coding:
       - code: 48001-2
         display: Cytogenetic (chromosome) location
         system: http://loinc.org
@@ -214,16 +204,6 @@
       coding:
       - code: LA26806-2
         display: GRCh38
-        system: http://loinc.org
-  - code:
-      coding:
-      - code: 48002-0
-        display: Genomic source class [Type]
-        system: http://loinc.org
-    valueCodeableConcept:
-      coding:
-      - code: LA6684-0
-        display: Somatic
         system: http://loinc.org
   - code:
       coding:
