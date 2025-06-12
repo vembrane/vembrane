@@ -1,7 +1,6 @@
 import json
 import textwrap
-from io import TextIOWrapper
-from typing import Any, Callable, Dict, Iterator
+from typing import Any, Callable, Dict, Iterator, TextIO
 
 import yaml
 import yte  # type: ignore
@@ -127,12 +126,12 @@ def process_vcf(
             yield converted
 
 
-def write_records_jsonl(output_file: TextIOWrapper, records: ConvertedRecords) -> None:
+def write_records_jsonl(output_file: TextIO, records: ConvertedRecords) -> None:
     for record in records:
         print(json.dumps(record), file=output_file)
 
 
-def write_records_json(output_file: TextIOWrapper, records: ConvertedRecords) -> None:
+def write_records_json(output_file: TextIO, records: ConvertedRecords) -> None:
     print("[", file=output_file)
     for idx, record in enumerate(records):
         if idx > 0:
@@ -141,7 +140,7 @@ def write_records_json(output_file: TextIOWrapper, records: ConvertedRecords) ->
     print("]", file=output_file)
 
 
-def write_records_yaml(output_file: TextIOWrapper, records: ConvertedRecords) -> None:
+def write_records_yaml(output_file: TextIO, records: ConvertedRecords) -> None:
     for record in records:
         head, tail = yaml.dump(record).split("\n", 1)
         head = f"- {head}"
@@ -192,6 +191,11 @@ def process(
         write_records = write_records_json
     elif output_fmt == "yaml":
         write_records = write_records_yaml
+    else:
+        raise VembraneError(
+            f"Unsupported output format: {output_fmt}, only json, jsonl and yaml are "
+            "supported."
+        )
 
     with (
         create_reader(

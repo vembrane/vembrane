@@ -1,7 +1,7 @@
 # as defined here: https://www.medizininformatik-initiative.de/Kerndatensatz/KDS_Molekulargenetischer_Befundbericht_V2025/implementation-guides-ImplementationGuide-2025.x-DE-MIIIGModulMolGenDE-TechnischeImplementierung-Variante-Observation.html
 
-# missing entries:
-# conclusion-string
+# TODO eventually add still missing entries:
+# conclusion-string: has to be filled by a human being or AI, not yet part of vcf
 # cytogenomic-nomenclature
 # genomic-ref-seq: Not annotate by VEP (must be RefSeq or LRG Identifiers)
 # inner-start-end
@@ -10,7 +10,7 @@
 # allelic-state
 # variant-inheritance
 # variation-code
-# amino-acid-change-type: Probably the same as molecular-consequence?
+# amino-acid-change-type: Same as molecular-consequence but artificially tied to coding variants
 # copy-number: not part of vcf
 # dna-region
 # gene-fusion: not part of vcf

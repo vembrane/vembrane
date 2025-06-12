@@ -1,5 +1,5 @@
 import csv
-import importlib
+import importlib.resources
 from collections import defaultdict
 from typing import Any
 
@@ -90,12 +90,13 @@ def add_subcommand(subparsers):
     add_common_arguments(parser)
 
 
-def load_tsv(path, skip_comment=True):
+def load_tsv(path, skip_comments=True):
     with open(path, "r") as file:
         reader = csv.reader(file, delimiter="\t")
-        if skip_comment:
-            next(reader)
-        return list(reader)
+        if skip_comments:
+            return [line for line in reader if not line[0].startswith("#")]
+        else:
+            return list(reader)
 
 
 class Cytobands:
@@ -130,7 +131,7 @@ class Assemblies:
                 / "assets"
                 / "fhir"
                 / "assemblies.txt",
-                skip_comment=False,
+                skip_comments=False,
             )
         }
 
@@ -147,7 +148,7 @@ class Chromosomes:
                 / "assets"
                 / "fhir"
                 / "chromosomes.txt",
-                skip_comment=False,
+                skip_comments=False,
             )
         }
 
@@ -158,7 +159,7 @@ class Chromosomes:
 
 
 def execute(args):
-    with open(PROFILE_DIR / f"{args.profile}.yaml", "r") as infile:
+    with open(PROFILE_DIR / f"{args.profile}.yaml", mode="r") as infile:
         template = infile.read()
     structured.process(
         template=template,

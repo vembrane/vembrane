@@ -4,7 +4,7 @@ import contextlib
 import shlex
 import sys
 from collections import defaultdict
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, TextIO
 
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamReader, PysamWriter
@@ -229,7 +229,7 @@ def create_writer(
 
 
 @contextlib.contextmanager
-def smart_open(filename=None, *args, **kwargs):
+def smart_open(filename=None, *args, **kwargs) -> Iterator[TextIO]:
     fh = open(filename, *args, **kwargs) if filename and filename != "-" else sys.stdout
 
     try:
