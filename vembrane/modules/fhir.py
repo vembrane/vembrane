@@ -15,7 +15,7 @@ PROFILE_DIR = (
 
 
 def add_subcommand(subparsers):
-    parser = subparsers.add_parser("fhir")
+    parser = subparsers.add_parser("fhir", help="Generate FHIR records from VCF files.")
     parser.add_argument(
         "vcf",
         help="The file containing the variants.",
@@ -54,7 +54,9 @@ def add_subcommand(subparsers):
         "--profile",
         required=True,
         choices=[path.with_suffix("").name for path in PROFILE_DIR.iterdir()],
-        help="The FHIR profile to use for generating the output.",
+        help="The FHIR profile to use for generating the output, see "
+        "https://github.com/vembrane/vembrane/tree/main/vembrane/modules/assets/"
+        "fhir/profiles for available profiles and the degree of support.",
     )
     parser.add_argument(
         "--id-source",
