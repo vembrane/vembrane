@@ -1,6 +1,7 @@
 import csv
 import importlib
 from collections import defaultdict
+from typing import Any
 
 # intervaltree is untyped, so we use type: ignore to suppress type checking errors
 from intervaltree import IntervalTree  # type: ignore
@@ -186,13 +187,13 @@ def execute(args):
 
 
 def postprocess_fhir_record(record: dict) -> dict:
-    def is_valid(record):
-        if type(record) is dict:
-            return all([is_valid(value) for value in record.values()])
-        elif type(record) is list:
-            return all([is_valid(entry) for entry in record])
+    def is_valid(entry: Any) -> bool:
+        if isinstance(entry, dict):
+            return all(is_valid(value) for value in entry.values())
+        elif isinstance(entry, list):
+            return all(is_valid(item) for item in entry)
         else:
-            return True if record is not None else False
+            return entry is not None
 
     record["component"] = [entry for entry in record["component"] if is_valid(entry)]
     return record
