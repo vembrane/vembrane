@@ -237,3 +237,6 @@ def smart_open(filename=None, *args, **kwargs):
     finally:
         if fh is not sys.stdout:
             fh.close()
+
+
+type Primitive = str | int | float | bool | None

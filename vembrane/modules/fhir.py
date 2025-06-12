@@ -6,7 +6,7 @@ from typing import Any
 # intervaltree is untyped, so we use type: ignore to suppress type checking errors
 from intervaltree import IntervalTree  # type: ignore
 
-from vembrane.common import add_common_arguments
+from vembrane.common import Primitive, add_common_arguments
 from vembrane.modules import structured
 
 PROFILE_DIR = (
@@ -186,7 +186,9 @@ def execute(args):
     )
 
 
-def postprocess_fhir_record(record: dict) -> dict:
+def postprocess_fhir_record(record: Primitive | dict | list) -> Primitive | dict | list:
+    assert isinstance(record, dict), "bug: FHIR record is expected to be a dictionary"
+
     def is_valid(entry: Any) -> bool:
         if isinstance(entry, dict):
             return all(is_valid(value) for value in entry.values())

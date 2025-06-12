@@ -8,7 +8,7 @@ import yte  # type: ignore
 
 from vembrane.ann_types import NA
 from vembrane.backend.base import VCFHeader, VCFReader, VCFRecord
-from vembrane.common import add_common_arguments, create_reader, smart_open
+from vembrane.common import Primitive, add_common_arguments, create_reader, smart_open
 from vembrane.errors import VembraneError
 from vembrane.representations import (
     Annotation,
@@ -161,7 +161,8 @@ def process(
     overwrite_number_format,
     backend,
     variables: Dict[str, Any] | None = None,
-    postprocess: Callable[[Any], Any] | None = None,
+    postprocess: Callable[[Primitive | dict | list], Primitive | dict | list]
+    | None = None,
 ) -> None:
     overwrite_number = {
         "INFO": dict(overwrite_number_info),
