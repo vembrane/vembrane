@@ -1,7 +1,7 @@
 import csv
 import importlib.resources
 from collections import defaultdict
-from typing import Any, Iterator
+from typing import Any
 
 # intervaltree is untyped, so we use type: ignore to suppress type checking errors
 from intervaltree import IntervalTree  # type: ignore
