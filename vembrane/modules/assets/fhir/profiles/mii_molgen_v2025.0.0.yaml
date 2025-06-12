@@ -222,8 +222,8 @@ component:
       system: http://loinc.org
   valueCodeableConcept:
     coding:
-    - code: ?coordinates
-      display: ?f"{coordinates}-based"
+    - code: LA30102-0
+      display: 1-based character counting
 - <:
     # TODO: multiple consequences are not yet supported by this profile
     # see https://github.com/medizininformatik-initiative/kerndatensatzmodul-GenetischeTests/issues/37

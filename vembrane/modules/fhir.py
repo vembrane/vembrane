@@ -6,7 +6,7 @@ from typing import Any, Iterator
 # intervaltree is untyped, so we use type: ignore to suppress type checking errors
 from intervaltree import IntervalTree  # type: ignore
 
-from vembrane.common import Primitive, add_common_arguments
+from vembrane.common import Primitive, Singleton, add_common_arguments
 from vembrane.modules import structured
 
 PROFILE_DIR = (
@@ -29,7 +29,7 @@ def add_subcommand(subparsers):
     parser.add_argument(
         "assembly",
         help="The reference assembly used for read mapping.",
-        choices=["GRCh38", "GRCh37"],
+        choices=Assemblies().names(),
     )
     parser.add_argument(
         "--url",
@@ -42,13 +42,6 @@ def add_subcommand(subparsers):
         "-s",
         help="Status of findings. E.g. final, preliminary, ...",
         default=None,
-    )
-    parser.add_argument(
-        "--coordinates",
-        "-c",
-        help="Coordinate system of base positions.",
-        default=None,
-        choices=["0", "1"],
     )
     parser.add_argument(
         "--profile",
@@ -118,7 +111,7 @@ def load_tsv(path, skip_comments=True):
             return list(reader)
 
 
-class Cytobands:
+class Cytobands(metaclass=Singleton):
     def __init__(self):
         self._data = defaultdict(IntervalTree)
         records = load_tsv(
@@ -141,7 +134,7 @@ class Cytobands:
         return None
 
 
-class Assemblies:
+class Assemblies(metaclass=Singleton):
     def __init__(self):
         self._data = {
             assembly: loinc
@@ -157,8 +150,14 @@ class Assemblies:
     def get(self, assembly: str) -> str | None:
         return self._data.get(assembly)
 
+    def names(self) -> list[str]:
+        """
+        Get a list of all assembly names.
+        """
+        return list(self._data.keys())
 
-class Chromosomes:
+
+class Chromosomes(metaclass=Singleton):
     def __init__(self):
         self._data = {
             chrom: (chrom_display, loinc)
@@ -177,7 +176,7 @@ class Chromosomes:
         return self._data.get(chrom)
 
 
-class GenomicSourceClasses:
+class GenomicSourceClasses(metaclass=Singleton):
     def __init__(self):
         self._data = {
             name: code
@@ -240,7 +239,6 @@ def execute(args):
             "url": args.url,
             "status": args.status,
             "assembly": args.assembly,
-            "coordinates": args.coordinates,
             "sample_allelic_frequency": args.sample_allelic_frequency,
             "sample_allelic_read_depth": args.sample_allelic_read_depth,
             "confidence_status": args.confidence_status,

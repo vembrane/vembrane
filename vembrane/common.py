@@ -1,10 +1,11 @@
+from abc import ABC
 import argparse
 import ast
 import contextlib
 import shlex
 import sys
 from collections import defaultdict
-from typing import Iterable, Iterator, TextIO
+from typing import Iterable, Iterator, Self, TextIO, Type
 
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamReader, PysamWriter
@@ -240,3 +241,15 @@ def smart_open(filename=None, *args, **kwargs) -> Iterator[TextIO]:
 
 
 type Primitive = str | int | float | bool | None
+
+
+# Inspired by https://stackoverflow.com/a/13793033
+class Singleton(type):
+    """A singleton metaclass: ensures that only one instance of a class exists."""
+
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]

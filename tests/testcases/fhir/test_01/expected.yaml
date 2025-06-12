@@ -119,6 +119,15 @@
     valueString: 'Exon #4 - #7'
   - code:
       coding:
+      - code: 92822-6
+        display: Genomic coordinate system [Type]
+        system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+      - code: LA30102-0
+        display: 1-based character counting
+  - code:
+      coding:
       - code: molecular-consequence
         display: Molecular Consequence
         system: http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs
@@ -257,6 +266,15 @@
         display: DNA region name [Identifier]
         system: http://loinc.org
     valueString: 'Exon #8 - #9'
+  - code:
+      coding:
+      - code: 92822-6
+        display: Genomic coordinate system [Type]
+        system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+      - code: LA30102-0
+        display: 1-based character counting
   - code:
       coding:
       - code: molecular-consequence
