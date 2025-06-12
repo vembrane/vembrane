@@ -62,6 +62,12 @@ def add_subcommand(subparsers):
         "as percentage. E.g. \"FORMAT['AF'][sample][0] * 100\" ",
     )
     parser.add_argument(
+        "--sample-allelic-read-depth",
+        default="FORMAT['AD'][sample][1]",
+        help="Python expression accessing the the samples allelic read depth."
+        "Default is: \"FORMAT['AD'][sample][1]\"",
+    )
+    parser.add_argument(
         "--confidence-status",
         default=None,
         help="Python expression for calculating the variants confidence status being "
@@ -169,6 +175,7 @@ def execute(args):
             "assembly": args.assembly,
             "coordinates": args.coordinates,
             "sample_allelic_frequency": args.sample_allelic_frequency,
+            "sample_allelic_read_depth":args.sample_allelic_read_depth,
             "confidence_status": args.confidence_status,
             "cytobands": Cytobands(),
             "assemblies": Assemblies(),

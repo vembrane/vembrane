@@ -148,7 +148,7 @@ component:
       display: Allelic Read Depth
       system: http://loinc.org
   valueQuantity:
-    value: ?FORMAT['AD'][sample][1]
+    value: ?eval(sample_allelic_read_depth)
 - code:
     coding:
     - code: 81254-5
