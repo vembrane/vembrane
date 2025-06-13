@@ -172,7 +172,7 @@ The following VCF fields can be accessed in the filter expression:
 
 ### Custom `ANN` types
 
-`vembrane` parses entries in the annotation field (`ANN` or whatever you specify under `--annotatio-key`) as outlined in [docs/ann_types.md](docs/ann_types.md).
+`vembrane` parses entries in the annotation field (`ANN` or whatever you specify under `--annotation-key`) as outlined in [docs/ann_types.md](docs/ann_types.md).
 
 ### Missing values in annotations
 
