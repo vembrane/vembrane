@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.0](https://github.com/vembrane/vembrane/compare/v2.0.0...v2.1.0) (2025-06-13)
+
+
+### Features
+
+* subcommand for generating FHIR from VCF ([#187](https://github.com/vembrane/vembrane/issues/187)) ([7ebd37f](https://github.com/vembrane/vembrane/commit/7ebd37f666d7a92c8da733ae0cf2d684bd411318))
+
+
+### Documentation
+
+* improve explanation of specifying (and using) alternative `--annotation-key`s ([#193](https://github.com/vembrane/vembrane/issues/193)) ([17506ff](https://github.com/vembrane/vembrane/commit/17506ff5d81748edfe59cbc32200a3bab6241d83))
+
 ## [2.0.0](https://github.com/vembrane/vembrane/compare/v1.0.7...v2.0.0) (2025-05-31)
 
 
