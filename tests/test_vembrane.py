@@ -12,13 +12,14 @@ import yaml
 from vembrane import __version__, errors
 from vembrane.backend.base import Backend
 from vembrane.common import create_reader
-from vembrane.modules import filter, structured, table, tag
+from vembrane.modules import fhir, filter, structured, table, tag
 
 FILTER_CASES = Path(__file__).parent.joinpath("testcases/filter")
 TABLE_CASES = Path(__file__).parent.joinpath("testcases/table")
 TAG_CASES = Path(__file__).parent.joinpath("testcases/tag")
 ANNOTATE_CASES = Path(__file__).parent.joinpath("testcases/annotate")
 STRUCTURED_CASES = Path(__file__).parent.joinpath("testcases/structured")
+FHIR_CASES = Path(__file__).parent.joinpath("testcases/fhir")
 
 
 def test_version():
@@ -41,6 +42,7 @@ def idfn(val):
                 TAG_CASES,
                 ANNOTATE_CASES,
                 STRUCTURED_CASES,
+                FHIR_CASES,
             ]
             for d in os.listdir(case_path)
             if not d.startswith(".")
@@ -119,9 +121,13 @@ def test_command(testcase: os.PathLike, backend: Backend):
                 with open(expected) as e:
                     e_out = e.read()
                 assert t_out == e_out
-            elif args.command == "structured":
+            elif args.command == "structured" or args.command == "fhir":
                 expected = (path / "expected").with_suffix(f".{config['output_fmt']}")
-                structured.execute(args)
+
+                if args.command == "structured":
+                    structured.execute(args)
+                else:
+                    fhir.execute(args)
 
                 with open(expected) as e:
                     if config["output_fmt"] == "jsonl":
@@ -140,6 +146,7 @@ def test_command(testcase: os.PathLike, backend: Backend):
                     "table",
                     "tag",
                     "structured",
+                    "fhir",
                 }, "Unknown subcommand"
 
 
@@ -154,6 +161,7 @@ def construct_parser():
     table.add_subcommmand(subparsers)
     tag.add_subcommand(subparsers)
     structured.add_subcommand(subparsers)
+    fhir.add_subcommand(subparsers)
     return parser
 
 
@@ -169,9 +177,15 @@ def parse_command_config(cmd, config, vcf_path):
     elif cmd == "structured":
         template_path = vcf_path.parent / "template.yte.yaml"
         command = [cmd, str(template_path), str(vcf_path)]
+    elif cmd == "fhir":
+        command = [cmd, str(vcf_path), config["sample"], config["assembly"]]
+        del config["sample"]
+        del config["assembly"]
     else:
         raise ValueError(f"Unknown subcommand {config['function']}")
     for key in config:
+        if key == "function":
+            continue
         if isinstance(config[key], str):
             command.append(f"--{key.replace('_', '-')}")
             command.append(config[key])

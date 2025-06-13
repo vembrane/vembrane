@@ -17,9 +17,6 @@ authors = [
 ]
 requires-python = ">=3.12"
 readme = "README.md"
-homepage = "https://github.com/vembrane/vembrane"
-repository = "https://github.com/vembrane/vembrane"
-
 dynamic = ["version"]
 
 dependencies = [
@@ -29,11 +26,15 @@ dependencies = [
   "asttokens~=2.4.1",
   "numpy~=2.0.1",
   "intervaltree~=3.1.0",
-  "yte~=1.6.0",
+  "yte~=1.8.1",
   "obonet~=1.1.0",
   "networkx~=3.3",
   "typing-extensions~=4.12.2",
 ]
+
+[project.urls]
+homepage = "https://github.com/vembrane/vembrane"
+repository = "https://github.com/vembrane/vembrane"
 
 [project.scripts]
 vembrane = 'vembrane.cli:main'

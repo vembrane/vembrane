@@ -4,7 +4,7 @@ import contextlib
 import shlex
 import sys
 from collections import defaultdict
-from typing import Iterable, Iterator
+from typing import Any, Iterable, Iterator, TextIO, Type
 
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamReader, PysamWriter
@@ -231,7 +231,7 @@ def create_writer(
 
 
 @contextlib.contextmanager
-def smart_open(filename=None, *args, **kwargs):
+def smart_open(filename=None, *args, **kwargs) -> Iterator[TextIO]:
     fh = open(filename, *args, **kwargs) if filename and filename != "-" else sys.stdout
 
     try:
@@ -239,3 +239,18 @@ def smart_open(filename=None, *args, **kwargs):
     finally:
         if fh is not sys.stdout:
             fh.close()
+
+
+type Primitive = str | int | float | bool | None
+
+
+# Inspired by https://stackoverflow.com/a/13793033
+class Singleton(type):
+    """A singleton metaclass: ensures that only one instance of a class exists."""
+
+    _instances: dict[Type, Any] = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]

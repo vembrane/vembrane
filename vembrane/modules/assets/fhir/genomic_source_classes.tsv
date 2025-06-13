@@ -1,0 +1,9 @@
+# As defined by LOINC: https://loinc.org/48002-0/
+Germline	LA6683-2
+Somatic	LA6684-0
+Fetal	LA10429-1
+Likely germline	LA18194-3
+Likely somatic	LA18195-0
+Likely fetal	LA18196-8
+Unknown genomic origin	LA18197-6
+De novo	LA26807-0
