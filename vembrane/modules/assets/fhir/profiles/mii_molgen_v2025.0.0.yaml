@@ -1,0 +1,293 @@
+# as defined here: https://www.medizininformatik-initiative.de/Kerndatensatz/KDS_Molekulargenetischer_Befundbericht_V2025/implementation-guides-ImplementationGuide-2025.x-DE-MIIIGModulMolGenDE-TechnischeImplementierung-Variante-Observation.html
+
+# Still missing entries:
+# conclusion-string: has to be filled by a human being or AI, not yet part of vcf
+# cytogenomic-nomenclature: needs ISCN codes to be derived from vcf records
+# genomic-ref-seq: Not annotated by VEP (must be RefSeq or LRG Identifiers)
+# coding-change-type: Sequence ontology term like SO:1000008 for point mutations. Maybe vembrane itself can provide that term?
+# variant-inheritance: codes not yet defined
+# amino-acid-change-type: Same as molecular-consequence but artificially tied to coding variants
+# copy-number: TODO, maybe add later if CNV notation becomes common in VCF
+# gene-fusion: TODO, maybe add later if gene fusion notation becomes common in VCF
+
+
+__variables__:
+  exon: ?ANN["EXON"]
+  protein_position: ?ANN["Protein_position"]
+
+resourceType: Observation
+
+?if url:
+  extension:
+    - url: ?url
+      valueString: ?sample
+
+meta:
+  profile:
+  - https://simplifier.net/medizininformatikinitiative-modulomics/mii_pr_molgen_variante|2025.0.0
+  - http://hl7.org/fhir/uv/genomics-reporting/StructureDefinition/variant|3.0.0
+
+?if status:
+  status: ?status
+
+code:
+  coding:
+  - code: 69548-6
+    display: Genetic variant assessment
+    system: http://loinc.org
+
+category:
+- coding:
+  - code: laboratory
+    display: Laboratory
+    system: http://terminology.hl7.org/CodeSystem/observation-category
+
+valueCodeableConcept:
+  coding:
+  - code: LA9633-4
+    display: Present
+    system: http://loinc.org
+
+component:
+- code:
+    coding:
+    - code: 48018-6
+      display: Gene studied [ID]
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: ?ANN["HGNC_ID"]
+      system: http://www.genenames.org/geneId
+      display: ?ANN["SYMBOL"]
+- code:
+    coding:
+    - code: 51958-7
+      display: Transcript reference sequence [ID]
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: ?ANN["Feature"]
+      system: https://mart.ensembl.org/info/genome/stable_ids/index.html
+- code:
+    coding:
+    - code: 48004-6
+      display: DNA change (c.HGVS)
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: ?ANN.get("HGVSc", ":").split(":")[1]
+      system: http://varnomen.hgvs.org 
+- code:
+    coding:
+    - code: 48005-3
+      display: Amino acid change (pHGVS)
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: ?ANN.get("HGVSp", ":").split(":")[1]
+      system: http://varnomen.hgvs.org
+- code:
+    coding:
+    - code: 81290-9
+      display: Genomic DNA change (gHGVS)
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: ?ANN.get("HGVSg", ":").split(":")[1]
+      system: http://varnomen.hgvs.org
+- code:
+    coding:
+    - code: 62374-4
+      display: Human reference sequence assembly version
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: ?assemblies.get(assembly)
+      display: ?assembly
+      system: http://loinc.org
+- ?if sample_allelic_frequency:
+    code:
+      coding:
+      - code: 81258-6
+        display: Sample variant allelic frequency [NFr]
+        system: http://loinc.org
+    valueQuantity:
+      code: '%'
+      system: http://unitsofmeasure.org
+      value: ?eval(sample_allelic_frequency)
+  ?else: ?SKIP
+- ?if genomic_source_class:
+    __variables__:
+      name: ?eval(genomic_source_class)
+    code:
+      coding:
+      - code: 48002-0
+        display: Genomic source class [Type]
+        system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+      - code: ?genomic_source_classes.code(name)
+        display: ?name
+        system: http://loinc.org
+  ?else: ?SKIP
+- code:
+    coding:
+    - code: 48001-2
+      display: Cytogenetic (chromosome) location
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: ?cytobands.get(CHROM, POS)
+      system: urn:oid:2.16.840.1.113883.6.335
+- code:
+    coding:
+    - code: 82121-5
+      display: Allelic Read Depth
+      system: http://loinc.org
+  valueQuantity:
+    value: ?eval(sample_allelic_read_depth)
+- <:
+    ?if "CIPOS" in INFO:
+      - code:
+          coding:
+          - code: 81302-2
+            display: Genomic allele inner start-end
+            system: http://loinc.org
+        valueRange:
+          low:
+            value: ?INFO["CIPOS"][1]
+          ?if POS != END:
+            high:
+              value: ?INFO["CIEND"][0]
+      - code:
+          coding:
+          - code: 81302-2
+            display: Genomic allele outer start-end
+            system: http://loinc.org
+        valueRange:
+          low:
+            value: ?INFO["CIPOS"][0]
+          ?if POS != END:
+            high:
+              value: ?INFO["CIEND"][1]
+    ?else:
+      - code:
+          coding:
+          - code: 81254-5
+            display: Genomic allele start-end
+            system: http://loinc.org
+        valueRange:
+          low:
+            value: ?POS
+          ?if POS != END:
+            high:
+              value: ?END
+- code:
+    coding:
+      - code: 48000-4
+        display: Chromosome [Identifier] in Blood or Tissue by Molecular genetics method
+        system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: ?chromosomes.get(CHROM)[1]
+      display: ?chromosomes.get(CHROM)[0]
+      system: http://loinc.org
+- code:
+    coding:
+    - code: 69551-0
+      display: Genomic alt allele [ID]
+      system: http://loinc.org
+  valueString: ?ALT
+- code:
+    coding:
+    - code: 69547-8
+      display: Genomic ref allele [ID]
+      system: http://loinc.org
+  valueString: ?REF
+- code:
+    coding:
+    - code: 47999-8
+      display: DNA region name [Identifier]
+      system: http://loinc.org
+  ?if not exon:
+    valueString:
+  ?elif exon.range.start == exon.range.stop:
+    valueString: '?f"Exon #{ exon.range.start }"'
+  ?else:
+    valueString: '?f"Exon #{ exon.range.start } - #{ exon.range.stop }"'
+- code:
+    coding:
+    - code: 92822-6
+      display: Genomic coordinate system [Type]
+      system: http://loinc.org
+  valueCodeableConcept:
+    coding:
+    - code: LA30102-0
+      display: 1-based character counting
+- <:
+    # TODO: multiple consequences are not yet supported by this profile
+    # see https://github.com/medizininformatik-initiative/kerndatensatzmodul-GenetischeTests/issues/37
+    # will be released in 2026.0.0
+    # However, we already report multiple consequences here.
+    # Better correct than incomplete.
+    ?for consequence in ANN.get("Consequence", []):
+      - code:
+          coding:
+          - code: molecular-consequence
+            display: Molecular Consequence
+            system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
+        valueCodeableConcept:
+          coding:
+          - code: ?consequence.get_id()
+            display: ?str(consequence)
+            system: "https://sequenceontology.org"
+- ?if confidence_status:
+    code:
+      coding:
+      - code: variant-confidence-status
+        display: Variant Confidence Status
+        system: "http://hl7.org/fhir/uv/genomics-reporting/CodeSystem/tbd-codes-cs"
+    valueCodeableConcept:
+      coding:
+      - code: ?eval(confidence_status)
+  ?else: ?SKIP
+- ?if ID and id_source is not None:
+    code:
+      coding:
+      - code: 81252-9
+        display: Variant ID
+        system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+      - code: ?ID
+        system: ?id_source
+  ?else: ?SKIP
+- ?if detection_limit:
+    code:
+      coding:
+      - code: 81258-6
+        display: Detection limit
+        system: http://loinc.org
+    valueQuantity:
+      value: ?detection_limit
+      unit: "%"
+      code: "%"
+      system: http://unitsofmeasure.org
+  ?else: ?SKIP
+- ?if has_genotype(sample):
+    code:
+      coding:
+      - code: 53034-5
+        display: Allelic state
+        system: http://loinc.org
+    valueCodeableConcept:
+      coding:
+        ?if is_het(sample):
+          - code: LA6706-1
+            display: Heterozygous
+            system: http://loinc.org
+        ?else:
+          - code: LA6705-3
+            display: Homozygous
+            system: http://loinc.org
+  ?else: ?SKIP

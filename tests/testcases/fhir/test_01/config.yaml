@@ -1,0 +1,6 @@
+function: fhir
+annotation_key: ANN
+sample: tumor
+assembly: GRCh38
+output_fmt: yaml
+profile: mii_molgen_v2025.0.0

@@ -1,14 +1,13 @@
 import json
 import textwrap
-from io import TextIOWrapper
-from typing import Any, Dict, Iterator
+from typing import Any, Callable, Dict, Iterator, TextIO
 
 import yaml
 import yte  # type: ignore
 
 from vembrane.ann_types import NA
 from vembrane.backend.base import VCFHeader, VCFReader, VCFRecord
-from vembrane.common import add_common_arguments, create_reader, smart_open
+from vembrane.common import Primitive, add_common_arguments, create_reader, smart_open
 from vembrane.errors import VembraneError
 from vembrane.representations import (
     Annotation,
@@ -100,9 +99,13 @@ def process_vcf(
     vcf: VCFReader,
     template: str,
     ann_key: str,
+    variables: Dict[str, Any] | None = None,
+    postprocess: Callable[[Any], Any] | None = None,
 ) -> ConvertedRecords:
     code_handler = CodeHandler(ann_key, vcf.header)
     value_handler = ValueHandler()
+    if variables is None:
+        variables = {}
 
     annotation = Annotation(ann_key, vcf.header)
 
@@ -113,17 +116,22 @@ def process_vcf(
         for ann in annotations:
             code_handler.update_from_annotation(ann)
             converted = yte.process_yaml(
-                template, code_handler=code_handler, value_handler=value_handler
+                template,
+                code_handler=code_handler,
+                value_handler=value_handler,
+                variables=variables,
             )
+            if postprocess is not None:
+                converted = postprocess(converted)
             yield converted
 
 
-def write_records_jsonl(output_file: TextIOWrapper, records: ConvertedRecords) -> None:
+def write_records_jsonl(output_file: TextIO, records: ConvertedRecords) -> None:
     for record in records:
         print(json.dumps(record), file=output_file)
 
 
-def write_records_json(output_file: TextIOWrapper, records: ConvertedRecords) -> None:
+def write_records_json(output_file: TextIO, records: ConvertedRecords) -> None:
     print("[", file=output_file)
     for idx, record in enumerate(records):
         if idx > 0:
@@ -132,7 +140,7 @@ def write_records_json(output_file: TextIOWrapper, records: ConvertedRecords) ->
     print("]", file=output_file)
 
 
-def write_records_yaml(output_file: TextIOWrapper, records: ConvertedRecords) -> None:
+def write_records_yaml(output_file: TextIO, records: ConvertedRecords) -> None:
     for record in records:
         head, tail = yaml.dump(record).split("\n", 1)
         head = f"- {head}"
@@ -142,45 +150,84 @@ def write_records_yaml(output_file: TextIOWrapper, records: ConvertedRecords) ->
         print(tail, file=output_file)
 
 
-def execute(args):
+def process(
+    template: str,
+    output_fmt: str | None,
+    output: str,
+    vcf: str,
+    annotation_key: str,
+    overwrite_number_info: dict[str, str],
+    overwrite_number_format,
+    backend,
+    variables: Dict[str, Any] | None = None,
+    postprocess: Callable[[Primitive | dict | list], Primitive | dict | list]
+    | None = None,
+) -> None:
     overwrite_number = {
-        "INFO": dict(args.overwrite_number_info),
-        "FORMAT": dict(args.overwrite_number_format),
+        "INFO": dict(overwrite_number_info),
+        "FORMAT": dict(overwrite_number_format),
     }
 
-    with open(args.template, "r") as template:
-        template = template.read()
-
-    if args.output_fmt is None:
-        if args.output.endswith(".json"):
-            args.output_fmt = "json"
-        elif args.output.endswith(".jsonl"):
-            args.output_fmt = "jsonl"
-        elif args.output.endswith(".yaml") or args.output.endswith(".yml"):
-            args.output_fmt = "yaml"
-        elif args.output == "-":
+    if output_fmt is None:
+        if output.endswith(".json"):
+            output_fmt = "json"
+        elif output.endswith(".jsonl"):
+            output_fmt = "jsonl"
+        elif output.endswith(".yaml") or output.endswith(".yml"):
+            output_fmt = "yaml"
+        elif output == "-":
             raise VembraneError(
                 "--output-fmt must be specified when writing to STDOUT."
             )
         else:
             raise VembraneError(
-                f"Unsupported file format: {args.output}, only .json, .jsonl and "
+                f"Unsupported file format: {output}, only .json, .jsonl and "
                 ".yaml are supported."
             )
 
-    if args.output_fmt == "jsonl":
+    if output_fmt == "jsonl":
         write_records = write_records_jsonl
-    elif args.output_fmt == "json":
+    elif output_fmt == "json":
         write_records = write_records_json
-    elif args.output_fmt == "yaml":
+    elif output_fmt == "yaml":
         write_records = write_records_yaml
+    else:
+        raise VembraneError(
+            f"Unsupported output format: {output_fmt}, only json, jsonl and yaml are "
+            "supported."
+        )
 
     with (
         create_reader(
-            args.vcf,
-            backend=args.backend,
+            vcf,
+            backend=backend,
             overwrite_number=overwrite_number,
         ) as reader,
-        smart_open(args.output, mode="w") as writer,
+        smart_open(output, mode="w") as writer,
     ):
-        write_records(writer, process_vcf(reader, template, args.annotation_key))
+        write_records(
+            writer,
+            process_vcf(
+                reader,
+                template,
+                annotation_key,
+                variables=variables,
+                postprocess=postprocess,
+            ),
+        )
+
+
+def execute(args):
+    with open(args.template, "r") as template:
+        template = template.read()
+
+    process(
+        template=template,
+        output_fmt=args.output_fmt,
+        output=args.output,
+        vcf=args.vcf,
+        annotation_key=args.annotation_key,
+        overwrite_number_info=args.overwrite_number_info,
+        overwrite_number_format=args.overwrite_number_format,
+        backend=args.backend,
+    )
