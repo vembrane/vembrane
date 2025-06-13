@@ -19,7 +19,9 @@ def add_common_arguments(parser: argparse.ArgumentParser):
         "-k",
         metavar="FIELDNAME",
         default="ANN",
-        help="The INFO key for the annotation field.",
+        help="The INFO key for the annotation field. "
+        "This defaults to 'ANN', but tools might use other field names. "
+        "For example, default VEP annotations can be parsed by setting 'CSQ' here.",
     )
     parser.add_argument(
         "--aux",
