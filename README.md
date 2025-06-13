@@ -147,7 +147,7 @@ The following VCF fields can be accessed in the filter expression:
     ```
   * by sample index:
     ```sh
-    vembrane filter 'FORMAT["DP"][0] > 0' variants.vcf
+    vembrane filter 'FORMAT["DP"][SAMPLES[0]] > 0' variants.vcf
     ```
   * by sample name based on the index in the list of `SAMPLES`:
     ```sh
@@ -167,7 +167,7 @@ The following VCF fields can be accessed in the filter expression:
   ```
 * Explicitly access the `GT` field for the first sample in the file:
   ```sh
-  vembrane filter 'FORMAT["GT"][0] == (1, 1)' variants.vcf
+  vembrane filter 'FORMAT["GT"][SAMPLES[0]] == (1, 1)' variants.vcf
   ```
 
 ### Custom `ANN` types
