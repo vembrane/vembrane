@@ -1,9 +1,7 @@
 import argparse
 
-from vembrane.modules import fhir
-
 from . import __version__
-from .modules import annotate, filter, structured, table, tag
+from .modules import annotate, fhir, filter, sort, structured, table, tag
 
 
 def main():
@@ -25,6 +23,7 @@ def main():
     tag.add_subcommand(subparsers)
     structured.add_subcommand(subparsers)
     fhir.add_subcommand(subparsers)
+    sort.add_subcommand(subparsers)
 
     args = parser.parse_args()
     if args.command == "filter":
@@ -39,5 +38,7 @@ def main():
         structured.execute(args)
     elif args.command == "fhir":
         fhir.execute(args)
+    elif args.command == "sort":
+        sort.execute(args)
     else:
         raise ValueError(f"Unknown subcommand {args.command}")

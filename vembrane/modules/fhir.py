@@ -15,10 +15,12 @@ PROFILE_DIR = (
 
 
 def add_subcommand(subparsers):
-    parser = subparsers.add_parser("fhir", help="Generate FHIR records from VCF files.")
+    parser = subparsers.add_parser(
+        "fhir", description="Generate FHIR records from VCF files."
+    )
     parser.add_argument(
         "vcf",
-        help="The file containing the variants.",
+        help="The file containing the variants. If not specified, reads from STDIN.",
         nargs="?",
         default="-",
     )
