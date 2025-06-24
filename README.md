@@ -362,7 +362,7 @@ Internally for each vcf record the overlapping regions of the annotation file ar
 The `sort` subcommand allows to sort VCF/BCF files via keys defined as Python expressions.
 The Python expressions are analogous to expressions in other vembrane commands.
 This feature loads the entire VCF file into memory in order to maximize performance.
-It is thus meant to sort small, already filtered VCF files, e.g. for prioritizing records for the human eye.
+It is thus meant to sort small, already filtered VCF files, e.g. for **prioritizing records for the human eye**.
 For large VCF files, the only relevant sorting is usually by position, which is better done with e.g. bcftools (and usually the sorting that variant callers output).
 
 ### Usage
