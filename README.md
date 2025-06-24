@@ -373,9 +373,10 @@ usage: vembrane sort [-h] [--output OUTPUT] [--output-fmt {vcf,bcf,uncompressed-
                      [vcf] sort_key [sort_key ...]
 
 positional arguments:
-  vcf                   The VCF/BCF file containing the variants.
-  sort_key              Python expressions returning orderable values to sort the VCF records by. If multiple expressions are provided, they are prioritized from left to
-                        right with lowest priority on the right.
+  vcf                   The VCF/BCF file containing the variants. If not specified, reads from STDIN.
+  sort_key              Python expressions returning orderable values to sort the VCF records by (ascending, smallest values coming first).
+                        If multiple expressions are provided, they are prioritized from left to right with lowest priority on the right.
+                        NA/NaN values are sorted to the end.
 
 options:
   -h, --help            show this help message and exit
