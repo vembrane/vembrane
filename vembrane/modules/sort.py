@@ -32,7 +32,7 @@ def add_subcommand(subparsers):
         help="Python expressions returning orderable values to sort the VCF records "
         "by (ascending, smallest values coming first). If multiple expressions are "
         "provided, they are prioritized from left to "
-        "right with lowest priority on the right.",
+        "right with lowest priority on the right. NA/NaN values are sorted to the end.",
     )
     parser.add_argument(
         "--output",
