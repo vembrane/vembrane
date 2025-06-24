@@ -71,7 +71,7 @@ def execute(args) -> None:
                 for expr in args.sort_keys
             ]
 
-        def sort_key(item):
+        def get_sort_key(item):
             idx, record = item
             for env in sort_keys:
                 env.update_from_record(idx, record)
@@ -90,7 +90,7 @@ def execute(args) -> None:
 
             return tuple(eval_env(env) for env in sort_keys)
 
-        records.sort(key=sort_key)
+        records.sort(key=get_sort_key)
 
         with create_writer(args.output, fmt, reader, backend=args.backend) as writer:
             for _, record in records:
