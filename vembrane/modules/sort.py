@@ -1,5 +1,8 @@
+import math
 import sys
+from typing import Any
 
+from vembrane.ann_types import NA
 from vembrane.common import add_common_arguments, create_reader, create_writer
 from vembrane.errors import VembraneError
 from vembrane.representations import Annotation, SourceEnvironment
@@ -27,7 +30,8 @@ def add_subcommand(subparsers):
         "sort_key",
         nargs="+",
         help="Python expressions returning orderable values to sort the VCF records "
-        "by. If multiple expressions are provided, they are prioritized from left to "
+        "by (ascending, smallest values coming first). If multiple expressions are "
+        "provided, they are prioritized from left to "
         "right with lowest priority on the right.",
     )
     parser.add_argument(
@@ -76,17 +80,26 @@ def execute(args) -> None:
             for env in sort_keys:
                 env.update_from_record(idx, record)
 
-            def eval_env(env: SourceEnvironment):
+            def eval_env(env: SourceEnvironment) -> Any:
+                def handle_na(value) -> Any:
+                    if (
+                        value is NA
+                        or value is None
+                        or (isinstance(value, float) and math.isnan(value))
+                    ):
+                        return NAToEnd()
+                    return value
+
                 if env.expression_annotations():
                     annotations = annotation.get_record_annotations(idx, record)
 
                     def eval_with_ann(annotation):
                         env.update_annotation(annotation)
-                        return eval(env.compiled, env)
+                        return handle_na(eval(env.compiled, env))
 
                     return min(map(eval_with_ann, annotations))
                 else:
-                    return eval(env.compiled, env)
+                    return handle_na(eval(env.compiled, env))
 
             return tuple(eval_env(env) for env in sort_keys)
 
@@ -98,3 +111,8 @@ def execute(args) -> None:
     except VembraneError as ve:
         print(ve, file=sys.stderr)
         sys.exit(1)
+
+
+class NAToEnd:
+    def __lt__(self, other: Any) -> bool:
+        return False
