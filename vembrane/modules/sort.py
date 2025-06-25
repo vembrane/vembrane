@@ -2,8 +2,14 @@ import math
 import sys
 from typing import Any
 
+from vembrane import __version__
 from vembrane.ann_types import NA
-from vembrane.common import add_common_arguments, create_reader, create_writer
+from vembrane.common import (
+    add_common_arguments,
+    create_reader,
+    create_writer,
+    normalize,
+)
 from vembrane.errors import VembraneError
 from vembrane.representations import Annotation, SourceEnvironment
 
@@ -27,7 +33,7 @@ def add_subcommand(subparsers):
         default="-",
     )
     parser.add_argument(
-        "sort_key",
+        "sort_keys",
         nargs="+",
         help="Python expressions returning orderable values to sort the VCF records "
         "by (ascending, smallest values coming first). If multiple expressions are "
@@ -63,6 +69,15 @@ def execute(args) -> None:
             backend=args.backend,
             overwrite_number=overwrite_number,
         ) as reader:
+            reader.header.add_generic("vembraneVersion", __version__)
+            reader.header.add_generic(
+                "vembraneCmd",
+                "vembrane "
+                + " ".join(
+                    normalize(arg) if " " in arg else arg for arg in sys.argv[1:]
+                ),
+            )
+
             annotation = Annotation(args.annotation_key, reader.header)
 
             # load records into memory
