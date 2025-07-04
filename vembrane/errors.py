@@ -191,10 +191,12 @@ def handle_vembrane_error(func):
     """
     Decorator to handle VembraneError exceptions and print a user-friendly message.
     """
+
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except VembraneError as e:
             print(f"Error: {e}", file=sys.stderr)
             sys.exit(1)
+
     return wrapper

@@ -127,9 +127,7 @@ def process_vcf(
                     converted = postprocess(converted)
                 yield converted
         except Exception as e:
-            raise VembraneError.from_record_and_exception(
-                idx, record, e
-            ) from e
+            raise VembraneError.from_record_and_exception(idx, record, e) from e
 
 
 def write_records_jsonl(output_file: TextIO, records: ConvertedRecords) -> None:

@@ -19,7 +19,12 @@ from ..common import (
     single_outer,
     swap_quotes,
 )
-from ..errors import FilterAlreadyDefinedError, FilterTagNameInvalidError, VembraneError, handle_vembrane_error
+from ..errors import (
+    FilterAlreadyDefinedError,
+    FilterTagNameInvalidError,
+    VembraneError,
+    handle_vembrane_error,
+)
 from ..representations import FuncWrappedExpressionEnvironment
 from ..sequence_ontology import SequenceOntology
 from .filter import DeprecatedAction
