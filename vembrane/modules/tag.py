@@ -19,7 +19,7 @@ from ..common import (
     single_outer,
     swap_quotes,
 )
-from ..errors import FilterAlreadyDefinedError, FilterTagNameInvalidError, VembraneError
+from ..errors import FilterAlreadyDefinedError, FilterTagNameInvalidError, VembraneError, handle_vembrane_error
 from ..representations import FuncWrappedExpressionEnvironment
 from ..sequence_ontology import SequenceOntology
 from .filter import DeprecatedAction
@@ -140,6 +140,7 @@ def check_tag(tag: str):
         raise FilterTagNameInvalidError(tag)
 
 
+@handle_vembrane_error
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
     ontology = read_ontology(args.ontology)
@@ -186,20 +187,11 @@ def execute(args) -> None:
             invert=(args.tag_mode == "fail"),
         )
 
-        try:
-            first_record = list(islice(records, 1))
-        except VembraneError as ve:
-            print(ve, file=stderr)
-            sys.exit(1)
+        first_record = list(islice(records, 1))
 
         records = chain(first_record, records)
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
 
         with create_writer(args.output, fmt, reader, backend=args.backend) as writer:
-            try:
-                for record in records:
-                    writer.write(record)
-
-            except VembraneError as ve:
-                print(ve, file=stderr)
-                sys.exit(1)
+            for record in records:
+                writer.write(record)

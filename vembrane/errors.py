@@ -1,8 +1,23 @@
-from typing import Any, List
+import sys
+from typing import Any, List, Self
+
+from vembrane.backend.base import VCFRecord
 
 
 class VembraneError(Exception):
     """Basic exception for errors raised by vembrane"""
+
+    @classmethod
+    def from_record_and_exception(
+        cls, idx: int, record: VCFRecord, e: Exception
+    ) -> Self:
+        """
+        Create a VembraneError from a VCFRecord and an Exception.
+        This is useful to preserve the record context in the error message.
+        """
+        return cls(
+            f"Error processing record {idx}: {e}\nRecord: {record}",
+        )
 
     def __str__(self) -> str:
         return self.args[0]
@@ -170,3 +185,16 @@ class NonBoolTypeError(VembraneError):
 class UnsupportedChromName(VembraneError):
     def __init__(self, chrom: str):
         super().__init__(f"Unsupported chromosome name: {chrom}.")
+
+
+def handle_vembrane_error(func):
+    """
+    Decorator to handle VembraneError exceptions and print a user-friendly message.
+    """
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except VembraneError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
+    return wrapper

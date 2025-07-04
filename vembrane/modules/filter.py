@@ -23,7 +23,7 @@ from ..common import (
     read_ontology,
     split_annotation_entry,
 )
-from ..errors import VembraneError
+from ..errors import VembraneError, handle_vembrane_error
 from ..representations import FuncWrappedExpressionEnvironment
 from ..sequence_ontology import SequenceOntology
 
@@ -102,9 +102,7 @@ def test_and_update_record(
     except VembraneError as e:
         raise e
     except Exception as e:
-        print(f"Encountered an error while processing record {idx}", file=stderr)
-        print(str(record), file=stderr)
-        raise e
+        raise VembraneError.from_record_and_exception(idx, record, e) from e
 
 
 def _test_and_update_record(
@@ -329,6 +327,7 @@ def statistics(
         yaml.dump(dict(counter), out)
 
 
+@handle_vembrane_error
 def execute(args) -> None:
     aux = read_auxiliary(args.aux)
     ontology = read_ontology(args.ontology)
@@ -364,11 +363,7 @@ def execute(args) -> None:
             ontology=ontology,
         )
 
-        try:
-            first_record = list(islice(records, 1))
-        except VembraneError as ve:
-            print(ve, file=stderr)
-            sys.exit(1)
+        first_record = list(islice(records, 1))
 
         records = chain(first_record, records)
 
@@ -378,10 +373,5 @@ def execute(args) -> None:
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
 
         with create_writer(args.output, fmt, reader, backend=args.backend) as writer:
-            try:
-                for record in records:
-                    writer.write(record)
-
-            except VembraneError as ve:
-                print(ve, file=stderr)
-                sys.exit(1)
+            for record in records:
+                writer.write(record)
