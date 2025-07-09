@@ -404,7 +404,7 @@ The following command sorts by gnomad_AF (ascending) and REVEL score (descending
 Thereby the gnomad allele frequencies are quantized in order to group them into 10 bins.
 
 ```bash
-vembrane sort calls.vcf "round(ANN['gnomad_AF'], 1)" "-ANN['REVEL']" > prioritized.vcf
+vembrane sort calls.vcf 'round(ANN["gnomad_AF"], 1), -ANN["REVEL"]' > prioritized.vcf
 ```
 
 ## `vembrane structured`
