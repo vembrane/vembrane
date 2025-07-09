@@ -8,7 +8,7 @@ import yte  # type: ignore
 from vembrane.ann_types import NA
 from vembrane.backend.base import VCFHeader, VCFReader, VCFRecord
 from vembrane.common import Primitive, add_common_arguments, create_reader, smart_open
-from vembrane.errors import VembraneError
+from vembrane.errors import VembraneError, handle_vembrane_error
 from vembrane.representations import (
     Annotation,
     SourceEnvironment,
@@ -113,20 +113,23 @@ def process_vcf(
     annotation = Annotation(ann_key, vcf.header)
 
     for idx, record in enumerate(vcf):
-        code_handler.update_from_record(idx, record)
-        annotations = annotation.get_record_annotations(idx, record)
+        try:
+            code_handler.update_from_record(idx, record)
+            annotations = annotation.get_record_annotations(idx, record)
 
-        for ann in annotations:
-            code_handler.update_from_annotation(ann)
-            converted = yte.process_yaml(
-                template,
-                code_handler=code_handler,
-                value_handler=value_handler,
-                variables=variables,
-            )
-            if postprocess is not None:
-                converted = postprocess(converted)
-            yield converted
+            for ann in annotations:
+                code_handler.update_from_annotation(ann)
+                converted = yte.process_yaml(
+                    template,
+                    code_handler=code_handler,
+                    value_handler=value_handler,
+                    variables=variables,
+                )
+                if postprocess is not None:
+                    converted = postprocess(converted)
+                yield converted
+        except Exception as e:
+            raise VembraneError.from_record_and_exception(idx, record, e) from e
 
 
 def write_records_jsonl(output_file: TextIO, records: ConvertedRecords) -> None:
@@ -153,6 +156,7 @@ def write_records_yaml(output_file: TextIO, records: ConvertedRecords) -> None:
         print(tail, file=output_file)
 
 
+@handle_vembrane_error
 def process(
     template: str,
     output_fmt: str | None,
