@@ -6,6 +6,8 @@ import numpy as np
 import yaml
 from intervaltree import Interval, IntervalTree  # type: ignore
 
+from vembrane.errors import handle_vembrane_error  # type: ignore
+
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
     add_common_arguments,
@@ -130,6 +132,7 @@ def annotate_vcf(
         yield record
 
 
+@handle_vembrane_error
 def execute(args):
     with open(args.config) as stream:
         try:

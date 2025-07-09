@@ -1,8 +1,6 @@
 import csv
-import sys
 from collections.abc import Iterator
 from enum import Enum
-from sys import stderr
 from typing import Any
 
 import asttokens
@@ -17,7 +15,7 @@ from ..common import (
     read_ontology,
     smart_open,
 )
-from ..errors import HeaderWrongColumnNumberError, VembraneError
+from ..errors import HeaderWrongColumnNumberError, handle_vembrane_error
 from ..globals import allowed_globals
 from ..representations import FuncWrappedExpressionEnvironment
 from ..sequence_ontology import SequenceOntology
@@ -326,6 +324,7 @@ def get_row(row):
     return row
 
 
+@handle_vembrane_error
 def execute(args):
     aux = read_auxiliary(args.aux)
     ontology = read_ontology(args.ontology)
@@ -362,27 +361,23 @@ def execute(args):
             ontology=ontology,
         )
 
-        try:
-            with smart_open(args.output, "wt", newline="") as csvfile:
-                writer = csv.writer(
-                    csvfile,
-                    delimiter=args.separator,
-                    quoting=csv.QUOTE_MINIMAL,
-                )
-                if args.header != "none":
-                    header = get_header(args, vcf)
-                    n_header_cols = len(header)
-                    expr_cols = get_toplevel(expression)
-                    n_expr_cols = len(expr_cols)
-                    if n_header_cols != n_expr_cols:
-                        raise HeaderWrongColumnNumberError(
-                            n_expr_cols,
-                            expr_cols,
-                            n_header_cols,
-                            header,
-                        )
-                    writer.writerow(header)
-                writer.writerows(get_row(row) for row in rows)
-        except VembraneError as ve:
-            print(ve, file=stderr)
-            sys.exit(1)
+        with smart_open(args.output, "wt", newline="") as csvfile:
+            writer = csv.writer(
+                csvfile,
+                delimiter=args.separator,
+                quoting=csv.QUOTE_MINIMAL,
+            )
+            if args.header != "none":
+                header = get_header(args, vcf)
+                n_header_cols = len(header)
+                expr_cols = get_toplevel(expression)
+                n_expr_cols = len(expr_cols)
+                if n_header_cols != n_expr_cols:
+                    raise HeaderWrongColumnNumberError(
+                        n_expr_cols,
+                        expr_cols,
+                        n_header_cols,
+                        header,
+                    )
+                writer.writerow(header)
+            writer.writerows(get_row(row) for row in rows)
