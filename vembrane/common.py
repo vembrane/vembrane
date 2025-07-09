@@ -9,7 +9,7 @@ from typing import Any, Iterable, Iterator, TextIO, Type
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamReader, PysamWriter
 from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
-from .errors import InvalidExpressionError
+from .errors import InvalidExpressionError, VembraneError
 from .sequence_ontology import SequenceOntology
 
 
@@ -114,12 +114,21 @@ def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
     if header.contains_generic("VEP"):
         separator = ":"
     if h := header.infos.get(ann_key):
-        return list(
-            map(
-                str.strip,
-                h.get("Description").strip('"').split(separator)[1].split("|"),
-            ),
-        )
+        try:
+            return list(
+                map(
+                    str.strip,
+                    h.get("Description").strip('"').split(separator)[1].split("|"),
+                ),
+            )
+        except Exception as e:
+            raise VembraneError(
+                "Could not parse annotation keys from header. Has your VCF been "
+                "properly annotated (e.g. with VEP or SnpEff)?"
+            ) from e
+    # TODO don't we want to raise an error here as well?
+    # I think it means that the VCF header does not contain the annotation key,
+    # doesn't it?
     return []
 
 

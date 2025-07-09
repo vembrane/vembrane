@@ -225,6 +225,7 @@ def execute(args):
 
     with open(PROFILE_DIR / f"{args.profile}.yaml", mode="r") as infile:
         template = infile.read()
+
     structured.process(
         template=template,
         output_fmt=args.output_fmt,
