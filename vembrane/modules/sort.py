@@ -71,6 +71,7 @@ def execute(args) -> None:
             backend=args.backend,
             overwrite_number=overwrite_number,
         ) as reader:
+            # TODO: unify the reader/writer setup across subcommands
             reader.header.add_generic("vembraneVersion", __version__)
             reader.header.add_generic(
                 "vembraneCmd",
@@ -85,6 +86,7 @@ def execute(args) -> None:
             # load records into memory
             # since sorting by something else than the position is only reasonable
             # for already small, filtered VCF files, this is not an issue in practice.
+            # TODO: auto-detect larger files and use a mergesort library for those?
             records = list(enumerate(reader))
 
             sort_keys = SourceEnvironment(
