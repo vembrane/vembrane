@@ -87,7 +87,9 @@ def execute(args) -> None:
             # for already small, filtered VCF files, this is not an issue in practice.
             records = list(enumerate(reader))
 
-            sort_keys = SourceEnvironment(args.expression, args.annotation_key, reader.header)
+            sort_keys = SourceEnvironment(
+                args.expression, args.annotation_key, reader.header
+            )
 
         def get_sort_key(item):
             idx, record = item
@@ -107,7 +109,7 @@ def execute(args) -> None:
                 return value
 
             if sort_keys.expression_annotations():
-                # if the expression refers to annotations, we obtain the 
+                # if the expression refers to annotations, we obtain the
                 # minimal keys across all annotations
                 annotations = annotation.get_record_annotations(idx, record)
 
