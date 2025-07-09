@@ -400,8 +400,8 @@ options:
 
 ### Example
 
-The following command sorts by gnomad_AF (ascending) and REVEL score (descending).
-Thereby the gnomad allele frequencies are quantized in order to group them into 10 bins.
+The following command sorts records first by `gnomad_AF` (binned and ascending), and then by `REVEL` score (descending).
+The descending sort is achieved by negating the `REVEL` value (`-ANN['REVEL']`) in the key expression.
 
 ```bash
 vembrane sort calls.vcf 'round(ANN["gnomad_AF"], 1), -ANN["REVEL"]' > prioritized.vcf
