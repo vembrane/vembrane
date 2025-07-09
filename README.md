@@ -405,11 +405,11 @@ options:
 
 ### Example
 
-The following command sorts by gnomad_AF (ascending) and REVEL score (descending).
-Thereby the gnomad allele frequencies are quantized in order to group them into 10 bins.
+The following command sorts records first by `gnomad_AF` (binned and ascending), and then by `REVEL` score (descending).
+The descending sort is achieved by negating the `REVEL` value (`-ANN['REVEL']`) in the key expression.
 
 ```bash
-vembrane sort calls.vcf "round(ANN['gnomad_AF'], 1)" "-ANN['REVEL']" > prioritized.vcf
+vembrane sort calls.vcf 'round(ANN["gnomad_AF"], 1), -ANN["REVEL"]' > prioritized.vcf
 ```
 
 ## `vembrane structured`
@@ -511,7 +511,7 @@ The `fhir` subcommand allows to convert VCF records into [HL7 FHIR](https://fhir
 
 The subcommand takes three positional arguments, the VCF file, the sample to be used (must be the name of a sample column in the VCF file), and the genome assembly to consider.
 In addition, various optional Python expressions can be provided in order to allow more information to be encoded as FHIR observations (see `options`).
-The subcommand expects the VCF to be annotated with [VEP](https://www.ensembl.org/info/docs/tools/vep/index.html), using the options `--numbers --symbol --hgvs --hgvsg` (`--numbers`, `--symbol`, and `--hgvs` are part of `--everything` as well).
+The subcommand expects the VCF to be annotated with [VEP](https://www.ensembl.org/info/docs/tools/vep/index.html), using the options `--vcf_info_field ANN --numbers --symbol --hgvs --hgvsg` (`--numbers`, `--symbol`, and `--hgvs` are part of `--everything` as well).
 
 ```
 usage: vembrane fhir [-h] [--url URL] [--status STATUS] --profile {mii_molgen_v2025.0.0} [--id-source ID_SOURCE] [--genomic-source-class GENOMIC_SOURCE_CLASS] [--sample-allelic-frequency SAMPLE_ALLELIC_FREQUENCY] [--sample-allelic-read-depth SAMPLE_ALLELIC_READ_DEPTH] [--confidence-status CONFIDENCE_STATUS]

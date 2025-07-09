@@ -88,7 +88,7 @@ def test_command(testcase: os.PathLike, backend: Backend):
                     raise AssertionError from None
         except AttributeError:
             exception = getattr(builtins, exception)
-            with pytest.raises(exception):
+            with pytest.raises(SystemExit), pytest.raises(exception):
                 if args.command == "filter":
                     filter.execute(args)
                 elif args.command == "table":
