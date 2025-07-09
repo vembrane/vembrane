@@ -1,8 +1,6 @@
 import csv
-import sys
 from collections.abc import Iterator
 from enum import Enum
-from sys import stderr
 from typing import Any
 
 import asttokens
@@ -17,7 +15,7 @@ from ..common import (
     read_ontology,
     smart_open,
 )
-from ..errors import HeaderWrongColumnNumberError, VembraneError, handle_vembrane_error
+from ..errors import HeaderWrongColumnNumberError, handle_vembrane_error
 from ..globals import allowed_globals
 from ..representations import FuncWrappedExpressionEnvironment
 from ..sequence_ontology import SequenceOntology

@@ -5,6 +5,7 @@ from typing import Any
 import numpy as np
 import yaml
 from intervaltree import Interval, IntervalTree
+
 from vembrane.errors import handle_vembrane_error  # type: ignore
 
 from ..backend.base import VCFReader, VCFRecord
