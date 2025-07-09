@@ -196,8 +196,8 @@ def parse_command_config(cmd, config, vcf_path):
         del config["sample"]
         del config["assembly"]
     elif cmd == "sort":
-        command = [cmd, str(vcf_path)] + config["expressions"]
-        del config["expressions"]
+        command = [cmd, str(vcf_path), config["expression"]]
+        del config["expression"]
     else:
         raise ValueError(f"Unknown subcommand {config['function']}")
     for key in config:

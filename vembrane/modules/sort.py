@@ -6,6 +6,7 @@ from vembrane import __version__
 from vembrane.ann_types import NA
 from vembrane.common import (
     add_common_arguments,
+    check_expression,
     create_reader,
     create_writer,
     normalize,
@@ -33,12 +34,13 @@ def add_subcommand(subparsers):
         default="-",
     )
     parser.add_argument(
-        "sort_keys",
-        nargs="+",
-        help="Python expressions returning orderable values to sort the VCF records "
-        "by (ascending, smallest values coming first). If multiple expressions are "
-        "provided, they are prioritized from left to "
-        "right with lowest priority on the right. NA/NaN values are sorted to the end.",
+        "expression",
+        type=check_expression,
+        help="Python expression (or tuple of expressions) returning orderable values "
+        "to sort the VCF records by (ascending, smallest values coming first). "
+        "If multiple expressions are provided as a tuple, they are prioritized from "
+        "left to right with lowest priority on the right. "
+        "NA/NaN values are sorted to the end.",
     )
     parser.add_argument(
         "--output",
@@ -87,7 +89,7 @@ def execute(args) -> None:
 
             sort_keys = [
                 SourceEnvironment(expr, args.annotation_key, reader.header)
-                for expr in args.sort_keys
+                for expr in args.expression
             ]
 
         def get_sort_key(item):

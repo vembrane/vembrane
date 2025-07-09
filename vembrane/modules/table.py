@@ -32,7 +32,7 @@ def add_subcommmand(subparsers):
     parser.add_argument(
         "expression",
         type=check_expression,
-        help=f"The expression for the output. "
+        help="The expression for the output. "
         f"Use {ALL_EXPRESSION} to output all fields.",
     )
     parser.add_argument(
