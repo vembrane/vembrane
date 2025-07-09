@@ -1,57 +1,4 @@
-[![CI](https://github.com/vembrane/vembrane/actions/workflows/main.yml/badge.svg)](https://github.com/vembrane/vembrane/actions/workflows/main.yml)
-[![Zenodo DOI](https://zenodo.org/badge/276383670.svg)](https://zenodo.org/badge/latestdoi/276383670)
-[![Paper DOI:10.1093/bioinformatics/btac810](http://img.shields.io/badge/DOI-10.1093/bioinformatics/btac810-3c799f.svg)](https://doi.org/10.1093/bioinformatics/btac810)
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/vembrane/README.html)
-
-# vembrane: variant filtering using python expressions
-
-vembrane allows to simultaneously filter variants based on any `INFO` or `FORMAT` field, `CHROM`, `POS`, `ID`, `REF`, `ALT`, `QUAL`, `FILTER`, and the annotation field `ANN`. When filtering based on `ANN`, annotation entries are filtered first. If no annotation entry remains, the entire variant is deleted.
-
-vembrane relies on [pysam](https://pysam.readthedocs.io/en/latest/) for reading/writing VCF/BCF files.
-
-For a comparison with similar tools have a look at the [vembrane benchmarks](https://github.com/vembrane/vembrane-benchmark).
-
-## Installation
-vembrane is available in [bioconda](https://bioconda.github.io/) and can either be installed into an existing conda environment with `mamba install -c conda-forge -c bioconda vembrane` or into a new named environment `mamba create -n environment_name -c conda-forge -c bioconda vembrane`.
-Alternatively, if you are familiar with git and [uv](https://docs.astral.sh/uv/), clone this repository and run `uv sync`.
-See [docs/develop.md](docs/develop.md) for further details.
-
-## Subcommands
-
-vembrane provides several subcommands for different tasks:
-
-*   `filter`: Filters VCF/BCF files based on flexible Python expressions. See the detailed documentation below.
-    ```sh
-     vembrane filter 'CHROM == "chr3" and ANN["Consequence"].any_is_a("frameshift_variant")' variants.bcf
-     ```
-
-*   `tag`: A non-destructive version of `filter`. Instead of removing records, it adds a user-defined tag to the `FILTER` field of records that match an expression. For more details, see [`docs/tag.md`](docs/tag.md).
-    ```sh
-    vembrane tag --tag quality_at_least_30="QUAL >= 30" variants.vcf
-    ```
-
-*   `table`: Creates tabular (TSV) files from VCF/BCF data. The columns can be defined with flexible Python expressions. For more details, see [`docs/table.md`](docs/table.md).
-    ```sh
-    vembrane table 'CHROM, POS, 10**(-QUAL/10)' input.vcf > table.tsv
-    ```
-
-*   `annotate`: Annotates VCF/BCF files with data from an external table-like file (e.g., TSV, CSV), based on genomic coordinates. For more details, see [`docs/annotate.md`](docs/annotate.md).
-    ```sh
-    vembrane annotate example.yaml example.bcf > annotated.vcf
-    ```
-
-*   `structured`: Converts VCF records into structured formats like JSON, JSONL, or YAML using a flexible YTE template. For more details, see [`docs/structured.md`](docs/structured.md).
-    ```sh
-    vembrane structured template.yml input.vcf --output output.json
-    ```
-
-*   `fhir`: Converts VCF records into FHIR observations. For more details, see [`docs/fhir.md`](docs/fhir.md).
-    ```sh
-    vembrane fhir tumor GRCh38 --profile mii_molgen_v2025.0.0 sample.vcf > sample-tumor.fhir.json
-    ```
-
-## `vembrane filter`
-Full documentation is also available in [`docs/filter.md`](docs/filter.md).
+# `vembrane filter`
 
 ### Usage
 vembrane takes two positional arguments: The filter expression and the input file; the latter may be omitted to read from `stdin` instead, making it easy to use vembrane in pipe chains.
@@ -108,7 +55,7 @@ However, functions and symbols available have been restricted to the following:
 The following VCF fields can be accessed in the filter expression:
 
 | Name      | Type                         | Interpretation                                                                                     | Example expression             |
-| --------- | ---------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------ |
+|-----------|------------------------------|----------------------------------------------------------------------------------------------------|--------------------------------|
 | `INFO`    | `Dict[str, Any¹]`            | `INFO field -> Value`                                                                              | `INFO["DP"] > 0`               |
 | `ANN`²    | `Dict[str, Any³]`            | `ANN field -> Value`²                                                                              | `ANN["SYMBOL"] == "CDH2"`²     |
 | `CHROM`   | `str`                        | Chromosome Name                                                                                    | `CHROM == "chr2"`              |
@@ -251,19 +198,3 @@ The following functions are available for ontologies, where `term` is a single `
 - `term.is_ancestor(other: Term) -> bool`: Check if `term` is an ancestor of `other`.
 - `term.is_descendant(other: Term) -> bool`: Check if `term` is a descendant of `other`. (Same as `is_a`)
 - `term.path_length(target: Term) -> int | None`: Get the shortest path length from `term` to `target` *or vice versa*. Returns `None` if no path exists.
-
-## Citation
-Check the "Cite this repository" entry in the sidebar for citation options.
-
-Also, please read [should-I-cite-this-software](https://github.com/mr-c/shouldacite/blob/main/should-I-cite-this-software.md) for background.
-
-## Authors
-
-* Marcel Bargull (@mbargull)
-* Jan Forster (@jafors)
-* Till Hartmann (@tedil)
-* Johannes Köster (@johanneskoester)
-* Elias Kuthe (@eqt)
-* David Lähnemann (@dlaehnemann)
-* Felix Mölder (@felixmoelder)
-* Christopher Schröder (@christopher-schroeder)
