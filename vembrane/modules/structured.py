@@ -16,7 +16,10 @@ from vembrane.representations import (
 
 
 def add_subcommand(subparsers):
-    parser = subparsers.add_parser("structured")
+    parser = subparsers.add_parser(
+        "structured",
+        help="Create structured output from a VCF and a YAML file.",
+    )
     parser.add_argument(
         "template",
         help="File containing a YTE template with the desired structure per record and "

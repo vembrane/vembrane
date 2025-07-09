@@ -27,7 +27,9 @@ ALL_EXPRESSION = "ALL"
 
 
 def add_subcommmand(subparsers):
-    parser = subparsers.add_parser("table")
+    parser = subparsers.add_parser(
+        "table", help="Convert VCF records to tabular format."
+    )
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
         "expression",
