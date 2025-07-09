@@ -1,7 +1,8 @@
 import sys
-from typing import Any, List, Self
+from typing import TYPE_CHECKING, Any, List, Self
 
-from vembrane.backend.base import VCFRecord
+if TYPE_CHECKING:
+    from vembrane.backend.base import VCFRecord
 
 
 class VembraneError(Exception):
@@ -9,7 +10,7 @@ class VembraneError(Exception):
 
     @classmethod
     def from_record_and_exception(
-        cls, idx: int, record: VCFRecord, e: Exception
+        cls, idx: int, record: "VCFRecord", e: Exception
     ) -> Self:
         """
         Create a VembraneError from a VCFRecord and an Exception.
