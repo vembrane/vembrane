@@ -32,7 +32,7 @@ vembrane provides several subcommands for different tasks:
 
 *   `table`: Creates tabular (TSV) files from VCF/BCF data. The columns can be defined with flexible Python expressions. For more details, see [`docs/table.md`](docs/table.md).
     ```sh
-    vembrane table 'CHROM, POS, 10**(-QUAL/10)' input.vcf > table.tsv
+    vembrane table 'CHROM, POS, 10**(-QUAL/10), ANN["CLIN_SIG"]' input.vcf > table.tsv
     ```
 
 *   `annotate`: Annotates VCF/BCF files with data from an external table-like file (e.g., TSV, CSV), based on genomic coordinates. For more details, see [`docs/annotate.md`](docs/annotate.md).
@@ -47,7 +47,7 @@ vembrane provides several subcommands for different tasks:
 
 *   `fhir`: Converts VCF records into FHIR observations. For more details, see [`docs/fhir.md`](docs/fhir.md).
     ```sh
-    vembrane fhir tumor GRCh38 --profile mii_molgen_v2025.0.0 sample.vcf > sample-tumor.fhir.json
+    vembrane fhir tumor GRCh38 --profile mii_molgen_v2025.0.0 --output-fmt json --annotation-key ANN < sample.vcf > sample-tumor.fhir.json
     ```
 
 ## `vembrane filter`
