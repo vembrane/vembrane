@@ -165,7 +165,7 @@ dev-dependencies = [
     "mypy>=1.13.0",
     "types-pyyaml>=6.0.12.20240917",
     "types-networkx>=3.4.2.20250304",
-    "ruff~=0.9.9",
+    "ruff~=0.12.2",
     "tox>=4.23.2",
     "tox-uv>=1.20.1",
 ]
