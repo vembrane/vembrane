@@ -1,6 +1,6 @@
 import math
 import sys
-from typing import Any
+from typing import Any, Iterable
 
 from vembrane import __version__
 from vembrane.ann_types import NA
@@ -87,38 +87,37 @@ def execute(args) -> None:
             # for already small, filtered VCF files, this is not an issue in practice.
             records = list(enumerate(reader))
 
-            sort_keys = [
-                SourceEnvironment(expr, args.annotation_key, reader.header)
-                for expr in args.expression
-            ]
+            sort_keys = SourceEnvironment(args.expression, args.annotation_key, reader.header)
 
         def get_sort_key(item):
             idx, record = item
-            for env in sort_keys:
-                env.update_from_record(idx, record)
+            sort_keys.update_from_record(idx, record)
 
-            def eval_env(env: SourceEnvironment) -> Any:
-                def handle_na(value) -> Any:
-                    if (
-                        value is NA
-                        or value is None
-                        or (isinstance(value, float) and math.isnan(value))
-                    ):
-                        return NAToEnd()
-                    return value
+            def handle_na(value) -> Any:
+                # ensures that NA/None values are sorted to the end
+                if isinstance(value, Iterable) and not isinstance(value, str):
+                    # if the value is a tuple, we need to handle each element
+                    return tuple(handle_na(v) for v in value)
+                if (
+                    value is NA
+                    or value is None
+                    or (isinstance(value, float) and math.isnan(value))
+                ):
+                    return NAToEnd()
+                return value
 
-                if env.expression_annotations():
-                    annotations = annotation.get_record_annotations(idx, record)
+            if sort_keys.expression_annotations():
+                # if the expression refers to annotations, we obtain the 
+                # minimal keys across all annotations
+                annotations = annotation.get_record_annotations(idx, record)
 
-                    def eval_with_ann(annotation):
-                        env.update_annotation(annotation)
-                        return handle_na(eval(env.compiled, env))
+                def eval_with_ann(annotation):
+                    sort_keys.update_annotation(annotation)
+                    return handle_na(eval(sort_keys.compiled, sort_keys))
 
-                    return min(map(eval_with_ann, annotations))
-                else:
-                    return handle_na(eval(env.compiled, env))
-
-            return tuple(eval_env(env) for env in sort_keys)
+                return min(map(eval_with_ann, annotations))
+            else:
+                return handle_na(eval(sort_keys.compiled, sort_keys))
 
         records.sort(key=get_sort_key)
 
