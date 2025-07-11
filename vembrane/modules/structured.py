@@ -19,6 +19,7 @@ def add_subcommand(subparsers):
     parser = subparsers.add_parser(
         "structured",
         help="Create structured output from a VCF and a YAML file.",
+        description="Create structured output from a VCF and a YAML file.",
     )
     parser.add_argument(
         "template",

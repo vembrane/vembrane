@@ -39,7 +39,9 @@ class DeprecatedAction(argparse.Action):
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser(
-        "filter", help="Filter VCF records with a python expression."
+        "filter",
+        help="Filter VCF records with a python expression.",
+        description="Filter VCF records with a python expression.",
     )
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(

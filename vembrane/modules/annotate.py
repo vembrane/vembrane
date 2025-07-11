@@ -20,7 +20,9 @@ from ..representations import FuncWrappedExpressionEnvironment
 
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser(
-        "annotate", help="Annotate a VCF file based on a configuration file."
+        "annotate",
+        help="Annotate a VCF file based on a configuration file.",
+        description="Annotate a VCF file based on a configuration file.",
     )
     parser.add_argument(
         "config",

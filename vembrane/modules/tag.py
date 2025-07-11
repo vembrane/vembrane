@@ -32,7 +32,9 @@ from .filter import DeprecatedAction
 
 def add_subcommand(subparsers):
     parser = subparsers.add_parser(
-        "tag", help="Tag VCF records (non-destructive `filter`)."
+        "tag",
+        help="Tag VCF records (non-destructive `filter`).",
+        description="Tag VCF records (non-destructive `filter`).",
     )
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
