@@ -73,9 +73,9 @@ Annotations with type `str`:
 | `Gene`               | Ensembl stable ID of affected gene                                                                                                          |                             |
 | `Feature`            | Ensembl stable ID of feature                                                                                                                |                             |
 | `Feature_type`       | Type of feature. Currently one of Transcript, RegulatoryFeature, MotifFeature.                                                              |                             |
-| `HGVSc`              | [HGVS notation](https://hgvs-nomenclature.org/stable/background/simple/) for the variant relative to the coding sequence of the gene                                           |                             |
-| `HGVSp`              | [HGVS notation](https://hgvs-nomenclature.org/stable/background/simple/) for the variant relative to the protein sequence                                                                 |                             |
-| `HGVSg`              | [HGVS notation](https://hgvs-nomenclature.org/stable/background/simple/) for the variant relative to the genomic sequence                                                               |                             |
+| `HGVSc`              | [HGVS notation](https://hgvs-nomenclature.org/stable/background/simple/) for the variant relative to the coding sequence of the gene        |                             |
+| `HGVSp`              | [HGVS notation](https://hgvs-nomenclature.org/stable/background/simple/) for the variant relative to the protein sequence                   |                             |
+| `HGVSg`              | [HGVS notation](https://hgvs-nomenclature.org/stable/background/simple/) for the variant relative to the genomic sequence                   |                             |
 | `REF_ALLELE`         | The reference allele                                                                                                                        |                             |
 | `IMPACT`             | The impact modifier for the consequence type                                                                                                | `'"HIGH" in ANN["IMPACT"]'` |
 | `SYMBOL`             | The gene symbol                                                                                                                             |                             |
