@@ -122,7 +122,8 @@ def process_vcf(
                 "DUP",
             ]:
                 print(
-                    f"Warning: Error is a structural variant which are currently not supported and will be skipped.\n"
+                    f"Warning: Error is a structural variant which are currently "
+                    f"not supported and will be skipped.\n"
                     f"Record: {record}"
                 )
                 continue
