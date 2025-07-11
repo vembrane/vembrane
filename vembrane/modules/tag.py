@@ -33,8 +33,12 @@ from .filter import DeprecatedAction
 def add_subcommand(subparsers):
     parser = subparsers.add_parser(
         "tag",
-        help="Tag VCF records (non-destructive `filter`).",
-        description="Tag VCF records (non-destructive `filter`).",
+        help="Add a flag to the FILTER field of VCF records without removing them "
+        "(a non-destructive `filter`).",
+        description="Flag records by adding a tag to their FILTER field "
+        "based on one or more expressions. "
+        "This is a non-destructive alternative to `filter`, "
+        "as it keeps all records.",
     )
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
@@ -50,7 +54,7 @@ def add_subcommand(subparsers):
     )
     parser.add_argument(
         "vcf",
-        help="The file containing the variants.",
+        help="Path to the VCF/BCF file to be filtered. Defaults to '-' for stdin.",
         nargs="?",
         default="-",
     )

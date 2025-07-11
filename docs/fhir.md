@@ -14,7 +14,7 @@ usage: vembrane fhir [-h] [--url URL] [--status STATUS] --profile {mii_molgen_v2
                      [vcf] sample {GRCh37,GRCh38}
 
 positional arguments:
-  vcf                   The file containing the variants.
+  vcf                   Path to the VCF/BCF file to be filtered. Defaults to '-' for stdin.
   sample                The sample to use for generating FHIR output.
   {GRCh37,GRCh38}       The reference assembly used for read mapping.
 

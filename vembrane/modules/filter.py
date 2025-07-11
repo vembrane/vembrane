@@ -40,19 +40,25 @@ class DeprecatedAction(argparse.Action):
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser(
         "filter",
-        help="Filter VCF records with a python expression.",
-        description="Filter VCF records with a python expression.",
+        help="Filter VCF records and annotations using a python expression.",
+        description="Filter VCF records and annotations "
+        "based on a user-defined Python expression."
+        "Only records for which the expression evaluates to True are kept.",
     )
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
         "expression",
         type=check_expression,
-        help="Filter variants and annotations. If this removes all annotations, "
-        "the variant is removed as well.",
+        help="A python expression to filter variants. "
+        "The expression must evaluate to bool. "
+        "All VCF fields can be accessed. "
+        "Additionally, annotation fields can be accessed, see `--annotation-key`. "
+        "If all annotations of a record are filtered out, "
+        "the entire record is removed.",
     )
     parser.add_argument(
         "vcf",
-        help="The file containing the variants.",
+        help="Path to the VCF/BCF file to be filtered. Defaults to '-' for stdin.",
         nargs="?",
         default="-",
     )

@@ -22,7 +22,7 @@ def add_subcommand(subparsers):
     )
     parser.add_argument(
         "vcf",
-        help="The file containing the variants.",
+        help="Path to the VCF/BCF file to be filtered. Defaults to '-' for stdin.",
         nargs="?",
         default="-",
     )

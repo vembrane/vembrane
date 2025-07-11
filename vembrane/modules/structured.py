@@ -18,17 +18,18 @@ from vembrane.representations import (
 def add_subcommand(subparsers):
     parser = subparsers.add_parser(
         "structured",
-        help="Create structured output from a VCF and a YAML file.",
-        description="Create structured output from a VCF and a YAML file.",
+        help="Create structured output (e.g., JSON/YAML) "
+        "from a VCF file using a YTE template.",
+        description="Create structured output from a VCF and a YTE template.",
     )
     parser.add_argument(
         "template",
-        help="File containing a YTE template with the desired structure per record and "
-        "expressions that retrieve data from the VCF record.",
+        help="File containing a YTE template with the desired structure per record "
+        "and expressions that retrieve data from the VCF record.",
     )
     parser.add_argument(
         "vcf",
-        help="The file containing the variants.",
+        help="Path to the VCF/BCF file to be filtered. Defaults to '-' for stdin.",
         nargs="?",
         default="-",
     )
