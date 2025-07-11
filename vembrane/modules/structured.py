@@ -111,7 +111,8 @@ def process_vcf(
 
     for idx, record in enumerate(vcf):
         try:
-            # TODO: For now structural variants are not supported but should be added later.
+            # TODO: For now structural variants are not supported
+            # but should be added later.
             if record.info.get("SVTYPE", "") in [
                 "CNV",
                 "INDEL",
