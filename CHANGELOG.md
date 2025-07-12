@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.1.1](https://github.com/vembrane/vembrane/compare/v2.1.0...v2.1.1) (2025-07-11)
+
+
+### Bug Fixes
+
+* improve error handling ([6eec426](https://github.com/vembrane/vembrane/commit/6eec42692bf57ec5ee4d521f91f07ee56d31b863))
+* improve error handling ([9725e06](https://github.com/vembrane/vembrane/commit/9725e06397ffa474d320f833b795029947e9bc76))
+
+
+### Documentation
+
+* complete vep options for vembrane fhir ([8148a43](https://github.com/vembrane/vembrane/commit/8148a438c1db040e7118fa775981f4ae6e655938))
+* separate documentation into smaller parts ([#206](https://github.com/vembrane/vembrane/issues/206)) ([5808c36](https://github.com/vembrane/vembrane/commit/5808c36e50b6fc3d03fd688c09912e2dd0cbe42a))
+
 ## [2.1.0](https://github.com/vembrane/vembrane/compare/v2.0.0...v2.1.0) (2025-06-13)
 
 
