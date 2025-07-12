@@ -25,17 +25,22 @@ ALL_EXPRESSION = "ALL"
 
 
 def add_subcommmand(subparsers):
-    parser = subparsers.add_parser("table")
+    parser = subparsers.add_parser(
+        "table",
+        help="Convert VCF records to tabular format.",
+        description="Convert VCF records to tabular format.",
+    )
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(
         "expression",
         type=check_expression,
-        help=f"The expression for the output. "
+        help="A comma-separated tuple of expressions "
+        "that define the table column contents. "
         f"Use {ALL_EXPRESSION} to output all fields.",
     )
     parser.add_argument(
         "vcf",
-        help="The file containing the variants.",
+        help="Path to the VCF/BCF file to be filtered. Defaults to '-' for stdin.",
         nargs="?",
         default="-",
     )
