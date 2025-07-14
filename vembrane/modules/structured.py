@@ -113,17 +113,9 @@ def process_vcf(
         try:
             # TODO: For now structural variants are not supported
             # but should be added later.
-            if record.info.get("SVTYPE", "") in [
-                "CNV",
-                "INDEL",
-                "BND",
-                "INV",
-                "TRA",
-                "DEL",
-                "DUP",
-            ]:
+            if record.is_sv_record:
                 print(
-                    f"Warning: Error is a structural variant which are currently "
+                    f"Warning: Record is a structural variant which are currently "
                     f"not supported and will be skipped.\n"
                     f"Record: {record}"
                 )
