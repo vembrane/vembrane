@@ -175,6 +175,34 @@ class VCFRecord:
         return "SVTYPE" in self.info and self.info.get("SVTYPE", None) == "BND"
 
     @property
+    def is_sv_record(self) -> bool:
+        is_sv = self.info.get("SVTYPE", "") in [
+            "DEL",
+            "INS",
+            "DUP",
+            "CNV",
+            "INV",
+            "INDEL",
+            "BND",
+            "TRA",
+        ] or any(
+            alt
+            in [
+                "<DEL>",
+                "<DEL:ME>",
+                "<INS>",
+                "<INS:ME>",
+                "<DUP>",
+                "<DUP:TANDEM>",
+                "<CNV>",
+                "<CNV:TR>",
+                "<INV>",
+            ]
+            for alt in self.alt_alleles
+        )
+        return is_sv
+
+    @property
     def end(self):
         if self.is_bnd_record:
             return NA

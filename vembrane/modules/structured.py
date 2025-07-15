@@ -116,6 +116,15 @@ def process_vcf(
 
     for idx, record in enumerate(vcf):
         try:
+            # TODO: For now structural variants are not supported
+            # but should be added later.
+            if record.is_sv_record:
+                print(
+                    f"Warning: Record is a structural variant which are currently "
+                    f"not supported and will be skipped.\n"
+                    f"Record: {record}"
+                )
+                continue
             code_handler.update_from_record(idx, record)
             annotations = annotation.get_record_annotations(idx, record)
 
@@ -169,8 +178,9 @@ def process(
     overwrite_number_format,
     backend,
     variables: Dict[str, Any] | None = None,
-    postprocess: Callable[[Primitive | dict | list], Primitive | dict | list]
-    | None = None,
+    postprocess: (
+        Callable[[Primitive | dict | list], Primitive | dict | list] | None
+    ) = None,
 ) -> None:
     overwrite_number = {
         "INFO": dict(overwrite_number_info),
