@@ -1,4 +1,5 @@
 from collections import OrderedDict, defaultdict
+from pathlib import Path
 from sys import stderr
 from typing import Dict, List, Optional, Tuple
 
@@ -192,13 +193,13 @@ class PysamReader(VCFReader):
 
     def __init__(
         self,
-        filename: str,
+        filename: str | Path,
         overwrite_number: Dict[str, Dict[str, str]] | None = None,
     ):
         if overwrite_number is None:
             overwrite_number = {}
         self.filename = filename
-        self._file = pysam.VariantFile(self.filename)
+        self._file = pysam.VariantFile(str(self.filename))
         self._header = PysamHeader(self._file.header, overwrite_number)
         self._current_record_idx = 0
 
@@ -313,10 +314,10 @@ class PysamHeader(VCFHeader):
 class PysamWriter(VCFWriter):
     __slots__ = ("filename", "_header", "_file")
 
-    def __init__(self, filename: str, fmt: str, template: VCFReader):
+    def __init__(self, filename: str | Path, fmt: str, template: VCFReader):
         self.filename = filename
         self._file = pysam.VariantFile(
-            self.filename,
+            str(self.filename),
             f"w{fmt}",  # type: ignore
             header=template.header._raw_header,
         )

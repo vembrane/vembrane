@@ -107,6 +107,7 @@ class Environment(dict):
         header: VCFHeader,
         auxiliary: dict[str, set[str]] | None = None,
         ontology: SequenceOntology | None = None,
+        auxiliary_globals: dict[str, Any] | None = None,
     ) -> None:
         if auxiliary is None:
             auxiliary = {}
@@ -115,6 +116,8 @@ class Environment(dict):
         self._globals: dict[str, Any] = {}
         # We use self + self.func as a closure.
         self._globals = dict(allowed_globals)
+        if auxiliary_globals:
+            self._globals.update(auxiliary_globals)
         self._globals.update(custom_functions(self))
         self._globals["SAMPLES"] = list(header.samples)
         # REF/ALT alleles are cached separately to raise "MoreThanOneAltAllele"
@@ -267,8 +270,9 @@ class SourceEnvironment(Environment):
         header: VCFHeader,
         auxiliary: dict[str, set[str]] | None = None,
         ontology: SequenceOntology | None = None,
+        auxiliary_globals: dict[str, Any] | None = None,
     ):
-        super().__init__(ann_key, header, auxiliary, ontology)
+        super().__init__(ann_key, header, auxiliary, ontology, auxiliary_globals)
 
         self._has_ann: bool = any(
             hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
@@ -307,10 +311,13 @@ class FuncWrappedExpressionEnvironment(SourceEnvironment):
         header: VCFHeader,
         auxiliary: dict[str, set[str]] | None = None,
         ontology: SequenceOntology | None = None,
+        auxiliary_globals: dict[str, Any] | None = None,
         evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
         func_str: str = evaluation_function_template.format(expression=expression)
-        super().__init__(func_str, ann_key, header, auxiliary, ontology)
+        super().__init__(
+            func_str, ann_key, header, auxiliary, ontology, auxiliary_globals
+        )
         self._func = eval(self.compiled, self, {})
 
     def is_true(self, annotation: str = "") -> bool:

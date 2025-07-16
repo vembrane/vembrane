@@ -1,4 +1,5 @@
 from collections import OrderedDict, defaultdict
+from pathlib import Path
 from sys import stderr
 from typing import Dict, List, Optional, Tuple
 
@@ -31,7 +32,7 @@ class Cyvcf2Reader(VCFReader):
 
     def __init__(
         self,
-        filename: str,
+        filename: str | Path,
         overwrite_number: Dict[str, Dict[str, str]] | None = None,
     ):
         if overwrite_number is None:
@@ -382,7 +383,7 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
 
 
 class Cyvcf2Writer(VCFWriter):
-    def __init__(self, filename: str, fmt: str, template: VCFReader):
+    def __init__(self, filename: str | Path, fmt: str, template: VCFReader):
         self._file = Writer(filename, template.file, mode=f"w{fmt}")
 
     def write(self, record: VCFRecord):

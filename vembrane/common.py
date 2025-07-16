@@ -4,6 +4,7 @@ import contextlib
 import shlex
 import sys
 from collections import defaultdict
+from pathlib import Path
 from typing import Any, Iterable, Iterator, TextIO, Type
 
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
@@ -210,10 +211,10 @@ def read_ontology(path: str | None) -> SequenceOntology | None:
 
 
 def create_reader(
-    filename: str,
+    filename: str | Path,
     backend: Backend = Backend.pysam,
     overwrite_number=None,
-):
+) -> VCFReader:
     # GT should always be "."
     if overwrite_number is None:
         overwrite_number = defaultdict(dict)
@@ -226,7 +227,7 @@ def create_reader(
 
 
 def create_writer(
-    filename: str,
+    filename: str | Path,
     fmt: str,
     template: VCFReader,
     backend: Backend = Backend.pysam,
