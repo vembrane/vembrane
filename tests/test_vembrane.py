@@ -12,7 +12,7 @@ import yaml
 from vembrane import __version__, errors
 from vembrane.backend.base import Backend
 from vembrane.common import create_reader
-from vembrane.modules import fhir, filter, structured, table, tag
+from vembrane.modules import fhir, filter, sort, structured, table, tag
 
 FILTER_CASES = Path(__file__).parent.joinpath("testcases/filter")
 TABLE_CASES = Path(__file__).parent.joinpath("testcases/table")
@@ -20,6 +20,7 @@ TAG_CASES = Path(__file__).parent.joinpath("testcases/tag")
 ANNOTATE_CASES = Path(__file__).parent.joinpath("testcases/annotate")
 STRUCTURED_CASES = Path(__file__).parent.joinpath("testcases/structured")
 FHIR_CASES = Path(__file__).parent.joinpath("testcases/fhir")
+SORT_CASES = Path(__file__).parent.joinpath("testcases/sort")
 
 
 def test_version():
@@ -43,6 +44,7 @@ def idfn(val):
                 ANNOTATE_CASES,
                 STRUCTURED_CASES,
                 FHIR_CASES,
+                SORT_CASES,
             ]
             for d in os.listdir(case_path)
             if not d.startswith(".")
@@ -99,8 +101,18 @@ def test_command(testcase: os.PathLike, backend: Backend):
         with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
             args.output = tmp_out.name
             args.backend = backend
-            if args.command == "filter" or args.command == "tag":
-                module = filter if args.command == "filter" else tag
+            if (
+                args.command == "filter"
+                or args.command == "tag"
+                or args.command == "sort"
+            ):
+                match args.command:
+                    case "filter":
+                        module = filter
+                    case "tag":
+                        module = tag
+                    case "sort":
+                        module = sort
                 expected = str(path.joinpath("expected.vcf"))
                 module.execute(args)
                 with create_reader(tmp_out.name, backend=backend) as vcf_actual:
@@ -147,6 +159,7 @@ def test_command(testcase: os.PathLike, backend: Backend):
                     "tag",
                     "structured",
                     "fhir",
+                    "sort",
                 }, "Unknown subcommand"
 
 
@@ -162,6 +175,7 @@ def construct_parser():
     tag.add_subcommand(subparsers)
     structured.add_subcommand(subparsers)
     fhir.add_subcommand(subparsers)
+    sort.add_subcommand(subparsers)
     return parser
 
 
@@ -181,21 +195,35 @@ def parse_command_config(cmd, config, vcf_path):
         command = [cmd, str(vcf_path), config["sample"], config["assembly"]]
         del config["sample"]
         del config["assembly"]
+    elif cmd == "sort":
+        command = [cmd, config["expression"], str(vcf_path)]
+        del config["expression"]
     else:
         raise ValueError(f"Unknown subcommand {config['function']}")
     for key in config:
         if key == "function":
             continue
         if isinstance(config[key], str):
-            command.append(f"--{key.replace('_', '-')}")
+            command.append(config_key_to_arg(key))
             command.append(config[key])
+        elif isinstance(config[key], bool):
+            if config[key]:
+                command.append(config_key_to_arg(key))
+        elif isinstance(config[key], (int, float)):
+            command.append(config_key_to_arg(key))
+            command.append(str(config[key]))
         else:
             if isinstance(config[key], dict):
                 for k, v in config[key].items():
-                    command.append(f"--{key.replace('_', '-')}")
+                    command.append(config_key_to_arg(key))
                     command.append(f"{k}={v}")
             else:
-                command.append(f"--{key.replace('_', '-')}")
+                command.append(config_key_to_arg(key))
                 for argument in config[key]:
                     command.append(argument)
     return command
+
+
+def config_key_to_arg(key: str) -> str:
+    """Convert a config key to an argument name."""
+    return f"--{key.replace('_', '-')}"

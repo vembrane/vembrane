@@ -12,6 +12,7 @@ from .. import __version__
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
     BreakendEvent,
+    HumanReadableDefaultsFormatter,
     add_common_arguments,
     check_expression,
     create_reader,
@@ -44,6 +45,7 @@ def add_subcommmand(subparsers):
         description="Filter VCF records and annotations "
         "based on a user-defined Python expression."
         "Only records for which the expression evaluates to True are kept.",
+        formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(

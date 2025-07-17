@@ -1,0 +1,4 @@
+function: "sort"
+expression: "ANN['Consequence']"
+chunk-size: "1"
+preserve-annotation-order: true

@@ -4,6 +4,7 @@ import contextlib
 import shlex
 import sys
 from collections import defaultdict
+from pathlib import Path
 from typing import Any, Iterable, Iterator, TextIO, Type
 
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
@@ -210,10 +211,10 @@ def read_ontology(path: str | None) -> SequenceOntology | None:
 
 
 def create_reader(
-    filename: str,
+    filename: str | Path,
     backend: Backend = Backend.pysam,
     overwrite_number=None,
-):
+) -> VCFReader:
     # GT should always be "."
     if overwrite_number is None:
         overwrite_number = defaultdict(dict)
@@ -226,7 +227,7 @@ def create_reader(
 
 
 def create_writer(
-    filename: str,
+    filename: str | Path,
     fmt: str,
     template: VCFReader,
     backend: Backend = Backend.pysam,
@@ -263,3 +264,24 @@ class Singleton(type):
         if cls not in cls._instances:
             cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
+
+
+class HumanReadableDefaultsFormatter(argparse.HelpFormatter):
+    """A custom argparse formatter that displays default values in a more
+    human-readable way than the argparse's own defaults formatter which
+    exposes Python types like dicts and None."""
+
+    def _get_help_string(self, action):
+        help_text = action.help
+        if help_text is None:
+            help_text = ""
+
+        if action.default and action.default is not argparse.SUPPRESS:
+            if isinstance(action.default, list):
+                default_value = " ".join(map(str, action.default))
+            elif isinstance(action.default, dict):
+                default_value = " ".join(f"{k}={v}" for k, v in action.default.items())
+            else:
+                default_value = action.default
+            help_text += f" (default: {default_value})"
+        return help_text

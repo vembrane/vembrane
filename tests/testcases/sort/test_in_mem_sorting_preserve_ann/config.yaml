@@ -1,0 +1,3 @@
+function: "sort"
+expression: "ANN['Consequence']"
+preserve-annotation-order: true

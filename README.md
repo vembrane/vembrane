@@ -40,6 +40,11 @@ vembrane provides several subcommands for different tasks:
     vembrane annotate example.yaml example.bcf > annotated.vcf
     ```
 
+*   `sort`: Sorts VCF/BCF files. The sort order can be defined via flexible Python expressions and thus be based on any field and annotation that occurs in the VCF/BCF (e.g. impact or clinical significance). The primary use case is variant prioritization. For more details, see [`docs/sort.md`](docs/sort.md).
+    ```sh
+    vembrane sort input.vcf 'round(ANN["gnomad_AF"], 1), -ANN["REVEL"]' > prioritized.vcf
+    ```
+
 *   `structured`: Converts VCF records into structured formats like JSON, JSONL, or YAML using a flexible YTE template. For more details, see [`docs/structured.md`](docs/structured.md).
     ```sh
     vembrane structured template.yml input.vcf --output output.json
