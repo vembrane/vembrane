@@ -2,10 +2,10 @@ import heapq
 import math
 import sys
 import tempfile
-from functools import total_ordering
+from functools import partial, total_ordering
 from itertools import batched
 from pathlib import Path
-from typing import Any, Callable, Iterable, List, Self, Sequence, Tuple, TypeVar
+from typing import Any, Callable, Dict, Iterable, List, Self, Sequence, Tuple, TypeVar
 
 from vembrane import __version__
 from vembrane.ann_types import NA
@@ -60,6 +60,14 @@ def add_subcommand(subparsers):
         default="vcf",
         choices=["vcf", "bcf", "uncompressed-bcf"],
         help="Output format.",
+    )
+    parser.add_argument(
+        "--preserve-annotation-order",
+        action="store_true",
+        help="If set, annotations are not sorted within the records, but kept in the "
+        "same order as in the input VCF file. If not set (default), annotations "
+        "are sorted within the record according to the given keys if any of the sort "
+        "keys given in the python expression refers to an annotation.",
     )
     parser.add_argument(
         "--chunk-size",
@@ -191,7 +199,9 @@ def execute(args) -> None:
                 auxiliary_globals=auxiliary_globals,
             )
 
-            def get_sort_key(item: Tuple[int, VCFRecord]) -> SortKey:
+            def get_sort_key(
+                item: Tuple[int, VCFRecord], sort_annotations: bool = False
+            ) -> SortKey:
                 idx, record = item
                 sort_keys.update_from_record(idx, record)
 
@@ -201,7 +211,10 @@ def execute(args) -> None:
                     annotations = annotation.get_record_annotations(idx, record)
 
                     def eval_with_ann(annotation):
+                        # load given annotation into the eval context
                         sort_keys.update_annotation(annotation)
+                        # eval key expression and ensure that default SortKey is applied
+                        # if not explicitly annotated by the user
                         return apply_default_key(
                             eval(
                                 sort_keys.compiled,
@@ -209,13 +222,31 @@ def execute(args) -> None:
                             )
                         )
 
-                    return min(map(eval_with_ann, annotations))
+                    if sort_annotations:
+                        # obtain keys for all annotations
+                        keys = list(map(eval_with_ann, annotations))
+                        # sort by keys
+                        sorted_idx = sorted(
+                            range(len(annotations)), key=keys.__getitem__
+                        )
+                        # order annotations according to the sorted keys
+                        sorted_annotations = [annotations[i] for i in sorted_idx]
+                        # update annotations in the record
+                        annotation.set_record_annotations(record, sorted_annotations)
+                        # return min key (SortKey ensures that this implements
+                        # either ascending or descending order)
+                        return keys[sorted_idx[0]]
+                    else:
+                        # return min key (SortKey ensures that this implements
+                        # either ascending or descending order)
+                        return min(map(eval_with_ann, annotations))
                 else:
                     return apply_default_key(eval(sort_keys.compiled, sort_keys))
 
             with create_writer(
                 args.output, fmt, reader, backend=args.backend
             ) as writer:
+                # perform the actual sorting
                 external_sort(
                     reader,
                     writer,
@@ -223,6 +254,7 @@ def execute(args) -> None:
                     chunk_size=args.chunk_size,
                     backend=args.backend,
                     overwrite_number=overwrite_number,
+                    preserve_annotation_order=args.preserve_annotation_order,
                 )
     except VembraneError as ve:
         print(ve, file=sys.stderr)
@@ -235,8 +267,10 @@ def external_sort(
     key: Callable[[Tuple[int, VCFRecord]], SortKey],
     chunk_size: int,
     backend: Backend,
-    overwrite_number,
+    overwrite_number: Dict[str, Dict[str, str]],
+    preserve_annotation_order: bool,
 ):
+    # Open temp dir for storing sorted chunks in case of external sorting
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
         chunk_files: List[Path] = []
@@ -252,19 +286,25 @@ def external_sort(
 
         for chunk in batched(enumerate(reader), n=chunk_size):
             if last_chunk is not None:
+                # if there was a previous chunk, store it now
                 store_chunk(last_chunk)
-            chunk = sorted(chunk, key=key)
+            # sort by key function (SortKey ensures that this implements
+            # either ascending or descending order)
+            chunk = sorted(
+                chunk, key=partial(key, sort_annotations=not preserve_annotation_order)
+            )
 
             last_chunk = chunk
         if last_chunk:
             if not chunk_files:
                 # only one chunk, nothing stored yet
-                # directly write the sorted chunk
+                # directly write the sorted chunk to the output
+                # Thus, no external sorting is needed!
                 for _, record in last_chunk:
                     writer.write(record)
                 return
             else:
-                # store last chunk
+                # store last chunk of the iteration
                 store_chunk(last_chunk)
         else:
             # empty input
@@ -273,6 +313,7 @@ def external_sort(
         # now merge the chunks
         readers = {}
         for i, chunk_file in enumerate(chunk_files):
+            # open a reader for each chunk
             reader = create_reader(
                 chunk_file, backend=backend, overwrite_number=overwrite_number
             )
@@ -281,11 +322,14 @@ def external_sort(
         def next_record_to_heap(reader_idx: int) -> None:
             reader_iter, reader = readers[reader_idx]
             try:
+                # get the next record of the given reader
                 idx, record = next(reader_iter)
             except StopIteration:
+                # no more records, close reader
                 reader.close()
                 del readers[reader_idx]
                 return
+            # store the record in the heap
             heapq.heappush(heap, (key((idx, record)), record, reader_idx))
 
         heap: List[Tuple[SortKey, VCFRecord, int]] = []
@@ -293,7 +337,9 @@ def external_sort(
             next_record_to_heap(reader_idx)
 
         while True:
-            # pop the smallest item from the heap
+            # Pop the smallest item from the heap.
+            # Since all chunks are sorted and each has given one item to the heap,
+            # the smallest item is the next record to write.
             try:
                 _, record, reader_idx = heapq.heappop(heap)
             except IndexError:
@@ -302,4 +348,7 @@ def external_sort(
                 return
 
             writer.write(record)
+            # Get the next record from the same reader and push it to the heap.
+            # This ensures that the heap always contains the next smallest record
+            # from each reader. The heap sorts it into the right place.
             next_record_to_heap(reader_idx)

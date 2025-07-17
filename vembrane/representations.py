@@ -64,6 +64,9 @@ class Annotation(NoValueDict, DefaultGet):
             annotations = [empty]
         return annotations
 
+    def set_record_annotations(self, record: VCFRecord, annotations: list[str]) -> None:
+        record.info[self._ann_key] = annotations
+
     def __getitem__(self, item):
         try:
             return self._data[item]

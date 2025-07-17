@@ -1,3 +1,4 @@
 function: "sort"
 expression: "POS"
-chunk-size: "1"
+chunk-size: 1
+preserve-annotation-order: true
