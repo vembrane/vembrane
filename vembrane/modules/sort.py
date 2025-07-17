@@ -11,6 +11,7 @@ from vembrane import __version__
 from vembrane.ann_types import NA
 from vembrane.backend.base import Backend, VCFReader, VCFRecord, VCFWriter
 from vembrane.common import (
+    HumanReadableDefaultsFormatter,
     add_common_arguments,
     check_expression,
     create_reader,
@@ -26,12 +27,12 @@ def add_subcommand(subparsers):
         "sort",
         help="Sort VCF records by one or multiple Python expressions.",
         description="Sort VCF records by one or multiple Python expressions that "
-        "encode keys for the desired order. This feature loads the entire VCF file "
-        "into memory in order to maximize performance. It is thus meant to sort small, "
+        "encode keys for the desired order. This feature is primarily meant to sort "
         "already filtered VCF files, e.g. for prioritizing records for the human eye. "
         "For large VCF files, the only relevant sorting is usually by position, "
-        "which is better done with e.g. bcftools (and usually the sorting that variant "
-        "callers output).",
+        "which is better done with e.g. bcftools (and usually the standard sorting "
+        "that variant callers output).",
+        formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.add_argument(
         "vcf",
@@ -44,10 +45,16 @@ def add_subcommand(subparsers):
         "expression",
         type=check_expression,
         help="Python expression (or tuple of expressions) returning orderable values "
-        "to sort the VCF records by (ascending, smallest values coming first). "
+        "(keys) to sort the VCF records by. "
+        "By default keys are considered in ascending order. "
+        "To sort by descending order, use `desc(<expression>)` on the entire "
+        "expression or on individual items of the tuple. "
         "If multiple expressions are provided as a tuple, they are prioritized from "
         "left to right with lowest priority on the right. "
-        "NA/NaN values are sorted to the end.",
+        "NA/NaN values are always sorted to the end. "
+        "Expressions on annotation entries will cause the annotation with the "
+        "minimum key value (or maximum if descending) to be considered to sort "
+        "the record.",
     )
     parser.add_argument(
         "--output",
@@ -71,7 +78,7 @@ def add_subcommand(subparsers):
         "keys given in the python expression refers to an annotation.",
     )
     parser.add_argument(
-        "--chunk-size",
+        "--max-in-mem-records",
         type=int,
         default=1000,
         help="Number of VCF records to sort in memory. If the VCF file exceeds this "
@@ -252,7 +259,7 @@ def execute(args) -> None:
                     reader,
                     writer,
                     key=get_sort_key,
-                    chunk_size=args.chunk_size,
+                    chunk_size=args.max_in_mem_records,
                     backend=args.backend,
                     overwrite_number=overwrite_number,
                     preserve_annotation_order=args.preserve_annotation_order,

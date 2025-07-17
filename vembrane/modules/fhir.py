@@ -6,7 +6,12 @@ from typing import Any
 # intervaltree is untyped, so we use type: ignore to suppress type checking errors
 from intervaltree import IntervalTree  # type: ignore
 
-from vembrane.common import Primitive, Singleton, add_common_arguments
+from vembrane.common import (
+    HumanReadableDefaultsFormatter,
+    Primitive,
+    Singleton,
+    add_common_arguments,
+)
 from vembrane.modules import structured
 
 PROFILE_DIR = (
@@ -19,6 +24,7 @@ def add_subcommand(subparsers):
         "fhir",
         help="Generate FHIR records from VCF files.",
         description="Generate FHIR records from VCF files.",
+        formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.add_argument(
         "vcf",

@@ -7,6 +7,7 @@ import asttokens
 
 from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
+    HumanReadableDefaultsFormatter,
     add_common_arguments,
     check_expression,
     create_reader,
@@ -29,6 +30,7 @@ def add_subcommmand(subparsers):
         "table",
         help="Convert VCF records to tabular format.",
         description="Convert VCF records to tabular format.",
+        formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(

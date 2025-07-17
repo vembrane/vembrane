@@ -9,6 +9,7 @@ from ..ann_types import NA
 from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
     AppendTagExpression,
+    HumanReadableDefaultsFormatter,
     add_common_arguments,
     check_expression,
     create_reader,
@@ -39,6 +40,7 @@ def add_subcommand(subparsers):
         "based on one or more expressions. "
         "This is a non-destructive alternative to `filter`, "
         "as it keeps all records.",
+        formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.register("action", "deprecated", DeprecatedAction)
     parser.add_argument(

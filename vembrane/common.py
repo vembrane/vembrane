@@ -264,3 +264,24 @@ class Singleton(type):
         if cls not in cls._instances:
             cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
+
+
+class HumanReadableDefaultsFormatter(argparse.HelpFormatter):
+    """A custom argparse formatter that displays default values in a more
+    human-readable way than the argparse's own defaults formatter which
+    exposes Python types like dicts and None."""
+
+    def _get_help_string(self, action):
+        help_text = action.help
+        if help_text is None:
+            help_text = ""
+
+        if action.default and action.default is not argparse.SUPPRESS:
+            if isinstance(action.default, list):
+                default_value = " ".join(map(str, action.default))
+            elif isinstance(action.default, dict):
+                default_value = " ".join(f"{k}={v}" for k, v in action.default.items())
+            else:
+                default_value = action.default
+            help_text += f" (default: {default_value})"
+        return help_text

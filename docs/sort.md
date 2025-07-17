@@ -2,29 +2,30 @@
 
 The `sort` subcommand allows to sort VCF/BCF files via keys defined as Python expressions (in ascending order).
 The Python expressions are analogous to expressions in other vembrane commands.
-This feature loads the entire VCF file into memory in order to maximize performance.
-It is thus meant to sort small, already filtered VCF files, e.g. for **prioritizing records for the human eye**.
-For large VCF files, the only relevant sorting is usually by position, which is better done with e.g. bcftools (and usually the sorting that variant callers output).
+This feature is primarily meant to sort 
+already filtered VCF files, e.g. for **prioritizing records for the human eye**. 
+For large VCF files, the only relevant sorting is usually by position, 
+which is better done with e.g. bcftools (and usually the standard sorting 
+that variant callers output).
 
 ### Usage
 
 ```
 usage: vembrane sort [-h] [--output OUTPUT] [--output-fmt {vcf,bcf,uncompressed-bcf}] [--preserve-annotation-order]
-                     [--chunk-size CHUNK_SIZE] [--annotation-key FIELDNAME] [--aux NAME=PATH] [--ontology PATH]
-                     [--overwrite-number-info FIELD=NUMBER] [--overwrite-number-format FIELD=NUMBER]
+                     [--max-in-mem-records MAX_IN_MEM_RECORDS] [--annotation-key FIELDNAME] [--aux NAME=PATH]
+                     [--ontology PATH] [--overwrite-number-info FIELD=NUMBER] [--overwrite-number-format FIELD=NUMBER]
                      [--backend {cyvcf2,pysam}]
                      [vcf] expression
 
-Sort VCF records by one or multiple Python expressions that encode keys for the desired order. This feature loads the entire
-VCF file into memory in order to maximize performance. It is thus meant to sort small, already filtered VCF files, e.g. for
-prioritizing records for the human eye. For large VCF files, the only relevant sorting is usually by position, which is better
-done with e.g. bcftools (and usually the sorting that variant callers output).
-
 positional arguments:
   vcf                   The VCF/BCF file containing the variants. If not specified, reads from STDIN.
-  expression            Python expression (or tuple of expressions) returning orderable values to sort the VCF records by
-                        (ascending, smallest values coming first). If multiple expressions are provided as a tuple, they are
-                        prioritized from left to right with lowest priority on the right. NA/NaN values are sorted to the end.
+  expression            Python expression (or tuple of expressions) returning orderable values (keys) to sort the VCF records
+                        by. By default keys are considered in ascending order. To sort by descending order, use
+                        `desc(<expression>)` on the entire expression or on individual items of the tuple. If multiple
+                        expressions are provided as a tuple, they are prioritized from left to right with lowest priority 
+                        on the right. NA/NaN values are always sorted to the end.
+                        Expressions on annotation entries will cause the annotation with the minimum key value (or maximum if descending) to be considered to sort the record.
+
 
 options:
   -h, --help            show this help message and exit
@@ -36,7 +37,7 @@ options:
                         If set, annotations are not sorted within the records, but kept in the same order as in the input VCF
                         file. If not set (default), annotations are sorted within the record according to the given keys if
                         any of the sort keys given in the python expression refers to an annotation.
-  --chunk-size CHUNK_SIZE
+  --max-in-mem-records MAX_IN_MEM_RECORDS
                         Number of VCF records to sort in memory. If the VCF file exceeds this number of records, external
                         sorting is used.
   --annotation-key FIELDNAME, -k FIELDNAME
@@ -56,11 +57,21 @@ options:
                         Set the backend library.
 ```
 
-### Example
+### Examples
 
 The following command sorts records first by `gnomad_AF` (binned and ascending), and then by `REVEL` score (descending).
-The descending sort is achieved by negating the `REVEL` value (`-ANN['REVEL']`) in the key expression.
+The descending sort is achieved by marking the `REVEL` value  as descending via `desc()` in the key expression.
 
 ```bash
-vembrane sort input.vcf 'round(ANN["gnomad_AF"], 1), -ANN["REVEL"]' > prioritized.vcf
+vembrane sort input.vcf 'round(ANN["gnomad_AF"], 1), desc(ANN["REVEL"])' > prioritized.vcf
 ```
+
+In case of non-numeric values, an order can be defined ad-hoc via an inline dictionary.
+For example, in order to get variants with high impact in one of their annotations first, we can define the following.
+
+```bash
+vembrane sort input.vcf '{"HIGH": 0, "MODERATE: 1, "LOW": 2, "MODIFIER" 3}[ANN["IMPACT"]]' > prioritized.vcf
+```
+Since ascending sort is the default, variants with at least one `HIGH` in their annotations will come first.
+Moreover, `vembrane` will also sort the annotation entries in the corresponding order, with higher impacts coming first.
+This behavior can be disabled via the flag `--preserve-annotation-order`.

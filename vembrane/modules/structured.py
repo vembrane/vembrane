@@ -7,7 +7,13 @@ import yte  # type: ignore
 
 from vembrane.ann_types import NA
 from vembrane.backend.base import VCFHeader, VCFReader, VCFRecord
-from vembrane.common import Primitive, add_common_arguments, create_reader, smart_open
+from vembrane.common import (
+    HumanReadableDefaultsFormatter,
+    Primitive,
+    add_common_arguments,
+    create_reader,
+    smart_open,
+)
 from vembrane.errors import VembraneError, handle_vembrane_error
 from vembrane.representations import (
     Annotation,
@@ -21,6 +27,7 @@ def add_subcommand(subparsers):
         help="Create structured output (e.g., JSON/YAML) "
         "from a VCF file using a YTE template.",
         description="Create structured output from a VCF and a YTE template.",
+        formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.add_argument(
         "template",

@@ -10,6 +10,7 @@ from vembrane.errors import handle_vembrane_error  # type: ignore
 
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
+    HumanReadableDefaultsFormatter,
     add_common_arguments,
     check_expression,
     create_reader,
@@ -25,6 +26,7 @@ def add_subcommmand(subparsers):
         "using a configuration file.",
         description="Add new INFO field annotations to a VCF from other data sources, "
         "using a configuration file.",
+        formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.add_argument(
         "config",
