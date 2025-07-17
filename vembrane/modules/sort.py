@@ -24,6 +24,7 @@ from vembrane.representations import Annotation, SourceEnvironment
 def add_subcommand(subparsers):
     parser = subparsers.add_parser(
         "sort",
+        help="Sort VCF records by one or multiple Python expressions.",
         description="Sort VCF records by one or multiple Python expressions that "
         "encode keys for the desired order. This feature loads the entire VCF file "
         "into memory in order to maximize performance. It is thus meant to sort small, "
