@@ -35,13 +35,6 @@ def add_subcommand(subparsers):
         formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.add_argument(
-        "vcf",
-        help="The VCF/BCF file containing the variants. If not specified, "
-        "reads from STDIN.",
-        nargs="?",
-        default="-",
-    )
-    parser.add_argument(
         "expression",
         type=check_expression,
         help="Python expression (or tuple of expressions) returning orderable values "
@@ -55,6 +48,13 @@ def add_subcommand(subparsers):
         "Expressions on annotation entries will cause the annotation with the "
         "minimum key value (or maximum if descending) to be considered to sort "
         "the record.",
+    )
+    parser.add_argument(
+        "vcf",
+        help="The VCF/BCF file containing the variants. If not specified, "
+        "reads from STDIN.",
+        nargs="?",
+        default="-",
     )
     parser.add_argument(
         "--output",
@@ -80,7 +80,7 @@ def add_subcommand(subparsers):
     parser.add_argument(
         "--max-in-mem-records",
         type=int,
-        default=1000,
+        default=100000,
         help="Number of VCF records to sort in memory. If the VCF file exceeds this "
         "number of records, external sorting is used.",
     )
