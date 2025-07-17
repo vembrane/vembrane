@@ -65,6 +65,16 @@ class Annotation(NoValueDict, DefaultGet):
         return annotations
 
     def set_record_annotations(self, record: VCFRecord, annotations: list[str]) -> None:
+        # If the given new annotations are all empty and ANN was NA before,
+        # we keep the NA.
+        # The check 'ann == len(ann) * "|"' is the fastest way to check if a string
+        # is just "||||||", according to https://stackoverflow.com/a/14321721.
+        # Even faster than regex.
+        if (
+            all(ann == len(ann) * "|" for ann in annotations)
+            and record.info[self._ann_key] is NA
+        ):
+            return
         record.info[self._ann_key] = annotations
 
     def __getitem__(self, item):

@@ -118,6 +118,8 @@ class KeyBase:
     def __eq__(self, other: Self) -> bool:  # type: ignore
         if is_na(self.key) and is_na(other.key):
             return True
+        if is_na(self.key) or is_na(other.key):
+            return False
         return self.key == other.key
 
 
@@ -142,16 +144,16 @@ class KeyAscending(KeyBase):
 class KeyDescending(KeyBase):
     def __lt__(self, other: Self) -> bool:
         if is_na(self.key):
-            return True
-        if is_na(other.key):
             return False
+        if is_na(other.key):
+            return True
         return self.key > other.key
 
     def __gt__(self, other: Self) -> bool:
         if is_na(self.key):
-            return False
-        if is_na(other.key):
             return True
+        if is_na(other.key):
+            return False
         return self.key < other.key
 
 
