@@ -18,17 +18,18 @@ from vembrane.representations import (
 def add_subcommand(subparsers):
     parser = subparsers.add_parser(
         "structured",
-        description="Converts VCF records into structured data in YAML, JSON or JSONL "
-        "format given a YAML/YTE template.",
+        help="Create structured output (e.g., JSON/YAML) "
+        "from a VCF file using a YTE template.",
+        description="Create structured output from a VCF and a YTE template.",
     )
     parser.add_argument(
         "template",
-        help="File containing a YTE template with the desired structure per record and "
-        "expressions that retrieve data from the VCF record.",
+        help="File containing a YTE template with the desired structure per record "
+        "and expressions that retrieve data from the VCF record.",
     )
     parser.add_argument(
         "vcf",
-        help="The file containing the variants. If not specified, reads from STDIN.",
+        help="Path to the VCF/BCF file to be filtered. Defaults to '-' for stdin.",
         nargs="?",
         default="-",
     )
@@ -115,6 +116,15 @@ def process_vcf(
 
     for idx, record in enumerate(vcf):
         try:
+            # TODO: For now structural variants are not supported
+            # but should be added later.
+            if record.is_sv_record:
+                print(
+                    f"Warning: Record is a structural variant which are currently "
+                    f"not supported and will be skipped.\n"
+                    f"Record: {record}"
+                )
+                continue
             code_handler.update_from_record(idx, record)
             annotations = annotation.get_record_annotations(idx, record)
 
@@ -168,8 +178,9 @@ def process(
     overwrite_number_format,
     backend,
     variables: Dict[str, Any] | None = None,
-    postprocess: Callable[[Primitive | dict | list], Primitive | dict | list]
-    | None = None,
+    postprocess: (
+        Callable[[Primitive | dict | list], Primitive | dict | list] | None
+    ) = None,
 ) -> None:
     overwrite_number = {
         "INFO": dict(overwrite_number_info),

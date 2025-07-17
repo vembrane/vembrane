@@ -5,7 +5,10 @@ from .modules import annotate, fhir, filter, sort, structured, table, tag
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="VCF/BCF filter and manipulation tool "
+        "leveraging Python expressions."
+    )
 
     parser.add_argument(
         "--version",
