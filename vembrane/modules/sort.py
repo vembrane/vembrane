@@ -291,9 +291,13 @@ def external_sort(
                 store_chunk(last_chunk)
             # sort by key function (SortKey ensures that this implements
             # either ascending or descending order)
+            # What we do here is seemingly too much for mypy to understand.
+            # But it is definitely correct and works fine.
+            # Thus the type: ignore below.
             chunk = sorted(
-                chunk, key=partial(key, sort_annotations=not preserve_annotation_order)
-            )
+                chunk,
+                key=partial(key, sort_annotations=not preserve_annotation_order),  # type: ignore
+            )  # type: ignore
 
             last_chunk = chunk
         if last_chunk:
