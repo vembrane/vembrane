@@ -130,7 +130,7 @@ The following VCF fields can be accessed in the filter expression:
 
  ¹ depends on type specified in VCF header
 
- ² if your VCF defines annotations under another key than `ANN` (e.g. VEP's `CSQ`) you have to specify this via the `--annotation-key` flag (e.g. `--annotation-key CSQ`). You can (and should, for portability) still use `ANN` in your expressions then (although the given annotation key works as well, e.g. `CSQ["SYMBOL"]`).
+ ² if your VCF defines annotations under a key other than `ANN` (e.g. VEP's `CSQ`) you have to specify this via the `--annotation-key` flag (e.g. `--annotation-key CSQ`). You can (and should, for portability) still use `ANN` in your expressions then (although the given annotation key works as well, e.g. `CSQ["SYMBOL"]`).
 
  ³ for the usual snpeff and vep annotations, custom types have been specified; any unknown ANN field will simply be of type `str`. If something lacks a custom parser/type, please consider filing an issue in the [issue tracker](https://github.com/vembrane/vembrane/issues).
 
