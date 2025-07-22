@@ -40,7 +40,7 @@ class MalformedAnnotationError(VembraneError):
     """Unknown annotation entry"""
 
     def __init__(self, record, key: str, ann_idx: int) -> None:
-        super(MalformedAnnotationError, self).__init__(
+        super().__init__(
             f"The annotation index {ann_idx} ('{key}') "
             f"in record {record.record_idx} is out of bounds. "
             f"The ANN field might be malformed for this record:\n{str(record)}",

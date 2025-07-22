@@ -90,7 +90,6 @@ class Annotation(NoValueDict, DefaultGet):
                 ) from ke2
             if ann_idx >= len(self._annotation_data):
                 raise MalformedAnnotationError(
-                    self._record_idx,
                     self._record,
                     item,
                     ann_idx,
@@ -124,7 +123,10 @@ class Environment(dict):
     ) -> None:
         if auxiliary is None:
             auxiliary = {}
-        self._ann_key: str = ann_key
+        if ann_key == "ANN":
+            self.item_is_ann = lambda item: item == "ANN"
+        else:
+            self.item_is_ann = lambda item: item == "ANN" or item == ann_key
         self._annotation: Annotation = Annotation(ann_key, header)
         self._globals: dict[str, Any] = {}
         # We use self + self.func as a closure.
@@ -253,7 +255,8 @@ class Environment(dict):
         return value
 
     def __getitem__(self, item):
-        if item == self._ann_key:
+        if self.item_is_ann(item):
+            # we always allow to access the annotation key with ANN
             return self._annotation
         value = self._globals[item]
         if value is UNSET:
@@ -288,7 +291,9 @@ class SourceEnvironment(Environment):
         super().__init__(ann_key, header, auxiliary, ontology, auxiliary_globals)
 
         self._has_ann: bool = any(
-            hasattr(node, "id") and isinstance(node, ast.Name) and node.id == ann_key
+            hasattr(node, "id")
+            and isinstance(node, ast.Name)
+            and self.item_is_ann(node.id)
             for node in ast.walk(ast.parse(source))
         )
 
