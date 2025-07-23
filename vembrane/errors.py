@@ -37,7 +37,7 @@ class UnknownAnnotationError(VembraneError):
 
 
 class MalformedAnnotationError(VembraneError):
-    """Unknown annotation entry"""
+    """Malformed annotation entry"""
 
     def __init__(self, record, key: str, ann_idx: int) -> None:
         super().__init__(
