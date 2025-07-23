@@ -59,11 +59,11 @@ options:
 
 ### Examples
 
-The following command sorts records first by `gnomad_AF` (binned and ascending), and then by `REVEL` score (descending).
+The following command sorts records first by `gnomad_AF` (binned into orders of magnitude and ascending), and then by `REVEL` score (descending).
 The descending sort is achieved by marking the `REVEL` value  as descending via `desc()` in the key expression.
 
 ```bash
-vembrane sort 'round(ANN["gnomad_AF"], 1), desc(ANN["REVEL"])' input.vcf > prioritized.vcf
+vembrane sort 'int(log10(ANN["gnomad_AF"])), desc(ANN["REVEL"])' input.vcf > prioritized.vcf
 ```
 
 In case of non-numeric values, an order can be defined ad-hoc via an inline dictionary.
