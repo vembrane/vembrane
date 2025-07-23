@@ -28,7 +28,7 @@ class UnknownAnnotationError(VembraneError):
     """Unknown annotation entry"""
 
     def __init__(self, record, key: str) -> None:
-        super(UnknownAnnotationError, self).__init__(
+        super().__init__(
             f"No ANN entry for '{key}' in record {record.record_idx}:\n{str(record)}",
         )
         self.record_idx = record.record_idx
@@ -68,7 +68,7 @@ class UnknownFormatFieldError(VembraneError, KeyError):
     """Unknown FORMAT key"""
 
     def __init__(self, record, field: str) -> None:
-        super(UnknownFormatFieldError, self).__init__(
+        super().__init__(
             f"No FORMAT field '{field}' in record \
                 {record.record_idx}:\n{str(record)}",
         )
@@ -174,7 +174,7 @@ class FilterTagNameInvalidError(VembraneError):
 
 class NonBoolTypeError(VembraneError):
     def __init__(self, value: Any):
-        super(NonBoolTypeError, self).__init__(
+        super().__init__(
             "The expression does not evaluate to bool, "
             f"but to {type(value)} ({value}).\n"
             "If you wish to use truthy values, "
