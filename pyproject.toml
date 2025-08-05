@@ -20,16 +20,17 @@ readme = "README.md"
 dynamic = ["version"]
 
 dependencies = [
-  "pysam~=0.22.1",
+  "pysam~=0.23.3",
   "cyvcf2~=0.31.1",
   "pyyaml~=6.0.2",
-  "asttokens~=2.4.1",
-  "numpy~=2.0.1",
+  "asttokens~=3.0.0",
+  "numpy~=2.3.2",
   "intervaltree~=3.1.0",
-  "yte~=1.8.1",
-  "obonet~=1.1.0",
-  "networkx~=3.3",
-  "typing-extensions~=4.12.2",
+  "yte~=1.9.0",
+  "obonet~=1.1.1",
+  "networkx~=3.5",
+  "typing-extensions~=4.14.1",
+  "mypy>=1.15.0",
 ]
 
 [project.urls]
