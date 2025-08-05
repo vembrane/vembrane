@@ -603,16 +603,16 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "asttokens", specifier = "~=3.0.0" },
-    { name = "cyvcf2", specifier = "~=0.31.1" },
-    { name = "intervaltree", specifier = "~=3.1.0" },
+    { name = "asttokens", specifier = "~=3.0" },
+    { name = "cyvcf2", specifier = "~=0.31" },
+    { name = "intervaltree", specifier = "~=3.1" },
     { name = "networkx", specifier = "~=3.5" },
-    { name = "numpy", specifier = "~=2.3.2" },
-    { name = "obonet", specifier = "~=1.1.1" },
-    { name = "pysam", specifier = "~=0.23.3" },
-    { name = "pyyaml", specifier = "~=6.0.2" },
-    { name = "typing-extensions", specifier = "~=4.14.1" },
-    { name = "yte", specifier = "~=1.9.0" },
+    { name = "numpy", specifier = "~=2.1" },
+    { name = "obonet", specifier = "~=1.1" },
+    { name = "pysam", specifier = "~=0.23" },
+    { name = "pyyaml", specifier = "~=6.0" },
+    { name = "typing-extensions", specifier = "~=4.12" },
+    { name = "yte", specifier = "~=1.9" },
 ]
 
 [package.metadata.requires-dev]
