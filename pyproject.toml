@@ -42,10 +42,10 @@ vembrane = 'vembrane.cli:main'
 
 [dependency-groups]
 dev = [
-    "mypy>=1.15.0",
-    "pre-commit~=3.8.0",
-    "pytest~=8.3.2",
-    "ruff~=0.12.2",
+    "mypy~=1.17",
+    "pre-commit~=4.2",
+    "pytest~=8.4",
+    "ruff~=0.12",
 ]
 test = [
     "pytest",
@@ -162,12 +162,12 @@ commands = [["mypy"]]
 
 [tool.uv]
 dev-dependencies = [
-    "mypy>=1.13.0",
-    "types-pyyaml>=6.0.12.20240917",
-    "types-networkx>=3.4.2.20250304",
-    "ruff~=0.12.2",
-    "tox>=4.23.2",
-    "tox-uv>=1.20.1",
+    "mypy~=1.15",
+    "types-pyyaml~=6.0",
+    "types-networkx~=3.5",
+    "ruff~=0.12",
+    "tox~=4.24",
+    "tox-uv~=1.25",
 ]
 
 [tool.mypy]
