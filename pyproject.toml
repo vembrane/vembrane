@@ -20,16 +20,16 @@ readme = "README.md"
 dynamic = ["version"]
 
 dependencies = [
-  "pysam~=0.22.1",
+  "pysam~=0.23.3",
   "cyvcf2~=0.31.1",
-  "pyyaml~=6.0.2",
-  "asttokens~=2.4.1",
-  "numpy~=2.0.1",
-  "intervaltree~=3.1.0",
-  "yte~=1.8.1",
-  "obonet~=1.1.0",
-  "networkx~=3.3",
-  "typing-extensions~=4.12.2",
+  "pyyaml~=6.0",
+  "asttokens~=3.0",
+  "numpy~=2.1",
+  "intervaltree~=3.1",
+  "yte~=1.9",
+  "obonet~=1.1",
+  "networkx~=3.5",
+  "typing-extensions~=4.12",
 ]
 
 [project.urls]
@@ -42,10 +42,10 @@ vembrane = 'vembrane.cli:main'
 
 [dependency-groups]
 dev = [
-    "mypy>=1.15.0",
-    "pre-commit~=3.8.0",
-    "pytest~=8.3.2",
-    "ruff~=0.12.2",
+    "mypy~=1.17",
+    "pre-commit~=4.2",
+    "pytest~=8.4",
+    "ruff~=0.12",
 ]
 test = [
     "pytest",
@@ -162,12 +162,12 @@ commands = [["mypy"]]
 
 [tool.uv]
 dev-dependencies = [
-    "mypy>=1.13.0",
-    "types-pyyaml>=6.0.12.20240917",
-    "types-networkx>=3.4.2.20250304",
-    "ruff~=0.12.2",
-    "tox>=4.23.2",
-    "tox-uv>=1.20.1",
+    "mypy~=1.15",
+    "types-pyyaml~=6.0",
+    "types-networkx~=3.5",
+    "ruff~=0.12",
+    "tox~=4.24",
+    "tox-uv~=1.25",
 ]
 
 [tool.mypy]
