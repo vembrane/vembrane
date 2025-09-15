@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2](https://github.com/vembrane/vembrane/compare/v2.3.1...v2.3.2) (2025-09-15)
+
+
+### Bug Fixes
+
+* upload correct build artifacts during CI release process ([#219](https://github.com/vembrane/vembrane/issues/219)) ([3d37220](https://github.com/vembrane/vembrane/commit/3d37220e7e3549f5c37f40f5ecfc74724acae336))
+
 ## [2.3.1](https://github.com/vembrane/vembrane/compare/v2.3.0...v2.3.1) (2025-09-15)
 
 
