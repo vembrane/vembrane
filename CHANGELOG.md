@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/vembrane/vembrane/compare/v2.3.0...v2.3.1) (2025-09-15)
+
+
+### Bug Fixes
+
+* improve CLI help (consistently mention BCF, clarify sort behavior) ([#217](https://github.com/vembrane/vembrane/issues/217)) ([b69ff3b](https://github.com/vembrane/vembrane/commit/b69ff3bc681d28a9bad6a7d8344f2187eb477a0b))
+
 ## [2.3.0](https://github.com/vembrane/vembrane/compare/v2.2.0...v2.3.0) (2025-09-10)
 
 
