@@ -22,10 +22,10 @@ from ..representations import FuncWrappedExpressionEnvironment
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser(
         "annotate",
-        help="Add new INFO field annotations to a VCF from other data sources, "
+        help="Add new INFO field annotations to a VCF/BCF from other data sources, "
         "using a configuration file.",
-        description="Add new INFO field annotations to a VCF from other data sources, "
-        "using a configuration file.",
+        description="Add new INFO field annotations to a VCF/BCF from other data "
+        "sources, using a configuration file.",
         formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.add_argument(

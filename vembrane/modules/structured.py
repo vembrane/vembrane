@@ -25,14 +25,14 @@ def add_subcommand(subparsers):
     parser = subparsers.add_parser(
         "structured",
         help="Create structured output (e.g., JSON/YAML) "
-        "from a VCF file using a YTE template.",
-        description="Create structured output from a VCF and a YTE template.",
+        "from a VCF/BCF file using a YTE template.",
+        description="Create structured output from a VCF/BCF and a YTE template.",
         formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.add_argument(
         "template",
         help="File containing a YTE template with the desired structure per record "
-        "and expressions that retrieve data from the VCF record.",
+        "and expressions that retrieve data from the VCF/BCF record.",
     )
     parser.add_argument(
         "vcf",

@@ -22,8 +22,8 @@ PROFILE_DIR = (
 def add_subcommand(subparsers):
     parser = subparsers.add_parser(
         "fhir",
-        help="Generate FHIR records from VCF files.",
-        description="Generate FHIR records from VCF files.",
+        help="Generate FHIR records from VCF/BCF files.",
+        description="Generate FHIR records from VCF/BCF files.",
         formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.add_argument(
@@ -44,7 +44,8 @@ def add_subcommand(subparsers):
     parser.add_argument(
         "--url",
         "-u",
-        help="Generic url used as identifier by FHIR e.g. http://<institute>/<department>/VCF",
+        help="Generic url used as identifier by FHIR e.g. "
+        "http://<institute>/<department>/VCF",
         default=None,
     )
     parser.add_argument(
@@ -63,7 +64,7 @@ def add_subcommand(subparsers):
     )
     parser.add_argument(
         "--id-source",
-        help="URL to the source of IDs found in the ID column of the VCF file. "
+        help="URL to the source of IDs found in the ID column of the VCF/BCF file. "
         "IDs are only used if this is given.",
     )
     parser.add_argument(

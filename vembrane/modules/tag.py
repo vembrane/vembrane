@@ -34,7 +34,7 @@ from .filter import DeprecatedAction
 def add_subcommand(subparsers):
     parser = subparsers.add_parser(
         "tag",
-        help="Add a flag to the FILTER field of VCF records without removing them "
+        help="Add a flag to the FILTER field of VCF/BCF records without removing them "
         "(a non-destructive `filter`).",
         description="Flag records by adding a tag to their FILTER field "
         "based on one or more expressions. "
