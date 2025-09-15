@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.3](https://github.com/vembrane/vembrane/compare/v2.3.2...v2.3.3) (2025-09-15)
+
+
+### Bug Fixes
+
+* specify artifact unpack directory ([#221](https://github.com/vembrane/vembrane/issues/221)) ([dbec559](https://github.com/vembrane/vembrane/commit/dbec55983d667056f38d72ca54cb419bf9e86e3f))
+
 ## [2.3.2](https://github.com/vembrane/vembrane/compare/v2.3.1...v2.3.2) (2025-09-15)
 
 
