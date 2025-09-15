@@ -41,8 +41,8 @@ class DeprecatedAction(argparse.Action):
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser(
         "filter",
-        help="Filter VCF records and annotations using a python expression.",
-        description="Filter VCF records and annotations "
+        help="Filter VCF/BCF records and annotations using a python expression.",
+        description="Filter VCF/BCF records and annotations "
         "based on a user-defined Python expression."
         "Only records for which the expression evaluates to True are kept.",
         formatter_class=HumanReadableDefaultsFormatter,
@@ -53,7 +53,7 @@ def add_subcommmand(subparsers):
         type=check_expression,
         help="A python expression to filter variants. "
         "The expression must evaluate to bool. "
-        "All VCF fields can be accessed. "
+        "All VCF/BCF fields can be accessed. "
         "Additionally, annotation fields can be accessed, see `--annotation-key`. "
         "If all annotations of a record are filtered out, "
         "the entire record is removed.",

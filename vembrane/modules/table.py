@@ -28,8 +28,8 @@ ALL_EXPRESSION = "ALL"
 def add_subcommmand(subparsers):
     parser = subparsers.add_parser(
         "table",
-        help="Convert VCF records to tabular format.",
-        description="Convert VCF records to tabular format.",
+        help="Convert VCF/BCF records to tabular format.",
+        description="Convert VCF/BCF records to tabular format.",
         formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.register("action", "deprecated", DeprecatedAction)

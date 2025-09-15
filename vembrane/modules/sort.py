@@ -25,27 +25,29 @@ from vembrane.representations import Annotation, SourceEnvironment
 def add_subcommand(subparsers):
     parser = subparsers.add_parser(
         "sort",
-        help="Sort VCF records by one or multiple Python expressions.",
-        description="Sort VCF records by one or multiple Python expressions that "
-        "encode keys for the desired order. This feature is primarily meant to sort "
-        "already filtered VCF files, e.g. for prioritizing records for the human eye. "
-        "For large VCF files, the only relevant sorting is usually by position, "
-        "which is better done with e.g. bcftools (and usually the standard sorting "
-        "that variant callers output).",
+        help="Sort VCF/BCF records by one or multiple Python expressions.",
+        description="Sort VCF/BCF records by one or multiple Python expressions that "
+        "encode keys for the desired order. This feature is primarily meant to "
+        "prioritizing records for the human eye. For large unfiltered VCF/BCF files, "
+        "the only relevant sorting is usually by position, which is better done with "
+        "e.g. bcftools (and usually the standard sorting that variant callers output). "
+        "Expects the VCF/BCF file to be single-allelic, i.e., one ALT allele per "
+        "record.",
         formatter_class=HumanReadableDefaultsFormatter,
     )
     parser.add_argument(
         "expression",
         type=check_expression,
         help="Python expression (or tuple of expressions) returning orderable values "
-        "(keys) to sort the VCF records by. "
+        "(keys) to sort the VCF/BCF records by. "
         "By default keys are considered in ascending order. "
         "To sort by descending order, use `desc(<expression>)` on the entire "
         "expression or on individual items of the tuple. "
         "If multiple expressions are provided as a tuple, they are prioritized from "
         "left to right with lowest priority on the right. "
         "NA/NaN values are always sorted to the end. "
-        "Expressions on annotation entries will cause the annotation with the "
+        "Expressions on annotation entries (there can be multiple annotations per "
+        "record) will cause the annotation with the "
         "minimum key value (or maximum if descending) to be considered to sort "
         "the record.",
     )
@@ -73,7 +75,7 @@ def add_subcommand(subparsers):
         "--preserve-annotation-order",
         action="store_true",
         help="If set, annotations are not sorted within the records, but kept in the "
-        "same order as in the input VCF file. If not set (default), annotations "
+        "same order as in the input VCF/BCF file. If not set (default), annotations "
         "are sorted within the record according to the given keys if any of the sort "
         "keys given in the python expression refers to an annotation.",
     )
@@ -81,8 +83,8 @@ def add_subcommand(subparsers):
         "--max-in-mem-records",
         type=int,
         default=100000,
-        help="Number of VCF records to sort in memory. If the VCF file exceeds this "
-        "number of records, external sorting is used.",
+        help="Number of VCF/BCF records to sort in memory. If the VCF/BCF file exceeds "
+        "this number of records, external sorting is used.",
     )
     add_common_arguments(parser)
 
