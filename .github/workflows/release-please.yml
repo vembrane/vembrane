@@ -48,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vembrane-build
-          path: build/*
+          path: dist/*
 
   pypi-publish:
     name: Upload release to PyPI
