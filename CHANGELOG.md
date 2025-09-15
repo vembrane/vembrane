@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.3.0](https://github.com/vembrane/vembrane/compare/v2.2.0...v2.3.0) (2025-09-10)
+
+
+### Features
+
+* always allow to use ANN in expressions, even if the VCF/BCF uses e.g. CSQ for annotations ([#208](https://github.com/vembrane/vembrane/issues/208)) ([713d993](https://github.com/vembrane/vembrane/commit/713d99310c558c1839a513a49ee5882571738d09))
+
+
+### Bug Fixes
+
+* more modern error base class constructor syntax ([#212](https://github.com/vembrane/vembrane/issues/212)) ([584c3d4](https://github.com/vembrane/vembrane/commit/584c3d4b90e9a3d77431a021c333f950ac4633aa))
+
+
+### Documentation
+
+* in example, stratify by order of magnitude when sorting by gnomAD allele frequency ([#209](https://github.com/vembrane/vembrane/issues/209)) ([b08597e](https://github.com/vembrane/vembrane/commit/b08597eb19d05f80f4b0dd100d6dbc3422d195d3))
+* mention new logic of always being able to use ANN regardless of the used annotation key in the detailed docs for filter ([#211](https://github.com/vembrane/vembrane/issues/211)) ([8872250](https://github.com/vembrane/vembrane/commit/8872250535ef016ba83d3114324cba6cf2467262))
+
 ## [2.2.0](https://github.com/vembrane/vembrane/compare/v2.1.0...v2.2.0) (2025-07-17)
 
 
