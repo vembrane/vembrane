@@ -1,0 +1,8 @@
+[
+  {
+    "variant": {"chromosome": "1", "position": 123, "reference_allele": "A", "alternative_allele": "C"}
+  },
+  {
+    "variant": {"chromosome": "1", "position": 456, "reference_allele": "A", "alternative_allele": "C"}
+  }
+]

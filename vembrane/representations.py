@@ -98,6 +98,10 @@ class Annotation(NoValueDict, DefaultGet):
             value = self._data[item] = convert(raw_value)
             return value
 
+    def __bool__(self):
+        """Evaluates to False if no annotation is present in the header."""
+        return bool(self._ann_conv)
+
 
 UNSET = object()
 
@@ -317,7 +321,7 @@ class SourceEnvironment(Environment):
         # compile the now-fixed code-tree
         self.compiled: CodeType = compile(source_ast, filename="<string>", mode="eval")
 
-    def expression_annotations(self):
+    def expression_annotations(self) -> bool:
         return self._has_ann
 
 

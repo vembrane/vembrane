@@ -1,0 +1,5 @@
+variant:
+  chromosome: ?CHROM
+  position: ?POS
+  reference_allele: ?REF
+  alternative_allele: ?ALT

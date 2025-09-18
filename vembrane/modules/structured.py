@@ -98,6 +98,9 @@ class CodeHandler(yte.CodeHandler):
         env = self._env(source)
         return exec(env.compiled, variables, env)
 
+    def has_annotation(self) -> bool:
+        return any(env.expression_annotations() for env in self._envs.values())
+
 
 class ValueHandler(yte.ValueHandler):
     def postprocess_atomic_value(self, value: Any) -> Any:
@@ -133,10 +136,18 @@ def process_vcf(
                 )
                 continue
             code_handler.update_from_record(idx, record)
-            annotations = annotation.get_record_annotations(idx, record)
 
-            for ann in annotations:
-                code_handler.update_from_annotation(ann)
+            annotations: list[str] | None
+
+            if annotation:
+                annotations = annotation.get_record_annotations(idx, record)
+            else:
+                annotations = None
+
+            # type ignore below because mypy is too stupid!
+            for ann_entry in annotations or [None]:  # type: ignore
+                if ann_entry is not None:
+                    code_handler.update_from_annotation(ann_entry)
                 converted = yte.process_yaml(
                     template,
                     code_handler=code_handler,
@@ -146,6 +157,11 @@ def process_vcf(
                 if postprocess is not None:
                     converted = postprocess(converted)
                 yield converted
+                if not code_handler.has_annotation():
+                    # If annotation is not used in template, only process first entry.
+                    # There can be no subsequent entries leading to different results.
+                    break
+
         except Exception as e:
             raise VembraneError.from_record_and_exception(idx, record, e) from e
 
