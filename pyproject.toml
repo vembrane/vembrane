@@ -140,7 +140,7 @@ isolated_build = true
 runner = "uv-venv-lock-runner"
 description = "run unit tests"
 dependency_groups = ["test"]
-commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
+commands = [["pytest -v", { replace = "posargs", default = ["tests"], extend = true }]]
 
 [tool.tox.env."format-check"]
 runner = "uv-venv-lock-runner"
