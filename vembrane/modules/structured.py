@@ -144,7 +144,8 @@ def process_vcf(
             else:
                 annotations = None
 
-            for ann_entry in annotations or [None]:  # type: ignore (mypy is too stupid!)
+            # type ignore below because mypy is too stupid!
+            for ann_entry in annotations or [None]:  # type: ignore
                 if ann_entry is not None:
                     code_handler.update_from_annotation(ann_entry)
                 converted = yte.process_yaml(
