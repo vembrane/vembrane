@@ -3,7 +3,10 @@
 [![Paper DOI:10.1093/bioinformatics/btac810](http://img.shields.io/badge/DOI-10.1093/bioinformatics/btac810-3c799f.svg)](https://doi.org/10.1093/bioinformatics/btac810)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/vembrane/README.html)
 
-# vembrane: VCF/BCF transformation using python expressions
+![logo dark](./logo_dark.svg#gh-dark-mode-only)
+![logo light](./logo.svg#gh-light-mode-only)
+
+# VCF/BCF transformation using python expressions
 
 vembrane allows to transform VCF/BCF files by specifying flexible Python expressions over `INFO` or `FORMAT` field, `CHROM`, `POS`, `ID`, `REF`, `ALT`, `QUAL`, `FILTER`, and the annotation field `ANN`/`CSQ`.
 Supported transformations include filtering, tagging, annotation, sorting, and conversion to tabular (CSV/TSV), structured formats (JSON/JSONL/YAML), and [FHIR](https://www.hl7.org/fhir).
