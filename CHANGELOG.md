@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.4](https://github.com/vembrane/vembrane/compare/v2.3.3...v2.3.4) (2025-09-18)
+
+
+### Bug Fixes
+
+* vembrane structured failing when VCF has no ANN annotations (issue [#224](https://github.com/vembrane/vembrane/issues/224)) ([#225](https://github.com/vembrane/vembrane/issues/225)) ([73a780d](https://github.com/vembrane/vembrane/commit/73a780daabe805a4887a5a1bc49f76aa98b4d081))
+
+
+### Documentation
+
+* generalize intro and mention homepage ([#226](https://github.com/vembrane/vembrane/issues/226)) ([170cab2](https://github.com/vembrane/vembrane/commit/170cab26d9140e9c22698e52dc30147de0874102))
+
 ## [2.3.3](https://github.com/vembrane/vembrane/compare/v2.3.2...v2.3.3) (2025-09-15)
 
 
