@@ -137,12 +137,14 @@ def process_vcf(
                 continue
             code_handler.update_from_record(idx, record)
 
+            annotations: list[str] | None
+
             if annotation:
                 annotations = annotation.get_record_annotations(idx, record)
             else:
-                annotations = [None]
+                annotations = None
 
-            for ann_entry in annotations:
+            for ann_entry in annotations or [None]:
                 if ann_entry is not None:
                     code_handler.update_from_annotation(ann_entry)
                 converted = yte.process_yaml(
