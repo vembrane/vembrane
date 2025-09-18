@@ -120,6 +120,14 @@ def process_vcf(
         variables = {}
 
     annotation = Annotation(ann_key, vcf.header)
+    
+    # Check if the template references ANN/annotation fields
+    # We check for both the annotation key and "ANN" (the canonical form)
+    template_needs_ann = (
+        ann_key in template or 
+        "ANN" in template or 
+        ann_key.lower() in template.lower()
+    )
 
     for idx, record in enumerate(vcf):
         try:
@@ -133,10 +141,22 @@ def process_vcf(
                 )
                 continue
             code_handler.update_from_record(idx, record)
-            annotations = annotation.get_record_annotations(idx, record)
-
-            for ann in annotations:
-                code_handler.update_from_annotation(ann)
+            
+            if template_needs_ann:
+                annotations = annotation.get_record_annotations(idx, record)
+                for ann in annotations:
+                    code_handler.update_from_annotation(ann)
+                    converted = yte.process_yaml(
+                        template,
+                        code_handler=code_handler,
+                        value_handler=value_handler,
+                        variables=variables,
+                    )
+                    if postprocess is not None:
+                        converted = postprocess(converted)
+                    yield converted
+            else:
+                # Template doesn't use annotations, process directly
                 converted = yte.process_yaml(
                     template,
                     code_handler=code_handler,
