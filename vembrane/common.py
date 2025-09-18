@@ -127,9 +127,6 @@ def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
                 "Could not parse annotation keys from header. Has your VCF been "
                 "properly annotated (e.g. with VEP or SnpEff)?"
             ) from e
-    # TODO don't we want to raise an error here as well?
-    # I think it means that the VCF header does not contain the annotation key,
-    # doesn't it?
     return []
 
 

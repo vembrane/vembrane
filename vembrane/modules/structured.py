@@ -98,6 +98,9 @@ class CodeHandler(yte.CodeHandler):
         env = self._env(source)
         return exec(env.compiled, variables, env)
 
+    def has_annotation(self) -> bool:
+        return any(env.expression_annotations() for env in self._envs.values())
+
 
 class ValueHandler(yte.ValueHandler):
     def postprocess_atomic_value(self, value: Any) -> Any:
@@ -120,14 +123,6 @@ def process_vcf(
         variables = {}
 
     annotation = Annotation(ann_key, vcf.header)
-    
-    # Check if the template references ANN/annotation fields
-    # We check for both the annotation key and "ANN" (the canonical form)
-    template_needs_ann = (
-        ann_key in template or 
-        "ANN" in template or 
-        ann_key.lower() in template.lower()
-    )
 
     for idx, record in enumerate(vcf):
         try:
@@ -141,22 +136,15 @@ def process_vcf(
                 )
                 continue
             code_handler.update_from_record(idx, record)
-            
-            if template_needs_ann:
+
+            if annotation:
                 annotations = annotation.get_record_annotations(idx, record)
-                for ann in annotations:
-                    code_handler.update_from_annotation(ann)
-                    converted = yte.process_yaml(
-                        template,
-                        code_handler=code_handler,
-                        value_handler=value_handler,
-                        variables=variables,
-                    )
-                    if postprocess is not None:
-                        converted = postprocess(converted)
-                    yield converted
             else:
-                # Template doesn't use annotations, process directly
+                annotations = [None]
+
+            for ann_entry in annotations:
+                if ann_entry is not None:
+                    code_handler.update_from_annotation(ann_entry)
                 converted = yte.process_yaml(
                     template,
                     code_handler=code_handler,
@@ -166,6 +154,11 @@ def process_vcf(
                 if postprocess is not None:
                     converted = postprocess(converted)
                 yield converted
+                if not code_handler.has_annotation():
+                    # If annotation is not used in template, only process first entry.
+                    # There can be no subsequent entries leading to different results.
+                    break
+
         except Exception as e:
             raise VembraneError.from_record_and_exception(idx, record, e) from e
 
