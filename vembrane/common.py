@@ -38,11 +38,15 @@ def add_common_arguments(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--context",
         help="Python statement defining a context for given Python expressions. "
-        "Extends eventual definitions given via --context-file.",
+        "Extends eventual definitions given via --context-file. "
+        "Any global variables (or functions) become available in the Python "
+        "expressions",
     )
     parser.add_argument(
         "--context-file",
-        help="Path to Python script defining a context for given Python expressions.",
+        help="Path to Python script defining a context for given Python expressions. "
+        "Any global variables (or functions) become available in the Python "
+        "expressions",
     )
     parser.add_argument(
         "--ontology",

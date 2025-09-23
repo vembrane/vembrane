@@ -249,6 +249,12 @@ In addition to the default context for expressions given to vembrane, consisting
 
 In both cases, the provided input is evaluated with Python. Any global variables (or functions) become available in the Python expressions that you provide to vembrane for filtering or the other subcommands.
 
+An example use case is the import of additional Python modules. For example, you could use this to randomly subsample 10% of the VCF/BCF records given in a file `input.vcf`:
+
+```bash
+vembrane filter --context "import random; random.seed(42)" "random.random() < 0.1" input.vcf > subsampled.vcf
+```
+
 ### Ontologies
 `vembrane` supports ontologies in OBO format. The ontology is loaded into memory and can be accessed in the filter expression via the `SO` symbol. This enables filtering based on relationships between ontology terms. 
 For example, `vembrane filter --ontology so.obo 'ANN["Consequence"].any_is_a("intron_variant")'` will keep only records where at least one of the consequences is an intron variant *or a subtype thereof*.
