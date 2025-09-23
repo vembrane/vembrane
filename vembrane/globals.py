@@ -137,7 +137,7 @@ _explicit_clear: dict[str, dict[str, Any] | None] = {
     "__import__": None,
 }
 
-allowed_globals: dict[str, Any] = {
+default_allowed_globals: dict[str, Any] = {
     **_builtins,
     **_modules,
     **_math_exports,

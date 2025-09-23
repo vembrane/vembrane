@@ -6,8 +6,13 @@ from typing import Any
 from .ann_types import ANN_TYPER, NA, MoreThanOneAltAlleleError, NvFloat, NvInt
 from .backend.base import VCFHeader, VCFRecord, VCFRecordFormats, VCFRecordInfo
 from .common import get_annotation_keys, split_annotation_entry
-from .errors import MalformedAnnotationError, NonBoolTypeError, UnknownAnnotationError
-from .globals import _explicit_clear, allowed_globals, custom_functions
+from .errors import (
+    MalformedAnnotationError,
+    NonBoolTypeError,
+    UnknownAnnotationError,
+    VembraneError,
+)
+from .globals import _explicit_clear, custom_functions, default_allowed_globals
 from .sequence_ontology import _C, SequenceOntology
 
 
@@ -123,8 +128,11 @@ class Environment(dict):
         header: VCFHeader,
         auxiliary: dict[str, set[str]] | None = None,
         ontology: SequenceOntology | None = None,
+        allowed_globals: dict[str, Any] | None = None,
         auxiliary_globals: dict[str, Any] | None = None,
     ) -> None:
+        if allowed_globals is None:
+            allowed_globals = default_allowed_globals
         if auxiliary is None:
             auxiliary = {}
         if ann_key == "ANN":
@@ -132,18 +140,14 @@ class Environment(dict):
         else:
             self.item_is_ann = lambda item: item == "ANN" or item == ann_key
         self._annotation: Annotation = Annotation(ann_key, header)
-        self._globals: dict[str, Any] = {}
+        self._globals: dict[str, Any] = dict(allowed_globals)
         # We use self + self.func as a closure.
-        self._globals = dict(allowed_globals)
-        if auxiliary_globals:
-            self._globals.update(auxiliary_globals)
         self._globals.update(custom_functions(self))
         self._globals["SAMPLES"] = list(header.samples)
+
         # REF/ALT alleles are cached separately to raise "MoreThanOneAltAllele"
         # only if ALT (but not REF) is accessed (and ALT has multiple entries).
         self._alleles = None
-
-        self.update(**_explicit_clear)
 
         self._getters = {
             "AUX": self._get_aux,
@@ -160,6 +164,21 @@ class Environment(dict):
             "FORMAT": self._get_format,
             "INDEX": self._get_index,
         }
+
+        self.update(**_explicit_clear)
+
+        if auxiliary_globals:
+            common_names = [
+                name
+                for name in auxiliary_globals
+                if name in self._getters or name in self._globals
+            ]
+            if common_names:
+                raise VembraneError(
+                    "Context definition may not overwrite names defined by vembrane. "
+                    f"Conflicting: {','.join(common_names)}."
+                )
+            self._globals.update(auxiliary_globals)
 
         # vembrane only supports bi-allelic records (i.e. one REF, one ALT allele).
         # Hence, for all fields in the header whith `number in {"A", "R"}`
@@ -290,9 +309,12 @@ class SourceEnvironment(Environment):
         header: VCFHeader,
         auxiliary: dict[str, set[str]] | None = None,
         ontology: SequenceOntology | None = None,
+        allowed_globals: dict[str, Any] | None = None,
         auxiliary_globals: dict[str, Any] | None = None,
     ):
-        super().__init__(ann_key, header, auxiliary, ontology, auxiliary_globals)
+        super().__init__(
+            ann_key, header, auxiliary, ontology, allowed_globals, auxiliary_globals
+        )
 
         self._has_ann: bool = any(
             hasattr(node, "id")
@@ -333,12 +355,19 @@ class FuncWrappedExpressionEnvironment(SourceEnvironment):
         header: VCFHeader,
         auxiliary: dict[str, set[str]] | None = None,
         ontology: SequenceOntology | None = None,
+        allowed_globals: dict[str, Any] | None = None,
         auxiliary_globals: dict[str, Any] | None = None,
         evaluation_function_template: str = "lambda: {expression}",
     ) -> None:
         func_str: str = evaluation_function_template.format(expression=expression)
         super().__init__(
-            func_str, ann_key, header, auxiliary, ontology, auxiliary_globals
+            func_str,
+            ann_key,
+            header,
+            auxiliary,
+            ontology,
+            allowed_globals,
+            auxiliary_globals,
         )
         self._func = eval(self.compiled, self, {})
 

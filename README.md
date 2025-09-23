@@ -79,6 +79,11 @@ options:
                         setting "CSQ" here.
   --aux NAME=PATH, -a NAME=PATH
                         Path to an auxiliary file containing a set of symbols.
+  --context CONTEXT     Python statement defining a context for any Python expressions given to 
+                        vembrane (e.g. filter, table, or sort expressions).
+  --context-file CONTEXT_FILE
+                        Path to Python script defining a context for any Python expressions
+                        given to vembrane (e.g. filter, table, or sort expressions).
   --ontology PATH       Path to an ontology in OBO format. 
                         The ontology is loaded into memory and can be used in expressions via the SO symbol.
                         May be compressed with gzip, bzip2 or xz.

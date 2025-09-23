@@ -7,11 +7,13 @@ from typing import Any
 from intervaltree import IntervalTree  # type: ignore
 
 from vembrane.common import (
+    Context,
     HumanReadableDefaultsFormatter,
     Primitive,
     Singleton,
     add_common_arguments,
 )
+from vembrane.globals import default_allowed_globals
 from vembrane.modules import structured
 
 PROFILE_DIR = (
@@ -246,7 +248,8 @@ def execute(args):
         overwrite_number_info=args.overwrite_number_info,
         overwrite_number_format=args.overwrite_number_format,
         backend=args.backend,
-        variables={
+        allowed_globals=default_allowed_globals
+        | {
             "sample": args.sample,
             "url": args.url,
             "status": args.status,
@@ -264,6 +267,7 @@ def execute(args):
             "id_source": args.id_source,
             "detection_limit": args.detection_limit,
         },
+        auxiliary_globals=Context.from_args(args).get_globals(),
         postprocess=postprocess_fhir_record,
     )
 

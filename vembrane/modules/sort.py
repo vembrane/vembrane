@@ -11,12 +11,14 @@ from vembrane import __version__
 from vembrane.ann_types import NA
 from vembrane.backend.base import Backend, VCFReader, VCFRecord, VCFWriter
 from vembrane.common import (
+    Context,
     HumanReadableDefaultsFormatter,
     add_common_arguments,
     check_expression,
     create_reader,
     create_writer,
     normalize,
+    read_auxiliary,
 )
 from vembrane.errors import VembraneError
 from vembrane.representations import Annotation, SourceEnvironment
@@ -186,6 +188,8 @@ def execute(args) -> None:
     }
     fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
 
+    aux = read_auxiliary(args.aux)
+
     try:
         with create_reader(
             args.vcf,
@@ -208,7 +212,9 @@ def execute(args) -> None:
                 args.expression,
                 args.annotation_key,
                 reader.header,
-                auxiliary_globals=auxiliary_globals,
+                auxiliary_globals=Context.from_args(args).get_globals()
+                | auxiliary_globals,
+                auxiliary=aux,
             )
 
             def get_sort_key(

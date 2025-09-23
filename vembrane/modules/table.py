@@ -7,6 +7,7 @@ import asttokens
 
 from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
+    Context,
     HumanReadableDefaultsFormatter,
     add_common_arguments,
     check_expression,
@@ -17,7 +18,7 @@ from ..common import (
     smart_open,
 )
 from ..errors import HeaderWrongColumnNumberError, handle_vembrane_error
-from ..globals import allowed_globals
+from ..globals import default_allowed_globals
 from ..representations import FuncWrappedExpressionEnvironment
 from ..sequence_ontology import SequenceOntology
 from .filter import DeprecatedAction
@@ -99,6 +100,7 @@ def tableize_vcf(
     overwrite_number: dict[str, dict[str, str]] | None = None,
     wide: bool = False,
     auxiliary: dict[str, set[str]] | None = None,
+    auxiliary_globals: dict[str, Any] | None = None,
     ontology: SequenceOntology | None = None,
 ) -> Iterator[tuple]:
     if overwrite_number is None:
@@ -106,7 +108,9 @@ def tableize_vcf(
     if auxiliary is None:
         auxiliary = {}
 
-    kwargs: dict[str, Any] = dict(auxiliary=auxiliary, ontology=ontology)
+    kwargs: dict[str, Any] = dict(
+        auxiliary_globals=auxiliary_globals, auxiliary=auxiliary, ontology=ontology
+    )
 
     long_with_samples = not wide and list(vcf.header.samples)
     if long_with_samples:
@@ -206,7 +210,7 @@ def generate_for_each_sample_column_names(s: str, vcf: VCFReader) -> list[str]:
     var, inner = _var_and_body(s)
 
     samples = list(vcf.header.samples)
-    __globals = allowed_globals.copy()
+    __globals = default_allowed_globals.copy()
 
     column_names = []
     for sample in samples:
@@ -365,6 +369,7 @@ def execute(args):
             overwrite_number=overwrite_number,
             wide=args.wide,
             auxiliary=aux,
+            auxiliary_globals=Context.from_args(args).get_globals(),
             ontology=ontology,
         )
 

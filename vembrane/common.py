@@ -4,6 +4,7 @@ import contextlib
 import shlex
 import sys
 from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator, TextIO, Type
 
@@ -11,6 +12,7 @@ from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamReader, PysamWriter
 from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
 from .errors import InvalidExpressionError, VembraneError
+from .globals import _explicit_clear
 from .sequence_ontology import SequenceOntology
 
 
@@ -32,6 +34,15 @@ def add_common_arguments(parser: argparse.ArgumentParser):
         metavar="NAME=PATH",
         default={},
         help="Path to an auxiliary file containing a set of symbols",
+    )
+    parser.add_argument(
+        "--context",
+        help="Python statement defining a context for given Python expressions. "
+        "Extends eventual definitions given via --context-file.",
+    )
+    parser.add_argument(
+        "--context-file",
+        help="Path to Python script defining a context for given Python expressions.",
     )
     parser.add_argument(
         "--ontology",
@@ -205,6 +216,48 @@ def read_auxiliary(aux: dict[str, str]) -> dict[str, set[str]]:
 
 def read_ontology(path: str | None) -> SequenceOntology | None:
     return SequenceOntology.from_obo(path) if path else None
+
+
+@dataclass
+class Context:
+    context_file: str | None = None
+    context_file_path: Path | None = None
+    context_statement: str | None = None
+    internal_context: str | None = None
+
+    @classmethod
+    def from_args(cls, args: argparse.Namespace) -> "Context":
+        context_file = None
+        context_statement = None
+        internal_context = None
+        context_file_path = None
+        if path := args.context_file:
+            context_file_path = Path(path).absolute()
+            parent = context_file_path.parent
+            internal_context = f"import sys\nsys.path.insert(0, '{parent}')\n"
+            with open(path) as f:
+                context_file = f.read()
+        if statement := args.context:
+            context_statement = statement
+        return cls(
+            context_file=context_file,
+            context_file_path=context_file_path,
+            context_statement=context_statement,
+            internal_context=internal_context,
+        )
+
+    def get_globals(self) -> dict[str, Any]:
+        globals_dict: dict[str, Any] = {}
+        if self.internal_context:
+            exec(self.internal_context, globals_dict)
+        if self.context_file:
+            exec(self.context_file, globals_dict)
+        if self.context_statement:
+            exec(self.context_statement, globals_dict)
+        for name in _explicit_clear:
+            if name in globals_dict:
+                del globals_dict[name]
+        return globals_dict
 
 
 def create_reader(

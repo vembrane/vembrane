@@ -10,6 +10,7 @@ from vembrane.errors import handle_vembrane_error  # type: ignore
 
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
+    Context,
     HumanReadableDefaultsFormatter,
     add_common_arguments,
     check_expression,
@@ -70,8 +71,11 @@ def annotate_vcf(
     ann_key: str,
     ann_data,
     config: dict,
+    auxiliary_globals: dict[str, Any] | None = None,
 ) -> Iterator[VCFRecord]:
-    env = FuncWrappedExpressionEnvironment(expression, ann_key, vcf.header)
+    env = FuncWrappedExpressionEnvironment(
+        expression, ann_key, vcf.header, auxiliary_globals=auxiliary_globals
+    )
 
     config_chrom_column: str = config["annotation"]["columns"]["chrom"]
     config_start_column: str = config["annotation"]["columns"]["start"]
@@ -191,6 +195,7 @@ def execute(args):
                 args.annotation_key,
                 ann_data=ann_data,
                 config=config,
+                auxiliary_globals=Context.from_args(args).get_globals(),
             )
             for v in variants:
                 out.write(v)

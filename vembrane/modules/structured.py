@@ -8,6 +8,7 @@ import yte  # type: ignore
 from vembrane.ann_types import NA
 from vembrane.backend.base import VCFHeader, VCFReader, VCFRecord
 from vembrane.common import (
+    Context,
     HumanReadableDefaultsFormatter,
     Primitive,
     add_common_arguments,
@@ -59,13 +60,21 @@ ConvertedRecords = Iterator[list[Any] | dict[Any, Any] | Any]
 
 
 class CodeHandler(yte.CodeHandler):
-    def __init__(self, ann_key: str, header: VCFHeader) -> None:
+    def __init__(
+        self,
+        ann_key: str,
+        header: VCFHeader,
+        allowed_globals: dict[str, Any] | None,
+        auxiliary_globals: dict[str, Any] | None,
+    ) -> None:
         self.ann_key = ann_key
         self.header = header
         self._envs: Dict[str, SourceEnvironment] = {}
         self._record: VCFRecord | None = None
         self._record_idx: int | None = None
         self._annotation: str | None = None
+        self._auxiliary_globals = auxiliary_globals
+        self._allowed_globals = allowed_globals
 
     def update_from_record(self, idx: int, record: VCFRecord) -> None:
         self._record = record
@@ -83,7 +92,13 @@ class CodeHandler(yte.CodeHandler):
     def _env(self, source: str) -> SourceEnvironment:
         env = self._envs.get(source)
         if env is None:
-            env = SourceEnvironment(source, self.ann_key, self.header)
+            env = SourceEnvironment(
+                source,
+                self.ann_key,
+                self.header,
+                allowed_globals=self._allowed_globals,
+                auxiliary_globals=self._auxiliary_globals,
+            )
             env.update_from_record(self._record_idx, self._record)  # type: ignore
             if self._annotation is not None:
                 env.update_annotation(self._annotation)
@@ -114,13 +129,12 @@ def process_vcf(
     vcf: VCFReader,
     template: str,
     ann_key: str,
-    variables: Dict[str, Any] | None = None,
+    allowed_globals: dict[str, Any] | None = None,
+    auxiliary_globals: dict[str, Any] | None = None,
     postprocess: Callable[[Any], Any] | None = None,
 ) -> ConvertedRecords:
-    code_handler = CodeHandler(ann_key, vcf.header)
+    code_handler = CodeHandler(ann_key, vcf.header, allowed_globals, auxiliary_globals)
     value_handler = ValueHandler()
-    if variables is None:
-        variables = {}
 
     annotation = Annotation(ann_key, vcf.header)
 
@@ -152,7 +166,6 @@ def process_vcf(
                     template,
                     code_handler=code_handler,
                     value_handler=value_handler,
-                    variables=variables,
                 )
                 if postprocess is not None:
                     converted = postprocess(converted)
@@ -200,7 +213,8 @@ def process(
     overwrite_number_info: dict[str, str],
     overwrite_number_format,
     backend,
-    variables: Dict[str, Any] | None = None,
+    allowed_globals: Dict[str, Any] | None = None,
+    auxiliary_globals: Dict[str, Any] | None = None,
     postprocess: (
         Callable[[Primitive | dict | list], Primitive | dict | list] | None
     ) = None,
@@ -253,7 +267,8 @@ def process(
                 reader,
                 template,
                 annotation_key,
-                variables=variables,
+                allowed_globals,
+                auxiliary_globals,
                 postprocess=postprocess,
             ),
         )
@@ -272,4 +287,5 @@ def execute(args):
         overwrite_number_info=args.overwrite_number_info,
         overwrite_number_format=args.overwrite_number_format,
         backend=args.backend,
+        auxiliary_globals=Context.from_args(args).get_globals(),
     )

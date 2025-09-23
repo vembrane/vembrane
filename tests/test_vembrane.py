@@ -3,6 +3,7 @@ import builtins
 import json
 import os
 import tempfile
+from enum import Enum, auto
 from itertools import product, zip_longest
 from pathlib import Path
 
@@ -32,8 +33,14 @@ def idfn(val):
         return "-".join(os.path.normpath(val).split(os.sep)[-2:])
 
 
+class Context(Enum):
+    FILE = auto()
+    STATEMENT = auto()
+    NONE = auto()
+
+
 @pytest.mark.parametrize(
-    "testcase,backend",
+    "testcase,backend,context",
     product(
         (
             case_path.joinpath(d)
@@ -49,11 +56,12 @@ def idfn(val):
             for d in os.listdir(case_path)
             if not d.startswith(".")
         ),
-        (Backend.pysam, Backend.cyvcf2),  # Backend.cyvcf2
+        (Backend.pysam, Backend.cyvcf2),
+        (Context.NONE, Context.FILE, Context.STATEMENT),
     ),
     ids=idfn,
 )
-def test_command(testcase: os.PathLike, backend: Backend):
+def test_command(testcase: os.PathLike, backend: Backend, context: Context | None):
     path = testcase
     vcf_path = path.joinpath("test.vcf")
 
@@ -63,6 +71,13 @@ def test_command(testcase: os.PathLike, backend: Backend):
     # emulate command-line command setup to use argparse afterwards
     cmd = config["function"]
     command = parse_command_config(cmd, config, vcf_path)
+
+    match context:
+        case Context.STATEMENT:
+            command.extend(["--context", "import random"])
+        case Context.FILE:
+            command.extend(["--context-file", "tests/resources/dummy_context.py"])
+
     parser = construct_parser()
 
     try:
