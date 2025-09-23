@@ -45,6 +45,9 @@ options:
                         For example, default VEP annotations can be parsed by setting 'CSQ' here. (default: ANN)
   --aux NAME=PATH, -a NAME=PATH
                         Path to an auxiliary file containing a set of symbols
+  --context CONTEXT     Python statement defining a context for given Python expressions. Extends eventual definitions given via --context-file.
+  --context-file CONTEXT_FILE
+                        Path to Python script defining a context for given Python expressions.
   --ontology PATH       Path to an ontology in OBO format. May be compressed with gzip, bzip2 and xz. Defaults to built-in
                         ontology (from sequenceontology.org).
   --overwrite-number-info FIELD=NUMBER

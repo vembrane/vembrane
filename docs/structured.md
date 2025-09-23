@@ -4,18 +4,38 @@ The `structured` subcommand allows you to convert VCF records into structured da
 
 ### Usage
 ```
-usage: vembrane structured [options] template [input vcf]
+usage: vembrane structured [-h] [--output-fmt {json,jsonl,yaml}] [--output OUTPUT] [--annotation-key FIELDNAME] [--aux NAME=PATH] [--context CONTEXT]
+                           [--context-file CONTEXT_FILE] [--ontology PATH] [--overwrite-number-info FIELD=NUMBER] [--overwrite-number-format FIELD=NUMBER]
+                           [--backend {cyvcf2,pysam}]
+                           template [vcf]
+
+Create structured output from a VCF/BCF and a YTE template.
+
+positional arguments:
+  template              File containing a YTE template with the desired structure per record and expressions that retrieve data from the VCF/BCF record.
+  vcf                   Path to the VCF/BCF file to be filtered. Defaults to '-' for stdin. (default: -)
 
 options:
   -h, --help            show this help message and exit
-  --annotation-key FIELDNAME, -k FIELDNAME
-                        The INFO key for the annotation field. This defaults to "ANN", but tools might
-                        use other field names. For example, default VEP annotations can be parsed by
-                        setting "CSQ" here.
-  --output OUTPUT, -o OUTPUT
-                        Output file. If not specified, output is written to STDOUT.
   --output-fmt {json,jsonl,yaml}
                         Output format. If not specified, can be automatically determined from the --output file extension.
+  --output OUTPUT, -o OUTPUT
+                        Output file, if not specified, output is written to STDOUT. (default: -)
+  --annotation-key FIELDNAME, -k FIELDNAME
+                        The INFO key for the annotation field. This defaults to 'ANN', but tools might use other field names. For example, default VEP annotations can be
+                        parsed by setting 'CSQ' here. (default: ANN)
+  --aux NAME=PATH, -a NAME=PATH
+                        Path to an auxiliary file containing a set of symbols
+  --context CONTEXT     Python statement defining a context for given Python expressions. Extends eventual definitions given via --context-file.
+  --context-file CONTEXT_FILE
+                        Path to Python script defining a context for given Python expressions.
+  --ontology PATH       Path to an ontology in OBO format. May be compressed with gzip, bzip2 and xz. Defaults to built-in ontology (from sequenceontology.org).
+  --overwrite-number-info FIELD=NUMBER
+                        Overwrite the number specification for INFO fields given in the VCF header. Example: `--overwrite-number cosmic_CNT=.`
+  --overwrite-number-format FIELD=NUMBER
+                        Overwrite the number specification for FORMAT fields given in the VCF header. Example: `--overwrite-number-format DP=2`
+  --backend {cyvcf2,pysam}, -b {cyvcf2,pysam}
+                        Set the backend library. (default: cyvcf2)
 ```
 
 ### Examples
