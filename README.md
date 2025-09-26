@@ -247,7 +247,7 @@ In addition to the default context for expressions given to vembrane, consisting
 * `--context STATEMENT`: providing a Python statement,
 * `--context-file PATH`: providing a Python script to evaluate (considering the parent directory of the script as search path for eventual additional imports).
 
-In both cases, the provided input is evaluated with Python. Any global variables (or functions) become available in the Python expressions that you provide to vembrane for filtering or the other subcommands.
+In both cases, the provided input is evaluated with Python. Any global variables (or functions) become available in the Python expressions that you provide to vembrane for filtering or the other subcommands. Note that the code you provide as context is not sandboxed and should be trusted. Carefully review any code you get from the internet or AI.
 
 An example use case is the import of additional Python modules. For example, you could use this to randomly subsample 10% of the VCF/BCF records given in a file `input.vcf`:
 
