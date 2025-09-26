@@ -1,0 +1,5 @@
+observation:
+  chrom: ?dummy_func(CHROM)
+  pos: ?POS
+  ref: ?REF
+  alt: ?ALT

@@ -1,0 +1,8 @@
+[
+  {
+    "observation": {"chrom": "1", "pos": 26696985, "ref": "C", "alt": "T"}
+  },
+  {
+    "observation": {"chrom": "1", "pos": 26696986, "ref": "C", "alt": "T"}
+  }
+]

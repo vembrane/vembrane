@@ -1,0 +1,3 @@
+function: "sort"
+expression: "dummy_func(desc(POS))"
+needs_context: true

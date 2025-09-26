@@ -252,12 +252,15 @@ class Context:
 
     def get_globals(self) -> dict[str, Any]:
         globals_dict: dict[str, Any] = {}
-        if self.internal_context:
-            exec(self.internal_context, globals_dict)
-        if self.context_file:
-            exec(self.context_file, globals_dict)
-        if self.context_statement:
-            exec(self.context_statement, globals_dict)
+        try:
+            if self.internal_context:
+                exec(self.internal_context, globals_dict)
+            if self.context_file:
+                exec(self.context_file, globals_dict)
+            if self.context_statement:
+                exec(self.context_statement, globals_dict)
+        except Exception as e:
+            raise VembraneError("Error while executing context: {e}") from e
         for name in _explicit_clear:
             if name in globals_dict:
                 del globals_dict[name]

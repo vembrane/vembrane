@@ -1,0 +1,3 @@
+function: "structured"
+output_fmt: "json"
+needs_context: true

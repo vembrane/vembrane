@@ -1,0 +1,5 @@
+function: "tag"
+tags:
+ high_impact: '"HIGH" in ANN["Annotation_Impact"]'
+ missense: "dummy_func('missense_variant' in ANN['Annotation'])"
+needs_context: true

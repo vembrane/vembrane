@@ -37,6 +37,7 @@ class Context(Enum):
     FILE = auto()
     STATEMENT = auto()
     NONE = auto()
+    ERROR = auto()
 
 
 @pytest.mark.parametrize(
@@ -57,7 +58,7 @@ class Context(Enum):
             if not d.startswith(".")
         ),
         (Backend.pysam, Backend.cyvcf2),
-        (Context.NONE, Context.FILE, Context.STATEMENT),
+        (Context.NONE, Context.FILE, Context.STATEMENT, Context.ERROR),
     ),
     ids=idfn,
 )
@@ -74,9 +75,20 @@ def test_command(testcase: os.PathLike, backend: Backend, context: Context | Non
 
     match context:
         case Context.STATEMENT:
-            command.extend(["--context", "import random"])
+            command.extend(["--context", "import random; dummy_func = lambda x: x"])
         case Context.FILE:
-            command.extend(["--context-file", "tests/resources/dummy_context.py"])
+            command.extend(["--context-file", "tests/resources/context.py"])
+        case Context.ERROR:
+            if "raises" not in config:
+                command.extend(["--context-file", "tests/resources/context_error.py"])
+                config["raises"] = "VembraneError"
+            else:
+                pytest.skip(
+                    "Test expects other error, skipping context error injection."
+                )
+        case Context.NONE:
+            if config.get("needs_context"):
+                pytest.skip("Test needs context, skipping.")
 
     parser = construct_parser()
 
@@ -92,26 +104,24 @@ def test_command(testcase: os.PathLike, backend: Backend, context: Context | Non
         exception = config["raises"]
         try:
             exception = getattr(errors, exception)
-            with pytest.raises(SystemExit), pytest.raises(exception):
-                if args.command == "filter":
-                    filter.execute(args)
-                elif args.command == "table":
-                    table.execute(args)
-                elif args.command == "tag":
-                    tag.execute(args)
-                else:
-                    raise AssertionError from None
         except AttributeError:
             exception = getattr(builtins, exception)
-            with pytest.raises(SystemExit), pytest.raises(exception):
-                if args.command == "filter":
-                    filter.execute(args)
-                elif args.command == "table":
-                    table.execute(args)
-                elif args.command == "tag":
-                    tag.execute(args)
-                else:
-                    raise AssertionError from None
+
+        with pytest.raises(SystemExit), pytest.raises(exception):
+            if args.command == "filter":
+                filter.execute(args)
+            elif args.command == "table":
+                table.execute(args)
+            elif args.command == "tag":
+                tag.execute(args)
+            elif args.command == "structured":
+                structured.execute(args)
+            elif args.command == "fhir":
+                fhir.execute(args)
+            elif args.command == "sort":
+                sort.execute(args)
+            else:
+                raise AssertionError from None
     else:
         with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
             args.output = tmp_out.name

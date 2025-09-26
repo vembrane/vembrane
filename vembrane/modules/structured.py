@@ -1,4 +1,5 @@
 import json
+import sys
 import textwrap
 from typing import Any, Callable, Dict, Iterator, TextIO
 
@@ -275,17 +276,21 @@ def process(
 
 
 def execute(args):
-    with open(args.template, "r") as template:
-        template = template.read()
+    try:
+        with open(args.template, "r") as template:
+            template = template.read()
 
-    process(
-        template=template,
-        output_fmt=args.output_fmt,
-        output=args.output,
-        vcf=args.vcf,
-        annotation_key=args.annotation_key,
-        overwrite_number_info=args.overwrite_number_info,
-        overwrite_number_format=args.overwrite_number_format,
-        backend=args.backend,
-        auxiliary_globals=Context.from_args(args).get_globals(),
-    )
+        process(
+            template=template,
+            output_fmt=args.output_fmt,
+            output=args.output,
+            vcf=args.vcf,
+            annotation_key=args.annotation_key,
+            overwrite_number_info=args.overwrite_number_info,
+            overwrite_number_format=args.overwrite_number_format,
+            backend=args.backend,
+            auxiliary_globals=Context.from_args(args).get_globals(),
+        )
+    except VembraneError as ve:
+        print(ve, file=sys.stderr)
+        sys.exit(1)
