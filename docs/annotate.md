@@ -2,6 +2,44 @@
 
 vembrane is able to annotate vcf files with a given table-like file. In addition to the vcf and annotation file, the user has to provide a configuration file.
 
+### Usage
+
+```
+usage: vembrane annotate [-h] [--output OUTPUT] [--output-fmt {vcf,bcf,uncompressed-bcf}] [--annotation-key FIELDNAME] [--aux NAME=PATH] [--context CONTEXT]
+                         [--context-file CONTEXT_FILE] [--ontology PATH] [--overwrite-number-info FIELD=NUMBER] [--overwrite-number-format FIELD=NUMBER]
+                         [--backend {cyvcf2,pysam}]
+                         config [vcf]
+
+Add new INFO field annotations to a VCF/BCF from other data sources, using a configuration file.
+
+positional arguments:
+  config                The configuration file.
+  vcf                   Path to the VCF/BCF file to be filtered. Defaults to '-' for stdin. (default: -)
+
+options:
+  -h, --help            show this help message and exit
+  --output OUTPUT, -o OUTPUT
+                        Output file, if not specified, output is written to STDOUT. (default: -)
+  --output-fmt {vcf,bcf,uncompressed-bcf}, -O {vcf,bcf,uncompressed-bcf}
+                        Output format. (default: vcf)
+  --annotation-key FIELDNAME, -k FIELDNAME
+                        The INFO key for the annotation field. This defaults to 'ANN', but tools might use other field names. For example, default VEP annotations can be
+                        parsed by setting 'CSQ' here. (default: ANN)
+  --aux NAME=PATH, -a NAME=PATH
+                        Path to an auxiliary file containing a set of symbols
+  --context CONTEXT     Python statement defining a context for given Python expressions. Extends eventual definitions given via --context-file. Any global variables (or
+                        functions) become available in the Python expressions
+  --context-file CONTEXT_FILE
+                        Path to Python script defining a context for given Python expressions. Any global variables (or functions) become available in the Python expressions
+  --ontology PATH       Path to an ontology in OBO format. May be compressed with gzip, bzip2 and xz. Defaults to built-in ontology (from sequenceontology.org).
+  --overwrite-number-info FIELD=NUMBER
+                        Overwrite the number specification for INFO fields given in the VCF header. Example: `--overwrite-number cosmic_CNT=.`
+  --overwrite-number-format FIELD=NUMBER
+                        Overwrite the number specification for FORMAT fields given in the VCF header. Example: `--overwrite-number-format DP=2`
+  --backend {cyvcf2,pysam}, -b {cyvcf2,pysam}
+                        Set the backend library. (default: cyvcf2)
+```
+
 Configuration (Example):
 
 ```yaml
