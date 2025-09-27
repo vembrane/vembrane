@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/vembrane/vembrane/compare/v2.3.4...v2.4.0) (2025-09-27)
+
+
+### Features
+
+* add ability to define a custom context for expressions ([#228](https://github.com/vembrane/vembrane/issues/228)) ([4be7631](https://github.com/vembrane/vembrane/commit/4be7631c02562668d3e09874351df0fa5ae6258c))
+
 ## [2.3.4](https://github.com/vembrane/vembrane/compare/v2.3.3...v2.3.4) (2025-09-18)
 
 
