@@ -1,0 +1,4 @@
+function: "table"
+expression: "dummy_func(CHROM), POS, ANN['EXON']"
+wide: []
+needs_context: true

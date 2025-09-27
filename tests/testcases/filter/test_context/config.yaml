@@ -1,0 +1,4 @@
+function: "filter"
+# we want to pass all records and just check whether the context is available
+expression: 'random.random() >= 0.0 and dummy_func(1) == 1'
+needs_context: true

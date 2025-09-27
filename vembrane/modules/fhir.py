@@ -1,5 +1,6 @@
 import csv
 import importlib.resources
+import sys
 from collections import defaultdict
 from typing import Any
 
@@ -7,11 +8,14 @@ from typing import Any
 from intervaltree import IntervalTree  # type: ignore
 
 from vembrane.common import (
+    Context,
     HumanReadableDefaultsFormatter,
     Primitive,
     Singleton,
     add_common_arguments,
 )
+from vembrane.errors import VembraneError
+from vembrane.globals import default_allowed_globals
 from vembrane.modules import structured
 
 PROFILE_DIR = (
@@ -228,44 +232,50 @@ class GenomicSourceClasses(metaclass=Singleton):
 
 
 def execute(args):
-    if args.detection_limit is not None:
-        if not (0 < args.detection_limit <= 100):
-            raise ValueError("Detection limit must be between 1 and 100.")
+    try:
+        if args.detection_limit is not None:
+            if not (0 < args.detection_limit <= 100):
+                raise ValueError("Detection limit must be between 1 and 100.")
 
-    genomic_source_classes = GenomicSourceClasses()
+        genomic_source_classes = GenomicSourceClasses()
 
-    with open(PROFILE_DIR / f"{args.profile}.yaml", mode="r") as infile:
-        template = infile.read()
+        with open(PROFILE_DIR / f"{args.profile}.yaml", mode="r") as infile:
+            template = infile.read()
 
-    structured.process(
-        template=template,
-        output_fmt=args.output_fmt,
-        output=args.output,
-        vcf=args.vcf,
-        annotation_key=args.annotation_key,
-        overwrite_number_info=args.overwrite_number_info,
-        overwrite_number_format=args.overwrite_number_format,
-        backend=args.backend,
-        variables={
-            "sample": args.sample,
-            "url": args.url,
-            "status": args.status,
-            "assembly": args.assembly,
-            "sample_allelic_frequency": args.sample_allelic_frequency,
-            "sample_allelic_read_depth": args.sample_allelic_read_depth,
-            "confidence_status": args.confidence_status,
-            "cytobands": Cytobands(),
-            "assemblies": Assemblies(),
-            "chromosomes": Chromosomes(),
-            "genomic_source_classes": genomic_source_classes,
-            "genomic_source_class": genomic_source_classes.preprocess_expression(
-                args.genomic_source_class
-            ),
-            "id_source": args.id_source,
-            "detection_limit": args.detection_limit,
-        },
-        postprocess=postprocess_fhir_record,
-    )
+        structured.process(
+            template=template,
+            output_fmt=args.output_fmt,
+            output=args.output,
+            vcf=args.vcf,
+            annotation_key=args.annotation_key,
+            overwrite_number_info=args.overwrite_number_info,
+            overwrite_number_format=args.overwrite_number_format,
+            backend=args.backend,
+            allowed_globals=default_allowed_globals
+            | {
+                "sample": args.sample,
+                "url": args.url,
+                "status": args.status,
+                "assembly": args.assembly,
+                "sample_allelic_frequency": args.sample_allelic_frequency,
+                "sample_allelic_read_depth": args.sample_allelic_read_depth,
+                "confidence_status": args.confidence_status,
+                "cytobands": Cytobands(),
+                "assemblies": Assemblies(),
+                "chromosomes": Chromosomes(),
+                "genomic_source_classes": genomic_source_classes,
+                "genomic_source_class": genomic_source_classes.preprocess_expression(
+                    args.genomic_source_class
+                ),
+                "id_source": args.id_source,
+                "detection_limit": args.detection_limit,
+            },
+            auxiliary_globals=Context.from_args(args).get_globals(),
+            postprocess=postprocess_fhir_record,
+        )
+    except VembraneError as ve:
+        print(ve, file=sys.stderr)
+        sys.exit(1)
 
 
 def postprocess_fhir_record(record: Primitive | dict | list) -> Primitive | dict | list:

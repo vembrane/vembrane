@@ -12,6 +12,7 @@ from .. import __version__
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
     BreakendEvent,
+    Context,
     HumanReadableDefaultsFormatter,
     add_common_arguments,
     check_expression,
@@ -155,12 +156,18 @@ def filter_vcf(
     keep_unmatched: bool = False,
     preserve_order: bool = False,
     auxiliary: dict[str, set[str]] | None = None,
+    auxiliary_globals: dict[str, Any] | None = None,
     ontology: SequenceOntology | None = None,
 ) -> Iterator[VCFRecord]:
     if auxiliary is None:
         auxiliary = {}
     env = FuncWrappedExpressionEnvironment(
-        expression, ann_key, reader.header, auxiliary, ontology
+        expression,
+        ann_key,
+        reader.header,
+        auxiliary,
+        ontology,
+        auxiliary_globals=auxiliary_globals,
     )
     has_mateid_key = reader.header.infos.get("MATEID", None) is not None
     has_event_key = reader.header.infos.get("EVENT", None) is not None
@@ -372,6 +379,7 @@ def execute(args) -> None:
             keep_unmatched=args.keep_unmatched,
             preserve_order=args.preserve_order,
             auxiliary=aux,
+            auxiliary_globals=Context.from_args(args).get_globals(),
             ontology=ontology,
         )
 

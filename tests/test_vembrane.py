@@ -3,6 +3,7 @@ import builtins
 import json
 import os
 import tempfile
+from enum import Enum, auto
 from itertools import product, zip_longest
 from pathlib import Path
 
@@ -32,8 +33,15 @@ def idfn(val):
         return "-".join(os.path.normpath(val).split(os.sep)[-2:])
 
 
+class Context(Enum):
+    FILE = auto()
+    STATEMENT = auto()
+    NONE = auto()
+    ERROR = auto()
+
+
 @pytest.mark.parametrize(
-    "testcase,backend",
+    "testcase,backend,context",
     product(
         (
             case_path.joinpath(d)
@@ -49,11 +57,12 @@ def idfn(val):
             for d in os.listdir(case_path)
             if not d.startswith(".")
         ),
-        (Backend.pysam, Backend.cyvcf2),  # Backend.cyvcf2
+        (Backend.pysam, Backend.cyvcf2),
+        (Context.NONE, Context.FILE, Context.STATEMENT, Context.ERROR),
     ),
     ids=idfn,
 )
-def test_command(testcase: os.PathLike, backend: Backend):
+def test_command(testcase: os.PathLike, backend: Backend, context: Context | None):
     path = testcase
     vcf_path = path.joinpath("test.vcf")
 
@@ -63,6 +72,24 @@ def test_command(testcase: os.PathLike, backend: Backend):
     # emulate command-line command setup to use argparse afterwards
     cmd = config["function"]
     command = parse_command_config(cmd, config, vcf_path)
+
+    match context:
+        case Context.STATEMENT:
+            command.extend(["--context", "import random; dummy_func = lambda x: x"])
+        case Context.FILE:
+            command.extend(["--context-file", "tests/resources/context.py"])
+        case Context.ERROR:
+            if "raises" not in config:
+                command.extend(["--context-file", "tests/resources/context_error.py"])
+                config["raises"] = "VembraneError"
+            else:
+                pytest.skip(
+                    "Test expects other error, skipping context error injection."
+                )
+        case Context.NONE:
+            if config.get("needs_context"):
+                pytest.skip("Test needs context, skipping.")
+
     parser = construct_parser()
 
     try:
@@ -77,26 +104,24 @@ def test_command(testcase: os.PathLike, backend: Backend):
         exception = config["raises"]
         try:
             exception = getattr(errors, exception)
-            with pytest.raises(SystemExit), pytest.raises(exception):
-                if args.command == "filter":
-                    filter.execute(args)
-                elif args.command == "table":
-                    table.execute(args)
-                elif args.command == "tag":
-                    tag.execute(args)
-                else:
-                    raise AssertionError from None
         except AttributeError:
             exception = getattr(builtins, exception)
-            with pytest.raises(SystemExit), pytest.raises(exception):
-                if args.command == "filter":
-                    filter.execute(args)
-                elif args.command == "table":
-                    table.execute(args)
-                elif args.command == "tag":
-                    tag.execute(args)
-                else:
-                    raise AssertionError from None
+
+        with pytest.raises(SystemExit), pytest.raises(exception):
+            if args.command == "filter":
+                filter.execute(args)
+            elif args.command == "table":
+                table.execute(args)
+            elif args.command == "tag":
+                tag.execute(args)
+            elif args.command == "structured":
+                structured.execute(args)
+            elif args.command == "fhir":
+                fhir.execute(args)
+            elif args.command == "sort":
+                sort.execute(args)
+            else:
+                raise AssertionError from None
     else:
         with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
             args.output = tmp_out.name

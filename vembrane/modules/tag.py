@@ -9,6 +9,7 @@ from ..ann_types import NA
 from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
     AppendTagExpression,
+    Context,
     HumanReadableDefaultsFormatter,
     add_common_arguments,
     check_expression,
@@ -127,6 +128,7 @@ def tag_vcf(
     auxiliary: dict[str, set[str]] | None = None,
     ontology: SequenceOntology | None = None,
     invert: bool = False,
+    auxiliary_globals: dict[str, object] | None = None,
 ) -> Iterator[VCFRecord]:
     if auxiliary is None:
         auxiliary = {}
@@ -134,7 +136,12 @@ def tag_vcf(
     # For each tag-expression pair, a different Environment must be used.
     envs = {
         tag: FuncWrappedExpressionEnvironment(
-            expression, ann_key, vcf.header, auxiliary, ontology
+            expression,
+            ann_key,
+            vcf.header,
+            auxiliary,
+            ontology,
+            auxiliary_globals=auxiliary_globals,
         )
         for tag, expression in expressions.items()
     }
@@ -200,6 +207,7 @@ def execute(args) -> None:
             auxiliary=aux,
             ontology=ontology,
             invert=(args.tag_mode == "fail"),
+            auxiliary_globals=Context.from_args(args).get_globals(),
         )
 
         first_record = list(islice(records, 1))

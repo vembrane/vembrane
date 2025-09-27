@@ -79,6 +79,10 @@ options:
                         setting "CSQ" here.
   --aux NAME=PATH, -a NAME=PATH
                         Path to an auxiliary file containing a set of symbols.
+  --context CONTEXT     Python statement defining a context for given Python expressions.
+                        Extends eventual definitions given via --context-file.
+  --context-file CONTEXT_FILE
+                        Path to Python script defining a context for given Python expressions.
   --ontology PATH       Path to an ontology in OBO format. 
                         The ontology is loaded into memory and can be used in expressions via the SO symbol.
                         May be compressed with gzip, bzip2 or xz.
@@ -236,6 +240,20 @@ Sometimes, multi-valued fields may contain missing values; in this case, the `wi
 
 ### Auxiliary files
 `vembrane` supports additional files, such as lists of genes or ids with the `--aux NAME=path/to/file` option. The file should contain one item per line and is parsed as a set. For example `vembrane filter --aux genes=genes.txt "ANN['SYMBOL'] in AUX['genes']" variants.vcf` will keep only records where the annotated symbol is in the set specified in `genes.txt`.
+
+### Custom context
+In addition to the default context for expressions given to vembrane, consisting of variables containing the VCF/BCF record information, helper functions and useful Python builtins (like `any()`), it is possible to define additional custom context via the flags
+
+* `--context STATEMENT`: providing a Python statement,
+* `--context-file PATH`: providing a Python script to evaluate (considering the parent directory of the script as search path for eventual additional imports).
+
+In both cases, the provided input is evaluated with Python. Any global variables (or functions) become available in the Python expressions that you provide to vembrane for filtering or the other subcommands. Note that the code you provide as context is not sandboxed and should be trusted. Carefully review any code you get from the internet or AI.
+
+An example use case is the import of additional Python modules. For example, you could use this to randomly subsample 10% of the VCF/BCF records given in a file `input.vcf`:
+
+```bash
+vembrane filter --context "import random; random.seed(42)" "random.random() < 0.1" input.vcf > subsampled.vcf
+```
 
 ### Ontologies
 `vembrane` supports ontologies in OBO format. The ontology is loaded into memory and can be accessed in the filter expression via the `SO` symbol. This enables filtering based on relationships between ontology terms. 
