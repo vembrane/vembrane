@@ -159,11 +159,14 @@ def test_command(testcase: os.PathLike, backend: Backend, context: Context | Non
 
                     def get_tout(fileobj) -> str:
                         return "".join(
-                            line for line in fileobj if not line.startswith("##vembrane")
+                            line
+                            for line in fileobj
+                            if not line.startswith("##vembrane")
                         )
 
                     if output_fmt == "parquet":
                         import polars
+
                         with tempfile.NamedTemporaryFile() as tmp_csv_out:
                             polars.read_parquet(tmp_out.name).write_csv(tmp_csv_out)
                             t_out = get_tout(tmp_csv_out)

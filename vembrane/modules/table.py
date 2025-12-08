@@ -100,7 +100,7 @@ def add_subcommmand(subparsers):
         default="csv",
         choices=["csv", "parquet"],
         help="Output format to use. "
-        "The csv format is further configured via the --separator option."
+        "The csv format is further configured via the --separator option.",
     )
     parser.add_argument(
         "--parquet-row-group-size",
@@ -108,7 +108,7 @@ def add_subcommmand(subparsers):
         default=1000,
         help="Number of rows to encode as one parquet batch. "
         "Rows will be accumulated in memory before being written. "
-        "Capped at 64 * 1014 * 1024."
+        "Capped at 64 * 1014 * 1024.",
     )
     add_common_arguments(parser)
 
@@ -405,7 +405,6 @@ def execute(args):
                 header,
             )
 
-
         if args.output_fmt == "csv":
             with smart_open(args.output, "wt", newline="") as outfile:
                 writer = csv.writer(
@@ -419,16 +418,22 @@ def execute(args):
         elif args.output_fmt == "parquet":
             with smart_open(args.output, "wb") as outfile:
                 first_row = next(rows)
-                schema = pa.schema([
-                    (colname, ArrowTypes.python_type_to_arrow_type(value))
-                    for colname, value in zip(header, first_row, strict=True)
-                ])
+                schema = pa.schema(
+                    [
+                        (colname, ArrowTypes.python_type_to_arrow_type(value))
+                        for colname, value in zip(header, first_row, strict=True)
+                    ]
+                )
                 with pyarrow.parquet.ParquetWriter(outfile, schema) as writer:
-                    for chunk in batched(chain([first_row], rows), args.parquet_row_group_size):
+                    for chunk in batched(
+                        chain([first_row], rows), args.parquet_row_group_size
+                    ):
                         writer.write_batch(
                             pa.record_batch(
                                 {
-                                    colname: [ArrowTypes.handle_value(row[i]) for row in chunk]
+                                    colname: [
+                                        ArrowTypes.handle_value(row[i]) for row in chunk
+                                    ]
                                     for i, colname in enumerate(header)
                                 },
                                 schema=schema,
