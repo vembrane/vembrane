@@ -1,9 +1,13 @@
+from abc import ABC
 import csv
 from collections.abc import Iterator
 from enum import Enum
-from typing import Any
+from itertools import batched, chain
+from typing import Any, Type
 
 import asttokens
+import pyarrow as pa
+import pyarrow.parquet
 
 from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
@@ -17,7 +21,8 @@ from ..common import (
     read_ontology,
     smart_open,
 )
-from ..errors import HeaderWrongColumnNumberError, handle_vembrane_error
+from ..arrow import ArrowTypes
+from ..errors import HeaderWrongColumnNumberError, VembraneError, handle_vembrane_error
 from ..globals import default_allowed_globals
 from ..representations import FuncWrappedExpressionEnvironment
 from ..sequence_ontology import SequenceOntology
@@ -89,6 +94,21 @@ def add_subcommmand(subparsers):
         "-o",
         default="-",
         help="Output file, if not specified, output is written to STDOUT.",
+    )
+    parser.add_argument(
+        "--output-fmt",
+        default="csv",
+        choices=["csv", "parquet"],
+        help="Output format to use. "
+        "The csv format is further configured via the --separator option."
+    )
+    parser.add_argument(
+        "--parquet-row-group-size",
+        type=int,
+        default=1000,
+        help="Number of rows to encode as one parquet batch. "
+        "Rows will be accumulated in memory before being written. "
+        "Capped at 64 * 1014 * 1024."
     )
     add_common_arguments(parser)
 
@@ -373,23 +393,47 @@ def execute(args):
             ontology=ontology,
         )
 
-        with smart_open(args.output, "wt", newline="") as csvfile:
-            writer = csv.writer(
-                csvfile,
-                delimiter=args.separator,
-                quoting=csv.QUOTE_MINIMAL,
+        header = get_header(args, vcf)
+        n_header_cols = len(header)
+        expr_cols = get_toplevel(expression)
+        n_expr_cols = len(expr_cols)
+        if n_header_cols != n_expr_cols:
+            raise HeaderWrongColumnNumberError(
+                n_expr_cols,
+                expr_cols,
+                n_header_cols,
+                header,
             )
-            if args.header != "none":
-                header = get_header(args, vcf)
-                n_header_cols = len(header)
-                expr_cols = get_toplevel(expression)
-                n_expr_cols = len(expr_cols)
-                if n_header_cols != n_expr_cols:
-                    raise HeaderWrongColumnNumberError(
-                        n_expr_cols,
-                        expr_cols,
-                        n_header_cols,
-                        header,
-                    )
-                writer.writerow(header)
-            writer.writerows(get_row(row) for row in rows)
+
+
+        if args.output_fmt == "csv":
+            with smart_open(args.output, "wt", newline="") as outfile:
+                writer = csv.writer(
+                    outfile,
+                    delimiter=args.separator,
+                    quoting=csv.QUOTE_MINIMAL,
+                )
+                if args.header != "none":
+                    writer.writerow(header)
+                writer.writerows(get_row(row) for row in rows)
+        elif args.output_fmt == "parquet":
+            with smart_open(args.output, "wb") as outfile:
+                first_row = next(rows)
+                schema = pa.schema([
+                    (colname, ArrowTypes.python_type_to_arrow_type(value))
+                    for colname, value in zip(header, first_row, strict=True)
+                ])
+                with pyarrow.parquet.ParquetWriter(outfile, schema) as writer:
+                    for chunk in batched(chain([first_row], rows), args.parquet_row_group_size):
+                        writer.write_batch(
+                            pa.record_batch(
+                                {
+                                    colname: [ArrowTypes.handle_value(row[i]) for row in chunk]
+                                    for i, colname in enumerate(header)
+                                },
+                                schema=schema,
+                            ),
+                            row_group_size=args.parquet_row_group_size,
+                        )
+        else:
+            raise ValueError("bug: unreachable code, invalid output format given.")

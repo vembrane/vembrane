@@ -151,13 +151,26 @@ def test_command(testcase: os.PathLike, backend: Backend, context: Context | Non
                         )
             elif args.command == "table":
                 expected = str(path.joinpath("expected.tsv"))
-                table.execute(args)
-                t_out = "".join(
-                    line for line in tmp_out if not line.startswith("##vembrane")
-                )
                 with open(expected) as e:
                     e_out = e.read()
-                assert t_out == e_out
+                for output_fmt in ("csv", "parquet"):
+                    args.output_fmt = output_fmt
+                    table.execute(args)
+
+                    def get_tout(fileobj) -> str:
+                        return "".join(
+                            line for line in fileobj if not line.startswith("##vembrane")
+                        )
+
+                    if output_fmt == "parquet":
+                        import polars
+                        with tempfile.NamedTemporaryFile() as tmp_csv_out:
+                            polars.read_parquet(tmp_out.name).write_csv(tmp_csv_out)
+                            t_out = get_tout(tmp_csv_out)
+                    else:
+                        t_out = get_tout(tmp_out)
+
+                    assert t_out == e_out
             elif args.command == "structured" or args.command == "fhir":
                 expected = (path / "expected").with_suffix(f".{config['output_fmt']}")
 

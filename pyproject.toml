@@ -30,6 +30,7 @@ dependencies = [
   "obonet~=1.1",
   "networkx~=3.5",
   "typing-extensions~=4.12",
+  "pyarrow>=22.0.0",
 ]
 
 [project.urls]
@@ -50,6 +51,7 @@ dev = [
 test = [
     "pytest",
     "pytest-sugar",
+    "polars",
 ]
 lint = [
     "ruff",

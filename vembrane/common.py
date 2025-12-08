@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator, TextIO, Type
 
+import pyarrow as pa
+
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamReader, PysamWriter
 from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
