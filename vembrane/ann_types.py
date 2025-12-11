@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 from collections import defaultdict
 from ctypes import c_float
@@ -70,6 +71,12 @@ class NoValue(str):
 
 
 NA = NoValue()
+
+
+def is_na(value: Any) -> bool:
+    return (
+        value is NA or value is None or (isinstance(value, float) and math.isnan(value))
+    )
 
 
 class InfoTuple:

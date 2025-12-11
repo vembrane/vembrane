@@ -2,7 +2,7 @@ from typing import Any
 
 import pyarrow as pa
 
-from vembrane.ann_types import NA, NoValue
+from vembrane.ann_types import NA, is_na
 from vembrane.errors import VembraneError
 
 
@@ -12,11 +12,29 @@ class ArrowTypes:
         "float": pa.float64(),
         "str": pa.string(),
         "bool": pa.bool_(),
+        "list[int]": pa.list_(pa.field(pa.int64(), nullable=True)),
+        "list[float]": pa.list_(pa.field(pa.float64(), nullable=True)),
+        "list[str]": pa.list_(pa.field(pa.string(), nullable=True)),
+        "list[bool]": pa.list_(pa.field(pa.bool_(), nullable=True)),
         "RangeTotal": pa.struct(
-            {"start": pa.int64(), "stop": pa.int64(), "total": pa.int64()}
+            [
+                pa.field("start", pa.int64(), nullable=False),
+                pa.field("stop", pa.int64(), nullable=False),
+                pa.field("total", pa.int64(), nullable=False),
+            ]
         ),
-        "NumberTotal": pa.struct({"number": pa.int64(), "total": pa.int64()}),
-        "PosRange": pa.struct({"start": pa.int64(), "end": pa.int64()}),
+        "NumberTotal": pa.struct(
+            [
+                pa.field("number", pa.int64(), nullable=False),
+                pa.field("total", pa.int64(), nullable=False),
+            ]
+        ),
+        "PosRange": pa.struct(
+            [
+                pa.field("start", pa.int64(), nullable=True),
+                pa.field("end", pa.int64(), nullable=True),
+            ]
+        ),
     }
 
     def __init__(self):
@@ -29,18 +47,34 @@ class ArrowTypes:
                 f"Column {colname} is NA only in the first {len(values)} rows. "
                 "This is unsupported."
             )
-        types = {type(value).__name__ for value in values if value is not NA}
-        if len(types) > 1:
-            raise VembraneError(
-                f"Column {colname} has inconsistent types: {','.join(types)}"
-            )
-        elif not types:
-            # empty input
-            py_type = "str"
-        else:
-            py_type = types.pop()
+
+        py_type = self.python_type(values, colname, is_column_values=True)
         self.arrow_types[colname] = self.python_type_to_arrow_type(py_type)
         self.python_types[colname] = py_type
+
+    @classmethod
+    def python_type(
+        cls, value: Any, colname: str, is_column_values: bool = False
+    ) -> str:
+        if isinstance(value, (list, tuple)):
+            types = {
+                cls.python_type(item, colname) for item in value if not is_na(item)
+            }
+            if len(types) > 1:
+                raise VembraneError(
+                    f"Column {colname} has inconsistent types: {','.join(types)}"
+                )
+            elif not types:
+                # empty input
+                py_type = "str"
+            else:
+                py_type = types.pop()
+            if is_column_values:
+                return py_type
+            else:
+                return f"list[{py_type}]"
+
+        return type(value).__name__
 
     @classmethod
     def python_type_to_arrow_type(cls, py_type: str) -> pa.DataType:
@@ -53,44 +87,41 @@ class ArrowTypes:
             ) from e
 
     def handle_values(self, colname: str, values: list[Any]) -> Any:
-        def handle_na(value, *attrs):
-            if value is None or isinstance(value, NoValue):
-                return None
-            else:
-                for attr in attrs:
-                    value = getattr(value, attr)
-                return value
-
         py_type = self.python_types[colname]
         arrow_type = self.arrow_types[colname]
         match py_type:
             case "RangeTotal":
                 return pa.array(
                     [
-                        [handle_na(value, "range", "start") for value in values],
-                        [handle_na(value, "range", "stop") for value in values],
-                        [handle_na(value, "total") for value in values],
+                        None
+                        if is_na(value)
+                        else (value.range.start, value.range.stop, value.total)
+                        for value in values
                     ],
                     type=arrow_type,
                 )
             case "NumberTotal":
                 return pa.array(
                     [
-                        [handle_na(value, "number") for value in values],
-                        [handle_na(value, "total") for value in values],
+                        None if is_na(value) else (value.number, value.total)
+                        for value in values
                     ],
                     type=arrow_type,
                 )
             case "PosRange":
                 return pa.array(
                     [
-                        [handle_na(value, "start") for value in values],
-                        [handle_na(value, "end") for value in values],
+                        None
+                        if is_na(value)
+                        else (value.start or None, value.end or None)
+                        for value in values
                     ],
                     type=arrow_type,
                 )
 
-        return pa.array(map(handle_na, values), type=arrow_type)
+        return pa.array(
+            [None if is_na(value) else value for value in values], type=arrow_type
+        )
 
     @property
     def schema(self) -> pa.Schema:
