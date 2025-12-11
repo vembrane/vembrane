@@ -679,6 +679,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "mypy" },
+    { name = "polars" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "ruff" },
@@ -718,6 +719,7 @@ requires-dist = [
 dev = [
     { name = "mypy", specifier = "~=1.15" },
     { name = "mypy", specifier = "~=1.17" },
+    { name = "polars" },
     { name = "pre-commit", specifier = "~=4.2" },
     { name = "pytest", specifier = "~=8.4" },
     { name = "ruff", specifier = "~=0.12" },

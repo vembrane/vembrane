@@ -167,9 +167,17 @@ def test_command(testcase: os.PathLike, backend: Backend, context: Context | Non
                     if output_fmt == "parquet":
                         import polars
 
-                        with tempfile.NamedTemporaryFile() as tmp_csv_out:
-                            polars.read_parquet(tmp_out.name).write_csv(tmp_csv_out)
-                            t_out = get_tout(tmp_csv_out)
+                        tmp_csv_out = tempfile.NamedTemporaryFile(
+                            mode="wb", delete=False
+                        )
+                        polars.read_parquet(tmp_out.name).write_csv(
+                            tmp_csv_out, separator="\t"
+                        )
+                        tmp_csv_out.close()
+                        with open(tmp_csv_out.name, "r") as tmp_csv_in:
+                            t_out = get_tout(tmp_csv_in)
+                        Path(tmp_csv_out.name).unlink()
+
                     else:
                         t_out = get_tout(tmp_out)
 

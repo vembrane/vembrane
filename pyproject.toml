@@ -170,6 +170,7 @@ dev-dependencies = [
     "ruff~=0.12",
     "tox~=4.24",
     "tox-uv~=1.25",
+    "polars",
 ]
 
 [tool.mypy]

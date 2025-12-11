@@ -1,14 +1,14 @@
-from abc import ABC
 import csv
 from collections.abc import Iterator
 from enum import Enum
 from itertools import batched, chain
-from typing import Any, Type
+from typing import Any
 
 import asttokens
 import pyarrow as pa
 import pyarrow.parquet
 
+from ..arrow import ArrowTypes
 from ..backend.base import VCFHeader, VCFReader, VCFRecord
 from ..common import (
     Context,
@@ -21,8 +21,7 @@ from ..common import (
     read_ontology,
     smart_open,
 )
-from ..arrow import ArrowTypes
-from ..errors import HeaderWrongColumnNumberError, VembraneError, handle_vembrane_error
+from ..errors import HeaderWrongColumnNumberError, handle_vembrane_error
 from ..globals import default_allowed_globals
 from ..representations import FuncWrappedExpressionEnvironment
 from ..sequence_ontology import SequenceOntology
@@ -417,26 +416,26 @@ def execute(args):
                 writer.writerows(get_row(row) for row in rows)
         elif args.output_fmt == "parquet":
             with smart_open(args.output, "wb") as outfile:
-                first_row = next(rows)
-                schema = pa.schema(
-                    [
-                        (colname, ArrowTypes.python_type_to_arrow_type(value))
-                        for colname, value in zip(header, first_row, strict=True)
-                    ]
-                )
-                with pyarrow.parquet.ParquetWriter(outfile, schema) as writer:
-                    for chunk in batched(
-                        chain([first_row], rows), args.parquet_row_group_size
-                    ):
+                chunks = batched(rows, args.parquet_row_group_size)
+                first_chunk = next(chunks)
+                arrow_types = ArrowTypes()
+                for i, colname in enumerate(header):
+                    col = [row[i] for row in first_chunk]
+                    arrow_types.infer(colname, col)
+
+                with pyarrow.parquet.ParquetWriter(
+                    outfile, arrow_types.schema
+                ) as writer:
+                    for chunk in chain([first_chunk], chunks):
                         writer.write_batch(
                             pa.record_batch(
                                 {
-                                    colname: [
-                                        ArrowTypes.handle_value(row[i]) for row in chunk
-                                    ]
+                                    colname: arrow_types.handle_values(
+                                        colname, [row[i] for row in chunk]
+                                    )
                                     for i, colname in enumerate(header)
                                 },
-                                schema=schema,
+                                schema=arrow_types.schema,
                             ),
                             row_group_size=args.parquet_row_group_size,
                         )
