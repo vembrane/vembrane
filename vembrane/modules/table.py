@@ -21,13 +21,14 @@ from ..common import (
     read_ontology,
     smart_open,
 )
-from ..errors import HeaderWrongColumnNumberError, handle_vembrane_error
+from ..errors import HeaderWrongColumnNumberError, VembraneError, handle_vembrane_error
 from ..globals import default_allowed_globals
 from ..representations import FuncWrappedExpressionEnvironment
 from ..sequence_ontology import SequenceOntology
 from .filter import DeprecatedAction
 
 ALL_EXPRESSION = "ALL"
+MAX_PARQUET_ROW_GROUP_SIZE = 64 * 1024 * 1024
 
 
 def add_subcommmand(subparsers):
@@ -107,7 +108,7 @@ def add_subcommmand(subparsers):
         default=1000,
         help="Number of rows to encode as one parquet batch. "
         "Rows will be accumulated in memory before being written. "
-        "Capped at 64 * 1014 * 1024.",
+        f"At most {MAX_PARQUET_ROW_GROUP_SIZE}.",  # see pyarrow docs
     )
     add_common_arguments(parser)
 
@@ -354,8 +355,20 @@ def get_row(row):
     return row
 
 
+def check_args(args):
+    if (
+        args.output_fmt == "parquet"
+        and args.parquet_row_group_size > MAX_PARQUET_ROW_GROUP_SIZE
+    ):
+        raise VembraneError(
+            f"Maximum row group size for parquet is {MAX_PARQUET_ROW_GROUP_SIZE}."
+        )
+
+
 @handle_vembrane_error
 def execute(args):
+    check_args(args)
+
     aux = read_auxiliary(args.aux)
     ontology = read_ontology(args.ontology)
     overwrite_number = {

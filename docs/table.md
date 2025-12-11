@@ -6,9 +6,9 @@ In addition to the `filter` subcommand, vembrane (`≥ 0.5`) also supports writi
 ### Usage
 
 ```
-usage: vembrane table [-h] [--separator CHAR] [--header TEXT] [--naming-convention CONVENTION] [--wide] [--long LONG] [--output OUTPUT] [--annotation-key FIELDNAME]
-                      [--aux NAME=PATH] [--context CONTEXT] [--context-file CONTEXT_FILE] [--ontology PATH] [--overwrite-number-info FIELD=NUMBER]
-                      [--overwrite-number-format FIELD=NUMBER] [--backend {cyvcf2,pysam}]
+usage: vembrane table [-h] [--separator CHAR] [--header TEXT] [--naming-convention CONVENTION] [--wide] [--long LONG] [--output OUTPUT] [--output-fmt {csv,parquet}] [--parquet-row-group-size PARQUET_ROW_GROUP_SIZE]
+                      [--annotation-key FIELDNAME] [--aux NAME=PATH] [--context CONTEXT] [--context-file CONTEXT_FILE] [--ontology PATH] [--overwrite-number-info FIELD=NUMBER] [--overwrite-number-format FIELD=NUMBER]
+                      [--backend {cyvcf2,pysam}]
                       expression [vcf]
 
 Convert VCF/BCF records to tabular format.
@@ -21,27 +21,27 @@ options:
   -h, --help            show this help message and exit
   --separator CHAR, -s CHAR
                         Define the field separator (default: \t). (default: )
-  --header TEXT         Override the automatically generated header. Provide "auto" (default) to automatically generate the header from the expression. Provide a comma
-                        separated string to manually set the header. Provide "none" to disable any header output. (default: auto)
+  --header TEXT         Override the automatically generated header. Provide "auto" (default) to automatically generate the header from the expression. Provide a comma separated string to manually set the header.
+                        Provide "none" to disable any header output. (default: auto)
   --naming-convention CONVENTION
                         The naming convention to use for column names when generating the header for the ALL expression. (default: dictionary)
   --wide                Instead of using long format with a special SAMPLE column, generate multiple columns per sample with the `for_each_sample` utility function.
   --long LONG           Long format is now the default. For wide format, use `--wide` instead.
   --output OUTPUT, -o OUTPUT
                         Output file, if not specified, output is written to STDOUT. (default: -)
+  --output-fmt {csv,parquet}
+                        Output format to use. The csv format is further configured via the --separator option. (default: csv)
+  --parquet-row-group-size PARQUET_ROW_GROUP_SIZE
+                        Number of rows to encode as one parquet batch. Rows will be accumulated in memory before being written. At most 67108864. (default: 1000)
   --annotation-key FIELDNAME, -k FIELDNAME
-                        The INFO key for the annotation field. This defaults to 'ANN', but tools might use other field names. For example, default VEP annotations can be
-                        parsed by setting 'CSQ' here. (default: ANN)
+                        The INFO key for the annotation field. This defaults to 'ANN', but tools might use other field names. For example, default VEP annotations can be parsed by setting 'CSQ' here. (default: ANN)
   --aux NAME=PATH, -a NAME=PATH
                         Path to an auxiliary file containing a set of symbols
-  --context CONTEXT     Python statement defining a context for given Python expressions. Extends eventual definitions given via --context-file. Any global variables (or
-                        functions) become available in the Python expressions.
-                        Note that the code you pass here is not sandboxed and should
-                        be trusted. Carefully review any code you get from the internet or AI.
+  --context CONTEXT     Python statement defining a context for given Python expressions. Extends eventual definitions given via --context-file. Any global variables (or functions) become available in the Python
+                        expressions. Note that the code you pass here is not sandboxed and should be trusted. Carefully review any code you get from the internet or AI.
   --context-file CONTEXT_FILE
-                        Path to Python script defining a context for given Python expressions. Any global variables (or functions) become available in the Python expressions.
-                        Note that the code you pass here is not sandboxed and should
-                        be trusted. Carefully review any code you get from the internet or AI.
+                        Path to Python script defining a context for given Python expressions. Any global variables (or functions) become available in the Python expressions. Note that the code you pass here is not
+                        sandboxed and should be trusted. Carefully review any code you get from the internet or AI.
   --ontology PATH       Path to an ontology in OBO format. May be compressed with gzip, bzip2 and xz. Defaults to built-in ontology (from sequenceontology.org).
   --overwrite-number-info FIELD=NUMBER
                         Overwrite the number specification for INFO fields given in the VCF header. Example: `--overwrite-number cosmic_CNT=.`
