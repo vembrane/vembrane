@@ -1,4 +1,5 @@
 import csv
+from collections import defaultdict
 from collections.abc import Iterator
 from enum import Enum
 from itertools import batched, chain
@@ -444,7 +445,18 @@ def execute(args):
                 chunks = batched(rows, args.parquet_row_group_size)
                 first_chunk = next(chunks)
                 arrow_types = ArrowTypes()
-                for i, colname in enumerate(header):
+
+                unique_header = []
+                header_counts = defaultdict(int)
+                for col in header:
+                    if header_counts[col] > 0:
+                        new_col = f"{col}_duplicated_{header_counts[col] - 1}"
+                    else:
+                        new_col = col
+                    header_counts[col] += 1
+                    unique_header.append(new_col)
+
+                for i, colname in enumerate(unique_header):
                     col = [row[i] for row in first_chunk]
                     arrow_types.infer(colname, col)
 
@@ -458,7 +470,7 @@ def execute(args):
                                     colname: arrow_types.handle_values(
                                         colname, [row[i] for row in chunk]
                                     )
-                                    for i, colname in enumerate(header)
+                                    for i, colname in enumerate(unique_header)
                                 },
                                 schema=arrow_types.schema,
                             ),
