@@ -167,6 +167,9 @@ def test_command(testcase: os.PathLike, backend: Backend, context: Context | Non
 
                         t_out = polars.read_parquet(tmp_out.name)
                         e_out = polars.read_csv(expected, separator=args.separator)
+                        # python csv writer escapes quotes as double quotes,
+                        # but polars does not de-quote those, so we fix that here:
+                        e_out.columns = [c.replace('""', '"') for c in e_out.columns]
                         # For now we just compare the columns.
                         # The expected tables in CSV format contain
                         # string representations for the structured data
