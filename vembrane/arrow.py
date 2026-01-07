@@ -7,15 +7,15 @@ from vembrane.errors import VembraneError
 
 
 class ArrowTypes:
-    mapping = {
+    mapping: dict[str, pa.DataType] = {
         "int": pa.int64(),
         "float": pa.float64(),
         "str": pa.string(),
         "bool": pa.bool_(),
-        "list[int]": pa.list_(pa.field(pa.int64(), nullable=True)),
-        "list[float]": pa.list_(pa.field(pa.float64(), nullable=True)),
-        "list[str]": pa.list_(pa.field(pa.string(), nullable=True)),
-        "list[bool]": pa.list_(pa.field(pa.bool_(), nullable=True)),
+        "list[int]": pa.list_(pa.int64()),
+        "list[float]": pa.list_(pa.float64()),
+        "list[str]": pa.list_(pa.string()),
+        "list[bool]": pa.list_(pa.bool_()),
         "RangeTotal": pa.struct(
             [
                 pa.field("start", pa.int64(), nullable=False),
@@ -35,6 +35,8 @@ class ArrowTypes:
                 pa.field("end", pa.int64(), nullable=True),
             ]
         ),
+        "Term": pa.string(),
+        "list[Term]": pa.list_(pa.string()),
     }
 
     def __init__(self):
