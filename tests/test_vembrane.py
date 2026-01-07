@@ -166,7 +166,7 @@ def test_command(testcase: os.PathLike, backend: Backend, context: Context | Non
                         import polars
 
                         t_out = polars.read_parquet(tmp_out.name)
-                        e_out = polars.read_csv(expected, separator="\t")
+                        e_out = polars.read_csv(expected, separator=args.separator)
                         # For now we just compare the columns.
                         # The expected tables in CSV format contain
                         # string representations for the structured data
