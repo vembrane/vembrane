@@ -71,10 +71,14 @@ class ArrowTypes:
                 py_type = "str"
             else:
                 py_type = types.pop()
+
             if is_column_values:
                 return py_type
             else:
                 return f"list[{py_type}]"
+
+        if isinstance(value, str):
+            return "str"
 
         return type(value).__name__
 
