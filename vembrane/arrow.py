@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Mapping
 from typing import Any
 
@@ -8,6 +9,8 @@ from vembrane.errors import VembraneError
 
 
 class ArrowTypes:
+    warnings: set[str] = set()
+
     mapping: dict[str, pa.DataType] = {
         "int": pa.int64(),
         "float": pa.float64(),
@@ -45,13 +48,18 @@ class ArrowTypes:
 
     def infer(self, colname: str, values: list[Any]) -> None:
         if all(value is NA for value in values):
-            # TODO: default to string instead?
-            #   self.arrow_types[colname] = pa.string()
-            #   self.python_types[colname] = "str"
-            raise VembraneError(
-                f"Column {colname} is NA only in the first {len(values)} rows. "
-                "This is unsupported."
-            )
+            if colname not in self.warnings:
+                self.warnings.add(colname)
+                print(
+                    f"Warning: Column '{colname}' is NA-only "
+                    f"in the first {len(values)} rows. "
+                    "Assuming type 'string'."
+                    "This warning will only be printed once per column.",
+                    file=sys.stderr,
+                )
+            self.arrow_types[colname] = pa.string()
+            self.python_types[colname] = "str"
+            return
 
         py_type = self.python_type(values, colname, is_column_values=True)
         self.arrow_types[colname] = self.python_type_to_arrow_type(py_type)
