@@ -1,8 +1,9 @@
+from collections.abc import Mapping
 from typing import Any
 
 import pyarrow as pa
 
-from vembrane.ann_types import NA, is_na
+from vembrane.ann_types import NA, InfoTuple, is_na
 from vembrane.errors import VembraneError
 
 
@@ -16,6 +17,7 @@ class ArrowTypes:
         "list[float]": pa.list_(pa.float64()),
         "list[str]": pa.list_(pa.string()),
         "list[bool]": pa.list_(pa.bool_()),
+        "map[str,list[str]]": pa.map_(pa.string(), pa.list_(pa.string())),
         "RangeTotal": pa.struct(
             [
                 pa.field("start", pa.int64(), nullable=False),
@@ -43,6 +45,9 @@ class ArrowTypes:
 
     def infer(self, colname: str, values: list[Any]) -> None:
         if all(value is NA for value in values):
+            # TODO: default to string instead?
+            #   self.arrow_types[colname] = pa.string()
+            #   self.python_types[colname] = "str"
             raise VembraneError(
                 f"Column {colname} is NA only in the first {len(values)} rows. "
                 "This is unsupported."
@@ -56,7 +61,22 @@ class ArrowTypes:
     def python_type(
         cls, value: Any, colname: str, is_column_values: bool = False
     ) -> str:
-        if isinstance(value, (list, tuple)):
+        if isinstance(value, str):
+            return "str"
+
+        if isinstance(value, Mapping):
+            # try infering key and value types from the first non-NA items,
+            # defaulting to string
+            k_type = "str"
+            v_type = "str"
+            for k, v in value.items():
+                if not is_na(k) and not is_na(v):
+                    k_type = cls.python_type(k, colname)
+                    v_type = cls.python_type(v, colname)
+                    break
+            return f"map[{k_type},{v_type}]"
+
+        if isinstance(value, (list, tuple, set, InfoTuple)):
             types = {
                 cls.python_type(item, colname) for item in value if not is_na(item)
             }
@@ -74,9 +94,6 @@ class ArrowTypes:
                 return py_type
             else:
                 return f"list[{py_type}]"
-
-        if isinstance(value, str):
-            return "str"
 
         return type(value).__name__
 
