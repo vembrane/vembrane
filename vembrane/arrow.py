@@ -35,8 +35,6 @@ class ArrowTypes:
                 pa.field("end", pa.int64(), nullable=True),
             ]
         ),
-        "Term": pa.string(),
-        "list[Term]": pa.list_(pa.string()),
     }
 
     def __init__(self):
