@@ -324,7 +324,10 @@ def get_header(args, vcf: VCFReader) -> list[str]:
             vcf.header, args.annotation_key, args.naming_convention
         )
         return all_header
-    header = args.expression if args.header == "auto" else args.header
+
+    header_mode = "auto" if args.header == "none" else args.header
+    header = args.expression if header_mode == "auto" else header_mode
+
     if not args.wide:
         header = f"SAMPLE, {header}"
     return get_toplevel(preprocess_expression(header, vcf, args.header == "auto"))

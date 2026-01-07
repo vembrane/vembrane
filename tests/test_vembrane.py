@@ -165,18 +165,32 @@ def test_command(testcase: os.PathLike, backend: Backend, context: Context | Non
                     if output_fmt == "parquet":
                         import polars
 
+                        has_header = args.header != "none"
                         t_out = polars.read_parquet(tmp_out.name)
-                        e_out = polars.read_csv(expected, separator=args.separator)
-                        # python csv writer escapes quotes as double quotes,
-                        # but polars does not de-quote those, so we fix that here:
-                        e_out.columns = [c.replace('""', '"') for c in e_out.columns]
-                        # For now we just compare the columns.
-                        # The expected tables in CSV format contain
-                        # string representations for the structured data
-                        # types which we would have to parse back for a
-                        # proper comparison.
-                        # TODO do this in the future.
-                        assert t_out.columns == e_out.columns
+                        e_out = polars.read_csv(
+                            expected,
+                            separator=args.separator,
+                            has_header=has_header,
+                        )
+                        if has_header:
+                            # python csv writer escapes quotes as double quotes,
+                            # but polars does not de-quote those, so we fix that here:
+                            e_out.columns = [
+                                c.replace('""', '"') for c in e_out.columns
+                            ]
+
+                            # For now we just compare the columns.
+                            # The expected tables in CSV format contain
+                            # string representations for the structured data
+                            # types which we would have to parse back for a
+                            # proper comparison.
+                            # TODO do this in the future.
+                            assert t_out.columns == e_out.columns
+                        else:
+                            # if there's no (tsv) header,
+                            # there are no column names to compare against.
+                            assert len(t_out.columns) == len(e_out.columns)
+
                     else:
                         with open(expected) as e:
                             e_out = e.read()
