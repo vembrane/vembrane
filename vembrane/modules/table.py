@@ -112,13 +112,25 @@ def tableize_vcf(
         auxiliary_globals=auxiliary_globals, auxiliary=auxiliary, ontology=ontology
     )
 
+    parts = get_toplevel(expression)
+    is_single_column = len(parts) == 1
+
     long_with_samples = not wide and list(vcf.header.samples)
     if long_with_samples:
-        kwargs["evaluation_function_template"] = (
-            "lambda: (({expression}) for SAMPLE in SAMPLES)"
-        )
+        if is_single_column:
+            kwargs["evaluation_function_template"] = (
+                "lambda: (({expression},) for SAMPLE in SAMPLES)"
+            )
+        else:
+            kwargs["evaluation_function_template"] = (
+                "lambda: (({expression}) for SAMPLE in SAMPLES)"
+            )
     else:
-        expression = f"({expression})"
+        if is_single_column:
+            expression = f"({expression},)"
+        else:
+            expression = f"({expression})"
+
     env = FuncWrappedExpressionEnvironment(expression, ann_key, vcf.header, **kwargs)
 
     record: VCFRecord
