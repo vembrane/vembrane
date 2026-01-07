@@ -58,6 +58,7 @@ lint = [
     "mypy",
     "types-networkx",
     "types-pyyaml",
+    "pyarrow-stubs"
 ]
 
 [tool.hatch.version]
@@ -167,6 +168,7 @@ dev-dependencies = [
     "mypy~=1.15",
     "types-pyyaml~=6.0",
     "types-networkx~=3.5",
+    "pyarrow-stubs~=20.0.0.20251215",
     "ruff~=0.12",
     "tox~=4.24",
     "tox-uv~=1.25",
