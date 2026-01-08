@@ -433,6 +433,20 @@ def execute(args):
                 header,
             )
 
+        # Duplicate column names are not allowed in Parquet and can be confusing in TSV.
+        # We automatically deduplicate them by appending a corresponding suffix
+        # e.g. "POS, POS" → "POS, POS_duplicated_0"
+        unique_header = []
+        header_counts = defaultdict(int)
+        for col in header:
+            if header_counts[col] > 0:
+                new_col = f"{col}_duplicated_{header_counts[col] - 1}"
+            else:
+                new_col = col
+            header_counts[col] += 1
+            unique_header.append(new_col)
+        header = unique_header
+
         if args.output_fmt == "csv":
             with smart_open(args.output, "wt", newline="") as outfile:
                 writer = csv.writer(
@@ -449,17 +463,7 @@ def execute(args):
                 first_chunk = next(chunks)
                 arrow_types = ArrowTypes()
 
-                unique_header = []
-                header_counts = defaultdict(int)
-                for col in header:
-                    if header_counts[col] > 0:
-                        new_col = f"{col}_duplicated_{header_counts[col] - 1}"
-                    else:
-                        new_col = col
-                    header_counts[col] += 1
-                    unique_header.append(new_col)
-
-                for i, colname in enumerate(unique_header):
+                for i, colname in enumerate(header):
                     col = [row[i] for row in first_chunk]
                     arrow_types.infer(colname, col)
 
@@ -473,7 +477,7 @@ def execute(args):
                                     colname: arrow_types.handle_values(
                                         colname, [row[i] for row in chunk]
                                     )
-                                    for i, colname in enumerate(unique_header)
+                                    for i, colname in enumerate(header)
                                 },
                                 schema=arrow_types.schema,
                             ),
