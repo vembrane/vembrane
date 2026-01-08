@@ -123,6 +123,9 @@ class InfoTuple:
     def __hash__(self):
         return hash(self.values)
 
+    def __iter__(self):
+        return iter(map(lambda i: self.__getitem__(i), range(len(self))))
+
 
 IntFloatStr = Union[int, float, str]
 NvIntFloatStr = Union[IntFloatStr, NoValue]
