@@ -6,6 +6,7 @@ import tempfile
 from enum import Enum, auto
 from itertools import product, zip_longest
 from pathlib import Path
+from typing import Any
 
 import pytest
 import yaml
@@ -163,33 +164,61 @@ def test_command(testcase: os.PathLike, backend: Backend, context: Context | Non
                         )
 
                     if output_fmt == "parquet":
-                        import polars
+                        import csv
+
+                        import pyarrow.parquet as pq
 
                         has_header = args.header != "none"
-                        t_out = polars.read_parquet(tmp_out.name)
-                        e_out = polars.read_csv(
-                            expected,
-                            separator=args.separator,
-                            has_header=has_header,
-                        )
-                        if has_header:
-                            # python csv writer escapes quotes as double quotes,
-                            # but polars does not de-quote those, so we fix that here:
-                            e_out.columns = [
-                                c.replace('""', '"') for c in e_out.columns
-                            ]
 
-                            # For now we just compare the columns.
-                            # The expected tables in CSV format contain
-                            # string representations for the structured data
-                            # types which we would have to parse back for a
-                            # proper comparison.
-                            # TODO do this in the future.
-                            assert t_out.columns == e_out.columns
+                        with open(expected, newline="") as f:
+                            reader = csv.reader(f, delimiter=args.separator)
+                            if has_header:
+                                expected_header = next(reader)
+                            expected_rows = list(reader)
+
+                        t = pq.read_table(tmp_out.name)
+                        actual_header = t.column_names
+                        actual_rows_raw = t.to_pylist()
+
+                        if has_header:
+                            expected_header = [
+                                c.replace('""', '"') for c in expected_header
+                            ]
+                            assert actual_header == expected_header
                         else:
-                            # if there's no (tsv) header,
-                            # there are no column names to compare against.
-                            assert len(t_out.columns) == len(e_out.columns)
+                            assert (
+                                len(actual_header) == len(expected_rows[0])
+                                if expected_rows
+                                else True
+                            )
+
+                        assert len(actual_rows_raw) == len(expected_rows)
+
+                        for i, (row_raw, row_expected) in enumerate(
+                            zip(actual_rows_raw, expected_rows, strict=False)
+                        ):
+                            if has_header:
+                                row_vals = [row_raw[col] for col in actual_header]
+                            else:
+                                row_vals = list(row_raw.values())
+
+                            # because some values are represented differently
+                            # in tsv and parquet output
+                            # we try different representations here
+                            for val_arrow, val_expected in zip(
+                                row_vals, row_expected, strict=False
+                            ):
+                                norm_val = normalize_arrow_value(val_arrow)
+                                candidates = {str(norm_val)}
+                                if isinstance(norm_val, list):
+                                    candidates.add(str(tuple(norm_val)))
+                                    str_items = [str(v) for v in norm_val]
+                                    candidates.add("&".join(str_items))
+
+                                assert val_expected in candidates, (
+                                    f"Row {i} mismatch: Expected '{val_expected}', "
+                                    f"but got Parquet value formatting to {candidates}"
+                                )
 
                     else:
                         with open(expected) as e:
@@ -291,3 +320,40 @@ def parse_command_config(cmd, config, vcf_path):
 def config_key_to_arg(key: str) -> str:
     """Convert a config key to an argument name."""
     return f"--{key.replace('_', '-')}"
+
+
+def normalize_arrow_value(value: Any) -> Any:
+    if value is None:
+        return ""
+
+    if isinstance(value, dict):
+        keys = set(value.keys())
+
+        # RangeTotal
+        if keys == {"start", "stop", "total"}:
+            start, stop, total = value["start"], value["stop"], value["total"]
+            length = stop - start
+            if length == 1:
+                return f"number / total: {start} / {total}"
+            else:
+                return f"range / total: {start} - {stop - 1} / {total}"
+
+        # NumberTotal
+        if keys == {"number", "total"}:
+            return f"number / total: {value['number']} / {value['total']}"
+
+        # PosRange
+        if keys == {"start", "end"}:
+            start, end = value["start"], value["end"]
+            if start is None or end is None:
+                s_str = start if start is not None else ""
+                e_str = end if end is not None else ""
+                return f"(start: {s_str}, end: {e_str}, length: )"
+            return f"(start: {start}, end: {end}, length: {end - start})"
+
+        return str(value)
+
+    if isinstance(value, list):
+        return [normalize_arrow_value(v) for v in value]
+
+    return value
