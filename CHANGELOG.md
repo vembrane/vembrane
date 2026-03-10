@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.5.0](https://github.com/vembrane/vembrane/compare/v2.4.0...v2.5.0) (2026-03-10)
+
+
+### Features
+
+* allow parquet output in vembrane table ([#232](https://github.com/vembrane/vembrane/issues/232)) ([bb4ee37](https://github.com/vembrane/vembrane/commit/bb4ee37bd7dc06a6e886346621fb28b7d1540281))
+
+
+### Bug Fixes
+
+* top-level tuples should be respected ([#233](https://github.com/vembrane/vembrane/issues/233)) ([45fcf9a](https://github.com/vembrane/vembrane/commit/45fcf9a022bc2b9a1c0c57ff08f6e5e176f04a0c))
+
 ## [2.4.0](https://github.com/vembrane/vembrane/compare/v2.3.4...v2.4.0) (2025-09-27)
 
 
