@@ -30,6 +30,7 @@ dependencies = [
   "obonet~=1.1",
   "networkx~=3.5",
   "typing-extensions~=4.12",
+  "pyarrow>=22.0.0",
 ]
 
 [project.urls]
@@ -50,12 +51,14 @@ dev = [
 test = [
     "pytest",
     "pytest-sugar",
+    "polars",
 ]
 lint = [
     "ruff",
     "mypy",
     "types-networkx",
     "types-pyyaml",
+    "pyarrow-stubs"
 ]
 
 [tool.hatch.version]
@@ -165,9 +168,11 @@ dev-dependencies = [
     "mypy~=1.15",
     "types-pyyaml~=6.0",
     "types-networkx~=3.5",
+    "pyarrow-stubs~=20.0.0.20251215",
     "ruff~=0.12",
     "tox~=4.24",
     "tox-uv~=1.25",
+    "polars",
 ]
 
 [tool.mypy]

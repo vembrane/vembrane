@@ -34,7 +34,7 @@ vembrane provides several subcommands for different tasks:
     vembrane tag --tag quality_at_least_30="QUAL >= 30" variants.vcf
     ```
 
-*   `table`: Creates tabular (TSV) files from VCF/BCF data. The columns can be defined with flexible Python expressions. For more details, see [`docs/table.md`](docs/table.md).
+*   `table`: Creates tabular (TSV/CSV or [parquet](https://parquet.apache.org)) files from VCF/BCF data. The columns can be defined with flexible Python expressions. For more details, see [`docs/table.md`](docs/table.md).
     ```sh
     vembrane table 'CHROM, POS, 10**(-QUAL/10), ANN["CLIN_SIG"]' input.vcf > table.tsv
     ```

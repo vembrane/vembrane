@@ -1,5 +1,4 @@
 import heapq
-import math
 import sys
 import tempfile
 from functools import partial, total_ordering
@@ -8,7 +7,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Self, Sequence, Tuple, TypeVar
 
 from vembrane import __version__
-from vembrane.ann_types import NA
+from vembrane.ann_types import is_na
 from vembrane.backend.base import Backend, VCFReader, VCFRecord, VCFWriter
 from vembrane.common import (
     Context,
@@ -89,12 +88,6 @@ def add_subcommand(subparsers):
         "this number of records, external sorting is used.",
     )
     add_common_arguments(parser)
-
-
-def is_na(value: Any) -> bool:
-    return (
-        value is NA or value is None or (isinstance(value, float) and math.isnan(value))
-    )
 
 
 T = TypeVar("T")
