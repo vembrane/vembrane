@@ -44,10 +44,17 @@ vembrane = 'vembrane.cli:main'
 [dependency-groups]
 dev = [
     "mypy~=1.17",
+    "types-pyyaml~=6.0",
+    "types-networkx~=3.5",
     "pre-commit~=4.2",
+    "pyarrow-stubs~=20.0.0.20251215",
     "pytest~=8.4",
     "ruff~=0.12",
+    "tox~=4.24",
+    "tox-uv~=1.25",
+    "polars",
 ]
+
 test = [
     "pytest",
     "pytest-sugar",
@@ -162,18 +169,6 @@ runner = "uv-venv-lock-runner"
 skip_install = false
 dependency_groups = ["lint"]
 commands = [["mypy"]]
-
-[tool.uv]
-dev-dependencies = [
-    "mypy~=1.15",
-    "types-pyyaml~=6.0",
-    "types-networkx~=3.5",
-    "pyarrow-stubs~=20.0.0.20251215",
-    "ruff~=0.12",
-    "tox~=4.24",
-    "tox-uv~=1.25",
-    "polars",
-]
 
 [tool.mypy]
 python_version = "3.12"
