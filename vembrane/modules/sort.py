@@ -1,5 +1,3 @@
-from vembrane.ann_types import NA
-from vembrane.ann_types import NoValue
 import heapq
 import sys
 import tempfile
@@ -9,7 +7,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Self, Sequence, Tuple, TypeVar
 
 from vembrane import __version__
-from vembrane.ann_types import is_na
+from vembrane.ann_types import NA, NoValue, is_na
 from vembrane.backend.base import Backend, VCFReader, VCFRecord, VCFWriter
 from vembrane.common import (
     Context,
