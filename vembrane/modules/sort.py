@@ -103,7 +103,7 @@ def quantize(value: Any, step: float | int) -> int | NoValue:
             return int(value / step)
         except Exception as e:
             raise VembraneError(
-                f"Cannot quantize value {value} with step {step}. "
+                f"Cannot quantize value {value} with step {step} ({e}). "
                 "Ensure that the value is either numeric (int or float) or missing."
             ) from e
 
