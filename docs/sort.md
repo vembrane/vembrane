@@ -86,7 +86,7 @@ In case of non-numeric values, an order can be defined ad-hoc via an inline dict
 For example, in order to get variants with high impact in one of their annotations first, we can define the following.
 
 ```bash
-vembrane sort '{"HIGH": 0, "MODERATE: 1, "LOW": 2, "MODIFIER" 3}[ANN["IMPACT"]]' input.vcf > prioritized.vcf
+vembrane sort '{"HIGH": 0, "MODERATE": 1, "LOW": 2, "MODIFIER": 3}[ANN["IMPACT"]]' input.vcf > prioritized.vcf
 ```
 
 Since ascending sort is the default, variants with at least one `HIGH` in their annotations will come first.
@@ -97,7 +97,7 @@ Sometimes, it is beneficial to quantize values before sorting, in order to raise
 The following example quantizes `QUAL` into bins of size 10 for sorting, and subsequently sorts by impact.
 
 ```bash
-vembrane sort 'desc(quantize(QUAL, 10)), {"HIGH": 0, "MODERATE: 1, "LOW": 2, "MODIFIER" 3}[ANN["IMPACT"]]' input.vcf > prioritized.vcf
+vembrane sort 'desc(quantize(QUAL, 10)), {"HIGH": 0, "MODERATE": 1, "LOW": 2, "MODIFIER": 3}[ANN["IMPACT"]]' input.vcf > prioritized.vcf
 ```
 
 The `quantize(value, step)` function thereby calculates `int(value / step)`, while properly handling missing values.
