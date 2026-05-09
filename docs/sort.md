@@ -74,7 +74,7 @@ options:
 ### Examples
 
 The following command sorts records first by `gnomad_AF` (binned into orders of magnitude and ascending), and then by `REVEL` score (descending).
-The descending sort is achieved by marking the `REVEL` value  as descending via `desc()` in the key expression (without that, the default is ascending sort).
+The descending sort is achieved by marking the `REVEL` value as descending via `desc()` in the key expression (without that, the default is ascending sort).
 
 ```bash
 vembrane sort 'int(log10(ANN["gnomad_AF"])), desc(ANN["REVEL"])' input.vcf > prioritized.vcf
