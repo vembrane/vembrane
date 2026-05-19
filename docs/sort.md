@@ -65,21 +65,39 @@ options:
                         Set the backend library. (default: cyvcf2)
 ```
 
+#### Behavior
+
+* By default, `vembrane` sorts both the records and the annotation entries within each record according to the order implied by the given sort keys (in case the sort key accesses annotation values).
+* Sorting annotation entries can be disabled via the flag `--preserve-annotation-order`.
+* Missing values within sort keys are always sorted to the end (regardless of ascending or descending order).
+
 ### Examples
 
 The following command sorts records first by `gnomad_AF` (binned into orders of magnitude and ascending), and then by `REVEL` score (descending).
-The descending sort is achieved by marking the `REVEL` value  as descending via `desc()` in the key expression.
+The descending sort is achieved by marking the `REVEL` value as descending via `desc()` in the key expression (without that, the default is ascending sort).
 
 ```bash
 vembrane sort 'int(log10(ANN["gnomad_AF"])), desc(ANN["REVEL"])' input.vcf > prioritized.vcf
 ```
 
+#### Ad-hoc ordering
+
 In case of non-numeric values, an order can be defined ad-hoc via an inline dictionary.
 For example, in order to get variants with high impact in one of their annotations first, we can define the following.
 
 ```bash
-vembrane sort '{"HIGH": 0, "MODERATE: 1, "LOW": 2, "MODIFIER" 3}[ANN["IMPACT"]]' input.vcf > prioritized.vcf
+vembrane sort '{"HIGH": 0, "MODERATE": 1, "LOW": 2, "MODIFIER": 3}[ANN["IMPACT"]]' input.vcf > prioritized.vcf
 ```
+
 Since ascending sort is the default, variants with at least one `HIGH` in their annotations will come first.
-Moreover, `vembrane` will also sort the annotation entries in the corresponding order, with higher impacts coming first.
-This behavior can be disabled via the flag `--preserve-annotation-order`.
+
+#### Quantization
+
+Sometimes, it is beneficial to quantize values before sorting, in order to raise the importance of subsequent sort keys.
+The following example quantizes `QUAL` into bins of size 10 for sorting, and subsequently sorts by impact.
+
+```bash
+vembrane sort 'desc(quantize(QUAL, 10)), {"HIGH": 0, "MODERATE": 1, "LOW": 2, "MODIFIER": 3}[ANN["IMPACT"]]' input.vcf > prioritized.vcf
+```
+
+The `quantize(value, step)` function thereby calculates `int(value / step)`, while properly handling missing values.
