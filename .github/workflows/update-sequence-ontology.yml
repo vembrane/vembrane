@@ -1,0 +1,97 @@
+name: Update Sequence Ontology
+
+on:
+  schedule:
+    - cron: "0 6 1 * *"  # Run at 06:00 on the 1st of every month
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-sequence-ontology:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get latest SO-Ontologies commit info
+        id: so-latest
+        run: |
+          # Fetch the latest commit on the main branch of SO-Ontologies
+          COMMIT_INFO=$(curl -sSf \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/The-Sequence-Ontology/SO-Ontologies/commits?path=so.obo&per_page=1")
+          COMMIT_SHA=$(echo "$COMMIT_INFO" | python3 -c "import json,sys; data=json.load(sys.stdin); print(data[0]['sha'])")
+          COMMIT_DATE=$(echo "$COMMIT_INFO" | python3 -c "import json,sys; data=json.load(sys.stdin); print(data[0]['commit']['committer']['date'][:10])")
+          echo "sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+          echo "date=$COMMIT_DATE" >> "$GITHUB_OUTPUT"
+          echo "Latest so.obo commit: $COMMIT_SHA ($COMMIT_DATE)"
+
+      - name: Check current SO file date
+        id: current
+        run: |
+          CURRENT_FILE=$(ls vembrane/resources/sequence_ontology.*.obo.xz)
+          CURRENT_DATE=$(echo "$CURRENT_FILE" | grep -oP '\d{4}-\d{2}-\d{2}')
+          echo "file=$CURRENT_FILE" >> "$GITHUB_OUTPUT"
+          echo "date=$CURRENT_DATE" >> "$GITHUB_OUTPUT"
+          echo "Current SO file: $CURRENT_FILE (date: $CURRENT_DATE)"
+
+      - name: Check if update is needed
+        id: check
+        run: |
+          if [ "${{ steps.so-latest.outputs.date }}" = "${{ steps.current.outputs.date }}" ]; then
+            echo "No update needed: current file already matches latest commit date (${{ steps.current.outputs.date }})"
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Update needed: ${{ steps.current.outputs.date }} -> ${{ steps.so-latest.outputs.date }}"
+            echo "update_needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download and compress updated so.obo
+        if: steps.check.outputs.update_needed == 'true'
+        run: |
+          NEW_DATE="${{ steps.so-latest.outputs.date }}"
+          NEW_FILENAME="sequence_ontology.${NEW_DATE}.obo.xz"
+
+          # Download so.obo at the specific commit
+          curl -sSf \
+            "https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/${{ steps.so-latest.outputs.sha }}/so.obo" \
+            -o /tmp/so.obo
+
+          # Compress with xz
+          xz -k /tmp/so.obo
+          mv /tmp/so.obo.xz "vembrane/resources/${NEW_FILENAME}"
+
+          # Remove the old file
+          rm "${{ steps.current.outputs.file }}"
+
+          echo "new_filename=$NEW_FILENAME" >> "$GITHUB_ENV"
+
+      - name: Update sequence_ontology.py
+        if: steps.check.outputs.update_needed == 'true'
+        run: |
+          NEW_FILENAME="${new_filename}"
+          sed -i "s/DEFAULT_SEQUENCE_ONTOLOGY_FILE = \"sequence_ontology\..*\.obo\.xz\"/DEFAULT_SEQUENCE_ONTOLOGY_FILE = \"${NEW_FILENAME}\"/" \
+            vembrane/sequence_ontology.py
+          echo "Updated DEFAULT_SEQUENCE_ONTOLOGY_FILE to ${NEW_FILENAME}"
+
+      - name: Create Pull Request
+        if: steps.check.outputs.update_needed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: update sequence ontology to ${{ steps.so-latest.outputs.date }}"
+          branch: "chore/update-sequence-ontology-${{ steps.so-latest.outputs.date }}"
+          title: "chore: update sequence ontology to ${{ steps.so-latest.outputs.date }}"
+          body: |
+            Automated update of the bundled sequence ontology file.
+
+            - Previous file date: `${{ steps.current.outputs.date }}`
+            - New file date: `${{ steps.so-latest.outputs.date }}`
+            - Upstream commit: The-Sequence-Ontology/SO-Ontologies@${{ steps.so-latest.outputs.sha }}
+
+            Closes #264
+          labels: "dependencies"
+          delete-branch: true
