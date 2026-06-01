@@ -95,7 +95,5 @@ jobs:
             - Previous file date: `${{ steps.current.outputs.date }}`
             - New file date: `${{ steps.so-latest.outputs.date }}`
             - Upstream commit: The-Sequence-Ontology/SO-Ontologies@${{ steps.so-latest.outputs.sha }}
-
-            Closes #264
           labels: "dependencies"
           delete-branch: true
