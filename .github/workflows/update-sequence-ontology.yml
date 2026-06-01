@@ -33,8 +33,13 @@ jobs:
       - name: Check current SO file date
         id: current
         run: |
-          CURRENT_FILE=$(ls vembrane/resources/sequence_ontology.*.obo.xz)
-          CURRENT_DATE=$(echo "$CURRENT_FILE" | grep -oP '\d{4}-\d{2}-\d{2}')
+          mapfile -t MATCHES < <(find vembrane/resources -maxdepth 1 -name 'sequence_ontology.*.obo.xz')
+          if [ "${#MATCHES[@]}" -ne 1 ]; then
+            echo "Expected exactly one sequence ontology file, found ${#MATCHES[@]}"
+            exit 1
+          fi
+          CURRENT_FILE="${MATCHES[0]}"
+          CURRENT_DATE=$(echo "$CURRENT_FILE" | sed -n 's/.*sequence_ontology\.\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)\.obo\.xz/\1/p')
           echo "file=$CURRENT_FILE" >> "$GITHUB_OUTPUT"
           echo "date=$CURRENT_DATE" >> "$GITHUB_OUTPUT"
           echo "Current SO file: $CURRENT_FILE (date: $CURRENT_DATE)"
@@ -61,8 +66,8 @@ jobs:
             "https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/${{ steps.so-latest.outputs.sha }}/so.obo" \
             -o /tmp/so.obo
 
-          # Compress with xz
-          xz -k /tmp/so.obo
+          # Compress with xz (in-place, no -k flag)
+          xz /tmp/so.obo
           mv /tmp/so.obo.xz "vembrane/resources/${NEW_FILENAME}"
 
           # Remove the old file
@@ -73,10 +78,9 @@ jobs:
       - name: Update sequence_ontology.py
         if: steps.check.outputs.update_needed == 'true'
         run: |
-          NEW_FILENAME="${new_filename}"
-          sed -i "s/DEFAULT_SEQUENCE_ONTOLOGY_FILE = \"sequence_ontology\..*\.obo\.xz\"/DEFAULT_SEQUENCE_ONTOLOGY_FILE = \"${NEW_FILENAME}\"/" \
+          sed -i "s/DEFAULT_SEQUENCE_ONTOLOGY_FILE = \"sequence_ontology\..*\.obo\.xz\"/DEFAULT_SEQUENCE_ONTOLOGY_FILE = \"${new_filename}\"/" \
             vembrane/sequence_ontology.py
-          echo "Updated DEFAULT_SEQUENCE_ONTOLOGY_FILE to ${NEW_FILENAME}"
+          echo "Updated DEFAULT_SEQUENCE_ONTOLOGY_FILE to ${new_filename}"
 
       - name: Create Pull Request
         if: steps.check.outputs.update_needed == 'true'
