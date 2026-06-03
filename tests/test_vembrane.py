@@ -227,6 +227,8 @@ def test_command(testcase: Path, backend: Backend, context: Context | None):
     # we have to catch and compare such exceptions here, because they
     # do not cause a SystemExit like the .execute() instances below
     except Exception as e:
+        if "raises" not in config:
+            raise
         assert type(e).__name__ == config["raises"]
         return
 

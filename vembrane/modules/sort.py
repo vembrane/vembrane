@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Self, Sequence, Tuple, TypeVar
 
 from vembrane import __version__
-from vembrane.ann_types import is_na
+from vembrane.ann_types import NA, NoValue, is_na
 from vembrane.backend.base import Backend, VCFReader, VCFRecord, VCFWriter
 from vembrane.common import (
     Context,
@@ -95,6 +95,19 @@ T = TypeVar("T")
 type NestedSequence[T] = Sequence[T | NestedSequence[T]]
 
 
+def quantize(value: Any, step: float | int) -> int | NoValue:
+    if is_na(value):
+        return NA
+    else:
+        try:
+            return int(value / step)
+        except Exception as e:
+            raise VembraneError(
+                f"Cannot quantize value {value} with step {step} ({e}). "
+                "Ensure that the value is either numeric (int or float) or missing."
+            ) from e
+
+
 # Key wrapper classes for sorting.
 # sorted() uses <, max and min use < and >, so we need to implement both.
 # For maximizing speed, we avoid delegation, saving an additional method call.
@@ -171,6 +184,7 @@ def apply_default_key(
 auxiliary_globals: dict[str, Any] = {
     "asc": KeyAscending.wrap,
     "desc": KeyDescending.wrap,
+    "quantize": quantize,
 }
 
 
