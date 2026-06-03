@@ -1,0 +1,4 @@
+function: "sort"
+expression: 'desc(quantize(QUAL, 10)), {"HIGH": 0, "MODERATE": 1, "LOW": 2, "MODIFIER": 3}[ANN["Annotation_Impact"]]'
+chunk-size: "10"
+preserve-annotation-order: false
