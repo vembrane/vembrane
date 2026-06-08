@@ -364,14 +364,14 @@ wheels = [
 
 [[package]]
 name = "obonet"
-version = "1.1.1"
+version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "networkx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a9/2a/d2129fbb8f8015df90f9755bd8cd3cf63ab53ca21a07b6371875716b31a3/obonet-1.1.1.tar.gz", hash = "sha256:0dbc742f078d5a9bb89c7ae8dc66535e944de08dd4ead24854d340d882cfa275", size = 25656, upload-time = "2025-03-26T01:51:08.746Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/a3/e8909a913d94d95806519906235baae831dae43df706eb006a0bb48c776b/obonet-1.3.0.tar.gz", hash = "sha256:7c128bfe455bd7a134a3e6122e89338b896b4dea116511a850cec1a2e2a98294", size = 27644, upload-time = "2026-06-03T14:21:22.851Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a3/86/ae23b7033126c05b7a75b06796b3627a8dc866df2de2f4a30b8796863675/obonet-1.1.1-py3-none-any.whl", hash = "sha256:0513a589e27fd29856a3e6d4660f53cbdecf601319aaae4635b59a9795e68bc7", size = 9248, upload-time = "2025-03-26T01:51:07.315Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/81/72afd839f6502b72cb01a641a39c43cc6e77bbba101dd07194008b9c735f/obonet-1.3.0-py3-none-any.whl", hash = "sha256:77d981082aa95cf0d6c78568a8079f43c781c8dd5df30a9b2f7c665b87e4f0fc", size = 10941, upload-time = "2026-06-03T14:21:21.697Z" },
 ]
 
 [[package]]
