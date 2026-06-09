@@ -23,7 +23,7 @@ jobs:
           COMMIT_INFO=$(curl -sSf \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/The-Sequence-Ontology/SO-Ontologies/commits?path=so.obo&per_page=1")
+            "https://api.github.com/repos/The-Sequence-Ontology/SO-Ontologies/commits?path=Ontology_Files/so.obo&per_page=1")
           COMMIT_SHA=$(echo "$COMMIT_INFO" | python3 -c "import json,sys; data=json.load(sys.stdin); print(data[0]['sha'])")
           COMMIT_DATE=$(echo "$COMMIT_INFO" | python3 -c "import json,sys; data=json.load(sys.stdin); print(data[0]['commit']['committer']['date'][:10])")
           echo "sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
@@ -63,7 +63,7 @@ jobs:
 
           # Download so.obo at the specific commit
           curl -sSf \
-            "https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/${{ steps.so-latest.outputs.sha }}/so.obo" \
+            "https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/${{ steps.so-latest.outputs.sha }}/Ontology_Files/so.obo" \
             -o /tmp/so.obo
 
           # Compress with xz (in-place, no -k flag)
