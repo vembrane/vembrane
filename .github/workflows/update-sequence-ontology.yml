@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Get latest SO-Ontologies commit info
         id: so-latest
@@ -75,16 +75,19 @@ jobs:
 
           echo "new_filename=$NEW_FILENAME" >> "$GITHUB_ENV"
 
-      - name: Update sequence_ontology.py
+      - name: Update file references in code and docs
         if: steps.check.outputs.update_needed == 'true'
         run: |
           sed -i "s/DEFAULT_SEQUENCE_ONTOLOGY_FILE = \"sequence_ontology\..*\.obo\.xz\"/DEFAULT_SEQUENCE_ONTOLOGY_FILE = \"${new_filename}\"/" \
             vembrane/sequence_ontology.py
           echo "Updated DEFAULT_SEQUENCE_ONTOLOGY_FILE to ${new_filename}"
 
+          sed -i "s/${{ steps.current.outputs.date }}/${{ steps.so-latest.outputs.date }}/g" README.md docs/filter.md
+          echo "Updated documentation dates from ${{ steps.current.outputs.date }} to ${{ steps.so-latest.outputs.date }}"
+
       - name: Create Pull Request
         if: steps.check.outputs.update_needed == 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           commit-message: "chore: update sequence ontology to ${{ steps.so-latest.outputs.date }}"
           branch: "chore/update-sequence-ontology-${{ steps.so-latest.outputs.date }}"
