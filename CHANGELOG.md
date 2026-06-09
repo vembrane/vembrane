@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.0](https://github.com/vembrane/vembrane/compare/v2.5.0...v2.6.0) (2026-06-09)
+
+
+### Features
+
+* quantize function for sorting ([#263](https://github.com/vembrane/vembrane/issues/263)) ([935f106](https://github.com/vembrane/vembrane/commit/935f106e082aac93bd5a9bc9eebae0e765fc634e))
+
 ## [2.5.0](https://github.com/vembrane/vembrane/compare/v2.4.0...v2.5.0) (2026-03-10)
 
 
