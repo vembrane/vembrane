@@ -1,0 +1,109 @@
+name: Update Sequence Ontology
+
+on:
+  schedule:
+    - cron: "0 6 1 * *"  # Run at 06:00 on the 1st of every month
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-sequence-ontology:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Get latest SO-Ontologies commit info
+        id: so-latest
+        run: |
+          # Fetch the latest commit on the main branch of SO-Ontologies
+          COMMIT_INFO=$(curl -sSf \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/The-Sequence-Ontology/SO-Ontologies/commits?path=Ontology_Files/so.obo&per_page=1")
+          COMMIT_SHA=$(echo "$COMMIT_INFO" | python3 -c "import json,sys; data=json.load(sys.stdin); print(data[0]['sha'])")
+          COMMIT_DATE=$(echo "$COMMIT_INFO" | python3 -c "import json,sys; data=json.load(sys.stdin); print(data[0]['commit']['committer']['date'][:10])")
+          echo "sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+          echo "date=$COMMIT_DATE" >> "$GITHUB_OUTPUT"
+          echo "Latest so.obo commit: $COMMIT_SHA ($COMMIT_DATE)"
+
+      - name: Check current SO file date
+        id: current
+        run: |
+          mapfile -t MATCHES < <(find vembrane/resources -maxdepth 1 -name 'sequence_ontology.*.obo.xz')
+          if [ "${#MATCHES[@]}" -ne 1 ]; then
+            echo "Expected exactly one sequence ontology file, found ${#MATCHES[@]}"
+            exit 1
+          fi
+          CURRENT_FILE="${MATCHES[0]}"
+          CURRENT_DATE=$(echo "$CURRENT_FILE" | sed -n 's/.*sequence_ontology\.\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)\.obo\.xz/\1/p')
+          echo "file=$CURRENT_FILE" >> "$GITHUB_OUTPUT"
+          echo "date=$CURRENT_DATE" >> "$GITHUB_OUTPUT"
+          echo "Current SO file: $CURRENT_FILE (date: $CURRENT_DATE)"
+
+      - name: Check if update is needed
+        id: check
+        run: |
+          CURRENT_DATE="${{ steps.current.outputs.date }}"
+          NEW_DATE="${{ steps.so-latest.outputs.date }}"
+
+          if [[ "$NEW_DATE" == "$CURRENT_DATE" ]]; then
+            echo "No update needed: current file already matches latest commit date ($CURRENT_DATE)"
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+          elif [[ "$NEW_DATE" > "$CURRENT_DATE" ]]; then
+            echo "Update needed: $CURRENT_DATE -> $NEW_DATE"
+            echo "update_needed=true" >> "$GITHUB_OUTPUT"
+          else
+            # Fail the job if the upstream date is somehow older than the local date
+            echo "::error::The fetched date ($NEW_DATE) is older than the current date ($CURRENT_DATE). Manual inspection required."
+            exit 1
+          fi
+
+      - name: Download and compress updated so.obo
+        if: steps.check.outputs.update_needed == 'true'
+        run: |
+          NEW_DATE="${{ steps.so-latest.outputs.date }}"
+          NEW_FILENAME="sequence_ontology.${NEW_DATE}.obo.xz"
+
+          # Download so.obo at the specific commit
+          curl -sSf \
+            "https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/${{ steps.so-latest.outputs.sha }}/Ontology_Files/so.obo" \
+            -o /tmp/so.obo
+
+          # Compress with xz (in-place, no -k flag)
+          xz /tmp/so.obo
+          mv /tmp/so.obo.xz "vembrane/resources/${NEW_FILENAME}"
+
+          # Remove the old file
+          rm "${{ steps.current.outputs.file }}"
+
+          echo "new_filename=$NEW_FILENAME" >> "$GITHUB_ENV"
+
+      - name: Update file references in code and docs
+        if: steps.check.outputs.update_needed == 'true'
+        run: |
+          sed -i "s/DEFAULT_SEQUENCE_ONTOLOGY_FILE = \"sequence_ontology\..*\.obo\.xz\"/DEFAULT_SEQUENCE_ONTOLOGY_FILE = \"${new_filename}\"/" \
+            vembrane/sequence_ontology.py
+          echo "Updated DEFAULT_SEQUENCE_ONTOLOGY_FILE to ${new_filename}"
+
+          sed -i "s/${{ steps.current.outputs.date }}/${{ steps.so-latest.outputs.date }}/g" README.md docs/filter.md
+          echo "Updated documentation dates from ${{ steps.current.outputs.date }} to ${{ steps.so-latest.outputs.date }}"
+
+      - name: Create Pull Request
+        if: steps.check.outputs.update_needed == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          commit-message: "chore: update sequence ontology to ${{ steps.so-latest.outputs.date }}"
+          branch: "chore/update-sequence-ontology-${{ steps.so-latest.outputs.date }}"
+          title: "chore: update sequence ontology to ${{ steps.so-latest.outputs.date }}"
+          body: |
+            Automated update of the bundled sequence ontology file.
+
+            - Previous file date: `${{ steps.current.outputs.date }}`
+            - New file date: `${{ steps.so-latest.outputs.date }}`
+            - Upstream commit: The-Sequence-Ontology/SO-Ontologies@${{ steps.so-latest.outputs.sha }}
+          labels: "dependencies"
+          delete-branch: true
