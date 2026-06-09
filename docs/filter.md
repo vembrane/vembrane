@@ -188,7 +188,7 @@ Sometimes, multi-valued fields may contain missing values; in this case, the `wi
 ### Ontologies
 `vembrane` supports ontologies in OBO format. The ontology is loaded into memory and can be accessed in the filter expression via the `SO` symbol. This enables filtering based on relationships between ontology terms. 
 For example, `vembrane filter --ontology so.obo 'ANN["Consequence"].any_is_a("intron_variant")'` will keep only records where at least one of the consequences is an intron variant *or a subtype thereof*.
-If no ontology is provided, the built-in ontology from sequenceontology.org (date: 2024-06-06) is loaded automatically if the `SO` symbol is accessed.
+If no ontology is provided, the built-in ontology from sequenceontology.org (date: 2025-09-10) is loaded automatically if the `SO` symbol is accessed.
 
 There are three relevant classes/types:
 - `Term`: Represents a term in the ontology. It inherits from `str` and can be used as such.

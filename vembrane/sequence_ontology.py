@@ -8,7 +8,7 @@ except ImportError:
 import networkx
 import obonet
 
-DEFAULT_SEQUENCE_ONTOLOGY_FILE = "sequence_ontology.2024-06-06.obo.xz"
+DEFAULT_SEQUENCE_ONTOLOGY_FILE = "sequence_ontology.2025-09-10.obo.xz"
 
 Id = NewType("Id", str)
 
