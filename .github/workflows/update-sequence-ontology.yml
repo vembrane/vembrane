@@ -47,12 +47,19 @@ jobs:
       - name: Check if update is needed
         id: check
         run: |
-          if [ "${{ steps.so-latest.outputs.date }}" = "${{ steps.current.outputs.date }}" ]; then
-            echo "No update needed: current file already matches latest commit date (${{ steps.current.outputs.date }})"
+          CURRENT_DATE="${{ steps.current.outputs.date }}"
+          NEW_DATE="${{ steps.so-latest.outputs.date }}"
+
+          if [[ "$NEW_DATE" == "$CURRENT_DATE" ]]; then
+            echo "No update needed: current file already matches latest commit date ($CURRENT_DATE)"
             echo "update_needed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Update needed: ${{ steps.current.outputs.date }} -> ${{ steps.so-latest.outputs.date }}"
+          elif [[ "$NEW_DATE" > "$CURRENT_DATE" ]]; then
+            echo "Update needed: $CURRENT_DATE -> $NEW_DATE"
             echo "update_needed=true" >> "$GITHUB_OUTPUT"
+          else
+            # Fail the job if the upstream date is somehow older than the local date
+            echo "::error::The fetched date ($NEW_DATE) is older than the current date ($CURRENT_DATE). Manual inspection required."
+            exit 1
           fi
 
       - name: Download and compress updated so.obo
