@@ -1,9 +1,5 @@
-##fileformat=VCFv4.1
+##fileformat=VCFv4.2
 ##FILTER=<ID=PASS,Description="All filters passed">
-##fileDate=20191217
-##source=strelka
-##source_version=2.9.10
-##startTime=Tue Dec 17 17:01:25 2019
 ##contig=<ID=chr18,length=80373285>
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
