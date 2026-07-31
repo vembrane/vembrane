@@ -264,6 +264,7 @@ class VCFRecordFormats(NoValueDict):
     def get(self, key: str, default=None):
         if key not in self:
             return default
+        return self[key]
 
 
 class VCFReader:

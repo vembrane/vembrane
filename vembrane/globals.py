@@ -190,7 +190,8 @@ def custom_functions(env) -> dict[str, Callable]:
             {},
         ),
         "has_genotype": eval(
-            "lambda sample: FORMAT.get('GT') and FORMAT['GT'][sample] is not NA",
+            "lambda sample: bool(FORMAT.get('GT')) "
+            "and any(x is not NA for x in FORMAT['GT'][sample])",
             env,
             {},
         ),

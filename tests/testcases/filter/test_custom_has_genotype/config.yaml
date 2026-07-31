@@ -1,0 +1,2 @@
+function: "filter"
+expression: 'has_genotype("S2") and not has_genotype("S1")'
