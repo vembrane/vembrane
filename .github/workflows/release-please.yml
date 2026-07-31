@@ -45,7 +45,7 @@ jobs:
         run: uv build
 
       - name: Save build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vembrane-build
           path: dist/*
