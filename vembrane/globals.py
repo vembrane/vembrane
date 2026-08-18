@@ -215,7 +215,7 @@ def custom_functions(env) -> dict[str, Callable]:
             {},
         ),
         "is_hom_var": eval(
-            "lambda sample: all(x != 0 and x is not NA for x in FORMAT['GT'][s])",
+            "lambda sample: all(x != 0 and x is not NA for x in FORMAT['GT'][sample])",
             env,
             {},
         ),

@@ -1,0 +1,2 @@
+function: "filter"
+expression: 'is_hom_var("S2") and is_hom_ref("S3") and is_het("S4") and is_hom("S3") and has_ref("S9") and has_var("S7") and not is_hom_var("S3") and not is_het("S2") and not is_hom_ref("S2") and not is_hom("S4") and not has_ref("S7") and not has_var("S3")'
