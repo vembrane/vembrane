@@ -39,7 +39,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        run: uv python install 3.10  # Build only for Python 3.10
+        run: uv python install 3.12  # Build only for Python 3.12
 
       - name: Build package
         run: uv build
