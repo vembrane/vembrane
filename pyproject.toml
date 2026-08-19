@@ -48,11 +48,12 @@ dev = [
     "types-networkx~=3.5",
     "pre-commit~=4.2",
     "pyarrow-stubs~=20.0.0.20251215",
-    "pytest~=8.4",
+    "pytest~=9.0",
     "ruff~=0.12",
     "tox~=4.24",
     "tox-uv~=1.25",
     "polars",
+    "pytest-sugar~=1.1",
 ]
 
 test = [
