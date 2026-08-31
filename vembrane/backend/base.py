@@ -1,4 +1,4 @@
-from abc import abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List, Optional, Tuple
 
@@ -24,7 +24,7 @@ class Backend(Enum):
             return s
 
 
-class VCFRecordInfo:
+class VCFRecordInfo(ABC):
     __slots__ = ()
 
     @abstractmethod
@@ -53,7 +53,11 @@ class VCFRecordSamples:
     pass
 
 
-class NoValueDict:
+class NoValueDict(ABC):
+    @abstractmethod
+    def __getitem__(self, item):
+        raise NotImplementedError
+
     def __contains__(self, item):
         try:
             value = self[item]
@@ -62,7 +66,11 @@ class NoValueDict:
         return value is not NA
 
 
-class DefaultGet:
+class DefaultGet(ABC):
+    @abstractmethod
+    def __getitem__(self, item):
+        raise NotImplementedError
+
     def get(self, item, default=NA):
         v = self[item]
         if v is not NA:
@@ -72,6 +80,8 @@ class DefaultGet:
 
 
 class VCFRecordFormat(NoValueDict):
+    _header: "VCFHeader"
+
     @abstractmethod
     def __setitem__(self, key, value):
         raise NotImplementedError
@@ -94,8 +104,17 @@ class VCFRecordFormat(NoValueDict):
             },
         )
 
+    def __eq__(self, other: object):
+        if not isinstance(other, VCFRecordFormat):
+            return NotImplemented
+        return all(
+            self[sample] == other[sample]
+            or (self[sample] is NA and other[sample] is NA)
+            for sample in self._header.samples
+        )
 
-class VCFRecordFilter:
+
+class VCFRecordFilter(ABC):
     __slots__ = ()
 
     @abstractmethod
@@ -107,34 +126,37 @@ class VCFRecordFilter:
         raise NotImplementedError
 
 
-class VCFRecord:
+class VCFRecord(ABC):
     __slots__ = ("_raw_record", "record_idx", "_header")
 
-    @abstractmethod
     def __init__(self, record, record_idx: int, header):
         self._raw_record = record
         self.record_idx = record_idx
         self._header = header
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def contig(self) -> str:
         raise NotImplementedError
 
     def chrom(self) -> str:
         return self.contig
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def position(self) -> int:
         raise NotImplementedError
 
     def start(self) -> int:
         return self.position
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def stop(self) -> int:
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def id(self) -> str:
         raise NotImplementedError
 
@@ -142,31 +164,38 @@ class VCFRecord:
     def alleles(self) -> Tuple[str, ...]:
         return self.reference_allele, *self.alt_alleles
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def reference_allele(self) -> str:
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def alt_alleles(self) -> Tuple[str]:
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def quality(self) -> float:
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def filter(self) -> VCFRecordFilter:
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def info(self) -> VCFRecordInfo:
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def formats(self) -> "VCFRecordFormats":
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def header(self) -> "VCFHeader":
         raise NotImplementedError
 
@@ -215,11 +244,9 @@ class VCFRecord:
             # (as it is with 0-based), we do not need to add 1.
             return self.stop
 
-    @abstractmethod
     def __repr__(self):
         return self._raw_record.__str__()
 
-    @abstractmethod
     def __str__(self):
         return self._raw_record.__str__()
 
@@ -258,16 +285,22 @@ class VCFRecordFormats(NoValueDict):
         raise NotImplementedError
 
     @abstractmethod
+    def __getitem__(self, item):
+        raise NotImplementedError
+
+    @abstractmethod
     def keys(self):
         raise NotImplementedError
 
     def get(self, key: str, default=None):
         if key not in self:
             return default
+        return self[key]
 
 
-class VCFReader:
+class VCFReader(ABC):
     __slots__ = ("_file",)
+    _header: "VCFHeader"
 
     @abstractmethod
     def __init__(self, filename: str):
@@ -302,7 +335,7 @@ class VCFReader:
         raise NotImplementedError
 
 
-class VCFHeader:
+class VCFHeader(ABC):
     @abstractmethod
     def __init__(self, reader: VCFReader):
         raise NotImplementedError
@@ -315,23 +348,28 @@ class VCFHeader:
     def __next__(self):
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def samples(self) -> List[str]:
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def filters(self) -> List[str]:
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def records(self):
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def infos(self) -> VCFRecordInfo:
         raise NotImplementedError
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def formats(self) -> VCFRecordFormats:
         raise NotImplementedError
 
@@ -357,7 +395,7 @@ class VCFHeader:
         raise NotImplementedError
 
 
-class VCFWriter:
+class VCFWriter(ABC):
     __slots__ = ("_file",)
 
     @abstractmethod

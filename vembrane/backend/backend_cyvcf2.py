@@ -297,9 +297,6 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
     def __contains__(self, sample):
         return sample in self._header.samples
 
-    def __eq__(self, other):
-        return all(self[sample] == other[sample] for sample in self._header.samples)
-
     def keys(self):
         return self._raw_record.format.keys()
 

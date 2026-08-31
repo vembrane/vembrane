@@ -84,8 +84,11 @@ class PysamRecordFormats(VCFRecordFormats):
     def __getitem__(self, key):
         return PysamRecordFormat(key, self._record)
 
+    def __contains__(self, key):
+        return key in self._record._raw_record.format
+
     def keys(self):
-        return self._record._header.formats.keys()
+        return self._record._raw_record.format.keys()
 
 
 class PysamRecordFormat(VCFRecordFormat):
@@ -127,6 +130,9 @@ class PysamRecordFormat(VCFRecordFormat):
 
     def __contains__(self, sample):
         return sample in self._header.samples
+
+    def keys(self):
+        return self._raw_record.format.keys()
 
 
 class PysamRecordInfo(VCFRecordInfo):
