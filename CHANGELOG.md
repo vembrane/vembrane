@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.6.1](https://github.com/vembrane/vembrane/compare/v2.6.0...v2.6.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* `.get("GT")` returning None and `has_genotype(...)` incorrectly checking for single `NA` and typing issues ([#310](https://github.com/vembrane/vembrane/issues/310)) ([19b6bff](https://github.com/vembrane/vembrane/commit/19b6bff142c7a92a235c077853d3a1cf2f06133a))
+* is_hom_var using 's' instead of 'sample' ([#298](https://github.com/vembrane/vembrane/issues/298)) ([84e7d9f](https://github.com/vembrane/vembrane/commit/84e7d9f6910121723809409ffcce5fd8158bab52))
+
 ## [2.6.0](https://github.com/vembrane/vembrane/compare/v2.5.0...v2.6.0) (2026-06-09)
 
 
