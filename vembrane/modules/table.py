@@ -460,7 +460,12 @@ def execute(args):
         elif args.output_fmt == "parquet":
             with smart_open(args.output, "wb") as outfile:
                 chunks = batched(rows, args.parquet_row_group_size)
-                first_chunk = next(chunks)
+                is_empty = False
+                try:
+                    first_chunk = next(chunks)
+                except StopIteration:
+                    is_empty = True
+                    first_chunk = []
                 arrow_types = ArrowTypes()
 
                 for i, colname in enumerate(header):
@@ -470,18 +475,21 @@ def execute(args):
                 with pyarrow.parquet.ParquetWriter(
                     outfile, arrow_types.schema
                 ) as writer:
-                    for chunk in chain([first_chunk], chunks):
-                        writer.write_batch(
-                            pa.record_batch(
-                                {
-                                    colname: arrow_types.handle_values(
-                                        colname, [row[i] for row in chunk]
-                                    )
-                                    for i, colname in enumerate(header)
-                                },
-                                schema=arrow_types.schema,
-                            ),
-                            row_group_size=args.parquet_row_group_size,
-                        )
+                    if is_empty:
+                        writer.write_table(arrow_types.schema.empty_table())
+                    else:
+                        for chunk in chain([first_chunk], chunks):
+                            writer.write_batch(
+                                pa.record_batch(
+                                    {
+                                        colname: arrow_types.handle_values(
+                                            colname, [row[i] for row in chunk]
+                                        )
+                                        for i, colname in enumerate(header)
+                                    },
+                                    schema=arrow_types.schema,
+                                ),
+                                row_group_size=args.parquet_row_group_size,
+                            )
         else:
             raise ValueError("bug: unreachable code, invalid output format given.")
