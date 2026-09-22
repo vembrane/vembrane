@@ -6,9 +6,9 @@ from itertools import batched, chain
 from typing import Any
 
 import asttokens
-from more_itertools import peekable
 import pyarrow as pa
 import pyarrow.parquet
+from more_itertools import peekable
 
 from ..arrow import ArrowTypes
 from ..backend.base import VCFHeader, VCFReader, VCFRecord
