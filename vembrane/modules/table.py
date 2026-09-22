@@ -2,7 +2,7 @@ import csv
 from collections import defaultdict
 from collections.abc import Iterator
 from enum import Enum
-from itertools import batched, chain
+from itertools import batched
 from typing import Any
 
 import asttokens
