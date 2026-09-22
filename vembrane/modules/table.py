@@ -6,6 +6,7 @@ from itertools import batched, chain
 from typing import Any
 
 import asttokens
+from more_itertools import peekable
 import pyarrow as pa
 import pyarrow.parquet
 
@@ -459,13 +460,8 @@ def execute(args):
                 writer.writerows(get_row(row) for row in rows)
         elif args.output_fmt == "parquet":
             with smart_open(args.output, "wb") as outfile:
-                chunks = batched(rows, args.parquet_row_group_size)
-                is_empty = False
-                try:
-                    first_chunk = next(chunks)
-                except StopIteration:
-                    is_empty = True
-                    first_chunk = []
+                chunks = peekable(batched(rows, args.parquet_row_group_size))
+                first_chunk = chunks.peek(default=[])
                 arrow_types = ArrowTypes()
 
                 for i, colname in enumerate(header):
@@ -475,7 +471,7 @@ def execute(args):
                 with pyarrow.parquet.ParquetWriter(
                     outfile, arrow_types.schema
                 ) as writer:
-                    if is_empty:
+                    if not first_chunk:
                         writer.write_table(arrow_types.schema.empty_table())
                     else:
                         for chunk in chain([first_chunk], chunks):
