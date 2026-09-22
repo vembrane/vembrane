@@ -52,7 +52,7 @@ class ArrowTypes:
                 self.warnings.add(colname)
                 print(
                     f"Warning: Column '{colname}' is NA-only "
-                    f"in the first {len(values)} rows. "
+                    f"in the first {len(values)} rows or no rows present. "
                     "Assuming type 'string'."
                     "This warning will only be printed once per column.",
                     file=sys.stderr,
