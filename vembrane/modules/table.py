@@ -474,7 +474,7 @@ def execute(args):
                     if not first_chunk:
                         writer.write_table(arrow_types.schema.empty_table())
                     else:
-                        for chunk in chain([first_chunk], chunks):
+                        for chunk in chunks:
                             writer.write_batch(
                                 pa.record_batch(
                                     {
