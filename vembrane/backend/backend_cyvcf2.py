@@ -255,9 +255,16 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
         self._format_key = format_key
 
     def __getitem__(self, sample):
-        i = self._header.samples.index(sample)
-        if i == -1:
-            raise UnknownSampleError(self._record, sample)
+        samples = self._header.samples
+        try:
+            # indexing a range applies Python semantics, e.g. -1 is the last sample
+            i = (
+                range(len(samples))[sample]
+                if isinstance(sample, int)
+                else samples.index(sample)
+            )
+        except (IndexError, ValueError):
+            raise UnknownSampleError(self._record, sample) from None
         if self._format_key == "GT":  # genotype
             value = tuple(
                 None if gt == -1 else gt for gt in self._raw_record.genotypes[i][:-1]
@@ -295,6 +302,9 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
         raise NotImplementedError
 
     def __contains__(self, sample):
+        if isinstance(sample, int):
+            n = len(self._header.samples)
+            return -n <= sample < n
         return sample in self._header.samples
 
     def keys(self):

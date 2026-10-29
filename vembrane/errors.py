@@ -54,10 +54,10 @@ class MalformedAnnotationError(VembraneError):
 class UnknownSampleError(VembraneError, KeyError):
     """Unknown Sample"""
 
-    def __init__(self, record, sample: str) -> None:
+    def __init__(self, record, sample: str | int) -> None:
+        requested = f"index {sample}" if isinstance(sample, int) else f"name '{sample}'"
         super().__init__(
-            f"No sample with name '{sample}' in record \
-                {record.record_idx}:\n{str(record)}",
+            f"No sample with {requested} in record {record.record_idx}:\n{str(record)}",
         )
         self.record_idx = record.record_idx
         self.record = record
