@@ -1,0 +1,2 @@
+function: "filter"
+expression: 'FORMAT["GT"][0] == (1, 1) and FORMAT["DP"][-1] > 10'

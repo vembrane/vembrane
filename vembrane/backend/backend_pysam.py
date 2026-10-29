@@ -106,7 +106,10 @@ class PysamRecordFormat(VCFRecordFormat):
 
     def __getitem__(self, sample):
         if not self.__contains__(sample):
-            raise UnknownSampleError(self.record, sample)
+            raise UnknownSampleError(self._record, sample)
+        if isinstance(sample, int):
+            # pysam rejects negative indices, Python counts them from the end
+            sample %= len(self._header.samples)
         meta = self._header.formats[self._format_key]
         number = meta["Number"] if self._format_key != "GT" else "."
         value_array = self._raw_record.samples[sample]
@@ -129,6 +132,9 @@ class PysamRecordFormat(VCFRecordFormat):
         self._raw_record.format[key] = value
 
     def __contains__(self, sample):
+        if isinstance(sample, int):
+            n = len(self._header.samples)
+            return -n <= sample < n
         return sample in self._header.samples
 
     def keys(self):
