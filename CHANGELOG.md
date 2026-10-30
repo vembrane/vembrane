@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.6.2](https://github.com/vembrane/vembrane/compare/v2.6.1...v2.6.2) (2026-10-30)
+
+
+### Bug Fixes
+
+* accept sample indices in FORMAT field access ([#339](https://github.com/vembrane/vembrane/issues/339)) ([d5d20b0](https://github.com/vembrane/vembrane/commit/d5d20b08ab6fb04d1a05c8b2f1b72d64a6a92cb8))
+* take parquet column types from the VCF header and annotation types ([#343](https://github.com/vembrane/vembrane/issues/343)) ([43e39e5](https://github.com/vembrane/vembrane/commit/43e39e509e328c98028c652c28b280f727a03af9)), closes [#340](https://github.com/vembrane/vembrane/issues/340)
+
+
+### Performance Improvements
+
+* raise default parquet row group size to 10000 ([43e39e5](https://github.com/vembrane/vembrane/commit/43e39e509e328c98028c652c28b280f727a03af9))
+
 ## [2.6.1](https://github.com/vembrane/vembrane/compare/v2.6.0...v2.6.1) (2026-09-22)
 
 
