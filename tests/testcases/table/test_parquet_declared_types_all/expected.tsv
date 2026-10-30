@@ -1,0 +1,3 @@
+SAMPLE	CHROM	POS	REF	ALT	QUAL	FILTER	ID	INFO['DP']	FORMAT['GT']	FORMAT['AD']	ANN['Allele']	ANN['Consequence']	ANN['SYMBOL']	ANN['REVEL']	ANN['SIFT']	ANN['INTRON']
+S1	chr1	100	G	A		['PASS']			(0, 1)		A	missense_variant	G1		{}	
+S1	chr1	200	G	A	50.0	['PASS']		10	(0, 1)	(5, 5)	A	missense_variant	G2	0.5	{'deleterious': 0.25}	number / total: 2 / 5

@@ -110,7 +110,9 @@ def add_subcommmand(subparsers):
         default=10000,
         help="Number of rows to encode as one parquet batch. "
         "Rows will be accumulated in memory before being written. "
-        f"At most {MAX_PARQUET_ROW_GROUP_SIZE}.",  # see pyarrow docs
+        f"At most {MAX_PARQUET_ROW_GROUP_SIZE}. "  # see pyarrow docs
+        "Columns that do more than read a single field "
+        "infer their parquet type from the first batch.",
     )
     add_common_arguments(parser)
 

@@ -90,6 +90,12 @@ class ArrowTypes:
     def declared_type(
         cls, expression: str, header: VCFHeader, ann_key: str
     ) -> str | None:
+        """
+        Return the declared type if the column expression only reads one field,
+        or None otherwise. Recognized expressions are a fixed field like QUAL,
+        INFO["X"], FORMAT["X"][...], the (FORMAT["X"] or {}).get(SAMPLE, NA)
+        generated for ALL, and ANN["X"] (also under the --annotation-key name).
+        """
         try:
             node = ast.parse(expression, mode="eval").body
         except SyntaxError:
