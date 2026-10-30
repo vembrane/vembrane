@@ -107,10 +107,12 @@ def add_subcommmand(subparsers):
     parser.add_argument(
         "--parquet-row-group-size",
         type=int,
-        default=1000,
+        default=10000,
         help="Number of rows to encode as one parquet batch. "
         "Rows will be accumulated in memory before being written. "
-        f"At most {MAX_PARQUET_ROW_GROUP_SIZE}.",  # see pyarrow docs
+        f"At most {MAX_PARQUET_ROW_GROUP_SIZE}. "  # see pyarrow docs
+        "Columns that do more than read a single field "
+        "infer their parquet type from the first batch.",
     )
     add_common_arguments(parser)
 
@@ -464,9 +466,14 @@ def execute(args):
                 first_chunk = chunks.peek(default=[])
                 arrow_types = ArrowTypes()
 
-                for i, colname in enumerate(header):
-                    col = [row[i] for row in first_chunk]
-                    arrow_types.infer(colname, col)
+                for i, (colname, col_expr) in enumerate(
+                    zip(header, expr_cols, strict=True)
+                ):
+                    if not arrow_types.declare(
+                        colname, col_expr, vcf.header, args.annotation_key
+                    ):
+                        col = [row[i] for row in first_chunk]
+                        arrow_types.infer(colname, col)
 
                 with pyarrow.parquet.ParquetWriter(
                     outfile, arrow_types.schema

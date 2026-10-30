@@ -32,7 +32,7 @@ options:
   --output-fmt {csv,parquet}
                         Output format to use. The csv format is further configured via the --separator option. (default: csv)
   --parquet-row-group-size PARQUET_ROW_GROUP_SIZE
-                        Number of rows to encode as one parquet batch. Rows will be accumulated in memory before being written. At most 67108864. (default: 1000)
+                        Number of rows to encode as one parquet batch. Rows will be accumulated in memory before being written. At most 67108864. Columns that do more than read a single field infer their parquet type from the first batch. (default: 10000)
   --annotation-key FIELDNAME, -k FIELDNAME
                         The INFO key for the annotation field. This defaults to 'ANN', but tools might use other field names. For example, default VEP annotations can be parsed by setting 'CSQ' here. (default: ANN)
   --aux NAME=PATH, -a NAME=PATH
@@ -92,6 +92,11 @@ So you can for example perform computations on fields or combine multiple fields
 ```sh
 vembrane table --wide 'CHROM, POS, for_each_sample(lambda sample: FORMAT["AD"][sample] / FORMAT["DP"][sample] * QUAL)' input.vcf > table.tsv
 ```
+
+### Parquet column types
+
+With `--output-fmt parquet`, a column that just reads a field, such as `QUAL`, `INFO["DP"]`, `FORMAT["AD"][SAMPLE]` or `ANN["REVEL"]`, gets the type that the VCF header or vembrane's [annotation types](ann_types.md) declare for that field.
+Any other column gets its type from its values in the first row group (see `--parquet-row-group-size`), and becomes a string column if all of these values are missing.
 
 
 

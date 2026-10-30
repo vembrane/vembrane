@@ -222,6 +222,14 @@ def na_func() -> NoValue:
 
 AnnotationType = Union[IntFloatStr, Iterable[IntFloatStr], NoValue]
 
+# value types of plain typefuncs, see AnnotationEntry.value_type
+TYPEFUNC_VALUE_TYPES: dict[Callable[[str], Any], str] = {
+    str: "str",
+    int: "int",
+    float: "float",
+    float32: "float",
+}
+
 
 class AnnotationEntry:
     def __init__(
@@ -230,15 +238,25 @@ class AnnotationEntry:
         typefunc: Callable[[str], Any] = str,
         nafunc: Callable[[], Any] = na_func,
         description: str | None = None,
+        value_type: str | None = None,
     ) -> None:
         self._name = name
         self._typefunc = typefunc
         self._nafunc = nafunc
         self._description = description
+        self._value_type = value_type or TYPEFUNC_VALUE_TYPES.get(typefunc)
 
     @property
     def name(self):
         return self._name
+
+    @property
+    def value_type(self) -> str | None:
+        """
+        Type of the converted values, as named in `vembrane.arrow.ArrowTypes`,
+        or None if unknown.
+        """
+        return self._value_type
 
     def convert(self, value: str) -> Any:
         if value:
@@ -266,9 +284,12 @@ class AnnotationListEntry(AnnotationEntry):
         name: str,
         sep: str,
         typefunc: Callable[[str], Any] | None = None,
-        inner_typefunc: Callable[[str], Any] = lambda x: x,
+        inner_typefunc: Callable[[str], Any] = str,
         **kwargs,
     ) -> None:
+        if typefunc is None and inner_typefunc in TYPEFUNC_VALUE_TYPES:
+            inner_type = TYPEFUNC_VALUE_TYPES[inner_typefunc]
+            kwargs.setdefault("value_type", f"list[{inner_type}]")
         typefunc = (
             typefunc
             if typefunc
@@ -302,6 +323,7 @@ class ConsequenceEntry(AnnotationSetEntry):
             sep="&",
             typefunc=lambda v: Consequences(Term(t.strip()) for t in v.split("&")),
             nafunc=lambda: Consequences(),
+            value_type="list[str]",
             **kwargs,
         )
 
@@ -319,7 +341,9 @@ class AnnotationListDictEntry(AnnotationEntry):
             mapping.default_factory = nafunc
             return mapping
 
-        super().__init__(name=name, typefunc=typefunc, **kwargs)
+        super().__init__(
+            name=name, typefunc=typefunc, value_type="map[str,list[str]]", **kwargs
+        )
 
 
 class RangeTotal:
@@ -363,7 +387,9 @@ class RangeTotal:
 
 class AnnotationRangeTotalEntry(AnnotationEntry):
     def __init__(self, name: str, **kwargs) -> None:
-        super().__init__(name, typefunc=RangeTotal.from_vep_string, **kwargs)
+        super().__init__(
+            name, typefunc=RangeTotal.from_vep_string, value_type="RangeTotal", **kwargs
+        )
 
 
 class NumberTotal:
@@ -390,7 +416,12 @@ class NumberTotal:
 
 class AnnotationNumberTotalEntry(AnnotationEntry):
     def __init__(self, name: str, **kwargs) -> None:
-        super().__init__(name, typefunc=NumberTotal.from_vep_string, **kwargs)
+        super().__init__(
+            name,
+            typefunc=NumberTotal.from_vep_string,
+            value_type="NumberTotal",
+            **kwargs,
+        )
 
 
 PREDICTION_SCORE_REGEXP: re.Pattern = re.compile(r"(.*)\((.*)\)")
@@ -402,7 +433,13 @@ class AnnotationPredictionScoreEntry(AnnotationEntry):
             match = PREDICTION_SCORE_REGEXP.findall(x)[0]
             return {match[0]: float32(match[1])}
 
-        super().__init__(name, typefunc=typefunc, nafunc=lambda: {}, **kwargs)
+        super().__init__(
+            name,
+            typefunc=typefunc,
+            nafunc=lambda: {},
+            value_type="map[str,float]",
+            **kwargs,
+        )
 
 
 class DefaultAnnotationEntry(AnnotationEntry):
@@ -448,14 +485,17 @@ KNOWN_ANN_TYPE_MAP_SNPEFF = {
     "cDNA.pos / cDNA.length": AnnotationEntry(
         "cDNA.pos / cDNA.length",
         PosRange.from_snpeff_str,
+        value_type="PosRange",
     ),
     "CDS.pos / CDS.length": AnnotationEntry(
         "CDS.pos / CDS.length",
         PosRange.from_snpeff_str,
+        value_type="PosRange",
     ),
     "AA.pos / AA.length": AnnotationEntry(
         "AA.pos / AA.length",
         PosRange.from_snpeff_str,
+        value_type="PosRange",
     ),
     "Distance": AnnotationEntry("Distance", str),
     "ERRORS / WARNINGS / INFO": AnnotationListEntry(
@@ -486,9 +526,15 @@ KNOWN_ANN_TYPE_MAP_VEP = {
         "Consequence",
         description="Consequence type of this variant",
     ),
-    "cDNA_position": AnnotationEntry("cDNA_position", PosRange.from_vep_str),
-    "CDS_position": AnnotationEntry("CDS_position", PosRange.from_vep_str),
-    "Protein_position": AnnotationEntry("Protein_position", PosRange.from_vep_str),
+    "cDNA_position": AnnotationEntry(
+        "cDNA_position", PosRange.from_vep_str, value_type="PosRange"
+    ),
+    "CDS_position": AnnotationEntry(
+        "CDS_position", PosRange.from_vep_str, value_type="PosRange"
+    ),
+    "Protein_position": AnnotationEntry(
+        "Protein_position", PosRange.from_vep_str, value_type="PosRange"
+    ),
     "HGSVc": AnnotationEntry("HGSVc"),
     "HGSVp": AnnotationEntry("HGSVp"),
     "REF_ALLELE": AnnotationEntry("REF_ALLELE", description="The reference allele"),
@@ -565,6 +611,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "HIGH_INF_POS": AnnotationEntry(
         "HIGH_INF_POS",
         typefunc="Y".__eq__,
+        value_type="bool",
         description="A flag indicating if the variant falls in a high information "
         "position of a transcription factor binding profile (TFBP)",
     ),
@@ -582,6 +629,7 @@ KNOWN_ANN_TYPE_MAP_VEP = {
     "CANONICAL": AnnotationEntry(
         "CANONICAL",
         typefunc="YES".__eq__,
+        value_type="bool",
         description="A flag indicating if the transcript is denoted as the canonical "
         "transcript for this gene",
     ),
@@ -957,6 +1005,7 @@ for key, typer in KNOWN_ANN_TYPE_MAP_VEP.items():
             entry = AnnotationEntry(
                 name=name,
                 typefunc=typer._typefunc,
+                value_type=typer.value_type,
                 description=description,
             )
             NEW_GNOMAD_ENTRIES[name] = entry
