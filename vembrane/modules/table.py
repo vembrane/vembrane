@@ -107,7 +107,7 @@ def add_subcommmand(subparsers):
     parser.add_argument(
         "--parquet-row-group-size",
         type=int,
-        default=1000,
+        default=10000,
         help="Number of rows to encode as one parquet batch. "
         "Rows will be accumulated in memory before being written. "
         f"At most {MAX_PARQUET_ROW_GROUP_SIZE}.",  # see pyarrow docs

@@ -32,7 +32,7 @@ options:
   --output-fmt {csv,parquet}
                         Output format to use. The csv format is further configured via the --separator option. (default: csv)
   --parquet-row-group-size PARQUET_ROW_GROUP_SIZE
-                        Number of rows to encode as one parquet batch. Rows will be accumulated in memory before being written. At most 67108864. (default: 1000)
+                        Number of rows to encode as one parquet batch. Rows will be accumulated in memory before being written. At most 67108864. (default: 10000)
   --annotation-key FIELDNAME, -k FIELDNAME
                         The INFO key for the annotation field. This defaults to 'ANN', but tools might use other field names. For example, default VEP annotations can be parsed by setting 'CSQ' here. (default: ANN)
   --aux NAME=PATH, -a NAME=PATH
