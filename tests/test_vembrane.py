@@ -153,6 +153,9 @@ def check_parquet_output(args, expected_path, tmp_out_path):
                 candidates.add(str(tuple(norm_val)))
                 str_items = [str(v) for v in norm_val]
                 candidates.add("&".join(str_items))
+                if all(isinstance(v, tuple) for v in norm_val):
+                    # maps are read back as lists of key-value tuples
+                    candidates.add(str(dict(norm_val)))
 
             assert val_expected in candidates, (
                 f"Row {i} mismatch: Expected '{val_expected}', "

@@ -1,0 +1,3 @@
+function: "table"
+expression: 'INFO["DP"], QUAL, FORMAT["AD"][SAMPLE], ANN["REVEL"], ANN["SIFT"], ANN["INTRON"]'
+parquet_row_group_size: 1

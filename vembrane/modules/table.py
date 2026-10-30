@@ -464,9 +464,14 @@ def execute(args):
                 first_chunk = chunks.peek(default=[])
                 arrow_types = ArrowTypes()
 
-                for i, colname in enumerate(header):
-                    col = [row[i] for row in first_chunk]
-                    arrow_types.infer(colname, col)
+                for i, (colname, col_expr) in enumerate(
+                    zip(header, expr_cols, strict=True)
+                ):
+                    if not arrow_types.declare(
+                        colname, col_expr, vcf.header, args.annotation_key
+                    ):
+                        col = [row[i] for row in first_chunk]
+                        arrow_types.infer(colname, col)
 
                 with pyarrow.parquet.ParquetWriter(
                     outfile, arrow_types.schema

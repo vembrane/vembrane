@@ -1,0 +1,11 @@
+##fileformat=VCFv4.2
+##VEP="v110"
+##FILTER=<ID=PASS,Description="All filters passed">
+##contig=<ID=chr1,length=1000>
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total depth">
+##INFO=<ID=ANN,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|SYMBOL|REVEL|SIFT|INTRON">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1
+chr1	100	.	G	A	.	PASS	ANN=A|missense_variant|G1|||	GT	0/1
+chr1	200	.	G	A	50	PASS	DP=10;ANN=A|missense_variant|G2|0.5|deleterious(0.25)|2/5	GT:AD	0/1:5,5
