@@ -1025,8 +1025,10 @@ KNOWN_ANN_TYPE_MAP_MEHARI = {
     "ERRORS / WARNINGS / INFO": AnnotationListEntry("ERRORS / WARNINGS / INFO", "&"),
 }
 
-# mehari's description reads like snpEff's, so only its columns tell them apart.
-MEHARI_ONLY_COLUMNS = {"HGNC_ID", "Feature_Tags", "HGVS.g", "HGVS.n", "Strand"}
+# mehari's description reads like snpEff's, so without a `Source` attribute only its
+# columns tell them apart. All of these must be present, because a plugin can add a
+# column of any name. HGNC_ID is left out, since only recent mehari versions write it.
+MEHARI_CORE_COLUMNS = {"Feature_Tags", "HGVS.g", "HGVS.n", "Strand"}
 
 # Every typer falls back on the merged map, so that a column an annotator does not
 # define itself, such as one from a VEP plugin, keeps its type.
@@ -1044,10 +1046,18 @@ ANN_TYPERS: dict[str | None, AnnotationTyper] = {
 }
 
 
-def detect_annotator(description: str, columns: list[str]) -> str | None:
-    """Name the tool that wrote an annotation field, or None if unknown."""
+def detect_annotator(meta: dict[str, str], columns: list[str]) -> str | None:
+    """
+    Name the tool that wrote an annotation field, or None if unknown. The `Source`
+    attribute of the field's INFO line decides if present: the VCF specification
+    defines it, and it is case-insensitive. Otherwise only the description is left.
+    """
+    if source := meta.get("Source"):
+        annotator = source.strip('"').lower()
+        return annotator if annotator in ANN_TYPERS else None
+    description = meta["Description"]
     if "Ensembl VEP" in description:
         return "vep"
     if "Functional annotations" in description:
-        return "mehari" if MEHARI_ONLY_COLUMNS.intersection(columns) else "snpeff"
+        return "mehari" if MEHARI_CORE_COLUMNS.issubset(columns) else "snpeff"
     return None

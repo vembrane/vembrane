@@ -147,8 +147,10 @@ Annotations with type `str`:
 
 ## mehari
 
-mehari describes its `ANN` field in the same way as snpEff, so vembrane recognizes it by the columns that snpEff does not have (`HGNC_ID`, `Feature_Tags`, `HGVS.g`, `HGVS.n`, `Strand`).
+vembrane uses these types for an annotation field whose `##INFO` line has the attribute `Source="mehari"`.
+Without a `Source` attribute, mehari's description reads like snpEff's, so vembrane then requires all of the columns `Feature_Tags`, `HGVS.g`, `HGVS.n` and `Strand`, which snpEff does not have.
 Columns not listed here have the same type as in snpEff.
+A column added by a plugin has the type of a known annotation with the same name, and is `str` otherwise.
 
 | Name in mehari `ANN`       | Type                                                | Example expression                          |
 |----------------------------|-----------------------------------------------------|---------------------------------------------|

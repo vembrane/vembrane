@@ -143,6 +143,17 @@ def parse_annotation_columns(description: str) -> list[str]:
     return [column.strip() for column in columns.split("|")]
 
 
+def get_annotation_typer(header: VCFHeader, ann_key: str) -> AnnotationTyper:
+    """
+    Return the typer for one annotation field. The annotator is detected from that
+    field alone, because one VCF can hold fields written by different tools.
+    """
+    annotator = None
+    if h := header.infos.get(ann_key):
+        annotator = detect_annotator(h, get_annotation_keys(header, ann_key))
+    return ANN_TYPERS[annotator]
+
+
 def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
     if h := header.infos.get(ann_key):
         try:
@@ -153,18 +164,6 @@ def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
                 "properly annotated (e.g. with VEP or SnpEff)?"
             ) from e
     return []
-
-
-def get_annotation_typer(header: VCFHeader, ann_key: str) -> AnnotationTyper:
-    """
-    Return the typer for one annotation field. The annotator is detected from that
-    field alone, because one VCF can hold fields written by different tools.
-    """
-    annotator = None
-    if h := header.infos.get(ann_key):
-        columns = get_annotation_keys(header, ann_key)
-        annotator = detect_annotator(h.get("Description"), columns)
-    return ANN_TYPERS[annotator]
 
 
 _PERCENT_ESCAPES = {

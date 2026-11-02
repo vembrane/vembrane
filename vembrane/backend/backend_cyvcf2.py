@@ -68,6 +68,10 @@ class Cyvcf2Reader(VCFReader):
         # TODO: may this workaround lead to problems?
 
 
+def _decoded(value: str | bytes) -> str:
+    return value.decode() if isinstance(value, bytes) else value
+
+
 class Cyvcf2Header(VCFHeader):
     __slots__ = ("_reader", "_data", "_data_category", "_metadata_generic")
 
@@ -86,7 +90,9 @@ class Cyvcf2Header(VCFHeader):
         for r in reader._file.header_iter():
             if r.type == "GENERIC":
                 continue
-            d = r.info()
+            # only `extra` includes attributes such as Source and Version, and it
+            # repeats all attributes as bytes
+            d = {_decoded(k): _decoded(v) for k, v in r.info(extra=True).items()}
             self._data.append(d)
             if "ID" in d:
                 self._data_category[r.type][d["ID"]] = d
