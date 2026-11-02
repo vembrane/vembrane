@@ -215,33 +215,33 @@ def test_command(testcase: Path, backend: Backend, context: Context | None):
         assert type(e).__name__ == config["raises"]
         return
 
-    if "raises" in config:
-        exception = config["raises"]
-        try:
-            exception = getattr(errors, exception)
-        except AttributeError:
-            exception = getattr(builtins, exception)
-
-        with pytest.raises(SystemExit), pytest.raises(exception):
-            if args.command == "filter":
-                filter.execute(args)
-            elif args.command == "table":
-                table.execute(args)
-            elif args.command == "tag":
-                tag.execute(args)
-            elif args.command == "structured":
-                structured.execute(args)
-            elif args.command == "fhir":
-                fhir.execute(args)
-            elif args.command == "sort":
-                sort.execute(args)
-            else:
-                raise AssertionError("Unknown subcommand")
-        return
-
     with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
         args.output = tmp_out.name
         args.backend = backend
+
+        if "raises" in config:
+            exception = config["raises"]
+            try:
+                exception = getattr(errors, exception)
+            except AttributeError:
+                exception = getattr(builtins, exception)
+
+            with pytest.raises(SystemExit), pytest.raises(exception):
+                if args.command == "filter":
+                    filter.execute(args)
+                elif args.command == "table":
+                    table.execute(args)
+                elif args.command == "tag":
+                    tag.execute(args)
+                elif args.command == "structured":
+                    structured.execute(args)
+                elif args.command == "fhir":
+                    fhir.execute(args)
+                elif args.command == "sort":
+                    sort.execute(args)
+                else:
+                    raise AssertionError("Unknown subcommand")
+            return
 
         runner = TEST_RUNNERS.get(args.command)
         if runner:
