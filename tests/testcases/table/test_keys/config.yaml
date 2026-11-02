@@ -1,0 +1,4 @@
+function: "table"
+expression: 'POS, sorted(INFO.keys()), sorted(FORMAT.keys()), sorted(FORMAT["DP"].keys())'
+header: "POS, info, format, samples"
+wide: []

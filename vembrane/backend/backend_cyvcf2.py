@@ -256,7 +256,7 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
         return key in self._raw_format
 
     def keys(self):
-        return self._raw_format.keys()
+        return list(self._raw_format)
 
 
 class Cyvcf2RecordFormat(VCFRecordFormat):
@@ -324,7 +324,7 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
         return sample in self._header.samples
 
     def keys(self):
-        return self._raw_record.format.keys()
+        return self._header.samples
 
 
 class Cyvcf2RecordFilter(VCFRecordFilter):
@@ -409,7 +409,7 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         return self._raw_record.INFO.get(key, None) is not None
 
     def keys(self):
-        return self._raw_record.info.keys()
+        return [key for key, _ in self._raw_record.INFO]
 
 
 class Cyvcf2Writer(VCFWriter):

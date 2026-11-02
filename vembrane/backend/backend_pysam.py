@@ -138,7 +138,7 @@ class PysamRecordFormat(VCFRecordFormat):
         return sample in self._header.samples
 
     def keys(self):
-        return self._raw_record.format.keys()
+        return self._header.samples
 
 
 class PysamRecordInfo(VCFRecordInfo):
