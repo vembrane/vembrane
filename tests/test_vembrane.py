@@ -156,6 +156,15 @@ def check_parquet_output(args, expected_path, tmp_out_path):
             )
 
 
+COMMAND_MODULES = {
+    "filter": filter,
+    "table": table,
+    "tag": tag,
+    "structured": structured,
+    "fhir": fhir,
+    "sort": sort,
+}
+
 TEST_RUNNERS: dict[str, Callable] = {
     "filter": run_test_filter_tag_sort,
     "tag": run_test_filter_tag_sort,
@@ -226,21 +235,12 @@ def test_command(testcase: Path, backend: Backend, context: Context | None):
             except AttributeError:
                 exception = getattr(builtins, exception)
 
-            with pytest.raises(SystemExit), pytest.raises(exception):
-                if args.command == "filter":
-                    filter.execute(args)
-                elif args.command == "table":
-                    table.execute(args)
-                elif args.command == "tag":
-                    tag.execute(args)
-                elif args.command == "structured":
-                    structured.execute(args)
-                elif args.command == "fhir":
-                    fhir.execute(args)
-                elif args.command == "sort":
-                    sort.execute(args)
-                else:
-                    raise AssertionError("Unknown subcommand")
+            with pytest.raises(SystemExit) as excinfo:
+                COMMAND_MODULES[args.command].execute(args)
+            assert exception_in_chain(excinfo.value, exception), (
+                f"expected {config['raises']} in exception chain, got "
+                f"{list(exception_chain(excinfo.value))!r}"
+            )
             return
 
         runner = TEST_RUNNERS.get(args.command)
@@ -248,6 +248,23 @@ def test_command(testcase: Path, backend: Backend, context: Context | None):
             runner(args, config, path, tmp_out, backend)
         else:
             raise ValueError(f"No verifier defined for command: {args.command}")
+
+
+def exception_chain(exc: BaseException | None):
+    """Yield exc and everything reachable via __cause__ and __context__."""
+    seen: set[int] = set()
+    stack = [exc]
+    while stack:
+        e = stack.pop()
+        if e is None or id(e) in seen:
+            continue
+        seen.add(id(e))
+        yield e
+        stack.extend([e.__cause__, e.__context__])
+
+
+def exception_in_chain(exc: BaseException, exception_type: type) -> bool:
+    return any(isinstance(e, exception_type) for e in exception_chain(exc))
 
 
 def construct_parser():
