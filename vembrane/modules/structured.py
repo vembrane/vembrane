@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, Iterator, TextIO
 import yaml
 import yte  # type: ignore
 
-from vembrane.ann_types import NA
+from vembrane.ann_types import NA, InfoTuple
 from vembrane.backend.base import VCFHeader, VCFReader, VCFRecord
 from vembrane.common import (
     Context,
@@ -123,6 +123,9 @@ class ValueHandler(yte.ValueHandler):
         processed = super().postprocess_atomic_value(value)
         if processed is NA:
             return None
+        if isinstance(processed, InfoTuple):
+            # missing elements are None here, not NA
+            return list(processed.values)
         return processed
 
 
