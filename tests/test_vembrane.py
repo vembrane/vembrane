@@ -16,7 +16,7 @@ import yaml
 from vembrane import __version__, errors
 from vembrane.backend.base import Backend
 from vembrane.common import create_reader
-from vembrane.modules import fhir, filter, sort, structured, table, tag
+from vembrane.modules import annotate, fhir, filter, sort, structured, table, tag
 
 TEST_DIR = Path(__file__).parent
 
@@ -38,7 +38,7 @@ class Context(Enum):
 
 
 def run_test_filter_tag_sort(args, config, path, tmp_out, backend):
-    """Handles verification for `filter`, `tag`, and `sort` commands."""
+    """Handles verification for `filter`, `tag`, `sort` and `annotate` commands."""
     match args.command:
         case "filter":
             module = filter
@@ -46,6 +46,8 @@ def run_test_filter_tag_sort(args, config, path, tmp_out, backend):
             module = tag
         case "sort":
             module = sort
+        case "annotate":
+            module = annotate
         case _:
             raise ValueError(f"Unknown VCF command: {args.command}")
 
@@ -157,6 +159,7 @@ def check_parquet_output(args, expected_path, tmp_out_path):
 
 
 COMMAND_MODULES = {
+    "annotate": annotate,
     "filter": filter,
     "table": table,
     "tag": tag,
@@ -168,6 +171,7 @@ COMMAND_MODULES = {
 TEST_RUNNERS: dict[str, Callable] = {
     "filter": run_test_filter_tag_sort,
     "tag": run_test_filter_tag_sort,
+    "annotate": run_test_filter_tag_sort,
     "sort": run_test_filter_tag_sort,
     "structured": run_test_structured_fhir,
     "fhir": run_test_structured_fhir,
@@ -277,6 +281,7 @@ def construct_parser():
     filter.add_subcommmand(subparsers)
     table.add_subcommmand(subparsers)
     tag.add_subcommand(subparsers)
+    annotate.add_subcommmand(subparsers)
     structured.add_subcommand(subparsers)
     fhir.add_subcommand(subparsers)
     sort.add_subcommand(subparsers)
@@ -296,6 +301,8 @@ def parse_command_config(cmd, config, vcf_path):
         for name, expr in config.pop("tags").items():
             command += ["--tag", f"{name}={expr}"]
         command.append(str(vcf_path))
+    elif cmd == "annotate":
+        command = [cmd, str(vcf_path.parent / "annotation.yaml"), str(vcf_path)]
     elif cmd == "structured":
         template_path = vcf_path.parent / "template.yte.yaml"
         command = [cmd, str(template_path), str(vcf_path)]
