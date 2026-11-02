@@ -19,13 +19,6 @@ from vembrane.common import create_reader
 from vembrane.modules import fhir, filter, sort, structured, table, tag
 
 TEST_DIR = Path(__file__).parent
-FILTER_CASES = TEST_DIR / "testcases/filter"
-TABLE_CASES = TEST_DIR / "testcases/table"
-TAG_CASES = TEST_DIR / "testcases/tag"
-ANNOTATE_CASES = TEST_DIR / "testcases/annotate"
-STRUCTURED_CASES = TEST_DIR / "testcases/structured"
-FHIR_CASES = TEST_DIR / "testcases/fhir"
-SORT_CASES = TEST_DIR / "testcases/sort"
 
 
 def test_version():
@@ -176,20 +169,7 @@ TEST_RUNNERS: dict[str, Callable] = {
 @pytest.mark.parametrize(
     "testcase,backend,context",
     product(
-        (
-            case_path.joinpath(d)
-            for case_path in [
-                FILTER_CASES,
-                TABLE_CASES,
-                TAG_CASES,
-                ANNOTATE_CASES,
-                STRUCTURED_CASES,
-                FHIR_CASES,
-                SORT_CASES,
-            ]
-            for d in os.listdir(case_path)
-            if not d.startswith(".")
-        ),
+        sorted(p.parent for p in TEST_DIR.glob("testcases/*/*/config.yaml")),
         (Backend.pysam, Backend.cyvcf2),
         (Context.NONE, Context.FILE, Context.STATEMENT, Context.ERROR),
     ),
