@@ -5,11 +5,13 @@ import json
 import os
 import tempfile
 from enum import Enum, auto
+from functools import cache
 from itertools import product, zip_longest
 from pathlib import Path
 from typing import Any, Callable
 
 import pyarrow.parquet as pq
+import pysam
 import pytest
 import yaml
 
@@ -37,7 +39,7 @@ class Context(Enum):
     ERROR = auto()
 
 
-def run_test_filter_tag_sort(args, config, path, tmp_out, backend):
+def run_test_vcf_output(args, config, path, tmp_out, backend):
     """Handles verification for `filter`, `tag`, `sort` and `annotate` commands."""
     match args.command:
         case "filter":
@@ -169,35 +171,62 @@ COMMAND_MODULES = {
 }
 
 TEST_RUNNERS: dict[str, Callable] = {
-    "filter": run_test_filter_tag_sort,
-    "tag": run_test_filter_tag_sort,
-    "annotate": run_test_filter_tag_sort,
-    "sort": run_test_filter_tag_sort,
+    "filter": run_test_vcf_output,
+    "tag": run_test_vcf_output,
+    "annotate": run_test_vcf_output,
+    "sort": run_test_vcf_output,
     "structured": run_test_structured_fhir,
     "fhir": run_test_structured_fhir,
     "table": run_test_table,
 }
 
 
+@pytest.fixture(scope="session")
+def as_bcf(tmp_path_factory):
+    """Convert a case's test.vcf to BCF, once per case."""
+
+    @cache
+    def convert(vcf_path: Path) -> Path:
+        bcf_path = tmp_path_factory.mktemp("bcf") / "test.bcf"
+        with (
+            pysam.VariantFile(str(vcf_path)) as vcf,
+            pysam.VariantFile(str(bcf_path), "wb", header=vcf.header) as bcf,
+        ):
+            for record in vcf:
+                bcf.write(record)
+        return bcf_path
+
+    return convert
+
+
 @pytest.mark.parametrize(
-    "testcase,backend,context",
+    "testcase,backend,context,vcf_format",
     product(
         sorted(p.parent for p in TEST_DIR.glob("testcases/*/*/config.yaml")),
         (Backend.pysam, Backend.cyvcf2),
         (Context.NONE, Context.FILE, Context.STATEMENT, Context.ERROR),
+        ("vcf", "bcf"),
     ),
     ids=idfn,
 )
-def test_command(testcase: Path, backend: Backend, context: Context | None):
+def test_command(
+    testcase: Path,
+    backend: Backend,
+    context: Context | None,
+    vcf_format: str,
+    as_bcf: Callable[[Path], Path],
+):
     path = testcase
-    vcf_path = path.joinpath("test.vcf")
+    input_path = path / "test.vcf"
+    if vcf_format == "bcf":
+        input_path = as_bcf(input_path)
 
     with open(path.joinpath("config.yaml")) as config_fp:
         config = yaml.load(config_fp, Loader=yaml.FullLoader)
 
     # emulate command-line command setup to use argparse afterwards
     cmd = config["function"]
-    command = parse_command_config(cmd, config, vcf_path)
+    command = parse_command_config(cmd, config, path, input_path)
 
     match context:
         case Context.STATEMENT:
@@ -231,6 +260,8 @@ def test_command(testcase: Path, backend: Backend, context: Context | None):
     with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
         args.output = tmp_out.name
         args.backend = backend
+        if vcf_format == "bcf" and TEST_RUNNERS[args.command] is run_test_vcf_output:
+            args.output_fmt = "bcf"
 
         if "raises" in config:
             exception = config["raises"]
@@ -291,25 +322,24 @@ def construct_parser():
 HARNESS_KEYS = {"function", "raises", "needs_context"}
 
 
-def parse_command_config(cmd, config, vcf_path):
+def parse_command_config(cmd, config, path, input_path):
     # keys consumed as positional arguments or only meaningful to the harness
     config = {k: v for k, v in config.items() if k not in HARNESS_KEYS}
     if cmd in ("filter", "table", "sort"):
-        command = [cmd, config.pop("expression"), str(vcf_path)]
+        command = [cmd, config.pop("expression"), str(input_path)]
     elif cmd == "tag":
         command = [cmd]
         for name, expr in config.pop("tags").items():
             command += ["--tag", f"{name}={expr}"]
-        command.append(str(vcf_path))
+        command.append(str(input_path))
     elif cmd == "annotate":
-        command = [cmd, str(vcf_path.parent / "annotation.yaml"), str(vcf_path)]
+        command = [cmd, str(path / "annotation.yaml"), str(input_path)]
     elif cmd == "structured":
-        template_path = vcf_path.parent / "template.yte.yaml"
-        command = [cmd, str(template_path), str(vcf_path)]
+        command = [cmd, str(path / "template.yte.yaml"), str(input_path)]
     elif cmd == "fhir":
         command = [
             cmd,
-            str(vcf_path),
+            str(input_path),
             config.pop("sample"),
             config.pop("assembly"),
         ]
