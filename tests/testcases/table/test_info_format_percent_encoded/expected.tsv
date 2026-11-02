@@ -1,0 +1,5 @@
+POS	INFO['X']	INFO['L']	FORMAT['S']['s']	FORMAT['T']['s']
+1	p.Pro194=	('a,b', 'c')	q;z	('a,b', 'c')
+2	a=b	('x',)	m=n	('m=n', 'o')
+3	a%20b	('%20', '%3d')	a%20b	('%3d%',)
+4				('u',)
