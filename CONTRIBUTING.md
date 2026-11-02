@@ -26,7 +26,7 @@ Arguments after `--` are passed to pytest. To run pytest directly:
 uv run pytest tests
 uv run pytest tests -k 'filter-test_ann_impact'
 ```
-Test ids look like `test_command[filter-test_ann_impact-cyvcf2-Context.NONE]`, so `-k 'filter-test_ann_impact'` selects all variants of one case.
+Test ids look like `test_command[filter-test_ann_impact-cyvcf2-Context.NONE-vcf]`, so `-k 'filter-test_ann_impact'` selects all variants of one case.
 
 Run all commands from the repository root: test cases reference files such as `tests/resources/context.py` by relative path.
 
@@ -49,7 +49,8 @@ Each case is a directory `tests/testcases/<subcommand>/<case>/` with
 - `test.vcf`: the input.
 - the expected output: `expected.vcf`, `expected.tsv`, or `expected.<output_fmt>` for `structured` and `fhir`.
 
-Every case runs against both backends, pysam and cyvcf2.
+Every case runs against both backends, pysam and cyvcf2, and with both VCF and BCF.
+`test.vcf` is converted to BCF at test time, and commands that write VCF then write BCF too.
 Look at an existing case of the same subcommand for the required keys.
 
 ## VCF specification
