@@ -44,7 +44,7 @@
         system: http://loinc.org
     valueCodeableConcept:
       coding:
-      - code: p.Pro194%3D
+      - code: p.Pro194=
         system: http://varnomen.hgvs.org
   - code:
       coding:
@@ -193,7 +193,7 @@
         system: http://loinc.org
     valueCodeableConcept:
       coding:
-      - code: p.Pro194%3D
+      - code: p.Pro194=
         system: http://varnomen.hgvs.org
   - code:
       coding:

@@ -1,6 +1,7 @@
 import argparse
 import ast
 import contextlib
+import re
 import shlex
 import sys
 from collections import defaultdict
@@ -147,8 +148,31 @@ def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
     return []
 
 
+_PERCENT_ESCAPES = {
+    "%3A": ":",
+    "%3B": ";",
+    "%3D": "=",
+    "%25": "%",
+    "%2C": ",",
+    "%0D": "\r",
+    "%0A": "\n",
+    "%09": "\t",
+}
+_PERCENT_ESCAPE_RE = re.compile("|".join(_PERCENT_ESCAPES))
+
+
 def split_annotation_entry(entry: str) -> list[str]:
-    return entry.split("|")
+    """Split an annotation entry and decode the VCF 4.3+ percent escapes.
+
+    Raw and encoded values are both seen in real files, so both are accepted.
+    """
+    values = entry.split("|")
+    if "%" in entry:
+        return [
+            _PERCENT_ESCAPE_RE.sub(lambda m: _PERCENT_ESCAPES[m.group()], v)
+            for v in values
+        ]
+    return values
 
 
 class BreakendEvent:
