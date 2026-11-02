@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from ..ann_types import NA
 from ..errors import UnknownSampleError
@@ -374,12 +374,7 @@ class VCFHeader(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def add_meta(
-        self,
-        key: str,
-        value: Optional[str] = None,
-        items: Optional[List[Tuple[str, str]]] = None,
-    ):
+    def add_info(self, id: str, number: str, type: str, description: str):
         raise NotImplementedError
 
     @abstractmethod

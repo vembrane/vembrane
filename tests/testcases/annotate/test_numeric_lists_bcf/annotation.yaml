@@ -1,0 +1,19 @@
+annotation:
+  file: "tests/testcases/annotate/test_numeric_lists_bcf/annotation.tsv"
+  columns:
+    chrom: "chrom"
+    start: "start"
+    stop: "stop"
+  values:
+    - value:
+        vcf_name: "scores"
+        number: "."
+        description: "Scores of all overlapping regions."
+        type: "Integer"
+        expression: "list(DATA['score'])"
+    - value:
+        vcf_name: "two_scores"
+        number: "2"
+        description: "A fixed number of values."
+        type: "Float"
+        expression: "[10.5, 20.5]"

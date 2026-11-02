@@ -1,0 +1,55 @@
+annotation:
+  file: "tests/testcases/annotate/test_value_types/annotation.tsv"
+  columns:
+    chrom: "chrom"
+    start: "start"
+    stop: "stop"
+  values:
+    - value:
+        vcf_name: "first_name"
+        number: "1"
+        description: "Name of the first overlapping region in the file."
+        type: "String"
+        expression: "DATA['name'][0]"
+    - value:
+        vcf_name: "all_names"
+        number: "."
+        description: "Names of all overlapping regions."
+        type: "String"
+        expression: "list(DATA['name'])"
+    - value:
+        vcf_name: "scores"
+        number: "."
+        description: "Scores of all overlapping regions."
+        type: "Integer"
+        expression: "list(DATA['score'])"
+    - value:
+        vcf_name: "two_scores"
+        number: "2"
+        description: "A fixed number of values."
+        type: "Float"
+        expression: "[10.5, 20.5]"
+    - value:
+        vcf_name: "per_alt"
+        number: "A"
+        description: "One value per alternate allele."
+        type: "Float"
+        expression: "[max(DATA['score']) / 2]"
+    - value:
+        vcf_name: "several"
+        number: "0"
+        description: "Set if more than one region overlaps."
+        type: "Flag"
+        expression: "len(DATA['score']) > 1"
+    - value:
+        vcf_name: "known_gene"
+        number: "0"
+        description: "Set if the gene of the last region is in the auxiliary file."
+        type: "Flag"
+        expression: "DATA['gene'][-1] in AUX['genes']"
+    - value:
+        vcf_name: "note"
+        number: "1"
+        description: "A value that needs \"percent\" encoding, and a back\\slash."
+        type: "String"
+        expression: "DATA['note'][0]"

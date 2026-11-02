@@ -1,7 +1,7 @@
 from collections import OrderedDict, defaultdict
 from pathlib import Path
 from sys import stderr
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 from cyvcf2.cyvcf2 import VCF, Variant, Writer  # type: ignore
@@ -152,17 +152,14 @@ class Cyvcf2Header(VCFHeader):
     def __next__(self):
         raise NotImplementedError
 
-    def add_meta(
-        self,
-        key: str,
-        value: Optional[str] = None,
-        items: Optional[List[Tuple[str, str]]] = None,
-    ):
-        raise NotImplementedError
+    def add_info(self, id: str, number: str, type: str, description: str):
+        meta = {"ID": id, "Number": number, "Type": type, "Description": description}
+        self._reader._file.add_info_to_header(meta)
+        self._data_category["INFO"][id] = {**meta, "Description": f'"{description}"'}
 
 
 class Cyvcf2Record(VCFRecord):
-    __slots__ = ("_file",)
+    __slots__ = ("_file", "has_untyped_info")
 
     def __init__(
         self,
@@ -173,6 +170,7 @@ class Cyvcf2Record(VCFRecord):
     ):
         super().__init__(record, record_idx, header)
         self._file = file
+        self.has_untyped_info = False
 
     @property
     def contig(self) -> str:
@@ -375,12 +373,16 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         return type_info(value, number)
 
     def __setitem__(self, key, value):
-        # for some reason cyvcf2 doesn't split String lists, a known circumstance
-        meta = self._header.infos[key]
-        number, typ = meta["Number"], meta["Type"]
-        if typ == "String" and number != "1":
-            value = ",".join(value)
-        self._raw_record.INFO[key] = value
+        if not isinstance(value, list):
+            self._raw_record.INFO[key] = value
+            return
+
+        # cyvcf2 only accepts lists as comma-separated strings, and stores them as
+        # strings whatever the header declares, which is invalid in BCF.
+        # Cyvcf2Writer gives them their declared type.
+        self._raw_record.INFO[key] = ",".join(map(str, value))
+        if self._header.infos[key]["Type"] != "String":
+            self._record.has_untyped_info = True
 
     def __contains__(self, key):
         return self._raw_record.INFO.get(key, None) is not None
@@ -394,4 +396,8 @@ class Cyvcf2Writer(VCFWriter):
         self._file = Writer(filename, template.file, mode=f"w{fmt}")
 
     def write(self, record: VCFRecord):
-        self._file.write_record(record._raw_record)
+        raw_record = record._raw_record
+        if isinstance(record, Cyvcf2Record) and record.has_untyped_info:
+            # parsing the record's text gives its values their declared type
+            raw_record = self._file.variant_from_string(str(raw_record).rstrip("\n"))
+        self._file.write_record(raw_record)
