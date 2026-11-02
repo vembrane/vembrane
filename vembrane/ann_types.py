@@ -177,6 +177,9 @@ def type_info(
             return value[0] if value[0] is not None else NA
         return value if value is not None else NA
     if isinstance(value, tuple):
+        if len(value) == 1 and value[0] is None and number.isdigit():
+            # a single MISSING stands for a list of missing values
+            value = value * int(number)
         return InfoTuple(value)
     else:
         return InfoTuple((value,))

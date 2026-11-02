@@ -1,0 +1,3 @@
+POS	I_I2	I_F2	I_S2	I_I3	I_I4	F_I2	F_F2	F_S2	F_I3	F_I4
+100				(None, None, None)	(None, None)				(None, None, None)	(None, None)
+101	2	2.5	b	(1, 2)	(5,)	2	2.5	b	(1, 2)	(5,)

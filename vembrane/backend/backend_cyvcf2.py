@@ -387,6 +387,9 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         # for some reason cyvcf2 doesn't split String lists, a known circumstance
         if typ == "String" and not number == "1":
             value = value.split(",")
+        elif value is None:
+            # a present but missing value, which pysam gives as (None,)
+            value = (None,)
 
         return type_info(value, number)
 
