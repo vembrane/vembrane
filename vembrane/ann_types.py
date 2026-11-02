@@ -151,6 +151,12 @@ def type_info(
         value = tuple(value.tolist())
     elif isinstance(value, list):
         value = tuple(value)
+    # "." is the MISSING value of Strings
+    if isinstance(value, str):
+        if value == ".":
+            value = (None,)
+    elif isinstance(value, tuple) and "." in value:
+        value = tuple(None if v == "." else v for v in value)
     if number == "A":
         if isinstance(value, tuple):
             if len(value) > 1:

@@ -1,0 +1,3 @@
+POS	I_S1	I_SA	I_SR	I_SD	I_S2	F_S1	F_SA	F_SR	F_SD	F_S2
+100			('x', None)	('x', None)	(None, 'x')			('x', None)	('x', None)	(None, 'x')
+101	x	y	(None, 'y')	(None,)	('x', 'y')	x	y	(None, 'y')	(None,)	('x', 'y')

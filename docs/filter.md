@@ -176,7 +176,7 @@ In general, any attribute access on `NA` will result in `NA` (and issue a warnin
 
 Since you may want to use the regex module to search for matches, `NA` also acts as an empty `str`, such that `re.search("nothing", NA)` returns nothing instead of raising an exception.
 
-*Explicitly* handling missing/optional values in INFO or FORMAT fields can be done by checking for NA, e.g.: `INFO["DP"] is NA`.
+*Explicitly* handling missing/optional values in INFO or FORMAT fields can be done by checking for NA, e.g.: `INFO["DP"] is NA`. This also holds for String values: a `.` in the VCF is `NA`, not the text `"."`.
 
 Handling missing/optional values in fields other than INFO or FORMAT can be done by checking for None, e.g `ID is not None`.
 
