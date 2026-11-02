@@ -1,3 +1,4 @@
 function: "table"
 expression: 'for_each_sample(lambda s: FORMAT["AD"][s])'
 header: 'for_each_sample(lambda s: f"ad_{s}")'
+wide: []
