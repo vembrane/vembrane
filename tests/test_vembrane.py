@@ -215,7 +215,7 @@ def test_command(testcase: Path, backend: Backend, context: Context | None):
     parser = construct_parser()
 
     try:
-        args, unknown = parser.parse_known_args(command)
+        args = parser.parse_args(command)
     # we have to catch and compare such exceptions here, because they
     # do not cause a SystemExit like the .execute() instances below
     except Exception as e:
@@ -283,30 +283,32 @@ def construct_parser():
     return parser
 
 
+HARNESS_KEYS = {"function", "raises", "needs_context"}
+
+
 def parse_command_config(cmd, config, vcf_path):
-    if cmd in ("filter", "table"):
-        command = [cmd, config["expression"], str(vcf_path)]
+    # keys consumed as positional arguments or only meaningful to the harness
+    config = {k: v for k, v in config.items() if k not in HARNESS_KEYS}
+    if cmd in ("filter", "table", "sort"):
+        command = [cmd, config.pop("expression"), str(vcf_path)]
     elif cmd == "tag":
         command = [cmd]
-        tags = config["tags"]
-        for name, expr in tags.items():
+        for name, expr in config.pop("tags").items():
             command += ["--tag", f"{name}={expr}"]
         command.append(str(vcf_path))
     elif cmd == "structured":
         template_path = vcf_path.parent / "template.yte.yaml"
         command = [cmd, str(template_path), str(vcf_path)]
     elif cmd == "fhir":
-        command = [cmd, str(vcf_path), config["sample"], config["assembly"]]
-        del config["sample"]
-        del config["assembly"]
-    elif cmd == "sort":
-        command = [cmd, config["expression"], str(vcf_path)]
-        del config["expression"]
+        command = [
+            cmd,
+            str(vcf_path),
+            config.pop("sample"),
+            config.pop("assembly"),
+        ]
     else:
-        raise ValueError(f"Unknown subcommand {config['function']}")
+        raise ValueError(f"Unknown subcommand {cmd}")
     for key in config:
-        if key == "function":
-            continue
         if isinstance(config[key], str):
             command.append(config_key_to_arg(key))
             command.append(config[key])
