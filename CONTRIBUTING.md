@@ -52,6 +52,12 @@ Each case is a directory `tests/testcases/<subcommand>/<case>/` with
 Every case runs against both backends, pysam and cyvcf2.
 Look at an existing case of the same subcommand for the required keys.
 
+## VCF specification
+
+Where vembrane does not rely directly on a backend, it follows the current [VCF specification](https://github.com/samtools/hts-specs).
+The backends do not define what is valid: they can accept more or less than the specification allows, so check the specification when in doubt or when they disagree.
+Test data should be valid under it too.
+
 ## Documentation
 
 `docs/<subcommand>.md` and `README.md` contain copies of the `--help` output. Update them when you change options.
