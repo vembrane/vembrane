@@ -139,9 +139,10 @@ def annotate_vcf(
                     current_tree = tree[chrom]
 
         if current_tree is not None:
+            # POS is 1-based, the regions are 0-based and half-open like in BED.
             # sorted, so that DATA has the order of the annotation file
             indices = np.array(
-                sorted(i for _, _, i in current_tree[record.position]), dtype=int
+                sorted(i for _, _, i in current_tree[record.position - 1]), dtype=int
             )
             if len(indices):
                 env.update_data(current_ann_data[(np.array(indices))])  # type: ignore

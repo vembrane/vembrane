@@ -1,0 +1,13 @@
+annotation:
+  file: "tests/testcases/annotate/test_bed_coordinates/annotation.tsv"
+  columns:
+    chrom: "chrom"
+    start: "start"
+    stop: "stop"
+  values:
+    - value:
+        vcf_name: "score"
+        number: "1"
+        description: "Score of the overlapping region."
+        type: "Integer"
+        expression: "DATA['score'][0]"
