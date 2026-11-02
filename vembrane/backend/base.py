@@ -390,10 +390,6 @@ class VCFHeader(ABC):
     def add_filter(self, id: str, description: str):
         raise NotImplementedError
 
-    @abstractmethod
-    def contains_generic(self, key: str):
-        raise NotImplementedError
-
 
 class VCFWriter(ABC):
     __slots__ = ("_file",)

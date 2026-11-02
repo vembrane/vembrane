@@ -4,7 +4,6 @@ from types import CodeType
 from typing import Any
 
 from .ann_types import (
-    ANN_TYPER,
     NA,
     InfoTuple,
     MoreThanOneAltAlleleError,
@@ -16,7 +15,12 @@ from .backend.base import (
     VCFRecord,
     VCFRecordFormat,
 )
-from .common import decode_percent_escapes, get_annotation_keys, split_annotation_entry
+from .common import (
+    decode_percent_escapes,
+    get_annotation_keys,
+    get_annotation_typer,
+    split_annotation_entry,
+)
 from .errors import (
     MalformedAnnotationError,
     NonBoolTypeError,
@@ -132,9 +136,10 @@ class Annotation(NoValueDict, DefaultGet):
         self._data: dict[str, Any] = {}
         self._ann_key = ann_key
         annotation_keys = get_annotation_keys(header, ann_key)
+        typer = get_annotation_typer(header, ann_key)
         self._ann_conv = {
             entry.name: (ann_idx, entry.convert)
-            for ann_idx, entry in enumerate(map(ANN_TYPER.get_entry, annotation_keys))
+            for ann_idx, entry in enumerate(map(typer.get_entry, annotation_keys))
         }
 
     def update(self, record_idx: int, record: VCFRecord, annotation: str):

@@ -268,9 +268,6 @@ class PysamHeader(VCFHeader):
                 if key in self._metadata_category[category]:
                     self._metadata_category[category][key]["Number"] = value
 
-    def contains_generic(self, key: str):
-        return key in self._metadata_generic
-
     def get_generic(self, key: str):
         return self._metadata_generic[key]
 

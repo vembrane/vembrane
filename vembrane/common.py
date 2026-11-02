@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Iterator, TextIO, Type
 
+from .ann_types import ANN_TYPERS, AnnotationTyper, detect_annotator
 from .backend.backend_cyvcf2 import Cyvcf2Reader, Cyvcf2Writer
 from .backend.backend_pysam import PysamReader, PysamWriter
 from .backend.base import Backend, VCFHeader, VCFReader, VCFRecord
@@ -128,24 +129,42 @@ def normalize(s: str) -> str:
     return shlex.quote(swap_quotes(s) if not single_outer(s) else s)
 
 
+def parse_annotation_columns(description: str) -> list[str]:
+    """
+    Read the column names from the description of one annotation field, which reads
+    `... Format: a|b` or `... Format: 'a|b'` (VEP), or
+    `Functional annotations: 'a | b'` (SnpEff, mehari).
+    """
+    before, has_format, after = description.strip('"').partition("Format:")
+    if has_format and not after.lstrip().startswith("'"):
+        columns = after
+    else:
+        columns = (after if has_format else before).split("'")[1]
+    return [column.strip() for column in columns.split("|")]
+
+
 def get_annotation_keys(header: VCFHeader, ann_key: str) -> list[str]:
-    separator = "'"
-    if header.contains_generic("VEP"):
-        separator = ":"
     if h := header.infos.get(ann_key):
         try:
-            return list(
-                map(
-                    str.strip,
-                    h.get("Description").strip('"').split(separator)[1].split("|"),
-                ),
-            )
+            return parse_annotation_columns(h.get("Description"))
         except Exception as e:
             raise VembraneError(
                 "Could not parse annotation keys from header. Has your VCF been "
                 "properly annotated (e.g. with VEP or SnpEff)?"
             ) from e
     return []
+
+
+def get_annotation_typer(header: VCFHeader, ann_key: str) -> AnnotationTyper:
+    """
+    Return the typer for one annotation field. The annotator is detected from that
+    field alone, because one VCF can hold fields written by different tools.
+    """
+    annotator = None
+    if h := header.infos.get(ann_key):
+        columns = get_annotation_keys(header, ann_key)
+        annotator = detect_annotator(h.get("Description"), columns)
+    return ANN_TYPERS[annotator]
 
 
 _PERCENT_ESCAPES = {

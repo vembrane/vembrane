@@ -144,3 +144,20 @@ Annotations with type `str`:
 | `HGVS.c`             |             |                    |
 | `HGVS.p`             |             |                    |
 | `Distance`           |             |                    |
+
+## mehari
+
+mehari describes its `ANN` field in the same way as snpEff, so vembrane recognizes it by the columns that snpEff does not have (`HGNC_ID`, `Feature_Tags`, `HGVS.g`, `HGVS.n`, `Strand`).
+Columns not listed here have the same type as in snpEff.
+
+| Name in mehari `ANN`       | Type                                                | Example expression                          |
+|----------------------------|-----------------------------------------------------|---------------------------------------------|
+| `Transcript_BioType`       | `list[str]`                                         | `'"Coding" in ANN["Transcript_BioType"]'`   |
+| `Feature_Tags`             | `list[str]`                                         | `'"ManeSelect" in ANN["Feature_Tags"]'`     |
+| `Rank`                     | `NumberTotal` with properties `number` and `total`  | `'ANN["Rank"].number == 1'`                 |
+| `Distance`                 | `int`                                               | `'ANN["Distance"] < 1000'`                  |
+| `Strand`                   | `int`                                               | `'ANN["Strand"] == -1'`                     |
+| `ERRORS / WARNINGS / INFO` | `list[str]`                                         |                                             |
+| `HGNC_ID`                  | `str`                                               |                                             |
+| `HGVS.g`                   | `str`                                               |                                             |
+| `HGVS.n`                   | `str`                                               |                                             |
