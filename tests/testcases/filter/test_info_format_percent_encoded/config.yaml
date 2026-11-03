@@ -1,0 +1,2 @@
+function: "filter"
+expression: 'INFO["X"] == "a=b" and INFO["L"][0] == "p,q" and FORMAT["S"]["s"] == "x;y" and FORMAT["T"]["s"][0] == "u,v"'

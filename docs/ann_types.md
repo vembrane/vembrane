@@ -6,18 +6,18 @@ The descriptions are mostly taken from the `snpEff` and `vep` website/documentat
 
 ## Percent-encoding
 
-Annotation values accept both percent-encoded and raw forms, because both occur in real files.
+Percent-encoded and raw forms are both accepted, because both occur in real files.
 VCF 4.3+ requires percent-encoding, e.g. VEP writes `p.Pro194%3D` for `p.Pro194=`.
 `vembrane` decodes exactly these escapes (uppercase only): `%3A` (`:`), `%3B` (`;`), `%3D` (`=`), `%25` (`%`), `%2C` (`,`), `%0D` (CR), `%0A` (LF) and `%09` (TAB).
 Everything else (e.g. `%20`, `%3d` or a bare `%`) is left unchanged.
 
 Expressions always see the decoded value, so `ANN["HGVSp"] == "p.Pro194="` matches both forms.
+This applies to `ANN[...]`, `INFO[...]` and `FORMAT[...]` string values, including the elements of lists.
 Output VCF records keep the original encoding.
 Decoding happens once, so `%253D` becomes `%3D`, not `=`.
 A raw value that literally contains an escape such as `%3D` is decoded as well.
-Raw `,` and `;` cannot occur in a value, because they end the annotation entry or the INFO field.
-
-Only values accessed via `ANN[...]` are decoded; `INFO[...]` and `FORMAT[...]` values are not.
+Lists are split on `,` before decoding, so `a%2Cb,c` is the two values `a,b` and `c`.
+Raw `,` and `;` cannot occur in a value, because they end the list element, annotation entry or INFO field.
 
 ## vep
 
