@@ -112,3 +112,5 @@ variant:
 * If the variant record has a value for INFO/SVLEN, this is included in the output. Note that unlike all the primary optional fields like ID, QUAL etc., missing values in INFO and FORMAT are represented as `NA` instead of `None`.
 * If the record has annotation, we show gene symbol (if present) and impact.
 * If there is at least one sample with allele frequency (`AF`) information, we show this in a substructure with an entry for each such sample.
+Annotation values with a custom type are written as their original text, for example `4-6/27` for `EXON`.
+`Consequence` is written as a list of terms, and missing values as `null`.

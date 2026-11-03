@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, Iterator, TextIO
 import yaml
 import yte  # type: ignore
 
-from vembrane.ann_types import NA, InfoTuple
+from vembrane.ann_types import NA, InfoTuple, NumberTotal, PosRange, RangeTotal
 from vembrane.backend.base import VCFHeader, VCFReader, VCFRecord
 from vembrane.common import (
     Context,
@@ -118,15 +118,26 @@ class CodeHandler(yte.CodeHandler):
         return any(env.expression_annotations() for env in self._envs.values())
 
 
+def to_serializable(value: Any) -> Any:
+    """Turn vembrane's value types into what JSON and YAML can represent."""
+    if value is NA:
+        return None
+    if isinstance(value, str):
+        return str(value)
+    if isinstance(value, PosRange | RangeTotal | NumberTotal):
+        return value.raw
+    if isinstance(value, InfoTuple):
+        return [to_serializable(v) for v in value.values]
+    if isinstance(value, list | tuple):
+        return [to_serializable(v) for v in value]
+    if isinstance(value, dict):
+        return {k: to_serializable(v) for k, v in value.items()}
+    return value
+
+
 class ValueHandler(yte.ValueHandler):
     def postprocess_atomic_value(self, value: Any) -> Any:
-        processed = super().postprocess_atomic_value(value)
-        if processed is NA:
-            return None
-        if isinstance(processed, InfoTuple):
-            # missing elements are None here, not NA
-            return list(processed.values)
-        return processed
+        return to_serializable(super().postprocess_atomic_value(value))
 
 
 def process_vcf(
