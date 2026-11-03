@@ -1,4 +1,4 @@
 function: "sort"
 expression: "POS"
-chunk-size: 1
+max_in_mem_records: 1
 preserve-annotation-order: true
