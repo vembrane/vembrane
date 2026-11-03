@@ -1,0 +1,8 @@
+##fileformat=VCFv4.5
+##INFO=<ID=SI,Number=1,Type=String,Description="s">
+##FORMAT=<ID=SF,Number=1,Type=String,Description="s">
+##FORMAT=<ID=NF,Number=1,Type=Integer,Description="n">
+##FORMAT=<ID=FF,Number=1,Type=Float,Description="f">
+##contig=<ID=1>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1
+1	100	.	A	T	50	PASS	SI=x,.	SF:NF:FF	x,y:1,2:1.5,2.5

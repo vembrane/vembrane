@@ -1,0 +1,4 @@
+pos: ?POS
+info: ?INFO["L"]
+str: ?INFO["S"]
+format: ?FORMAT["L"]["s1"]
