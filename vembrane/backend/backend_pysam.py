@@ -116,7 +116,7 @@ class PysamRecordFormat(VCFRecordFormat):
 
         try:
             value = value_array[self._format_key]
-            return type_info(value, number)
+            return type_info(value, number, self._format_key, self._record.record_idx)
         except KeyError:
             print(
                 f"Warning: "
@@ -170,7 +170,7 @@ class PysamRecordInfo(VCFRecordInfo):
                 file=stderr,
             )
             return type_info(NA, meta["Number"])
-        return type_info(value, meta["Number"])
+        return type_info(value, meta["Number"], key, self._record.record_idx)
 
     def __setitem__(self, key, value):
         self._raw_record.info[key] = value
