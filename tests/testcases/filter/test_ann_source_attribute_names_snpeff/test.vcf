@@ -1,0 +1,6 @@
+##fileformat=VCFv4.5
+##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Rank | Feature_Tags | HGVS.g | HGVS.n | Strand'",Source="snpEff">
+##contig=<ID=1>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+1	100	.	A	T	50	PASS	ANN=T|2/26|x|g.1A>T|n.1A>T|1
+1	200	.	A	T	50	PASS	ANN=T|3/26|x|g.2A>T|n.2A>T|1

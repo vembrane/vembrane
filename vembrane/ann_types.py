@@ -1012,4 +1012,52 @@ for key, typer in KNOWN_ANN_TYPE_MAP_VEP.items():
 KNOWN_ANN_TYPE_MAP_VEP.update(NEW_GNOMAD_ENTRIES)
 KNOWN_ANN_TYPE_MAP = {**KNOWN_ANN_TYPE_MAP_SNPEFF, **KNOWN_ANN_TYPE_MAP_VEP}
 
-ANN_TYPER = AnnotationTyper(KNOWN_ANN_TYPE_MAP)
+# Only what mehari adds to snpEff or types differently.
+KNOWN_ANN_TYPE_MAP_MEHARI = {
+    "HGNC_ID": AnnotationEntry("HGNC_ID"),
+    "Transcript_BioType": AnnotationListEntry("Transcript_BioType", "&"),
+    "Feature_Tags": AnnotationListEntry("Feature_Tags", "&"),
+    "Rank": AnnotationNumberTotalEntry("Rank"),
+    "HGVS.g": AnnotationEntry("HGVS.g"),
+    "HGVS.n": AnnotationEntry("HGVS.n"),
+    "Distance": AnnotationEntry("Distance", int),
+    "Strand": AnnotationEntry("Strand", int),
+    "ERRORS / WARNINGS / INFO": AnnotationListEntry("ERRORS / WARNINGS / INFO", "&"),
+}
+
+# mehari's description reads like snpEff's, so without a `Source` attribute only its
+# columns tell them apart. All of these must be present, because a plugin can add a
+# column of any name. HGNC_ID is left out, since only recent mehari versions write it.
+MEHARI_CORE_COLUMNS = {"Feature_Tags", "HGVS.g", "HGVS.n", "Strand"}
+
+# Every typer falls back on the merged map, so that a column an annotator does not
+# define itself, such as one from a VEP plugin, keeps its type.
+ANN_TYPERS: dict[str | None, AnnotationTyper] = {
+    None: AnnotationTyper(KNOWN_ANN_TYPE_MAP),
+    "vep": AnnotationTyper({**KNOWN_ANN_TYPE_MAP, **KNOWN_ANN_TYPE_MAP_VEP}),
+    "snpeff": AnnotationTyper({**KNOWN_ANN_TYPE_MAP, **KNOWN_ANN_TYPE_MAP_SNPEFF}),
+    "mehari": AnnotationTyper(
+        {
+            **KNOWN_ANN_TYPE_MAP,
+            **KNOWN_ANN_TYPE_MAP_SNPEFF,
+            **KNOWN_ANN_TYPE_MAP_MEHARI,
+        }
+    ),
+}
+
+
+def detect_annotator(meta: dict[str, str], columns: list[str]) -> str | None:
+    """
+    Name the tool that wrote an annotation field, or None if unknown. The `Source`
+    attribute of the field's INFO line decides if present: the VCF specification
+    defines it, and it is case-insensitive. Otherwise only the description is left.
+    """
+    if source := meta.get("Source"):
+        annotator = source.strip('"').lower()
+        return annotator if annotator in ANN_TYPERS else None
+    description = meta["Description"]
+    if "Ensembl VEP" in description:
+        return "vep"
+    if "Functional annotations" in description:
+        return "mehari" if MEHARI_CORE_COLUMNS.issubset(columns) else "snpeff"
+    return None
