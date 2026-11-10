@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable, Iterable, Iterator
 from sys import exit, stderr
 from typing import Any
@@ -8,16 +9,20 @@ from intervaltree import Interval, IntervalTree  # type: ignore
 
 from vembrane.errors import handle_vembrane_error  # type: ignore
 
+from .. import __version__
 from ..backend.base import VCFReader, VCFRecord
 from ..common import (
     Context,
     HumanReadableDefaultsFormatter,
     add_common_arguments,
-    check_expression,
     create_reader,
     create_writer,
+    normalize,
+    read_auxiliary,
+    read_ontology,
 )
 from ..representations import FuncWrappedExpressionEnvironment
+from ..sequence_ontology import SequenceOntology
 
 
 def add_subcommmand(subparsers):
@@ -31,7 +36,6 @@ def add_subcommmand(subparsers):
     )
     parser.add_argument(
         "config",
-        type=check_expression,
         help="The configuration file.",
     )
     parser.add_argument(
@@ -56,11 +60,24 @@ def add_subcommmand(subparsers):
     add_common_arguments(parser)
 
 
+# The characters with a special meaning in an INFO value, see the VCF specification.
+INFO_PERCENT_ENCODING = str.maketrans(
+    {
+        "%": "%25",
+        ";": "%3B",
+        "=": "%3D",
+        ",": "%2C",
+        "\r": "%0D",
+        "\n": "%0A",
+        "\t": "%09",
+    }
+)
+
 typeparser: dict[str, Callable[[str], Any]] = {
     "Float": float,
     "Integer": int,
     "Character": lambda x: str(x)[0],
-    "String": str,
+    "String": lambda x: str(x).translate(INFO_PERCENT_ENCODING),
     "Flag": bool,
 }
 
@@ -71,10 +88,17 @@ def annotate_vcf(
     ann_key: str,
     ann_data,
     config: dict,
+    auxiliary: dict[str, set[str]] | None = None,
     auxiliary_globals: dict[str, Any] | None = None,
+    ontology: SequenceOntology | None = None,
 ) -> Iterator[VCFRecord]:
     env = FuncWrappedExpressionEnvironment(
-        expression, ann_key, vcf.header, auxiliary_globals=auxiliary_globals
+        expression,
+        ann_key,
+        vcf.header,
+        auxiliary,
+        ontology,
+        auxiliary_globals=auxiliary_globals,
     )
 
     config_chrom_column: str = config["annotation"]["columns"]["chrom"]
@@ -95,12 +119,14 @@ def annotate_vcf(
 
     current_chrom = None
     current_ann_data = None
+    current_tree: IntervalTree | None = None
 
     record: VCFRecord
     for idx, record in enumerate(vcf):
-        chrom: str | None = None
         if current_chrom != record.contig:
             current_chrom = record.contig
+            current_ann_data = None
+            current_tree = None
 
             # find the correct chrom name
             tmp = current_chrom
@@ -110,10 +136,14 @@ def annotate_vcf(
                 if prefix + tmp in available_chromsomes:
                     chrom = prefix + tmp
                     current_ann_data = chrom_ann_data[chrom]
-                    t = tree[chrom]
+                    current_tree = tree[chrom]
 
-        if chrom:
-            indices = np.fromiter((i for _, _, i in t[record.position]), dtype=int)
+        if current_tree is not None:
+            # POS is 1-based, the regions are 0-based and half-open like in BED.
+            # sorted, so that DATA has the order of the annotation file
+            indices = np.array(
+                sorted(i for _, _, i in current_tree[record.position - 1]), dtype=int
+            )
             if len(indices):
                 env.update_data(current_ann_data[(np.array(indices))])  # type: ignore
                 env.update_from_record(idx, record)
@@ -124,21 +154,19 @@ def annotate_vcf(
                     ann_values,
                     strict=True,
                 ):
-                    number = int(v["number"]) if v["number"] != "." else -1
+                    number = str(v["number"])
 
                     parse = typeparser[v["type"]]
-                    if number == -1:
-                        ev = list(map(parse, expression_value))
-                    elif number > 1:
-                        ev = list(map(parse, expression_value))
-                        assert len(ev) == number
-                    else:
-                        # number == 1
+                    if number in ("0", "1"):
                         assert isinstance(expression_value, str) or not isinstance(
                             expression_value,
                             Iterable,
                         )
                         ev = parse(expression_value)
+                    else:
+                        ev = list(map(parse, expression_value))
+                        if number.isdigit():
+                            assert len(ev) == int(number)
                     record.info[v["vcf_name"]] = ev
 
         yield record
@@ -162,40 +190,50 @@ def execute(args):
         encoding=None,
     )
 
-    # build expression
-    expression = ",".join(
+    # build expression, whose trailing comma makes a single value a tuple, too
+    expression = ", ".join(
         f"{value['expression']}"
         for value in (x["value"] for x in config["annotation"]["values"])
     )
-    expression = f"({expression})"
+    expression = f"({expression},)"
 
-    with create_reader(args.vcf) as vcf:
+    overwrite_number = {
+        "INFO": dict(args.overwrite_number_info),
+        "FORMAT": dict(args.overwrite_number_format),
+    }
+    with create_reader(
+        args.vcf,
+        backend=args.backend,
+        overwrite_number=overwrite_number,
+    ) as vcf:
         # add new info
         for value in config["annotation"]["values"]:
             v = value["value"]
-            vcf.header.add_meta(
-                "INFO",
-                items=[
-                    ("ID", v["vcf_name"]),
-                    ("Number", v["number"]),
-                    ("Type", v["type"]),
-                    ("Description", v["description"]),
-                ],
+            vcf.header.add_info(
+                v["vcf_name"],
+                str(v["number"]),
+                v["type"],
+                # the VCF specification requires these two to be escaped
+                v["description"].replace("\\", "\\\\").replace('"', '\\"'),
             )
+        vcf.header.add_generic("vembraneVersion", __version__)
+        vcf.header.add_generic(
+            "vembraneCmd",
+            "vembrane "
+            + " ".join(normalize(arg) if " " in arg else arg for arg in sys.argv[1:]),
+        )
 
         fmt = {"vcf": "", "bcf": "b", "uncompressed-bcf": "u"}[args.output_fmt]
-        with create_writer(
-            args.output,
-            f"w{fmt}",
-            header=vcf.header,
-        ) as out:
+        with create_writer(args.output, fmt, vcf, backend=args.backend) as out:
             variants = annotate_vcf(
                 vcf,
                 expression,
                 args.annotation_key,
                 ann_data=ann_data,
                 config=config,
+                auxiliary=read_auxiliary(args.aux),
                 auxiliary_globals=Context.from_args(args).get_globals(),
+                ontology=read_ontology(args.ontology),
             )
             for v in variants:
                 out.write(v)

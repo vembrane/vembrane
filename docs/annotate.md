@@ -84,3 +84,10 @@ chr10	654480	1000200	HSJKJSD	12
 Exemplary invocation: `vembrane annotate example.yaml example.bcf > annotated.vcf`.
 
 Internally for each vcf record the overlapping regions of the annotation file are determined and stored in `DATA`. The expression may then access the `DATA` object and its columns by the columns names to generate a single or multiple values of cardinality `number` of type `type`. These values are stored in the new annotation entry under the name `vcf_name` and with header description `description`.
+
+Regions use BED coordinates, i.e. they are 0-based and half-open: a region with start `100` and stop `200` covers the positions `101` to `200` of the VCF.
+A record overlaps a region if its `POS` lies inside; the rest of the variant's length is not considered.
+
+`DATA` holds the overlapping regions in the order of the annotation file, and `file` is relative to the current working directory.
+`number` takes what the VCF specification allows for an INFO field: `1`, `2`, ..., `A`, `R`, `G` or `.` for lists and single values, and `0` for type `Flag`.
+Values of type `String` are percent-encoded when written, as the specification requires, so `a;b` becomes `a%3Bb`.
