@@ -5,27 +5,22 @@ import json
 import os
 import tempfile
 from enum import Enum, auto
+from functools import cache
 from itertools import product, zip_longest
 from pathlib import Path
 from typing import Any, Callable
 
 import pyarrow.parquet as pq
+import pysam
 import pytest
 import yaml
 
 from vembrane import __version__, errors
 from vembrane.backend.base import Backend
 from vembrane.common import create_reader
-from vembrane.modules import fhir, filter, sort, structured, table, tag
+from vembrane.modules import annotate, fhir, filter, sort, structured, table, tag
 
 TEST_DIR = Path(__file__).parent
-FILTER_CASES = TEST_DIR / "testcases/filter"
-TABLE_CASES = TEST_DIR / "testcases/table"
-TAG_CASES = TEST_DIR / "testcases/tag"
-ANNOTATE_CASES = TEST_DIR / "testcases/annotate"
-STRUCTURED_CASES = TEST_DIR / "testcases/structured"
-FHIR_CASES = TEST_DIR / "testcases/fhir"
-SORT_CASES = TEST_DIR / "testcases/sort"
 
 
 def test_version():
@@ -44,8 +39,8 @@ class Context(Enum):
     ERROR = auto()
 
 
-def run_test_filter_tag_sort(args, config, path, tmp_out, backend):
-    """Handles verification for `filter`, `tag`, and `sort` commands."""
+def run_test_vcf_output(args, config, path, tmp_out, backend):
+    """Handles verification for `filter`, `tag`, `sort` and `annotate` commands."""
     match args.command:
         case "filter":
             module = filter
@@ -53,6 +48,8 @@ def run_test_filter_tag_sort(args, config, path, tmp_out, backend):
             module = tag
         case "sort":
             module = sort
+        case "annotate":
+            module = annotate
         case _:
             raise ValueError(f"Unknown VCF command: {args.command}")
 
@@ -163,48 +160,73 @@ def check_parquet_output(args, expected_path, tmp_out_path):
             )
 
 
+COMMAND_MODULES = {
+    "annotate": annotate,
+    "filter": filter,
+    "table": table,
+    "tag": tag,
+    "structured": structured,
+    "fhir": fhir,
+    "sort": sort,
+}
+
 TEST_RUNNERS: dict[str, Callable] = {
-    "filter": run_test_filter_tag_sort,
-    "tag": run_test_filter_tag_sort,
-    "sort": run_test_filter_tag_sort,
+    "filter": run_test_vcf_output,
+    "tag": run_test_vcf_output,
+    "annotate": run_test_vcf_output,
+    "sort": run_test_vcf_output,
     "structured": run_test_structured_fhir,
     "fhir": run_test_structured_fhir,
     "table": run_test_table,
 }
 
 
+@pytest.fixture(scope="session")
+def as_bcf(tmp_path_factory):
+    """Convert a case's test.vcf to BCF, once per case."""
+
+    @cache
+    def convert(vcf_path: Path) -> Path:
+        bcf_path = tmp_path_factory.mktemp("bcf") / "test.bcf"
+        with (
+            pysam.VariantFile(str(vcf_path)) as vcf,
+            pysam.VariantFile(str(bcf_path), "wb", header=vcf.header) as bcf,
+        ):
+            for record in vcf:
+                bcf.write(record)
+        return bcf_path
+
+    return convert
+
+
 @pytest.mark.parametrize(
-    "testcase,backend,context",
+    "testcase,backend,context,vcf_format",
     product(
-        (
-            case_path.joinpath(d)
-            for case_path in [
-                FILTER_CASES,
-                TABLE_CASES,
-                TAG_CASES,
-                ANNOTATE_CASES,
-                STRUCTURED_CASES,
-                FHIR_CASES,
-                SORT_CASES,
-            ]
-            for d in os.listdir(case_path)
-            if not d.startswith(".")
-        ),
+        sorted(p.parent for p in TEST_DIR.glob("testcases/*/*/config.yaml")),
         (Backend.pysam, Backend.cyvcf2),
         (Context.NONE, Context.FILE, Context.STATEMENT, Context.ERROR),
+        ("vcf", "bcf"),
     ),
     ids=idfn,
 )
-def test_command(testcase: Path, backend: Backend, context: Context | None):
+def test_command(
+    testcase: Path,
+    backend: Backend,
+    context: Context | None,
+    vcf_format: str,
+    as_bcf: Callable[[Path], Path],
+):
     path = testcase
-    vcf_path = path.joinpath("test.vcf")
+    input_path = path / "test.vcf"
+    if vcf_format == "bcf":
+        input_path = as_bcf(input_path)
 
     with open(path.joinpath("config.yaml")) as config_fp:
         config = yaml.load(config_fp, Loader=yaml.FullLoader)
 
     # emulate command-line command setup to use argparse afterwards
     cmd = config["function"]
-    command = parse_command_config(cmd, config, vcf_path)
+    command = parse_command_config(cmd, config, path, input_path)
 
     match context:
         case Context.STATEMENT:
@@ -226,7 +248,7 @@ def test_command(testcase: Path, backend: Backend, context: Context | None):
     parser = construct_parser()
 
     try:
-        args, unknown = parser.parse_known_args(command)
+        args = parser.parse_args(command)
     # we have to catch and compare such exceptions here, because they
     # do not cause a SystemExit like the .execute() instances below
     except Exception as e:
@@ -235,39 +257,49 @@ def test_command(testcase: Path, backend: Backend, context: Context | None):
         assert type(e).__name__ == config["raises"]
         return
 
-    if "raises" in config:
-        exception = config["raises"]
-        try:
-            exception = getattr(errors, exception)
-        except AttributeError:
-            exception = getattr(builtins, exception)
-
-        with pytest.raises(SystemExit), pytest.raises(exception):
-            if args.command == "filter":
-                filter.execute(args)
-            elif args.command == "table":
-                table.execute(args)
-            elif args.command == "tag":
-                tag.execute(args)
-            elif args.command == "structured":
-                structured.execute(args)
-            elif args.command == "fhir":
-                fhir.execute(args)
-            elif args.command == "sort":
-                sort.execute(args)
-            else:
-                raise AssertionError("Unknown subcommand")
-        return
-
     with tempfile.NamedTemporaryFile(mode="w+t") as tmp_out:
         args.output = tmp_out.name
         args.backend = backend
+        if vcf_format == "bcf" and TEST_RUNNERS[args.command] is run_test_vcf_output:
+            args.output_fmt = "bcf"
+
+        if "raises" in config:
+            exception = config["raises"]
+            try:
+                exception = getattr(errors, exception)
+            except AttributeError:
+                exception = getattr(builtins, exception)
+
+            with pytest.raises(SystemExit) as excinfo:
+                COMMAND_MODULES[args.command].execute(args)
+            assert exception_in_chain(excinfo.value, exception), (
+                f"expected {config['raises']} in exception chain, got "
+                f"{list(exception_chain(excinfo.value))!r}"
+            )
+            return
 
         runner = TEST_RUNNERS.get(args.command)
         if runner:
             runner(args, config, path, tmp_out, backend)
         else:
             raise ValueError(f"No verifier defined for command: {args.command}")
+
+
+def exception_chain(exc: BaseException | None):
+    """Yield exc and everything reachable via __cause__ and __context__."""
+    seen: set[int] = set()
+    stack = [exc]
+    while stack:
+        e = stack.pop()
+        if e is None or id(e) in seen:
+            continue
+        seen.add(id(e))
+        yield e
+        stack.extend([e.__cause__, e.__context__])
+
+
+def exception_in_chain(exc: BaseException, exception_type: type) -> bool:
+    return any(isinstance(e, exception_type) for e in exception_chain(exc))
 
 
 def construct_parser():
@@ -280,36 +312,40 @@ def construct_parser():
     filter.add_subcommmand(subparsers)
     table.add_subcommmand(subparsers)
     tag.add_subcommand(subparsers)
+    annotate.add_subcommmand(subparsers)
     structured.add_subcommand(subparsers)
     fhir.add_subcommand(subparsers)
     sort.add_subcommand(subparsers)
     return parser
 
 
-def parse_command_config(cmd, config, vcf_path):
-    if cmd in ("filter", "table"):
-        command = [cmd, config["expression"], str(vcf_path)]
+HARNESS_KEYS = {"function", "raises", "needs_context"}
+
+
+def parse_command_config(cmd, config, path, input_path):
+    # keys consumed as positional arguments or only meaningful to the harness
+    config = {k: v for k, v in config.items() if k not in HARNESS_KEYS}
+    if cmd in ("filter", "table", "sort"):
+        command = [cmd, config.pop("expression"), str(input_path)]
     elif cmd == "tag":
         command = [cmd]
-        tags = config["tags"]
-        for name, expr in tags.items():
+        for name, expr in config.pop("tags").items():
             command += ["--tag", f"{name}={expr}"]
-        command.append(str(vcf_path))
+        command.append(str(input_path))
+    elif cmd == "annotate":
+        command = [cmd, str(path / "annotation.yaml"), str(input_path)]
     elif cmd == "structured":
-        template_path = vcf_path.parent / "template.yte.yaml"
-        command = [cmd, str(template_path), str(vcf_path)]
+        command = [cmd, str(path / "template.yte.yaml"), str(input_path)]
     elif cmd == "fhir":
-        command = [cmd, str(vcf_path), config["sample"], config["assembly"]]
-        del config["sample"]
-        del config["assembly"]
-    elif cmd == "sort":
-        command = [cmd, config["expression"], str(vcf_path)]
-        del config["expression"]
+        command = [
+            cmd,
+            str(input_path),
+            config.pop("sample"),
+            config.pop("assembly"),
+        ]
     else:
-        raise ValueError(f"Unknown subcommand {config['function']}")
+        raise ValueError(f"Unknown subcommand {cmd}")
     for key in config:
-        if key == "function":
-            continue
         if isinstance(config[key], str):
             command.append(config_key_to_arg(key))
             command.append(config[key])
