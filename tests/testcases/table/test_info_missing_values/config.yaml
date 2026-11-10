@@ -1,0 +1,4 @@
+function: "table"
+expression: 'POS, INFO["I1"], INFO["IA"], INFO["IR"], INFO["ID"], INFO["I2"], INFO["F1"], INFO["FA"], INFO["FR"], INFO["FD"], INFO["F2"]'
+header: "POS, I1, IA, IR, ID, I2, F1, FA, FR, FD, F2"
+wide: []

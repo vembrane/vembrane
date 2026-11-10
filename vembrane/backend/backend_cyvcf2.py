@@ -20,6 +20,22 @@ from vembrane.backend.base import (
 from ..ann_types import NA, type_info
 from ..errors import UnknownInfoFieldError, UnknownSampleError
 
+# htslib sentinels as int32 bit patterns: (missing, vector end)
+_INT_SENTINELS = (-2147483648, -2147483647)
+_FLOAT_SENTINELS = (0x7F800001, 0x7F800002)
+
+
+def _drop_sentinels(array: np.ndarray, sentinels: tuple[int, int]) -> list:
+    """Map htslib's missing value to None and drop its vector-end padding."""
+    missing, end = sentinels
+    # float32 sentinels are NaNs, so they can only be told apart by their bits
+    bits = array.view(np.int32) if array.dtype.kind == "f" else array
+    return [
+        None if b == missing else v
+        for b, v in zip(bits.tolist(), array.tolist(), strict=True)
+        if b != end
+    ]
+
 
 class Cyvcf2Reader(VCFReader):
     __slots__ = (
@@ -286,14 +302,16 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
         else:
             value = value_array[i]
 
-        if meta["Type"] == "String" and not number == "1":
-            value = value.split(",")
-        if number == "1":
-            if isinstance(value, np.ndarray):
-                value = value[0].item()
-            # cyvcf2 gives min int for unknown integer values
-            if meta["Type"] == "Integer" and value == np.iinfo(np.int32).min:
-                return NA
+        typ = meta["Type"]
+        if typ == "String":
+            if number != "1":
+                value = value.split(",")
+        elif typ == "Integer":
+            value = _drop_sentinels(value, _INT_SENTINELS)
+        elif typ == "Float":
+            value = _drop_sentinels(value, _FLOAT_SENTINELS)
+        if number == "1" and isinstance(value, list):
+            value = value[0]
         return type_info(value, number)
 
     def __setitem__(self, key, value):

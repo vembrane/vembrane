@@ -146,6 +146,10 @@ def check_parquet_output(args, expected_path, tmp_out_path):
             norm_val = normalize_arrow_value(val_arrow)
 
             candidates = {str(norm_val)}
+            if isinstance(val_arrow, list):
+                # normalization turns null elements into "", but the table
+                # output prints them as None
+                candidates.add(str(tuple(val_arrow)))
             if isinstance(norm_val, list):
                 candidates.add(str(tuple(norm_val)))
                 str_items = [str(v) for v in norm_val]
