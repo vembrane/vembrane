@@ -144,3 +144,22 @@ Annotations with type `str`:
 | `HGVS.c`             |             |                    |
 | `HGVS.p`             |             |                    |
 | `Distance`           |             |                    |
+
+## mehari
+
+vembrane uses these types for an annotation field whose `##INFO` line has the attribute `Source="mehari"`.
+Without a `Source` attribute, mehari's description reads like snpEff's, so vembrane then requires all of the columns `Feature_Tags`, `HGVS.g`, `HGVS.n` and `Strand`, which snpEff does not have.
+Columns not listed here have the same type as in snpEff.
+A column added by a plugin has the type of a known annotation with the same name, and is `str` otherwise.
+
+| Name in mehari `ANN`       | Type                                                | Example expression                          |
+|----------------------------|-----------------------------------------------------|---------------------------------------------|
+| `Transcript_BioType`       | `list[str]`                                         | `'"Coding" in ANN["Transcript_BioType"]'`   |
+| `Feature_Tags`             | `list[str]`                                         | `'"ManeSelect" in ANN["Feature_Tags"]'`     |
+| `Rank`                     | `NumberTotal` with properties `number` and `total`  | `'ANN["Rank"].number == 1'`                 |
+| `Distance`                 | `int`                                               | `'ANN["Distance"] < 1000'`                  |
+| `Strand`                   | `int`                                               | `'ANN["Strand"] == -1'`                     |
+| `ERRORS / WARNINGS / INFO` | `list[str]`                                         |                                             |
+| `HGNC_ID`                  | `str`                                               |                                             |
+| `HGVS.g`                   | `str`                                               |                                             |
+| `HGVS.n`                   | `str`                                               |                                             |
