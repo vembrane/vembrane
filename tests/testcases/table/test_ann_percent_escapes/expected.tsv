@@ -1,0 +1,8 @@
+POS	ANN['HGVSp']
+1	a:b;c=d%e,f
+2	"ab
+c	d"
+3	p.Pro%3D
+4	a%20b%3dc%2d
+5	100%
+6	plain
