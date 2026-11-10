@@ -1,0 +1,3 @@
+function: "table"
+expression: "POS, INFO['X'], INFO['L'], FORMAT['S']['s'], FORMAT['T']['s']"
+wide: []
