@@ -1,0 +1,4 @@
+function: "table"
+expression: 'INFO["SI"]'
+raises: "NotExactlyOneValueError"
+wide: []

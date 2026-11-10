@@ -1,0 +1,9 @@
+##fileformat=VCFv4.5
+##contig=<ID=chr1,length=1000>
+##INFO=<ID=A,Number=1,Type=Integer,Description="A">
+##INFO=<ID=B,Number=1,Type=String,Description="B">
+##INFO=<ID=C,Number=1,Type=Integer,Description="C">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="GT">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="DP">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	s1	s2
+chr1	100	.	G	A	.	.	B=x;A=1	GT:DP	0/1:5	1/1:6

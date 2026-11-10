@@ -1,0 +1,6 @@
+##fileformat=VCFv4.5
+##VEP="v110"
+##INFO=<ID=ANN,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|EXON|INTRON|cDNA_position|SIFT">
+##contig=<ID=1>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+1	100	.	A	T	50	PASS	ANN=T|missense_variant&splice_region_variant|4-6/27||1773-1775|deleterious(0.5)
