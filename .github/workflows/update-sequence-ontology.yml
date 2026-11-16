@@ -94,7 +94,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.check.outputs.update_needed == 'true'
-        uses: peter-evans/create-pull-request@15733dbdfeedb4f7fdb73d13c6f5ac83b710fab8 # v8.1.2
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
           commit-message: "chore: update sequence ontology to ${{ steps.so-latest.outputs.date }}"
           branch: "chore/update-sequence-ontology-${{ steps.so-latest.outputs.date }}"
