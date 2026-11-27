@@ -256,7 +256,7 @@ class Cyvcf2RecordFormats(VCFRecordFormats):
         return key in self._raw_format
 
     def keys(self):
-        return self._raw_format.keys()
+        return list(self._raw_format)
 
 
 class Cyvcf2RecordFormat(VCFRecordFormat):
@@ -304,15 +304,12 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
 
         typ = meta["Type"]
         if typ == "String":
-            if number != "1":
-                value = value.split(",")
+            value = value.split(",")
         elif typ == "Integer":
             value = _drop_sentinels(value, _INT_SENTINELS)
         elif typ == "Float":
             value = _drop_sentinels(value, _FLOAT_SENTINELS)
-        if number == "1" and isinstance(value, list):
-            value = value[0]
-        return type_info(value, number)
+        return type_info(value, number, self._format_key, self._record.record_idx)
 
     def __setitem__(self, key, value):
         raise NotImplementedError
@@ -324,7 +321,7 @@ class Cyvcf2RecordFormat(VCFRecordFormat):
         return sample in self._header.samples
 
     def keys(self):
-        return self._raw_record.format.keys()
+        return self._header.samples
 
 
 class Cyvcf2RecordFilter(VCFRecordFilter):
@@ -385,10 +382,13 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
             return type_info(NA, number)
 
         # for some reason cyvcf2 doesn't split String lists, a known circumstance
-        if typ == "String" and not number == "1":
+        if typ == "String":
             value = value.split(",")
+        elif value is None:
+            # a present but missing value, which pysam gives as (None,)
+            value = (None,)
 
-        return type_info(value, number)
+        return type_info(value, number, key, self._record.record_idx)
 
     def __setitem__(self, key, value):
         if not isinstance(value, list):
@@ -406,7 +406,7 @@ class Cyvcf2RecordInfo(VCFRecordInfo):
         return self._raw_record.INFO.get(key, None) is not None
 
     def keys(self):
-        return self._raw_record.info.keys()
+        return [key for key, _ in self._raw_record.INFO]
 
 
 class Cyvcf2Writer(VCFWriter):

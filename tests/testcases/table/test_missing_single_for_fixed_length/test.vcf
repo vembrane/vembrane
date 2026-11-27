@@ -1,0 +1,15 @@
+##fileformat=VCFv4.5
+##contig=<ID=chr1,length=1000>
+##INFO=<ID=I2,Number=2,Type=Integer,Description="I2">
+##INFO=<ID=F2,Number=2,Type=Float,Description="F2">
+##INFO=<ID=S2,Number=2,Type=String,Description="S2">
+##INFO=<ID=I3,Number=3,Type=Integer,Description="I3">
+##INFO=<ID=I4,Number=2,Type=Integer,Description="I4">
+##FORMAT=<ID=I2,Number=2,Type=Integer,Description="I2">
+##FORMAT=<ID=F2,Number=2,Type=Float,Description="F2">
+##FORMAT=<ID=S2,Number=2,Type=String,Description="S2">
+##FORMAT=<ID=I3,Number=3,Type=Integer,Description="I3">
+##FORMAT=<ID=I4,Number=2,Type=Integer,Description="I4">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	s1
+chr1	100	.	G	A	.	.	I2=.;F2=.;S2=.;I3=.;I4=.	I2:F2:S2:I3:I4	.:.:.:.:.
+chr1	101	.	G	A	.	.	I2=1,2;F2=1.5,2.5;S2=a,b;I3=1,2;I4=5	I2:F2:S2:I3:I4	1,2:1.5,2.5:a,b:1,2:5

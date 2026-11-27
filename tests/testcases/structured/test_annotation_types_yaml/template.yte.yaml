@@ -1,0 +1,6 @@
+exon: ?ANN["EXON"]
+cdna: ?ANN["cDNA_position"]
+consequence: ?ANN["Consequence"]
+first_consequence: ?ANN["Consequence"][0]
+sift: ?ANN["SIFT"]
+missing_exon: ?ANN["INTRON"]

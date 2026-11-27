@@ -1,0 +1,4 @@
+function: "table"
+expression: 'FORMAT["SF"][0]'
+raises: "NotExactlyOneValueError"
+wide: []
