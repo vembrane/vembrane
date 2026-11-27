@@ -1,0 +1,17 @@
+##fileformat=VCFv4.5
+##contig=<ID=chr1,length=1000>
+##FORMAT=<ID=I1,Number=1,Type=Integer,Description="I1">
+##FORMAT=<ID=IA,Number=A,Type=Integer,Description="IA">
+##FORMAT=<ID=IR,Number=R,Type=Integer,Description="IR">
+##FORMAT=<ID=IG,Number=G,Type=Integer,Description="IG">
+##FORMAT=<ID=ID,Number=.,Type=Integer,Description="ID">
+##FORMAT=<ID=I2,Number=2,Type=Integer,Description="I2">
+##FORMAT=<ID=F1,Number=1,Type=Float,Description="F1">
+##FORMAT=<ID=FA,Number=A,Type=Float,Description="FA">
+##FORMAT=<ID=FR,Number=R,Type=Float,Description="FR">
+##FORMAT=<ID=FG,Number=G,Type=Float,Description="FG">
+##FORMAT=<ID=FD,Number=.,Type=Float,Description="FD">
+##FORMAT=<ID=F2,Number=2,Type=Float,Description="F2">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	s1	s2
+chr1	100	.	G	A	.	.	.	I1:IA:IR:IG:ID:I2:F1:FA:FR:FG:FD:F2	5:3:1,2:1,2,3:1,.,3:1,.:5.5:3.5:1.5,2.5:1.5,2.5,3.5:1.5,.,3.5:1.5,.	.:.:.:.,.,.:4:.,.:.:.:.:.,.,.:4.5:.,.
+chr1	101	.	G	A	.	.	.	I1:IA:IR:IG:ID:I2:F1:FA:FR:FG:FD:F2	.:.:.,2:.,2,3:.:.,2:.:.:.,2.5:.,2.5,3.5:.:.,2.5	7:8:3,4:4,5,6:1,2,3,4:3,4:7.5:8.5:3.5,4.5:4.5,5.5,6.5:1.5,2.5,3.5,4.5:3.5,4.5

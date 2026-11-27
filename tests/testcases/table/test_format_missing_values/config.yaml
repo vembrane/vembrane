@@ -1,0 +1,4 @@
+function: "table"
+expression: 'POS, FORMAT["I1"]["s1"], FORMAT["I1"]["s2"], FORMAT["IA"]["s1"], FORMAT["IA"]["s2"], FORMAT["IR"]["s1"], FORMAT["IR"]["s2"], FORMAT["IG"]["s1"], FORMAT["IG"]["s2"], FORMAT["ID"]["s1"], FORMAT["ID"]["s2"], FORMAT["I2"]["s1"], FORMAT["I2"]["s2"], FORMAT["F1"]["s1"], FORMAT["F1"]["s2"], FORMAT["FA"]["s1"], FORMAT["FA"]["s2"], FORMAT["FR"]["s1"], FORMAT["FR"]["s2"], FORMAT["FG"]["s1"], FORMAT["FG"]["s2"], FORMAT["FD"]["s1"], FORMAT["FD"]["s2"], FORMAT["F2"]["s1"], FORMAT["F2"]["s2"]'
+header: "POS, I1_s1, I1_s2, IA_s1, IA_s2, IR_s1, IR_s2, IG_s1, IG_s2, ID_s1, ID_s2, I2_s1, I2_s2, F1_s1, F1_s2, FA_s1, FA_s2, FR_s1, FR_s2, FG_s1, FG_s2, FD_s1, FD_s2, F2_s1, F2_s2"
+wide: []

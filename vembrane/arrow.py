@@ -266,6 +266,15 @@ class ArrowTypes:
                     type=arrow_type,
                 )
 
+        if py_type.startswith("list["):
+            # InfoTuple yields NA for its missing elements, which arrow cannot convert
+            values = [
+                [None if is_na(v) else v for v in value]
+                if isinstance(value, tuple | list | InfoTuple)
+                else value
+                for value in values
+            ]
+
         return pa.array(
             [None if is_na(value) else value for value in values], type=arrow_type
         )
