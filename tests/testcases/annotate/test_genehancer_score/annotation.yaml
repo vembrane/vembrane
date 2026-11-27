@@ -1,0 +1,20 @@
+annotation:
+  file: "tests/testcases/annotate/test_genehancer_score/annotation.tsv"
+  columns:
+    chrom: "chrom"
+    start: "chromStart"
+    stop: "chromEnd"
+  delimiter: "\t"
+  values:
+    - value:
+        vcf_name: "genehancer_score"
+        number: "1"
+        description: "Highest score of all overlapping regions."
+        type: "Float"
+        expression: "max(DATA['score'])"
+    - value:
+        vcf_name: "genehancer_regions"
+        number: "1"
+        description: "Number of overlapping regions."
+        type: "Integer"
+        expression: "len(DATA['score'])"

@@ -1,0 +1,9 @@
+##fileformat=VCFv4.5
+##contig=<ID=chr10,length=135534747>
+##contig=<ID=chr11,length=135086622>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+chr10	76500	.	A	T	.	.	.
+chr10	600000	.	C	G	.	.	.
+chr10	700000	.	G	A	.	.	.
+chr10	5000000	.	T	C	.	.	.
+chr11	76500	.	A	T	.	.	.

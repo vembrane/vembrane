@@ -1,0 +1,6 @@
+##fileformat=VCFv4.5
+##contig=<ID=chr1,length=1000>
+##INFO=<ID=score,Number=1,Type=Integer,Description="Score of the overlapping region.">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+chr1	150	.	A	T	50	PASS	score=10
+chr1	350	.	C	G	50	PASS	score=20

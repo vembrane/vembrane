@@ -1,0 +1,12 @@
+##fileformat=VCFv4.5
+##FILTER=<ID=PASS,Description="All filters passed">
+##contig=<ID=chr10,length=135534747>
+##contig=<ID=chr11,length=135086622>
+##INFO=<ID=genehancer_score,Number=1,Type=Float,Description="Highest score of all overlapping regions.">
+##INFO=<ID=genehancer_regions,Number=1,Type=Integer,Description="Number of overlapping regions.">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+chr10	76500	.	A	T	.	.	genehancer_score=463;genehancer_regions=1
+chr10	600000	.	C	G	.	.	genehancer_score=435;genehancer_regions=1
+chr10	700000	.	G	A	.	.	genehancer_score=435;genehancer_regions=2
+chr10	5000000	.	T	C	.	.	.
+chr11	76500	.	A	T	.	.	.

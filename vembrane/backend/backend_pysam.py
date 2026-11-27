@@ -1,7 +1,7 @@
 from collections import OrderedDict, defaultdict
 from pathlib import Path
 from sys import stderr
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 
 import pysam
 from pysam import VariantRecord
@@ -314,13 +314,22 @@ class PysamHeader(VCFHeader):
             items=[("ID", id), ("Description", description)],
         )
 
-    def add_meta(
-        self,
-        key: str,
-        value: Optional[str] = None,
-        items: Optional[List[Tuple[str, str]]] = None,
-    ):
-        raise NotImplementedError
+    def add_info(self, id: str, number: str, type: str, description: str):
+        self._raw_header.add_meta(
+            key="INFO",
+            items=[
+                ("ID", id),
+                ("Number", number),
+                ("Type", type),
+                ("Description", description),
+            ],
+        )
+        self._metadata_category["INFO"][id] = {
+            "ID": id,
+            "Number": number,
+            "Type": type,
+            "Description": f'"{description}"',
+        }
 
 
 class PysamWriter(VCFWriter):

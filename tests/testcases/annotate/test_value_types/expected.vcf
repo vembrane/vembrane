@@ -1,0 +1,14 @@
+##fileformat=VCFv4.5
+##contig=<ID=1,length=1000>
+##INFO=<ID=first_name,Number=1,Type=String,Description="Name of the first overlapping region in the file.">
+##INFO=<ID=all_names,Number=.,Type=String,Description="Names of all overlapping regions.">
+##INFO=<ID=scores,Number=.,Type=Integer,Description="Scores of all overlapping regions.">
+##INFO=<ID=two_scores,Number=2,Type=Float,Description="A fixed number of values.">
+##INFO=<ID=per_alt,Number=A,Type=Float,Description="One value per alternate allele.">
+##INFO=<ID=several,Number=0,Type=Flag,Description="Set if more than one region overlaps.">
+##INFO=<ID=known_gene,Number=0,Type=Flag,Description="Set if the gene of the last region is in the auxiliary file.">
+##INFO=<ID=note,Number=1,Type=String,Description="A value that needs \"percent\" encoding, and a back\\slash.">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+1	120	.	A	T	50	PASS	first_name=first;all_names=first;scores=10;two_scores=10.5,20.5;per_alt=5;known_gene;note=a%3Bb%3Dc%2Cd%25e
+1	170	.	C	G	50	PASS	first_name=first;all_names=first,second;scores=10,20;two_scores=10.5,20.5;per_alt=10;several;note=a%3Bb%3Dc%2Cd%25e
+1	400	.	G	A	50	PASS	.
