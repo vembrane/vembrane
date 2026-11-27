@@ -1,0 +1,8 @@
+##fileformat=VCFv4.5
+##VEP="v110"
+##mehariVersion=0.49.1
+##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | HGNC_ID | Feature_Type | Feature_ID | Transcript_BioType | Feature_Tags | Rank | HGVS.g | HGVS.n | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | Strand | ERRORS / WARNINGS / INFO'">
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL">
+##contig=<ID=chr13>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+chr13	32315669	.	T	C	45	PASS	ANN=C|upstream_gene_variant|MODIFIER|ZAR1L|ENSG00000189167|HGNC:37116|transcript|NM_001136571.2|Noncoding|||g.32315669T>C|||||||306|-1|WARNING_TRANSCRIPT_INCOMPLETE&WARNING_SEQUENCE_NOT_AVAILABLE;CSQ=C|upstream_gene_variant|MODIFIER|ZAR1L

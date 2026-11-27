@@ -1,0 +1,6 @@
+##fileformat=VCFv4.5
+##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Annotation | Rank | Strand'">
+##contig=<ID=1>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+1	100	.	A	T	50	PASS	ANN=T|missense_variant|2/26|1
+1	200	.	A	T	50	PASS	ANN=T|intron_variant|3/26|1

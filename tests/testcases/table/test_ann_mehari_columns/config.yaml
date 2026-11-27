@@ -1,0 +1,4 @@
+function: "table"
+wide: []
+header: "tags, biotype, rank, distance, strand, messages, hgnc, g, n"
+expression: 'ANN["Feature_Tags"], ANN["Transcript_BioType"], ANN["Rank"], ANN["Distance"], ANN["Strand"], ANN["ERRORS / WARNINGS / INFO"], ANN["HGNC_ID"], ANN["HGVS.g"], ANN["HGVS.n"]'

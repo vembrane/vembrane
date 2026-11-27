@@ -5,8 +5,9 @@ from typing import Any
 
 import pyarrow as pa
 
-from vembrane.ann_types import ANN_TYPER, NA, InfoTuple, is_na
+from vembrane.ann_types import NA, InfoTuple, is_na
 from vembrane.backend.base import VCFHeader
+from vembrane.common import get_annotation_typer
 from vembrane.errors import VembraneError
 
 
@@ -139,7 +140,7 @@ class ArrowTypes:
             case ast.Subscript(
                 value=ast.Name(id=name), slice=ast.Constant(value=str() as key)
             ) if name in ("ANN", ann_key):
-                return ANN_TYPER.get_entry(key).value_type
+                return get_annotation_typer(header, ann_key).get_entry(key).value_type
         return None
 
     @classmethod

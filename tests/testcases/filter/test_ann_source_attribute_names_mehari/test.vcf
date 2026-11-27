@@ -1,0 +1,6 @@
+##fileformat=VCFv4.5
+##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Rank'",Source="Mehari",Version="0.49.1">
+##contig=<ID=1>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+1	100	.	A	T	50	PASS	ANN=T|2/26
+1	200	.	A	T	50	PASS	ANN=T|3/26

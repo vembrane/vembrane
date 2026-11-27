@@ -1,0 +1,2 @@
+function: "filter"
+expression: 'ANN["Allele"] == "T" and ANN["Rank"] == "2/26"'
