@@ -234,6 +234,8 @@ Since you may want to use the regex module to search for matches, `NA` also acts
 
 *Explicitly* handling missing/optional values in INFO or FORMAT fields can be done by checking for NA, e.g.: `INFO["DP"] is NA`.
 
+String values of `INFO`, `FORMAT` and `ANN` fields are percent-decoded in expressions (e.g. `%3D` becomes `=`); output records keep the original bytes. See [Percent-encoding](docs/ann_types.md#percent-encoding).
+
 Handling missing/optional values in fields other than INFO or FORMAT can be done by checking for None, e.g `ID is not None`.
 
 Sometimes, multi-valued fields may contain missing values; in this case, the `without_na` function can be convenient, for example: `mean(without_na(FORMAT['DP'][s] for s in SAMPLES)) > 2.3`. It is also possible to replace `NA` with some constant value with the `replace_na` function: `mean(replace_na((FORMAT['DP'][s] for s in SAMPLES), 0.0)) > 2.3`

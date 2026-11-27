@@ -161,17 +161,21 @@ _PERCENT_ESCAPES = {
 _PERCENT_ESCAPE_RE = re.compile("|".join(_PERCENT_ESCAPES))
 
 
-def split_annotation_entry(entry: str) -> list[str]:
-    """Split an annotation entry and decode the VCF 4.3+ percent escapes.
+def decode_percent_escapes(value: str) -> str:
+    """Decode the VCF 4.3+ percent escapes in a single pass.
 
     Raw and encoded values are both seen in real files, so both are accepted.
+    Anything that is not one of the spec's uppercase escapes stays unchanged.
     """
+    if "%" not in value:
+        return value
+    return _PERCENT_ESCAPE_RE.sub(lambda m: _PERCENT_ESCAPES[m.group()], value)
+
+
+def split_annotation_entry(entry: str) -> list[str]:
     values = entry.split("|")
     if "%" in entry:
-        return [
-            _PERCENT_ESCAPE_RE.sub(lambda m: _PERCENT_ESCAPES[m.group()], v)
-            for v in values
-        ]
+        return [decode_percent_escapes(v) for v in values]
     return values
 
 

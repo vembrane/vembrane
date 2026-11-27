@@ -1,0 +1,4 @@
+SAMPLE	CHROM	POS	REF	ALT	QUAL	FILTER	ID	INFO['X']	INFO['L']	FORMAT['S']	FORMAT['T']
+s	1	1	C	T		[]		p.Pro194=	('a,b', 'c')	q;z	('a,b', 'c')
+s	1	3	C	T		[]		a%20b	('%20', '%3d')	a%20b	('%3d%',)
+s	1	4	C	T		[]					('u',)

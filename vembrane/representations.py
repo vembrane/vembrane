@@ -3,13 +3,25 @@ import sys
 from types import CodeType
 from typing import Any
 
-from .ann_types import ANN_TYPER, NA, MoreThanOneAltAlleleError, NvFloat, NvInt
-from .backend.base import VCFHeader, VCFRecord, VCFRecordFormats, VCFRecordInfo
-from .common import get_annotation_keys, split_annotation_entry
+from .ann_types import (
+    ANN_TYPER,
+    NA,
+    InfoTuple,
+    MoreThanOneAltAlleleError,
+    NvFloat,
+    NvInt,
+)
+from .backend.base import (
+    VCFHeader,
+    VCFRecord,
+    VCFRecordFormat,
+)
+from .common import decode_percent_escapes, get_annotation_keys, split_annotation_entry
 from .errors import (
     MalformedAnnotationError,
     NonBoolTypeError,
     UnknownAnnotationError,
+    UnknownSampleError,
     VembraneError,
 )
 from .globals import _explicit_clear, custom_functions, default_allowed_globals
@@ -32,6 +44,84 @@ class DefaultGet:
             return v
         else:
             return default
+
+
+def _decode(value):
+    """Decode percent escapes in strings, e.g. for expressions.
+
+    NA (a str subclass), None, numbers and flags pass through unchanged.
+    """
+    if isinstance(value, str):
+        return decode_percent_escapes(value)
+    if type(value) is InfoTuple:
+        values = value.values
+        if any(isinstance(v, str) and "%" in v for v in values):
+            return InfoTuple(
+                tuple(
+                    decode_percent_escapes(v) if isinstance(v, str) else v
+                    for v in values
+                )
+            )
+    return value
+
+
+class _View:
+    """Wraps a record accessor so that expressions see decoded values.
+
+    Internal code keeps using the raw accessor, so output records are unchanged.
+    """
+
+    __slots__ = ("_raw",)
+
+    def __init__(self, raw) -> None:
+        self._raw = raw
+
+    def __getattr__(self, name):
+        return getattr(self._raw, name)
+
+    def __contains__(self, item) -> bool:
+        return item in self._raw
+
+    def __repr__(self) -> str:
+        return repr(self._raw)
+
+
+class InfoView(_View):
+    def __getitem__(self, key):
+        return _decode(self._raw[key])
+
+    def get(self, key, default=None):
+        if key in self._raw:
+            return self[key]
+        return default
+
+
+class FormatView(_View):
+    def __getitem__(self, sample):
+        return _decode(self._raw[sample])
+
+    def get(self, sample, default=None):
+        try:
+            return self[sample]
+        except UnknownSampleError:
+            return default
+
+    def __eq__(self, other: object):
+        if isinstance(other, FormatView):
+            other = other._raw
+        return self._raw == other
+
+
+class FormatsView(_View):
+    def __getitem__(self, key):
+        value = self._raw[key]
+        # a missing field may yield NA instead of a per-field object
+        return FormatView(value) if isinstance(value, VCFRecordFormat) else value
+
+    def get(self, key, default=None):
+        if key not in self._raw:
+            return default
+        return self[key]
 
 
 class Annotation(NoValueDict, DefaultGet):
@@ -267,13 +357,13 @@ class Environment(dict):
         self._globals["FILTER"] = value
         return value
 
-    def _get_info(self) -> VCFRecordInfo:
-        value = self.record.info
+    def _get_info(self) -> InfoView:
+        value = InfoView(self.record.info)
         self._globals["INFO"] = value
         return value
 
-    def _get_format(self) -> VCFRecordFormats:
-        value = self.record.formats
+    def _get_format(self) -> FormatsView:
+        value = FormatsView(self.record.formats)
         self._globals["FORMAT"] = value
         return value
 
