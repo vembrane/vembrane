@@ -18,7 +18,7 @@ from vembrane.backend.base import (
 )
 
 from ..ann_types import NA, type_info
-from ..errors import UnknownInfoFieldError, UnknownSampleError
+from ..errors import UnknownInfoFieldError, UnknownSampleError, VembraneError
 
 
 class Cyvcf2Reader(VCFReader):
@@ -49,8 +49,18 @@ class Cyvcf2Reader(VCFReader):
 
     def __next__(self):
         self._current_record_idx += 1
+        try:
+            record = self._iter_file.__next__()
+        except StopIteration:
+            raise
+        except Exception as e:  # cyvcf2 raises a bare Exception on a parse failure
+            raise VembraneError(
+                f"Could not read record {self._current_record_idx}: {e}\n"
+                "cyvcf2 bundles an old htslib that rejects some records valid since "
+                "VCF 4.4, such as the genotype /0/1. Try --backend pysam."
+            ) from e
         return Cyvcf2Record(
-            self._iter_file.__next__(),
+            record,
             self._current_record_idx,
             self._header,
             self._file,

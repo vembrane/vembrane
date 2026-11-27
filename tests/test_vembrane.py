@@ -371,3 +371,39 @@ def normalize_arrow_value(value: Any) -> Any:
         return [normalize_arrow_value(v) for v in value]
 
     return value
+
+
+def write_genotype_vcf(path: Path, genotype: str) -> Path:
+    vcf_path = path / "test.vcf"
+    vcf_path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "##contig=<ID=1>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        f"1\t100\t.\tA\tT\t50\tPASS\t.\tGT\t{genotype}\n"
+    )
+    return vcf_path
+
+
+@pytest.mark.parametrize("backend", (Backend.pysam, Backend.cyvcf2))
+def test_unparseable_record_is_a_clean_error(backend, tmp_path, capsys):
+    vcf_path = write_genotype_vcf(tmp_path, "x/y")
+    args = construct_parser().parse_args(["filter", "True", str(vcf_path)])
+    args.backend = backend
+    args.output = str(tmp_path / "output.vcf")
+    with pytest.raises(SystemExit):
+        filter.execute(args)
+    assert "Could not read record 1" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("backend", (Backend.pysam, Backend.cyvcf2))
+def test_genotype_with_leading_phase(backend, tmp_path):
+    # valid since VCF 4.4, but cyvcf2 bundles an htslib older than 1.22
+    vcf_path = write_genotype_vcf(tmp_path, "/0/1")
+    with create_reader(vcf_path, backend=backend) as reader:
+        try:
+            record = next(iter(reader))
+        except errors.VembraneError:
+            assert backend == Backend.cyvcf2
+        else:
+            assert record.formats["GT"]["S1"] == (0, 1)

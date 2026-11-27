@@ -19,7 +19,7 @@ from vembrane.backend.base import (
 )
 
 from ..ann_types import NA, type_info
-from ..errors import UnknownInfoFieldError, UnknownSampleError
+from ..errors import UnknownInfoFieldError, UnknownSampleError, VembraneError
 
 
 class PysamRecord(VCFRecord):
@@ -221,8 +221,14 @@ class PysamReader(VCFReader):
 
     def __next__(self):
         self._current_record_idx += 1
+        try:
+            record = self._iter_file.__next__()
+        except OSError as e:
+            raise VembraneError(
+                f"Could not read record {self._current_record_idx}: {e}"
+            ) from e
         return PysamRecord(
-            self._iter_file.__next__(),
+            record,
             self._current_record_idx,
             self._header,
         )
