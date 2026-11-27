@@ -1,3 +1,3 @@
 function: "sort"
 expression: "desc(POS)"
-chunk-size: 1
+max_in_mem_records: 1

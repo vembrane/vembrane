@@ -1,4 +1,4 @@
 function: "sort"
 expression: 'desc(ANN["Annotation_Impact"])'
-chunk-size: "10"
+max_in_mem_records: "10"
 preserve-annotation-order: false
